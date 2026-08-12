@@ -1,0 +1,13 @@
+# Direct byte patches, applied last, for text packed INSIDE a composite string where
+# there is no terminator to mark its boundary. Expressing these through the normal
+# translation file would mean writing 30+ bytes of <$XX> tokens around three of text.
+#
+# The length must match exactly -- these sit between other data, so growing one would
+# overwrite its neighbour. Addresses come from tools/mesen_status.lua, which logs which
+# bytes the status screen actually reads.
+#
+# loc	english	(must be exactly as many cells as the Japanese it replaces)
+#
+# 31:$41D0 (Gld) has moved to menu_en.tsv: it was only a raw patch because the old
+# extraction region started at $41D4 and cut the first row off box 1. It is a normal
+# box row now.

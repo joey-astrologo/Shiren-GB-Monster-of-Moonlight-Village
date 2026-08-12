@@ -1,0 +1,472 @@
+{
+  "name": "Dot Gothic Shiren",
+  "status": "approved specification; installed by default in the English ROM",
+  "source": {
+    "name": "Dot Gothic 8x8 Variable",
+    "file": "font candidates/dot_gothic_8x8-variable.png",
+    "sha256": "f057acf691ba24f7cb4beaeaf2e69b69d96868a9e6be8d2586fbdd82006152f7",
+    "collection": "Mx. Ashlynn's GB Studio Font Collection 2.0",
+    "url": "https://github.com/mxashlynn/gb-studio-fonts",
+    "copyright": "Copyright (c) 2021 & 2025, Paige Ashlynn",
+    "license": "SIL Open Font License 1.1"
+  },
+  "derived_from": {
+    "name": "DotGothic16",
+    "authors": "Kokiabe / Fontworks Inc.",
+    "url": "https://github.com/fontworks-fonts/DotGothic16",
+    "license": "SIL Open Font License 1.1"
+  },
+  "pixel_edits": [
+    {
+      "glyph": "e",
+      "x": 4,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "remove the isolated far-right pixel so lowercase e fits four ink columns"
+    },
+    {
+      "glyph": "e",
+      "x": 3,
+      "y": 4,
+      "from": 0,
+      "to": 1,
+      "reason": "extend the middle crossbar for the approved clear lowercase-e shape"
+    },
+    {
+      "glyph": "+",
+      "x": 0,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the left arm of the item modifier sign by one pixel"
+    },
+    {
+      "glyph": "+",
+      "x": 4,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the right arm of the item modifier sign by one pixel"
+    },
+    {
+      "glyph": "+",
+      "x": 2,
+      "y": 1,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the top arm of the item modifier sign by one pixel"
+    },
+    {
+      "glyph": "+",
+      "x": 2,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the bottom arm of the item modifier sign by one pixel"
+    },
+    {
+      "glyph": "4",
+      "x": 3,
+      "y": 0,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 0,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 2,
+      "y": 1,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 1,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 1,
+      "y": 2,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 2,
+      "y": 2,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 3,
+      "y": 2,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 2,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 0,
+      "y": 3,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 1,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 3,
+      "y": 3,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 1,
+      "y": 4,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 2,
+      "y": 4,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 3,
+      "y": 4,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 0,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 1,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 2,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 5,
+      "y": 5,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 3,
+      "y": 6,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 6,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 5,
+      "y": 0,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 4,
+      "y": 1,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 5,
+      "y": 1,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 3,
+      "y": 2,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 4,
+      "y": 2,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 3,
+      "from": 0,
+      "to": 1,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 3,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "install the approved compact digit shape"
+    },
+    {
+      "glyph": "7",
+      "x": 0,
+      "y": 1,
+      "from": 0,
+      "to": 1,
+      "reason": "adapt the status-bar seven's hooked cap into the compact footprint"
+    },
+    {
+      "glyph": "7",
+      "x": 1,
+      "y": 4,
+      "from": 0,
+      "to": 1,
+      "reason": "begin the status-bar-style straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 4,
+      "from": 1,
+      "to": 0,
+      "reason": "begin the status-bar-style straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 0,
+      "y": 6,
+      "from": 1,
+      "to": 0,
+      "reason": "finish the status-bar-style straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 1,
+      "y": 6,
+      "from": 0,
+      "to": 1,
+      "reason": "finish the status-bar-style straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 4,
+      "y": 0,
+      "from": 1,
+      "to": 0,
+      "reason": "tighten the seven to four ink columns while retaining its top-right corner"
+    },
+    {
+      "glyph": "7",
+      "x": 3,
+      "y": 1,
+      "from": 0,
+      "to": 1,
+      "reason": "retain a vertical pixel below the compact seven's top-right corner"
+    },
+    {
+      "glyph": "7",
+      "x": 4,
+      "y": 1,
+      "from": 1,
+      "to": 0,
+      "reason": "retain a vertical pixel below the compact seven's top-right corner"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 2,
+      "from": 0,
+      "to": 1,
+      "reason": "move the compact seven's diagonal one pixel left"
+    },
+    {
+      "glyph": "7",
+      "x": 3,
+      "y": 2,
+      "from": 1,
+      "to": 0,
+      "reason": "move the compact seven's diagonal one pixel left"
+    },
+    {
+      "glyph": "7",
+      "x": 1,
+      "y": 3,
+      "from": 0,
+      "to": 1,
+      "reason": "join the compact seven's diagonal to its straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "join the compact seven's diagonal to its straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 2,
+      "from": 1,
+      "to": 0,
+      "reason": "use Joey's final three-step diagonal before the straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 3,
+      "y": 2,
+      "from": 0,
+      "to": 1,
+      "reason": "use Joey's final three-step diagonal before the straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 1,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "use Joey's final three-step diagonal before the straight lower leg"
+    },
+    {
+      "glyph": "7",
+      "x": 2,
+      "y": 3,
+      "from": 0,
+      "to": 1,
+      "reason": "use Joey's final three-step diagonal before the straight lower leg"
+    },
+    {
+      "glyph": "4",
+      "x": 4,
+      "y": 4,
+      "from": 1,
+      "to": 0,
+      "reason": "remove the final crossbar pixel for Joey's four-column compact four"
+    },
+    {
+      "glyph": "-",
+      "x": 0,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the modifier minus by one pixel at each end"
+    },
+    {
+      "glyph": "-",
+      "x": 3,
+      "y": 3,
+      "from": 1,
+      "to": 0,
+      "reason": "shorten the modifier minus by one pixel at each end"
+    }
+  ],
+  "advance_overrides": {
+    "e": 5,
+    "D": 5,
+    "t": 5,
+    "/": 7,
+    "+": 4,
+    "-": 4,
+    "4": 5,
+    "7": 5
+  },
+  "approval": {
+    "date": "2026-08-09",
+    "decision": "Dot Gothic + e clear + tightened D, t, slash, plus, minus, and Joey's four-column 4/7",
+    "measured_hostile_peak_tiles": 71,
+    "measured_usable_tiles": 72,
+    "fragmented_runs": [57, 11, 4],
+    "packing_model": "plane-exact pass",
+    "warning": "the item-suffix audit must enumerate signed values; 144 two-digit signed values share the 14px-advance peak, represented by -99"
+  }
+}

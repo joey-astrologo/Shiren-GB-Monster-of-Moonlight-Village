@@ -1,0 +1,36 @@
+# ---- ROMs: never commit -------------------------------------------------
+*.gb
+*.gbc
+*.sgb
+
+# Save files
+*.sav
+*.srm
+*.sav.bak*
+*.state
+
+# Gemini translation credentials. The tracked .example file documents the shape;
+# the real key must never enter history.
+/.gemini-credentials.json
+
+# ---- Build output: all regenerable --------------------------------------
+# build/ holds the base.gb symlink, patched ROMs and rendered PNGs. Every file
+# in here is produced by the tools from the original ROM, so none of it belongs
+# in history.
+build/
+
+# ---- Extracted script: regenerable AND derived from the game ------------
+# script.json / script.tsv are the Japanese text pulled straight out of the ROM.
+# They rebuild in seconds with:
+#     python3 tools/extract.py build/base.gb
+# so there is no reason to keep game content in the repo.
+script/script.json
+script/script.tsv
+
+# ---- Python ------------------------------------------------------------
+__pycache__/
+*.pyc
+/.venv-gemini/
+
+# ---- macOS -------------------------------------------------------------
+.DS_Store

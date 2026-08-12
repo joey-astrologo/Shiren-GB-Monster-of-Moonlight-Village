@@ -1,0 +1,270 @@
+# Menu translation — Shiren GB
+#
+# HISTORICAL SPLIT SOURCE — NOT CONSUMED BY THE CURRENT BUILD. Edit `script/en.tsv` and
+# follow `TRANSLATING.md` / `VWF_BUDGETS.md`. Comments below preserve early POC decisions
+# and may mention superseded fixed-cell limits; they are not translator instructions.
+#
+# KEY IS `loc` (bank:$addr), never the sequential id: ids are reassigned by sorted
+# offset, so any change to extraction silently shifts an id-keyed file by one entry.
+#
+# Length: these are almost all table-referenced, so storage is not the limit — the tool
+# relocates them. The real limit is DISPLAY WIDTH, and each menu box is sized to its
+# widest entry. Budgets used here (cells, including the cursor space the tool prepends):
+#     title/file  ~11    difficulty  5    places  9    action menu  6
+#
+# loc	english
+
+# ---- title / file menu ----
+11:$5330	Adventure
+11:$533B	New Log
+11:$5344	Copy Log
+11:$534D	Erase Log
+11:$5355	Rename
+11:$535E	Rank/Pass
+11:$536E	Replay
+11:$5374	Fay's Puzzles
+11:$5387	Erase log?
+11:$5398	Log
+
+# ---- difficulty ----
+11:$53A1	Easy
+11:$53A6	Normal
+11:$53AA	Hard
+11:$5459	Expert
+
+# ---- places ----
+11:$53B1	Moonlight
+11:$53B9	Forest
+11:$53C1	Koma Cave
+11:$53CB	Crags
+11:$53D4	Kuyo Pass
+11:$53DC	Dragon's Maw
+11:$53E5	Orochi
+11:$53ED	Moon Exit
+
+# ---- in-game action menu ----
+11:$53FA	Item
+11:$5401	Floor
+11:$5407	Trap
+11:$540B	Stair
+11:$5412	Map
+11:$5418	Close
+11:$541E	Exit
+11:$5425	Quit
+11:$542A	Down
+11:$542F	Up
+11:$5435	Go
+11:$543A	Stay
+11:$5440	Step
+11:$5444	Rank
+11:$544C	Pass
+
+# ---- item action menu (bank 30), boxes 6 and 39.
+# STALE COMMENT REMOVED 2026-08-04: this said "the box is 4 cells wide, everything here is
+# therefore <= 4", which was measured on the JAPANESE box and stopped being true when
+# script/box_geometry.tsv widened boxes 6/39 from x=13,w=5 to x=9,w=9. The budget is
+# 8 CELLS, not 4 -- byte 0 is the cursor. That is what let Sip/Arm/Doff become
+# Drink/Equip/Remove (Joey, 2026-08-04). FINDINGS.md predicted exactly this: the box is
+# right-aligned with slack to its left, and the item list beside it ends at column 10.
+30:$7EC3	Drink
+30:$7EC6	Read
+30:$7EC9	Wave
+30:$7ECC	See
+30:$7ECF	Eat
+30:$7ED4	Equip
+30:$7ED9	Put
+30:$7EDD	Push
+30:$7EE0	Toss
+30:$7EE5	Drop
+30:$7EE8	Tag
+30:$7EEB	Info
+30:$7EF0	Fire
+30:$7EF3	Name
+30:$7EF7	Swap
+# Recovered 2026-07-29: the pointer table was being read as 15 entries, so these three were
+# invisible. They are LIVE -- ひろう and だす come from the category tables at 30:$7E14 and
+# $7E40, はずす from the equip/remove substitution at 30:$7D73.
+30:$7EFE	Take
+30:$7F02	Remove
+30:$7F08	Get
+
+# ---- status / pause screen (bank 31 menu boxes) ----
+# One line per BOX ROW. The rows of a box are one allocation, so a box that anything
+# points at can grow; box 2 is pinned (see script.json `box.pinned`) and each of its rows
+# is limited to its original cell count.
+#
+# These addresses used to be a byte-count guess away from the truth: 31:$41E2 and
+# 31:$4414 were the DESCRIPTOR of the box below them, and the translation had to carry
+# six or eight <$XX> layout bytes to step over it. Now that box_descriptors() finds the
+# real row starts, the descriptor is data again and the text begins where it says.
+#
+# 31:$41F6 is a composite: two labels sharing one row, split by the vertical bar glyph
+# $B6. The <$B6> token emits that byte verbatim so the column layout survives.
+# Box 1 is 11 cells and the VALUE is drawn right-aligned on the row BELOW its label
+# (screenshot: "Gld" then "0G" beneath it), so the label has all 11 cells to itself.
+# There was no reason for three-letter abbreviations here.
+31:$41D0	Gitan
+31:$41D4	Floor
+# なんいど = 難易度, "difficulty level". The game calls its difficulty choices dungeon
+# paths elsewhere, so "Path" is both compact and consistent with that terminology.
+31:$41DC	Path
+31:$41E9	Weapon  <$B6>Str
+31:$41F6	Shield  <$B6>Exp
+4:$4AFE	Gld
+
+# ---- difficulty select (box 29) ----
+# The tool prepends the cursor space itself where the original row starts with one, so
+# these are one cell narrower than the box. "Normal" needs a 7-wide box; the cursor follows
+# the box now, so it fits.
+31:$441B	Easy
+31:$4421	Normal
+31:$4426	Hard
+
+# ================================================================================
+# BANK 31 MENU BOXES
+# One line per box ROW. Budgets come from two places and both are checked:
+#   - the box `width` (box_geometry.tsv overrides it) -- how much the drawer will draw
+#   - for a PINNED box, the original cell count -- pinned rows cannot grow, because a
+#     second reader points into the middle of the block and relocating it would leave
+#     that pointer stale. `pinned` is in script.json under each row's `box`.
+# ================================================================================
+
+# ---- inventory titles (each its own one-row box) ----
+31:$4356	Items
+31:$4385	Pot
+31:$4390	Floor
+31:$422F	Which?
+
+# ---- close / exit menus ----
+31:$43A3	Close
+31:$43A9	Quit
+31:$43B5	Close
+31:$43BB	Exit
+31:$43C2	Quit
+
+# ---- item categories: box 33 consumables, box 34 equipment ----
+# HELD BACK -- these do not fit, and not for want of total space. Bank 31's descriptors sit
+# between the text blocks, so its free pool is a set of runs of at most 26 bytes, and these
+# two boxes need 32 and 38 contiguous. build.py reports it as fragmentation, not shortfall.
+#
+# The 116 contiguous bytes of the katakana grid page are what unlocks them; see HANDOFF.md.
+# Uncomment together with a width of 7 for both boxes in box_geometry.tsv.
+31:$446E	Herb
+31:$4472	Scroll
+31:$4478	Staff
+31:$447C	Pot
+31:$4481	Food
+31:$448F	Weapon
+31:$4494	Shield
+31:$4498	Bracer
+31:$449E	Arrow
+31:$44A1	Misc.
+
+# ---- messages. 18 cells, and the leading space is re-added for you ----
+# Kept short on purpose: bank 31's pool is 534 bytes and these all draw from it. The
+# 116 bytes of the katakana grid page are the obvious place to get more (task 4).
+31:$423C	No items held.
+31:$436A	No more names.
+31:$44BB	Pack is full.
+31:$4453	Which task?
+31:$44D1	No awards.
+
+# ---- title screen: start menu, rankings, dungeon entrances ----
+31:$43DC	Continue
+31:$43E4	New Game
+31:$45CA	New Game
+31:$440B	No
+31:$4410	Yes
+31:$44F7	Rankings
+31:$4549	Kuyou
+31:$4552	Village Exit
+# "Kuyou Pass" would make this box 26 bytes, and the only 26-byte run in bank 31 is the
+# one box 33 needs. 26+24 into 26+23 does not fit however it is ordered.
+
+# ---- difficulty explanations (boxes 46/48/50, all PINNED: budget is the original) ----
+# Row 2 of each is centred by hand in the original; one leading space is re-added, the
+# rest is up to the text.
+31:$4526	New
+31:$452C	New to the series
+# Box 48 is NOT translatable in place. Row 1 is 20 bytes but only 16 cells -- four
+# dakuten -- and English has none, so nothing can consume 20 bytes inside an 18-cell box
+# without pushing row 2 two bytes early. build.py rejects it; translating row 2 alone
+# would leave the box half-Japanese, so both stay.
+#31:$4567	Played Mystery
+#31:$457C	 Dungeon before
+31:$459E	Cleared Shiren
+31:$45AF	on Super Famicom
+
+# ---- name-entry page label + menu words (boxes 12 and 13, row 0) ----
+# The three words are SELECTABLE, and the picker maps cursor positions to columns, so
+# these keep the original column layout exactly: label at 0-3, then 6-8, 10-12, 15-17.
+# Moving them would move what the cursor lands on.
+#
+# Box 13 -- the second page -- is now ALIASED to box 12 in script/box_alias.tsv, so it has
+# no rows of its own to translate and this key would match no string. Its 116 bytes are
+# what let the item category boxes keep "Staff". The visible toggle action is retired;
+# both internal page branches resolve to box 12. This legacy staging file is not consumed
+# by build.sh, but these rows mirror canonical script/en.tsv for reference.
+31:$4261	      Fwd Bck  End
+31:$4275	ABCDE Zabcd  yz.,'
+31:$4288	FGHIJ efghi  -!?()
+31:$429B	KLMNO jklmn  :/[]+
+31:$42AE	PQRST opqrs  01234
+31:$42C1	UVWXY tuvwx  56789
+#31:$42DB	abc   Fwd Bck  End
+
+# ==== DIALOGUE SAMPLE (TASK 2) ====================================================
+# Ten real composer lines, chosen from a `msglog.py` transcript so every one is text the
+# game demonstrably draws, and covering the three shapes the sample had to cover:
+# combat fragments with runtime substitutions, a speaker-prefixed village line, and one
+# long multi-box conversation. Their purpose is to answer whether fixed-width English at
+# 18 cells reads badly -- see HANDOFF.md TASK 2.
+#
+# Control codes are written by NAME (`<var>`, `<br>`, `<cE0:88>`), the same tokens
+# codec.decode prints in script.tsv's `jp` column. Do NOT spell them `<$E2>`: an escape
+# means "layout byte, reserve it out of the DTE code space", and a control code is
+# already excluded by being >= $E0.
+
+# ---- combat fragments (bank 13, relocatable, and already DTE-allowlisted) ----
+# These are FRAGMENTS assembled at render time, not sentences: `<var>` pulls a name from
+# the message queue and `<cE4>` a number, so each pair below draws as two lines of one
+# box. Japanese orders them "X wa Y ni / dealt <cE4> points of damage"; English keeps the
+# same split, with the verb on line 1 and the number on line 2, so no fragment boundary
+# has to move.
+#
+# The widths quoted are the LITERAL cells. A `<var>` costs whatever the substituted name
+# costs, and monster names are still Japanese, so the real width of these lines is not
+# knowable until item and monster names are translated.
+13:$4B66	<var> hit <var>
+13:$4B6B	for <cE4> damage!
+13:$4B7E	<var> hit you
+13:$4B82	for <cE4> damage!
+13:$4B94	Defeated <var>!
+13:$4B9C	Got <cE5> Exp.
+# "Dodged <var>!" rather than "Dodged <var>'s attack!" -- the latter is 22 literal cells
+# before the name is substituted, so it could not fit the 18-cell line under ANY name.
+13:$4BA7	You dodged <var>!
+13:$4BB4	<var> missed!
+# 11 literal cells, so this one tolerates a name of 7. "<var> reached level <cE4>!" would
+# have been 20 literal cells and could never fit.
+13:$4BC2	<var> is now Lv<cE4>!<cE0:23>
+
+# ---- hunger warnings (bank 13; the last two are IN-PLACE and byte-capped) ----
+# $45DF has 19 bytes and $45F3 has 16, and neither is DTE-allowlisted, so those two are
+# hard byte limits with no compression to spend. "About to collapse!" is 20 bytes with
+# the <cE0:88> prefix and does not fit; "Ready to drop!" does.
+13:$45BC	<cE0:88>Getting hungry
+13:$45CB	<cE0:88>Dizzy with hunger
+13:$45DF	<cE0:88>Ready to collapse
+13:$45F3	<cE0:88>Need food fast
+
+# ---- village dialogue (bank 14, ALL in-place: the pointer is computed at runtime, so
+# these cannot be repointed and must fit their original byte count exactly) ----
+# The speaker prefix is where the budget goes. `おかみ「` is 4 bytes; `Innkeeper: ` is 11.
+# The font has no `"` glyph (available punctuation is  !'()+,-./:?[]~ ), so attribution
+# is `Name: ` with no quotes -- which is also 2 bytes cheaper than 「...」 would have been.
+14:$5106	Keyaki: No need.<end><br> But I'm glad.
+14:$5127	Keyaki: Ma'am, I'm<br> out for a bit.
+# 189 of 190 bytes across 11 lines and 4 boxes. Same line and box structure as the
+# Japanese; every line is 18 cells or fewer.
+14:$5047	Innkeeper: You're<br> awake! You were<br> crying out so.<end><brk> I was worried.<br> Where are you?<br> Moonlight Village<end><brk> Monsters got you<br> at Kuyo Pass?<end><brk> If your strength<br> runs out there,<br> you wake up here.<end><brk> Now go thank<br> Keyaki - she has<br> cared for you.

@@ -1,0 +1,14 @@
+# Opening cinematic. Edit only the english column; <br> forces a line break and <page> is a measured screen transition.
+id	clip	scene	loc	source_ranges	source_hex	japanese	english
+intro_01	0	1	31:$5CEF	31:$5CEF-$5D04	4c1a1a05244d14472c104e00050c190a450649494948	ははおや「わたしのこが・・・」	Mother: My child...
+intro_02	0	2	31:$5D1A	31:$5D1A-$5D46	4c2127451b144d1447062c020f03451045064c39353a4045104b4d6451014c4c01072722290c06180449494948	むらびと「かわいそうだが シキタリだ。  あきらめるしかねえ・・・」	Villager: It's tragic, but that's the custom. We have no choice...
+intro_03	0	3	31:$5D4E	31:$5D4E-$5D62	4c1a1a05244d144701012f4c4514030c1349494948	ははおや「ああっ どうして・・・」	Mother: Why...? Why her?
+intro_04	0	4	31:$5D6A	31:$5D6A-$5D78	4c0a0a4c0d03182e1f040627494949	ここ すうねんまえから・・・	A few years ago...
+intro_05	0	5	31:$5D80	31:$5D80-$5D9F	4c050b15450a2d4c0602451c121951014c02091604160b0b4509130229140203	おさなごを かいぶつの いけにえにささげているという	A small village was said to<br>offer children
+intro_06	0	6	31:$5DA7	31:$5DA7-$5DB8	4c1b1412194c11020b15212745064c012f10	ひとつの ちいさなむらが あった	as sacrifices to a monster.
+intro_07	1	1	31:$5E04	31:$5E04-$5E26	4c3742463c474d14541c032f4a554d32500050004d3254242f144c4513272a10154b55	コッパ「ふうっ、やっと でられたな。	Koppa: Phew, we finally got out.
+intro_08	1	2	31:$5E46	31:$5E46-$5E4C,31:$5E59-$5E66	1e274a010f0a43/4c4c38383f241f45064c20042943	ほら、あそこ！<page>ササラやまが みえる！	Look, over there!<page>There's Mount Sasara!
+intro_09	1	3	31:$5E6E	31:$5E6E-$5E99	4c4c0a0a1f45130828304c230316451414554d1451014c4c542345140b2a290a14234c150214052303450e48	ここまでくりゃ もうにどと  もどされることも ないとおもうぜ」	We've come too far to ever be sent back again.
+intro_10	1	4	31:$5EA7	31:$5EA7-$5ED7	4c3742463c474d1454363e3511302e190a140644554d965101544c4c0915450945134c02020a45102f1026155549494948	コッパ「ケヤキちゃんのことか？  けなげで いいこだったよな・・・」	Koppa: You mean Keyaki? She was such a sweet, brave girl...
+intro_11	1	5	31:$5EE1	31:$5EE1-$5F18	4c3742463c474d14494d14494d14494d14540c310345061502264b554d645101544c4c34323f10114c3d333f323b414e002945102341154b	コッパ「・・・しょうがないよ。  オイラたち フウライニンだもンな。	Koppa: ...It can't be helped. We're wanderers, after all.
+intro_12	1	6	31:$5F24	31:$5F24-$5F33	4c4c0b4a554d1454020a03450e434855	さ、いこうぜ！」	Come on, let's go!

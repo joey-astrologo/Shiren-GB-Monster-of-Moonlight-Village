@@ -1,0 +1,19 @@
+# Reviewed exceptions to the frozen glossary, in the same spirit as dte_ok.tsv and
+# reloc_ok.tsv: a line here says "this string names a glossary term and deliberately does
+# not use the frozen rendering, and someone looked at it".
+#
+# The glossary freezes what a name IS. It cannot freeze how a character ADDRESSES someone,
+# and English and Japanese do that differently: Japanese uses the role noun where English
+# uses a pronoun or a form of address. `おかみさん` in Keyaki's mouth is "Ma'am", not
+# "Innkeeper", and a translation that said "Innkeeper" there would be worse English for
+# being more consistent.
+#
+# THIS FILE IS NOT A SILENCER. Every line costs a sentence of justification, and if it
+# grows past a handful of entries the glossary has the wrong name in it, not the prose.
+# Fix the glossary instead -- that is what happened to おかみ itself: it was frozen as
+# "Landlady", the shipped innkeeper speech had reviewed it as "Innkeeper", and the
+# glossary is what changed.
+#
+# loc	jp term	why
+14:$5127	おかみ	Keyaki addresses her directly. English uses `Ma'am` where the Japanese uses the role noun.
+11:$73C1	チンタラ	Masa is telling Kinji to stop dawdling. `チンタラ` here is the ordinary adverb the monster Chintala is NAMED after, not the monster -- the frozen name would put a boss in a carpenter's grumble.

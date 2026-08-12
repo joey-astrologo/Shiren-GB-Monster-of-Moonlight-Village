@@ -1,0 +1,30 @@
+# Menu boxes that RENDER ANOTHER BOX'S TEXT, so their own text becomes free space.
+#
+# A box is a descriptor (x, y, rows, width, flags, text pointer) plus a block of rows.
+# Aliasing rewrites only the text pointer: the descriptor, and every call site that shows
+# the box, are untouched, so the box still appears exactly when it did -- it just draws
+# the other box's rows. Its own block is then referenced by nothing and its bytes go to
+# the bank's free pool.
+#
+# This is a DATA change. It is not a way to delete a screen: if a box is still shown, it
+# still has to say something sensible. Only alias a box whose content is redundant in
+# English, and screenshot the screen that shows it.
+#
+# Every 16-bit reference into the aliased block moves with it, row for row: a reference to
+# the aliased box's row N is rewritten to the TARGET's row N. That covers the descriptor's
+# own text pointer (row 0) and any code that points into the block -- for box 13 that is
+# 31:$4192's `ld hl`, the second page's grid base.
+#
+# box	renders	why
+
+# The name-entry picker has two pages, toggled by $C6F3 bit 7 (the CAPS / abc key on the
+# header row). In Japanese they are hiragana and katakana. In English box 12 alone already
+# carries the whole character set -- A-Z, a-z, 0-9 and punctuation -- so the second page is
+# redundant, and 116 contiguous bytes at 31:$42DB-$434E are the largest free run bank 31
+# can offer. That run is what lets the item category boxes (33 and 34) keep "Staff": they
+# need 24 contiguous bytes against a largest run of 23 without it.
+#
+# The visible toggle action is retired, but the internal page branch remains. 31:$4186
+# reads $C6F3 and 31:$4192 loads the second page's base; that base is repointed to box 12's
+# row 1, so a forced page-2 state selects the same characters it displays.
+13	12	name-entry katakana page; box 12 already holds the full Latin character set

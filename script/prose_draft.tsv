@@ -1,0 +1,610 @@
+# Shiren GB — VILLAGE AND STORY PROSE, as sentences. `tools/wrap_en.py` turns this into
+# the `<br>`-carrying rows in `script/en.tsv`.
+#
+# WHY THIS FILE EXISTS. `<br>` is authored data, so renderer changes do not re-flow old
+# text automatically. Production dialogue now uses modified Dot Gothic with independent
+# 30-source-glyph and 144-painted-pixel limits. Drafts live here so a measured geometry or
+# approved-font change can be applied in one command:
+#
+#     python3 tools/wrap_en.py script/prose_draft.tsv --apply
+#
+# WHAT GOES IN A ROW. `loc <TAB> english`, and the English is SENTENCES. No `<br>`, no
+# `<end>`, no leading-space indents — the wrapper owns all three, and the `<end>` rule it
+# applies is measured off the shipped Japanese (see wrap_en.wrap).
+#
+# What you DO write:
+#   <brk>          a page break you want for pacing. Put them where the Japanese does.
+#   <name> <var>   substitution tokens. lint_en checks these survive; the wrapper leaves
+#   <cE3>4         room for what they expand to. The character after <cE3> and the <$XX>
+#   <mode1><$3C>   after <mode1> are ARGUMENT BYTES, not text — see TRANSLATING.md §7.
+#
+# SPEAKER TAGS are the short form for the five compounds Joey ruled on 2026-08-05:
+# Kinji / Masa / Chief / Gon / Priest. `Fumi's Mom` is her whole name and stays.
+# `lint_en.ATTRIBUTION` is what permits this, and only in the opening position.
+#
+# loc	english
+
+# ============ bank 14 — the Dragon's Maw finale ============
+14:$4BF6	Yoshizota read the Dragon's Cry Scroll.
+14:$4C0F	Yoshizota: Whoa! It opened! ...Ugh, this place looks pretty scary after all.<brk>You go on ahead. I'll catch up with you later.
+14:$4C67	Koppa: Orochi...<brk>Where is he?
+14:$4C7B	Yoshizota: Right here.
+14:$4D07	Koppa: ...
+14:$4D19	Yoshizota: A shifting land where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will happen if I make Moonlight Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!
+14:$4F36	Yoshizota drank the drug!<mode1><$3C><cE7><mode0>
+14:$4F4C	Orochi: Even if I fall here,<brk>Orochi shall rise again and again... Heh heh heh.
+14:$4F8F	Koppa: Heh! If you made it this far, you're practically a monster yourself!
+14:$4FB9	Koppa: You're Fumi, right? We came to rescue you. Let's go home.
+
+# ============ bank 14 — waking at the inn ============
+14:$5037	Keyaki: Oh, you're awake!
+14:$5047	Innkeeper: Are you all right?...<brk>You were having terrible nightmares. I was worried about you.<brk>Where are you? This is Moonlight Village.<brk>Monsters got you at Kuyo Pass, didn't they?<brk>If you collapse there, you get thrown back here.<brk>Anyway, you should go thank Keyaki.<brk>She's been looking after you this whole time.
+14:$5106	Keyaki: Oh, you don't need to thank me...<brk>But I'm just glad you're all right.
+14:$5127	Keyaki: Ma'am, I'm going to step out for a bit.
+14:$5146	Innkeeper: You mean Keyaki?<brk>Oh, please! She's not my daughter. I'm still single!<brk>She just wanders in now and then and helps around the inn.<brk>She's a little odd, but she's a good kid...
+14:$51D3	Keyaki: <name>! Wait up!
+14:$51DE	Keyaki: Haa... haa... I'm so glad I made it in time...<brk>You're going to rescue her, right? Here, take this!
+14:$5213	<name> received <cE3>4.
+14:$5220	Keyaki: I went up into the hills to get it. It took quite a while...<brk>Good luck!
+14:$525F	Keyaki: ...Are you okay?<brk>Please don't overdo it.
+14:$5281	Innkeeper: I believe in you.
+14:$5294	Keyaki: Hey, <name>!
+
+# ============ bank 14 — Keyaki at the shrine, and Tanmomo ============
+14:$52B8	Keyaki: Good luck!
+14:$52C7	Innkeeper: Keyaki? I think she went toward the shrine...<brk>She's a free spirit. Sometimes she just wanders off somewhere.<brk>Like a cat.<brk>...Well, it's not like I'm busy. We don't have any customers.
+14:$535C	Keyaki: <name>?<brk>Wait just a moment. I will be done soon.
+14:$537F	Keyaki: There.<brk>All done.
+14:$538C	Keyaki: Isn't this shrine a little unusual?<brk>Moonlight Village doesn't follow the Reeva faith. That's why...
+14:$53D3	Keyaki: Hm? What was I praying for?<brk>...Hehe, it's a secret.
+14:$53FB	Keyaki: Anyway, um... I have a favor to ask. Is that okay?
+14:$541F	=<cEC:08>Can I ask a favor?<br><$81>Sure<br> No
+14:$5442	Keyaki: You're mean...
+14:$5451	Keyaki: Actually, I'd like you to look after this cat for a while.<brk>Her name is Tanmomo. Take good care of her!
+14:$5488	<cE0:28>Tanmomo the cat joined you.<mode1><$78>
+14:$549F	Keyaki: Hold B and press the D-Pad to swap places with Tanmomo.
+14:$54D4	Keyaki: Hm? What is it?
+14:$54E1	=<cEC:09><$81>Is Tanmomo yours?<br> Why the name Tanmomo?<br> How do I swap with her?
+14:$551D	Keyaki: No. I found her behind the shrine earlier.<brk>She was freezing, poor thing...<brk>Take good care of her!
+14:$5562	Keyaki: See how short her thighs are?<brk>That's why I call her Tanmomo: Short-Thigh.<brk>Take good care of her!
+14:$5596	Keyaki: Hold B and press the D-Pad toward Tanmomo to switch places.<brk>Take good care of her!
+
+# ============ bank 14 — Masa and Kinji build the warehouse ============
+14:$55D8	Kinji: Oh, there you are! Come with me for a minute, <name>.<brk>There's something I want to show you.
+14:$5611	Masa: Ah, <name>!<brk>Look at this! Check it out!
+14:$5636	Kinji: We built a Warehouse! You can store items in here.
+14:$566D	Kinji: We built it for you, <name>.<brk>Well... this is about all we can do for you.
+14:$56B2	Masa: This should make your adventures a lot easier.<brk>Good luck with Fumi!
+14:$572A	Kinji: We went to all the trouble of building it, so make sure you use it.
+14:$574F	Masa: Leave items in the Warehouse and you won't lose them if you collapse during an adventure.<brk>But everything inside a Pot will disappear, so be careful.<brk>Also, you can only take 5 items with you.<brk>Remember, Pots lose their contents.
+14:$57E7	Old Seer: Building a Warehouse in a place like that...<brk>Now I'm not getting any sunlight! Those boys never think things through! Honestly!
+
+# ============ bank 14 — gifts, and Nagi at Kuyo Pass ============
+14:$5840	Keyaki: Lately, it seems like everyone in the village is starting to accept you, <name>.<brk>I'm so happy...
+14:$5875	Innkeeper: No matter how many times you get knocked down, you never give up...<brk>You're every bit the man I thought you were.<brk>Good luck out there!
+14:$58CC	Tagura: This is my most treasured toy, but...<brk>I'll give it to you.
+14:$58F6	<name> received <cE3>1.
+14:$5902	Tagura: In return, please save Fumi. Promise me!
+14:$5924	Keyaki: Are you okay?<brk>...Thank goodness. I was so worried you might be hurt, <name>...
+14:$595B	Gon: Urgh...<brk>This is my prized possession, but I'll hand it over to you.
+14:$598A	<name> received <cE3>7.
+14:$5996	Gon: Whenever the Shrine Priest is about to scold me, I use this to get away.<brk>Urgh...<brk>It comes in pretty handy!
+14:$59E2	Nagi: Waaah!! Wh-what? You're not a monster? You scared me.<brk>...You came to rescue me?<brk>No! I'm not going back!<brk>I might if you promise to save Fumi...
+14:$5A59	=<cEC:08>Promise to save Fumi?<br><$81>Yes<br> No
+14:$5A7D	Nagi: Hmph! Go back by yourself. I can handle this on my own.<brk>M-monsters don't scare me...
+14:$5AB1	Nagi: ............<brk>Waaaaah!! This place really is scary!!
+14:$5AE2	Nagi: Waaaaah! Damn it!
+14:$5AF5	Nagi: Fine! I'll go back. Don't you forget your promise.<brk>...Truth is, I'm really scared, so, um...<brk>...I'm about to wet myself. Let's hurry back.
+14:$5AFD	=Please lets hurry back!<br>I gotta pee. Hurry!<end><brk>
+14:$5B5B	Nagi: Oh, you came back!<brk> Let's hurry home. I'm still holding it in.
+14:$5B81	=Please lets hurry back!<br>I gotta pee. Hurry!
+14:$5B89	Nagi: G-grandpa...
+14:$5B9B	Chief: Nagi... Y-you're safe!
+14:$5BB2	Nagi: Grandpaaa!!
+14:$5BC2	Chief: Nagiii! Whoaaa!
+14:$5BD6	Chief: Wh...
+14:$5BE1	Nagi: I'm gonna wet myself!!
+
+# ============ bank 14 — the Chief's secret ============
+14:$5C1B	Chief: <name>, I believe I know what it is you want to ask.<brk> Please come here tonight.
+14:$5C5A	Innkeeper: Oh? Staying the night? That's unusual.
+14:$5C73	Chief: W-wait! Don't be alarmed!<brk>It's me, the village chief.<brk>I may look like this, but I'm still in control of myself.<brk>I won't hurt you.<brk>Come closer and hear me out.
+14:$5CE0	Chief: When moonlight falls on us, we transform.<brk>It is a trait our clan carries.<brk>Across the sea, I believe they call our kind vampires.<brk>Because of this trait, we live here in hiding, far from prying eyes.<brk>Orochi... the sacrifices... Kuyo Pass...<brk>Please forgive me, but I cannot speak of these things.<brk>Even this conversation is probably reaching Orochi's ears...<brk>There is a scroll beneath the offering box at the shrine.<brk>Read it, and Dragon's Maw should open.<brk><name>, I beg you! Please save Fumi!<brk>If you save her, we can end the custom of sacrifice.<brk>Please free Fumi from this village's cursed fate!
+14:$5E92	Chief: Hmm? Would you like to hear my story once more?
+14:$5EB3	=<cEC:08>Hear the story?<br><$81>Yes<br> No
+14:$5ECC	Gon: Urgh... While they're children, a single fit can make them transform.<brk>And when they become monsters, they don't remember a thing. Urrrgh.
+
+# ============ bank 14 — around the village ============
+14:$60E5	Innkeeper: I wonder where Keyaki could have gone off to...
+14:$6107	Fumi's Mom: <name>... Please, take care of Fumi...
+14:$6127	Gon: So that's Koppa?<brk>Urgh... He looks as stinky as I expected...
+14:$615B	Rokuro: Whenever our ancestors' cursed bodies were seen, they fled and hid.<brk>In time, protecting this secret became our ironclad law.
+14:$61BD	Tagura: Last night?<brk>I always sleep soundly, though I have strange dreams...
+14:$61F4	Nagi: To reach Normal or Hard, check the map on the sign beside the Warehouse entrance.<brk>It'll show you the way. We're counting on you to save Fumi!
+14:$6256	Kinji: Gran, building that Warehouse made me hungry again.<brk>Got anything to eat?
+14:$6291	Old Seer: Nope. Nothing but a Rotten Rice Ball...
+
+# ============ bank 14 — trapped in the village (the post-clear loop) ============
+14:$62B6	Keyaki: Oh, you're awake!
+14:$62C6	Innkeeper: You're in Moonlight Village.<brk>Didn't you leave?
+14:$62F8	Keyaki: What?<brk>You can't leave the village?!
+14:$6317	Innkeeper: You made such a grand exit, and now look at you...
+14:$6338	Chief: Oh, what's wrong?<brk>What? You can't leave Moonlight Village?<brk>Hmm. How strange...
+14:$6386	Priest: What! You can't leave? Hmm.<brk>I offer guidance to those who venture into dungeons.<brk>What would you like to know?<brk>...is what I would say, but even I don't understand this.
+14:$6404	Fumi's Mom: Oh, <name>.<brk>Thank you again for everything you did for us.
+14:$643E	Gon: Urgh... Oh, it's you. You're back.
+14:$6461	Rokuro: Huh? You're back?<brk>I see! You've decided to become one of us. Good, good.
+14:$64A7	Masa: Huh? <name>?<brk>What are you doing here...?
+14:$64D1	Kinji: <nop>, <name>! What are you doing...<brk>Wait... Don't tell me you came back for Keyaki...
+14:$6510	Old Seer: Hm? What's wrong?<brk>Oh! Could it be... You came to see me...? Tee hee.
+14:$6548	Tagura: Hey, it's you! Hooray!
+14:$6564	Fumi: Oh... what is it? ...Forget something?
+14:$6580	Nagi: Huh? You guys...<brk>I know! You had to pee so bad you turned back!
+14:$65B9	Keyaki: <name>! Wait!
+14:$65C4	Keyaki: Here, take this!
+14:$65D0	<name> received <cE3>5.
+14:$65DD	Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that <name> came back to the village...
+14:$661D	Children: Ooh la la! Things are heating up!
+14:$6638	Koppa: Tch, they're just teasing us. Come on, <name>!
+14:$6656	Keyaki: ...Are you okay?<brk>Don't push yourself too hard.
+14:$6678	Innkeeper: Back again? You must really like this village...
+14:$66AC	Chief: You still can't leave?<brk>Hmm. How strange...
+14:$66DD	Masa: Huh? I said I'd build you a house next time you came?<brk>Did I really say that?<brk>W-well... maybe someday.
+14:$671F	Old Seer: ...So, when are you and I getting married? ...Tee hee.
+14:$6754	Fumi: ...Forgot something again?
+14:$6765	Nagi: Again?<brk>It's bad for you to hold it in that long.
+14:$678D	Kinji: ...Didn't <name> come back for Keyaki?<brk>Then why is she acting so cheerful...?
+14:$67E0	Keyaki: <name>! Wait!
+14:$67EB	Keyaki: Here, take this! Apparently it's called an ID Bracer.<brk>They say it's really useful... Huh?<brk>You can't take it with you?!<brk>Oh... that's too bad.<brk>I know cheering you on isn't much, but... good luck!
+14:$6875	Kinji: Keyaki...
+14:$688A	Innkeeper: Kinji stopped by earlier looking for <name>.<brk>He wants you to meet him at the shrine.
+14:$68C6	Koppa: Hey, <name>! Over there!<brk>Huh? Keyaki's there too. Looks like they're talking.
+14:$6920	Keyaki: .....
+14:$692B	Kinji: So...
+14:$693C	Kinji: Hey, what's wrong?
+14:$6950	Keyaki: ...Huh?
+14:$695B	Kinji: You're usually much chattier than this... You're acting like <name> today.
+
+# ============ bank 14 — companions ============
+14:$70A0	Nagi: I-I can't hold it anymore...
+14:$70B7	Nagi: Ugh... I'm gonna collapse before I wet myself. Help...
+14:$70BE	I'm gonna collapse before I wet myself. Help...
+14:$70D8	Fumi: .........
+14:$70E6	Fumi: I feel like I'm going to collapse...
+14:$72B4	Pochi: Woof! (Let's do this!)
+14:$72CB	Pochi: Woof, wuff! (Leave <var> to me!)
+14:$72EA	Pochi: Whine... (I can't go on...)
+14:$7518	Rooster: Cluck cluck cluck! (Witness my invincible power!)
+14:$753A	Rooster: Cock-a-doodle-doo! Cock-a-doodle-doo!<brk>(<var> is mere small fry! Bring me Orochi!)
+14:$756B	Rooster: Guh, cluck cluck...<brk>(Guh... Even I have finally run out of strength...)
+14:$75EC	Tanmomo: Meow!<brk>(I'm a no-good cat. Tanmomo...? What a weird name!)
+14:$7620	Tanmomo: Mew, me-mew! (<var> is a pushover!)
+14:$767A	Tanmomo: Me-me-mew... (I think I'm dying...)
+14:$77AB	Baby Mamel: I'm scared...
+14:$77BD	Baby Mamel: I... can't go on...
+14:$78D0	=<cEC:04>Fumi is asleep.<br> <br>
+14:$78E1	=<cEC:04>Nagi is asleep.<br> <br>
+14:$78F3	=<cEC:04>Pochi is asleep.<br> <br>
+14:$7905	=<cEC:04>The Rooster is asleep.<br> <br>
+14:$7918	=<cEC:04>Tanmomo is asleep.<br> <br>
+14:$792B	=<cEC:04>Baby Mamel is asleep.<br> <br>
+
+# ============ bank 14 — Koppa's prompts ============
+14:$7941	Koppa: Let's check out Dragon's Maw before we leave.
+14:$796C	Koppa: <name>, let's go back to the village!
+14:$797E	Koppa: Hey, <name>, let's ask the Village Chief about the village's secret.
+14:$79A9	Koppa: For now, let's rest at the Totoya and wait until night.
+14:$79D5	Koppa: It's way too quiet... Is no one here?
+14:$79F8	Koppa: <name>! The shrine! Let's search the offering box!
+14:$7A1E	Koppa: Come to think of it, I can understand animals.<brk>Let's talk to the ones in the village.
+14:$7A5F	Koppa: Well, we made it here, but...
+14:$7A75	Koppa: Let's hurry and get Fumi home.
+14:$7A94	Koppa: All that's left is rescuing Fumi. Let's do this!
+14:$7ABC	Koppa: What the heck is going on...?!
+14:$7AD7	Koppa: Looks like getting out of here won't be easy...
+14:$7AFB	Koppa: That Kinji... He did it on purpose to get Keyaki to admit how she really feels...
+14:$7B2B	Koppa: Keyaki said she'd wait at the shrine...<brk>What do you want to do?
+14:$7B5C	Koppa: That stray cat we saw... Guess it ran off somewhere.
+14:$7B7C	Koppa: ...Hey, when are we ever gonna get out of here?
+14:$7BA1	Koppa: This place looks as scary as ever...
+14:$7BC2	=Koppa: Brrr... That was scary.<br>Let's hurry home!
+14:$7BF2	Koppa: ...Come on, <name>. Let's go.
+14:$7C03	Koppa: .....
+
+# ============ bank 14 — record / password labels ============
+# These 40 clear-condition rows are staged by `4:$79E4` and displayed five at a time in
+# box 44. They now use the 21-source-glyph/144px approved proportional path; `fontaudit.py`
+# proves the widest possible current five fit the allocator and `conditionspill.py`
+# verifies the real screen plane-exact. 14:$7EE6 is extraction garbage, not a string.
+14:$7C78	=Normal + Pochi
+14:$7C87	=Normal + Tanmomo
+14:$7C97	=Normal + Rooster
+14:$7CA7	=Hard + Pochi
+14:$7CB9	=Hard + Tanmomo
+14:$7CCC	=Hard + Rooster
+14:$7CDF	=Escaped Moonlight
+14:$7CF1	=1000+ adventures
+14:$7D03	=Clear 90000+ Gitan
+14:$7D17	=Clear with 0 Gitan
+14:$7D22	=Max Fullness 200
+14:$7D38	=Max Fullness 10
+14:$7D4F	=Clear at Str 1
+14:$7D5B	=Cleared at max HP
+14:$7D68	=Cleared at Level 1
+14:$7D73	=Fully fused weapon
+14:$7D87	=Fully fused shield
+14:$7D9A	=Got Kabura Sutegi
+14:$7DAC	=Got Rasen Fuuma
+14:$7DBC	=Strength 30+
+14:$7DCD	=Reached max level
+14:$7DDD	=Beat a Shopkeeper
+14:$7DE7	=Rotten Rice Ball
+14:$7DFA	=Fell: Pitfall Trap
+14:$7E06	=Fell: Poison Arrow
+14:$7E11	=Fell: Boulder
+14:$7E1C	=Fell while asleep
+14:$7E2D	=Fell: Mamel
+14:$7E37	=Fell: Baby Mamel
+14:$7E45	=Clear 999999 Gitan
+14:$7E56	=Fell: Tanmomo
+14:$7E61	=Fell: Pochi
+14:$7E6B	=Fell: Rooster
+14:$7E76	=Fell: Fake Shiren
+14:$7E82	=Far-shot Fusion Pot
+14:$7E98	=Cleared Normal
+14:$7EA0	=Normal: no items out
+14:$7EB5	=Cleared Hard
+14:$7EC0	=Hard: no items out
+14:$7ED8	=Saved Baby Mamel
+
+# ============ bank 11 — after Orochi falls ============
+11:$56DB	Fumi's Mom: Ahh...
+11:$56E8	Nagi: Fumi, are you hurt? It must've been awful...<brk>I'm just glad you're safe.
+11:$571F	Chief: Y-you... You finally defeated Orochi!
+11:$5741	Kinji: We did it!
+11:$574D	Masa: Now we won't have to sacrifice any more children!
+11:$5770	Rokuro: Nothing could make me happier! Tonight, we feast!<brk>Oh, don't worry. It should be cloudy tonight.<brk>So we probably won't transform.<brk>Come on, everyone! Gather around <name> and let's celebrate!
+11:$57F6	Everyone: Yeah!!
+11:$5803	Innkeeper: Drinks are on me tonight, so have as much as you like!<brk>...Hold on. You're carrying a ton of stuff.<brk>You can't relax like that.<brk>You should put anything important in the Warehouse now.<brk>Wouldn't want to get drunk and lose it...
+11:$58B7	Innkeeper: You should put anything important in the Warehouse now.
+11:$58E5	Rokuro: Ha ha... This is great!
+11:$58F8	Priest: Defeating Orochi is no small feat. Impressive.<brk>Though frankly, it's all thanks to my expert advice.
+11:$5940	Masa: Put your things in the Warehouse.<brk>You don't want to lose them.<brk>That Warehouse belongs to you. Use it whenever you like.
+11:$59A3	Old Seer: How many years has it been since we had a celebration like this?
+11:$59CD	Nagi: Thanks, big bro.<brk>When I saw Fumi again, I was just... so happy.<brk>She seems a lot calmer now, too.
+11:$5A22	Fumi: ...Mister... I... My heart's still pounding...
+11:$5A50	Tagura: Now the three of us can play together again! Hooray!
+11:$5A74	Fumi's Mom: I'm making a bed for <name>.<brk>If you're tired, please rest here.<brk>Once I'm done, I need to help the Innkeeper!
+11:$5AD1	Gon: Wa-ha-ha-haaa!
+11:$5AE6	Kinji: I found this piece of paper just now...<brk>It says clearing without bringing any items earns another password...<brk>And doing all kinds of other things earns even more...<brk>...I have no idea what that means. Do you, <name>?
+11:$5B87	Koppa: ...So then, hic.<brk>I thought, <name>'s in danger!<brk>So I slashed Yoshizota with my sword! Swish!
+11:$5BD1	Gon: Wa-ha-ha-haaa!<brk>You're pretty good at telling jokes!
+
+# ============ bank 11 — the farewells (mode1 args are PAUSE lengths, keep exactly) ============
+11:$6275	Koppa:<mode1><$14> Let's go, <name>!<mode1><$78><mode0>
+11:$628A	Masa:<mode1><$14> See you.<mode1><$28><mode0>
+11:$629E	Rokuro:<mode1><$14> Thanks for everything.<mode1><$28><mode0>
+11:$62B0	Nagi:<mode1><$14> Take care!<mode1><$28><mode0>
+11:$62C3	Chief:<mode1><$14> Take care out there.<mode1><$28><mode0>
+11:$62D5	<mode1><$3C>Keyaki:<mode1><$14> Good luck on your next adventure!<mode1><$82><mode0>
+
+# ============ bank 11 — arriving in the village ============
+11:$632D	Rokuro: Oh, an outsider...
+11:$6340	Tagura: Mister, where'd ya come from?
+11:$6359	Gon: Koppa? Never heard of him.<brk>Urgh... Were you supposed to meet him in this village?
+11:$6391	Pochi: Woof! Woof woof!
+11:$639F	Fumi's Mom: I know it's tradition, but...<brk>Why does it have to be my daughter...?
+11:$63C7	Chief: It pains me, but you must give up on Fumi.
+11:$63ED	Kinji: No one stands a chance against Orochi. There's nothing we can do.
+11:$6415	Nagi: Damn it!
+11:$6421	Chief: Ah! Nagi!!
+11:$6431	Kinji: This is hard on him, too.<brk>He and Fumi were best friends.
+11:$6465	Fumi's Mom: Ohhh...
+11:$6473	Kinji: Damn it, if it weren't for Orochi, none of this would have happened...
+11:$649A	Chief: This village is ruled by a monster called Orochi.<brk>Once a year we must offer up a young child as a sacrifice.
+11:$64EE	Rooster: Cock-a-doodle-doo!
+11:$64FA	Innkeeper: Oh, a guest?<brk>Oh, you're not? What a shame. We almost never get visitors from outside.<brk>To be honest, I'm bored out of my mind...
+11:$6547	Old Seer: Orochi lives at Kuyo Pass,<brk>along with the monsters that serve him.
+11:$657B	Masa: Up ahead is a dangerous place called Kuyo Pass.<brk>If you're determined to go, stop at the shrine first.<brk>The Shrine Priest can teach you a few things.<brk>Kuyo Pass also splits into three roads.<brk>Check the map on that sign to choose one.
+11:$662C	Masa: Before heading out, you should talk to a few more villagers.<brk>Kuyo Pass splits into three roads.<brk>Check the map on that sign to choose one.
+11:$66A7	Rokuro: W-we've got trouble!!
+11:$66BA	Rokuro: Nagi! Nagi's gone!<brk>I've looked everywhere, but I can't find him!
+11:$66F1	Masa: Huh? I saw him here just a minute ago...
+11:$6713	Rokuro: No way... Wait, I'm sure of it!<brk>He went to rescue Fumi!
+11:$6745	Chief: Foolish boy! He'll only become monster food!<brk>He can't have gone very far yet!<brk>If someone goes after him now, they may still catch him...
+11:$67A8	Masa: N-not me...<brk>Even if Nagi is the Village Chief's grandson,<brk>I'm not going up there!
+11:$67E4	Rokuro: If the monsters get him up there, it's over.<brk>He'll never come back.<brk>There's nothing we can do but give up.
+11:$6826	Innkeeper: Honestly, doesn't this village have any real men?!<brk>You're all pathetic!
+11:$6856	Innkeeper: Y-you! Are you going to rescue Nagi?!
+11:$6875	Masa: Take my advice. You'd better not.
+11:$689B	Rokuro: Hey, if the guy wants to go, why stop him?<brk>Let him go.<brk>Must be nice being an outsider.<brk>Even if a monster gets him, he'll just be sent back here...<brk>Unlike us...
+11:$690F	Chief: That's enough, Rokuro!!
+11:$6921	Rokuro: ...
+11:$692B	Innkeeper: Wanderer...
+11:$693C	Chief: Rokuro... You've said too much.
+11:$695A	Stray Cat: Mew.
+11:$6963	Keyaki: Um... are you a traveler?<brk>If you need a place to stay, there's one just down the road.<brk>It's called the Totoya.
+11:$69AC	Keyaki: Um, excuse me!...
+11:$69BA	Keyaki: ...N-no, never mind. I'm sorry.
+
+# ============ bank 11 — Yoshizota, and the village after Nagi ============
+11:$69D8	Innkeeper: Good morning.<brk>You were sleeping like a log. You must've been exhausted.<brk>By the way, you have a visitor.<brk>He asked me to get him when you woke up. See that man over there?
+11:$6A42	Yoshizota: I heard you made it back from Kuyo Pass. That's pretty impressive.<brk>Come on, have a drink with me.
+11:$6A81	<name> got to talking with the stranger.
+11:$6A97	Yoshizota: Name's Yoshizota.<brk>I travel the country selling medicine.<brk>I stop by this village now and then.<brk>So, you're going to rescue Fumi next, right?
+11:$6B04	Yoshizota: I hear Orochi's a tough one, but I bet you'll find a way.<brk>Good luck!
+11:$6B3B	Yoshizota: I've really taken a liking to you. Let's grab another drink sometime!
+11:$6B69	Fumi's Mom: Ohhh...
+11:$6B77	=Nagi: It will be all<br> right, missus.<end><brk> This fellow here will<br> save her, I know it!<br> Right!<end><mode0>
+11:$6BB2	Chief: Thank you so much. I never thought I'd see Nagi alive again...
+11:$6BDF	Chief: What? Yoshizota?<brk>H-he's here in the village?!
+11:$6C04	Chief: ..........
+11:$6C15	Gon: W-what? Koppa's a weasel?! Then I did see him.<brk>A few days before you arrived.<brk>A weasel that looked like he stank walked right past me.<brk>That's the only time, but he was heading...<brk>toward Kuyo Pass. Urgh...
+11:$6CBE	Rokuro: Tch! Don't get cocky just because you saved Nagi.
+11:$6CE4	Tagura: Papa, where did Nagi go?
+11:$6D05	Masa: You... You're pretty good. I have to admit, I'm impressed.
+11:$6D2B	Old Seer: About 15 floors from Moonlight Village<brk>lies a place called Dragon's Maw.<brk>Orochi is another 6 floors beyond that.<brk>In other words, about 21 floors from the village.<brk>You're wondering why I'm telling you this?<brk>I'm starting to think you might actually do something about it...
+11:$6DF5	Keyaki: <name>! Wait!
+11:$6E00	Keyaki: Now it's finally time to save Fumi.<brk>Here, take this!
+11:$6E21	<name> received <cE3>6.
+11:$6E2E	Keyaki: Good luck! ...Oh.
+11:$6E42	Kinji: Hey.<brk>Take this.
+11:$6E58	<name> received <cE3>3.
+11:$6E64	Kinji: It's my dinner, okay? Don't tell the others.
+11:$6E94	Keyaki: Even Kinji's cheering you on...<brk>That makes me happy.
+11:$6EB9	Chief: N-Nagi? ...No luck after all?<brk>At a child's pace, he must be about 10 floors in by now...<brk>The monsters around there are fearsome...<brk>Oh, I'm so worried...
+11:$6F44	Gon: Urgh... No, I haven't seen him.<brk>This Koppa fellow.<brk>Maybe he went to another village?
+11:$6F8B	Rokuro: Tch! Got sent back, huh? I knew you couldn't do it!<brk>Going up there is a waste of time.
+11:$6FC6	Tagura: Hey, where did Fumi go?
+11:$6FE5	Masa: No one will blame you if you can't save Nagi.<brk>You're an outsider, after all.
+11:$7022	Kinji: Graaan, I'm hungry!
+11:$703D	Old Seer: You just ate! Wait until dinner.
+11:$7072	Old Seer: This village is burdened with a cursed fate.
+11:$709C	Rokuro: You... Why do you keep doing this?<brk>There's nothing in it for you.<brk>...Well, if you're determined to go, I won't stop you.<brk>But I'll tell you one thing.<brk>Kuyo Pass splits into three roads.<brk>Check the map on that sign to choose one.
+11:$7151	Kinji: Keyaki's so cute... I... I...
+11:$717E	Masa: Just because Keyaki's nice to you,<brk>don't get the wrong idea.
+11:$71B4	Old Seer: Defying Orochi was impossible from the start.
+11:$71DE	Kinji: Are you okay after that fit?...<brk>You still look like you're in pain.
+11:$7216	Masa: ......<brk>I-I'm fine. It's finally passing.
+11:$7246	=Fumi's Mom: Um... take<br> this.<end><mode0>
+11:$7257	=<name> received<br> <cE3>8.<end><mode0>
+11:$7264	Fumi's Mom: Please... Please save Fumi.
+11:$7280	Chief: I have seen the weasel you describe.<brk>He ran up the shrine steps and continued toward Kuyo Pass...
+11:$72CE	Gon: Urgh... That smelly weasel from the other day...<brk>So he's a friend of yours. Urgh...
+11:$730D	Rokuro: Hmph! I... I still don't accept you.
+11:$732C	Masa: Oh, it's you!<brk>...Sorry. We're discussing something important.
+11:$7360	Kinji: Actually, we're going to surpri...
+11:$737F	Masa: Hey!!
+11:$738E	Kinji: Whoops. It was supposed to be a secret. Heh heh heh...
+11:$73B0	Masa: Heh heh heh heh...
+11:$73C1	Masa: Come on, Kinji! Quit slacking!
+11:$73E5	Kinji: We have to hurry and finish it!<brk>But I'm starving! I don't have any strength left, bro.
+11:$741D	Old Seer: Destiny, fate, tradition...<brk>All of it is about to be overturned.<brk>Orochi is formidable, yes...<brk>but the light I sense in you shines brighter still.
+11:$7493	Nagi: Big bro! I still want to come with you!<brk>I'm going! You can't say no!<brk>...Or so I thought, but suddenly I have to pee really bad!<brk>Go on ahead!<brk>...Or so I thought, but now I feel like I have to go, but I can't.<brk>Hmm... What do I do?
+11:$7535	Innkeeper: Keyaki still hasn't come back.<brk>I wonder what happened.
+11:$755F	Fumi's Mom: <name>... Um, take this.
+11:$7575	<name> received <cE3>2.
+11:$7581	Fumi's Mom: I'm sorry this is all I can do. But please... save Fumi.
+11:$75B3	Kinji: Keyaki's gone missing?<brk>Nooooooo!!
+11:$75E1	Gon: Where could Keyaki have gone?<brk>Urgh... And I secretly had my eye on her, too.
+11:$761C	=Rokuro: Say <name>,<br> would this be of use?<end><mode0>
+11:$7639	=<name> received<br> <cE3>0.<end><mode0>
+11:$7648	Rokuro: I found it lying in the hills out back.<brk>It's no use to me, so you can have it.
+11:$7682	Tagura: Good luck! You have to save Fumi!
+11:$76A4	Chief: What! The scroll is gone?<brk>It was definitely there yesterday...<brk>Come to think of it, I heard someone saw a figure last night,<brk>heading toward Dragon's Maw.<brk>Apparently they avoided the Easy road and took Normal or Hard.<brk>Why don't you try taking Normal or Hard too?<brk>Maybe you'll find something...<brk>Forgive me... That was terribly irresponsible of me to suggest...
+11:$77A6	Nagi: I saw a weird shield by the river the other day,<brk>but I had to pee so bad that I went home without it.<brk>I'll grab it next time.
+11:$7803	Old Seer: For the first time, hope is growing<brk>among the villagers.<brk>Thanks to you, light is finally beginning to reach this village.
+11:$785F	Masa: Leave items in the Warehouse and you won't lose them if you collapse.<brk>But everything inside a Pot disappears, so be careful.<brk>You can only bring 5 items on an adventure.<brk>Remember, Pots lose their contents.
+11:$78F6	Gon: Maybe Keyaki...<brk>didn't want <name> to see her looking like a monster...<brk>Urgh... So that's why she's hiding...
+11:$7964	Kinji: I think Keyaki might have feelings for <name>...<brk>Ugh, I'm so jealous...
+11:$7998	Innkeeper: I'm sure Keyaki will come back.<brk>She'll smile like nothing ever happened.
+11:$79CC	Fumi's Mom: Please... Please save Fumi.
+11:$79EA	Rokuro: Don't you lose to Orochi.
+11:$79FF	Nagi: Hey, I picked up that shield I told you about yesterday. Here.
+11:$7A24	<name> received <cE3><$00>.
+11:$7A31	Nagi: I'm not sure it'll help, but you can have it.
+11:$7A52	Masa: Hey, <name>.<brk>Kinji and I expanded the Warehouse yesterday.<brk>Now you can store a lot more items.<brk>Remember, you can only bring 5 items on an adventure,<brk>and Pots lose their contents, so be careful.
+11:$7AE2	Innkeeper: I'm sure Keyaki will come back.<brk>She'll smile like nothing ever happened.
+11:$7B16	Gon: Keyaki... What a sweet girl. Urgh...
+11:$7B3C	Nagi: If only I were stronger...
+11:$7B58	Kinji: Gran, I got my heart broken.<brk>Food...
+11:$7B7F	Old Seer: At a time like this,<brk>aren't you normally too upset to eat?
+11:$7BB5	Kinji: ...Keyakiii! Waaaaah!<brk>Chomp chomp chomp chomp!
+11:$7BE1	Masa: Hey, Kinji! Stop stress-eating<brk>and help me work!<brk>We still have things to do!
+11:$7C36	Masa: Hey, <name>! This is the last thing I can do for you.<brk>I expanded the Warehouse as far as it'll go.<brk>That's the limit.<brk>You can still only bring 5 items on an adventure,<brk>and Pots lose their contents if you try to take them...<brk>The rest is up to you, <name>!<brk>It all comes down to your skill. We're counting on you!
+11:$7D0A	Kinji: Chomp chomp chomp chomp!<brk>Chomp chomp chomp chomp!!<brk>Chomp chomp chomp chomp chomp!!!
+11:$7D50	Old Seer: In the end, all you do is eat...
+11:$7D79	Rokuro: Truth is, I have something for you, <name>...<brk>But <name>, you're carrying 5 items or more,<brk>so I can't give it to you. Forget it...
+
+# ======================================================================================
+# SESSION 8 -- the 162 strings sessions 7 and 8b recovered. The shop, the Shrine Priest's
+# help, the Kuyo Pass road picker, the well, Dragon's Maw, the feast and the farewells.
+#
+# None of this had ever been seen in English: the region walker never opened on it, so it
+# was not in script.json at all until 2026-08-05.
+# ======================================================================================
+
+# ---- bank 11: the log menu's one missing label ----
+11:$537F	=: Log:<$00>
+
+# ---- bank 11: Fumi, and the feast ----
+11:$56C3	Fumi: ...Mom.<brk>Mooom!!
+11:$5C03	Kinji: Get this weasel drunk and he starts telling tall tales!<brk>Wa-ha-ha-ha!
+11:$5C35	Koppa: Wh-whaaat...? Hic. I'll have you know... Hm?<mode0>
+11:$5C58	<name>, where're you going? Hic.<brk>Oh, gotta pee? Off you go! Hic.
+11:$5C86	Koppa: Hic. Now, where was I? Oh, right.<brk>So then I equipped the Heavy Shield...
+11:$5CD2	Everyone: Wa-ha-ha-ha!
+11:$5CE2	Chief: What? You mean the monsters at Kuyo Pass?<brk>...Hmm.<cE1><mode1><$3C><cE0:1A><brk>Chief: You may have already realized this, <name>,<brk>but all of those monsters were once children offered as sacrifices.<brk>But you need not regret defeating them.<brk>It's better than wandering forever at Yoshizota's command,<brk>unable to return to normal.<brk>Sending them to their final rest is kinder.<brk>That's why we named it Kuyo Pass, where the lost find rest.<brk>...You don't need to worry about Keyaki.<brk>Wait a few days and she'll always return.<brk>As long as our clan carries this trait,<brk>there is nowhere else we can live.<brk>Chief: Come, everyone is waiting. Let's go back.
+
+# ---- bank 11: the feast runs all night, and the morning of the farewell ----
+11:$5E8C	<cF2><cF0><cF1><cF4>And so the village celebrated all night, its old custom finally broken.<brk>The next morning...<mode1><$C8><mode1><$64><mode0>
+11:$5ECB	Innkeeper:<mode1><$14> Do you really have to leave the very next day...?<mode1><$B4><brk>Wouldn't you like to stay a little longer?<mode1><$C8><mode0>
+11:$5F03	Koppa:<mode1><$14> I'm hungover, so I'd be happy to stay,<brk>but my partner here...<mode1><$B4><brk>Still, <name>... What about Keyaki?<brk>Are you really okay leaving her?<mode1><$B4><mode0>
+11:$5F60	Fumi's Mom:<mode1><$14> Thank you so much for everything.<mode1><$B4><brk>Her speech seems to be coming back, little by little...<mode1><$B4><mode0>
+11:$5FB6	Fumi:<mode1><$14> Mister...<mode1><$1E> thank you for saving me...<mode1><$3C> Mwah!<mode1><$1E><mode0>
+11:$5FE6	Rokuro:<mode1><$14> Take care.<mode1><$64><mode0>
+11:$5FF9	Nagi:<mode1><$14> You two were amazing!<mode1><$B4><mode0>
+11:$6016	Masa:<mode1><$14> Come back sometime and I'll build you a house.<mode1><$B4><mode0>
+11:$6038	Priest:<mode1><$14> Hey!<mode1><$3C> You're late!<mode1><$B4><mode0>
+11:$6057	Gon:<mode1><$14> Sorry... Pant, pant.<mode1><$B4><mode0>
+11:$6071	Chief:<mode1><$14> Well then, take care...<mode1><$3C> Hm?<mode1><$50><cE7><mode0>
+11:$6094	Cat:<mode1><$14> Meow...<mode1><$78><mode0>
+11:$60A4	Masa:<mode1><$14> A stray cat?<mode1><$B4><mode0>
+11:$60B8	Innkeeper:<mode1><$14> Isn't that the stray cat from the shrine?<mode1><$64><brk>We haven't seen her lately...<mode1><$3C> She came back.<mode1><$DC><mode0>
+11:$60FC	Gon:<mode1><$14> Urgh...<mode1><$1E><brk>Come to think of it, I thought I heard a stray cat at the shrine earlier...<mode1><$DC><mode0>
+11:$613E	Koppa:<mode1><$14> <name>!<mode1><$3C> Could it be?!<mode1><$64><cE7><mode0>
+11:$6157	Innkeeper:<mode1><$14> Keyaki...<mode1><$B4><cE7><mode0>
+11:$616C	Keyaki:<mode1><$14> I just had to see you one more time<mode1><$1E>.<mode1><$1E>.<mode1><$1E>.<mode1><$64><brk>You're leaving now, aren't you?<mode1><$B4><brk><name>, you're a Wanderer, after all.<mode1><$1E><brk>Your next adventure is waiting for you.<mode1><$78> That's why<mode1><$64>...<mode1><$C8><brk>Keyaki:<mode1><$14> ...Um<mode1><$1E>, take this!<mode1><$64><mode0>
+11:$61FD	<name> received a Medical Herb.<mode1><$B4><mode0>
+11:$620F	Keyaki:<mode1><$14> The first thing I gave you was a Medical Herb too,<brk>wasn't it?<mode1><$B4><brk>Since you're starting a new journey, I thought it would be fitting...<mode1><$78><brk>Well<mode1><$1E>.<mode1><$1E>.<mode1><$1E>.<mode1><$1E> take care of yourself!<mode1><$B4><mode0>
+11:$62F6	<cF2><cF0><cF1>May Kron, god of travelers, grant you fair winds!<mode1><$C8><mode0>
+11:$6311	<cF4>Keyaki:<mode1><$14> ...Um<mode1><$1E>, take this!<mode1><$64><mode0>
+11:$7DCC	Nagi: Hey, I picked up that shield I told you about yesterday.<brk>Here it is.<brk>...Or it would be, but you're carrying 5 items or more.<brk>So I can't give it to you.
+
+# ---- bank 14: the shop ----
+14:$4031	Shopkeeper: Welcome!<cE0:15>
+14:$4042	Shopkeeper: Thank you!
+14:$4057	Shopkeeper: For the items you've purchased,<brk>that will be <cE5> Gitan.<mode0>
+14:$408F	=<cEC:08><cE5> Gitan. Buy it?<br><$81>Buy<br> Cancel
+14:$40AC	=<cEC:08><cE4> Gitan. Buy it?<br><$81>Buy<br> Cancel
+14:$40C9	Shopkeeper: I see.<brk>Then I'll lower the price to <cE4> Gitan.<brk>Does that work for you?
+14:$40FC	Shopkeeper: For the items you left in the shop,<brk>I'll pay you <cE6> Gitan.
+14:$412B	=<cEC:08><cE6> Gitan. Sell it?<br><$81>Sell<br> Cancel
+14:$4148	Shopkeeper: That's too bad.
+14:$415A	Shopkeeper: You don't have enough money!
+14:$4176	Shopkeeper: Oh no!<brk>It's a Monster House!<brk>Hurry to the stairs!
+14:$41A6	=<cEC:04>Shopkeeper is asleep.<br> <br>
+
+# ---- bank 14: the signboards ----
+14:$41C2	=<cEC:04>  Moonlight Village<br>      Entrance<br>
+14:$41DB	=<cEC:04>   Lodging and Meals<br>       The Totoya<br>
+14:$4202	=<cEC:04>   Dragon's Cry Shrine<br><br>
+14:$421B	=<cEC:00>    Dragon's Maw<br> When the dragon cries,<br> its maw first opens
+14:$4255	=      The Rubbish Pot<br> Throw unwanted items<br> into the pot on the right.<end><brk> Once thrown away,<br> it is gone for good.
+
+# ---- bank 14: the Shrine Priest's advice ----
+14:$42B7	Priest: I give advice to travelers. What would you like to know?<mode0>
+14:$42EE	Priest: What would you like to know?<mode0>
+14:$4303	=<cEC:09><$81>1: About moving<br> 2: About Items<br> 3: Other
+14:$4329	=<cEC:09><$81>1: How do I dash?<br> 2: How do I move diagonally?<br> 3: How do I turn in place?
+14:$4361	Priest: Hold B and press the D-Pad to dash.<brk>Holding B also lets you step onto an item.
+14:$43B3	Priest: Hold Start and press the D-Pad to walk only diagonally.
+14:$43DF	Priest: Tap Start to display a marker. Then use the D-Pad to change direction.
+14:$441D	=<cEC:09><$81>1: How do I select items?<br> 2: How do I sort items?<br> 3: How do I fire arrows?
+14:$4451	Priest: Tap B and choose Items.<brk>Press left or right on the D-Pad to change pages.<brk>To use an item, choose it and press A, then check its description for instructions.
+14:$44D6	Priest: Press Start while the Items menu is open.
+14:$44FF	Priest: Equip arrows from the Items menu,<brk>then hold Select and press A to fire.
+14:$453B	=<cEC:09><$81>1: How do I heal faster?<br> 2: How do I view the map?<br> 3: How do I swap places?
+14:$4575	Priest: Press A and B together to recover faster.
+14:$45A3	Priest: Tap Select to view the dungeon map.
+14:$45D4	Priest: To swap places with a person or companion in the dungeon,<brk>hold B and press the D-Pad.
+
+# ---- bank 14: the Kuyo Pass road picker ----
+14:$4610	=   Kuyo Pass Route Map<br> Which path will you take?<end><mode0>
+14:$4638	=<cEC:09><$81>Easy (current road)<br> Normal<br> Hard
+14:$465B	=<cEC:09><$81>Easy<br> Normal (current road)<br> Hard
+14:$467F	=<cEC:09><$81>Easy<br> Normal<br> Hard (current road)
+14:$46A4	=<cEC:0E><$81>Go on<br> Stay here<br>
+14:$46B5	=<$81>Go on<br> Stay here<br>
+14:$46C1	=<$81>Go down<br> Stay here<br>
+14:$46CD	=<$81>Go up<br> Stay here<br>
+14:$46EC	<cF4><cF2><cF0><name> was blown away by the wind.<cF3><mode1><$78><mode0>
+
+# ---- bank 14: the voice in the well ----
+14:$4702	Hey! Somebody help me!
+14:$4716	A voice is coming from inside the well.
+14:$472A	Hey! I'm down here! Help me!
+14:$4746	<name> used the rope beside the well to pull him out.
+14:$4767	Koppa: Phew! How many days has it been since I saw daylight?<brk>You saved me. Oh!...<brk><nop>, <name>!<brk>Where have you been?! I was so lonely! Waaaaah!
+14:$47D5	<cE0:00><mode1><$02><cE0:28><name> reunited with Koppa!<mode1><$78><brk>...Maybe it's just been a while,<brk>but he definitely smells a little.
+14:$4818	Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a strange shifting land here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.
+14:$48DA	Koppa: Let's check out Dragon's Maw before we leave.
+14:$4905	    Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it. When a monster defeats <name> at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.
+14:$4AA0	Koppa: We came all this way, but of course it's still closed...
+14:$4AC6	Yoshizota: Hey!
+14:$4AD3	Yoshizota: It's me, Yoshizota. The medicine seller...<brk>This place opens if I read this scroll, right?
+14:$4B10	=<cEC:09><$81>Why do you have a scroll?<br> Why are you here?<br> Never mind
+14:$4B47	Yoshizota: Well, the truth is,<brk>I overheard your entire conversation<brk>with the Village Chief.<brk>It sounded interesting, so I took the scroll from the shrine<brk>and came on ahead...<brk>But going in alone looked scary,<brk>so I waited for you to show up.
+14:$4BE5	Yoshizota: All right, I'll read it.
+14:$4C89	Yoshizota: I'm Orochi.<mode1><$1E><brk><cF4><cE0:05>The villagers call me a monster, but give me a break.<brk>I'm a perfectly normal human.<brk>They're the real monsters.<brk>You saw them yourselves, didn't you?
+14:$4F11	<cF0>Yoshizota drank the drug and turned into Orochi!!<cF3><mode1><$1E><mode0>
+14:$4FDC	<cF2><cF0><cF1><cF4>And so, <name> and his friends defeated Orochi,<mode1><$B4><brk>then set out on another adventure<brk>to return to Moonlight Village...<mode1><cF0><mode0>
+
+# ---- bank 14: the village, the warehouse and the shrine ----
+14:$529F	Keyaki: Here, take this!
+14:$56EF	<cE0:00><mode1><$02><cE0:27><name> can now use the Warehouse!<mode1><$78><brk>You can store all kinds of things there!<cE0:0C>
+14:$5BF2	<cF2><cF0>Nagi: We made it...<mode1><$78><mode0>
+14:$5C05	<cF2><cF1>   And the next morning...<mode1><$78><mode0>
+14:$5F2A	Kinji: Once you become an adult, the fits stop,<brk>and you stay in control even when transformed.<brk>Some people take a while to change back, like my brother...
+14:$5F8B	Rokuro: Be careful Nagi and Tagura don't attack you.<brk>Children lose control when they transform.
+14:$5FD1	Priest: We don't follow the Reeva faith...<brk>but I'll still pray for Kron's wind to guide you.
+14:$6016	Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants <name> to see her...
+14:$604A	=<cEC:08>Search the offering box?<br><$81>Yes<br> No
+14:$606A	<name> searched the offering box.
+14:$607C	Koppa: ...Was the scroll there?<brk>What? It's gone?! No way!
+14:$60A2	Innkeeper: <name>... It's about Keyaki...<brk>She hasn't come back since last night. I wonder where she went.
+
+# ---- bank 14: Kinji at the shrine, and what Keyaki said ----
+14:$68FE	<cF4>Kinji: No, listen, the thing is...
+14:$698C	Keyaki: ......<brk>Hearing you say that... makes me so happy...
+14:$69B7	Kinji: When you really love someone, you start picking up their habits.
+14:$69E5	Kinji: ...So Keyaki really does have feelings for <name>...<brk>But still...
+14:$6A14	Keyaki: ...<name> isn't from here.<brk>And he intends to leave Moonlight Village...
+14:$6A4E	Kinji: R-right.<brk>Sure, right now he's stuck here because he can't get out...<brk>But he defeated Orochi.<brk>I'm sure he'll escape someday.<brk>And yet Keyaki always sees him off with a smile...<brk>Why? She may never see him again!
+14:$6B01	Keyaki: ...I've thought about going with him so many times...<brk>But I'd probably only be a burden, and besides...<brk>I can only survive in this village...<brk>So I told myself to give up.<brk>To let him go and forget everything...
+14:$6BB5	Kinji: Keyaki always sees him off with a smile, but...<brk>Deep down, she must...
+14:$6BF4	Kinji: Oh, Keyaki!
+14:$6C09	Kinji: Wow, that's amazing! I'm moved!<brk>Now I love her even more!
+14:$6C3E	Kinji: Women are incredible!<brk>She carries all those feelings<brk>and can still smile so brightly!<brk>I never had a chance, of course...<brk>but I won't give up.<brk>One day I'll get her to look my way...<brk>Just kidding.<brk>And thus ends the rambling monologue of a foolish man<brk>who decided for himself what a woman was feeling. The end.
+14:$6D22	Kinji: Ahh, shouting that out made me feel better!<brk>All right, time to go home.<brk>Home to... eat my feelings!!<cF3>
+14:$6D6B	Kinji: Chomp chomp chomp chomp!<brk>Chomp chomp chomp chomp!!<brk>Chomp chomp chomp chomp chomp!!!
+14:$6DB1	Kinji: ........
+14:$6DC5	Koppa: Huh? Didn't you say items don't work here?
+14:$6DED	Keyaki: Hm? No. I didn't come to bring you an item.
+14:$6E12	Keyaki: <name>, um...<brk>If you ever come back to the village...<brk>will you pray with me?<brk>I'll be waiting at the shrine.
+14:$6E69	Keyaki: I'll be waiting...<brk>At the shrine.
+14:$6E80	Keyaki: You came...<brk>Come on, let's pray.<cF4>
+14:$6E9F	Keyaki: All right.<brk>We're done.
+14:$6EAC	Keyaki: Thank you for coming with me...<brk>Now I don't have any regrets...
+
+# ---- bank 14: Chomomo, the shrine cat ----
+14:$6EDB	Chomomo: Meow.
+14:$6EE6	Koppa: Hey, a stray cat!<cE7>
+14:$6EF6	Keyaki: This one is probably Tanmomo's sibling.<brk>So I named her Chomomo.<cE7>
+14:$6F2B	Keyaki: I love stray cats, especially how free they are...<brk>...The truth is, there was a cat I loved very much,<brk>but he may never come back here again...<brk>Yet if he settled down and became a house cat,<brk>I think he'd lose the best part of himself...<brk>...So I decided to think of it this way.<brk>Come see me whenever you want.<cE7>
+14:$7019	Keyaki: I'll always be here...<brk>That's what I mean.<cE7>
+14:$7037	Keyaki: Oh! I almost forgot! I told the Innkeeper I'd be right back.<brk>...See you.<cF3><cE7>
+14:$706E	Keyaki: I'm sure you'll find a way out someday, <name>.<brk>...Good luck!
+
+# ---- bank 14: the companions ----
+14:$70F3	Pochi: Woof! Woof woof! Woof!
+14:$7105	Koppa: He says Fumi always petted him, so he owes her.<brk>He wants to help too, so let him join you.<brk>What do you say?
+14:$7165	=<cEC:08>Let Pochi join you?<br><$81>Yes<br> No
+14:$7182	<cE0:28>The dog Pochi joined you!<mode1><$78>
+14:$7198	Pochi: Woof woof woof wooooof!
+14:$71A7	Koppa: He says to call him anytime you need help.
+14:$71D3	Pochi: Woof! Woof woof! Woof!<brk>(Let me come along too!)
+14:$71F6	Koppa: He says Fumi always petted him, so he owes her.<brk>He wanted to help too and join you...<brk>but since you already have a companion, never mind.
+14:$7270	Pochi: Woof! Woof woof! Woof!<brk>(I wanted to come along too...<brk>but since you already have someone, never mind.)
+14:$7305	Rooster: Cock-a-doodle-doo!
+14:$73B0	=<cEC:08>Let the Rooster join?<br><$81>Yes<br> No
+14:$73CE	<cE0:28>The Rooster joined you!<mode1><$78>
+14:$7311	Koppa: I am the strongest rooster in history!<brk>To put it plainly, I am strong!<brk>I've watched in silence until now,<brk>but these useless villagers are simply unbearable!<brk>If they won't go, then I shall be your companion!<brk>That's what he says. What do you want to do?
+14:$73E2	Rooster: Cock-a-doodle-doo!<brk>(I am the mightiest rooster! Take me with you!)
+14:$7410	Koppa: I am the strongest rooster in history!<brk>To put it plainly, I am strong!<brk>I've watched in silence until now,<brk>but these useless villagers are simply unbearable!<brk>If they won't go, then I shall be your companion!...<brk>is what he thought, but since you already have a companion,<brk>never mind.
+14:$74C9	Rooster: Cock-a-doodle-doo!<brk>(I am the mightiest rooster! Take me with you!<brk>...or I would say that, but you already have someone. So be it!)
+14:$75A1	Tanmomo: Mew, mew.<brk>(I'm a no-good kitty. Will you make me your companion?)
+14:$75CE	=<cEC:08>Let Tanmomo join you?<br><$81>Yes<br> No
+14:$7645	Tanmomo: Mew mew? Mewww!<brk>(Huh? Well, it's your fault for standing there!)
+14:$7699	<cE0:28>The cat Tanmomo joined you!<mode1><$78>
+14:$76B0	Tanmomo: Yeeeeowl!
+14:$76C0	Tanmomo: Mew, mew.<brk>(I'm a no-good kitty. Will you make me your companion?<brk>...or I would ask, but you already have someone. Never mind.)
+14:$770F	Tanmomo: Mew, mew.<brk>(I've been training and gotten a little stronger since then.<brk>Will you make me your companion?)
+14:$774A	Tanmomo: Mew, mew.<brk>(I've gotten so strong that no one at Kuyo Pass can beat me.<brk>Will you make me your companion?)
+14:$778D	Baby Mamel: Please take me with you too...
+14:$77D3	Baby Mamel: Thank you for saving me.<brk>Here, take this as thanks!
+14:$780A	Baby Mamel: Bye! See you!
+14:$781F	Baby Mamel: Thank you for saving me.<brk>I'll send this to your Warehouse as thanks.
+14:$7850	Baby Mamel: Thank you for saving me.<brk>I'd like to give you something as thanks...<brk>but your pack and Warehouse are both full,<brk>so I can't give it to you. Bye! See you!
+14:$78AE	<name> received the Mamel Sword!
+14:$78BF	<name> received the Mamel Shield!

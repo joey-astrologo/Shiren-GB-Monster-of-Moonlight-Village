@@ -1,0 +1,63 @@
+# Shiren GB — THE OPENING CINEMATIC, for review. `loc <TAB> english`, same shape as
+# `script/prose_draft.tsv`, so it feeds the same review-then-edit loop you use everywhere
+# else. Nothing here is inserted yet.
+#
+# WHY IT IS A SEPARATE FILE AND NOT `en.tsv` YET. Every `loc` in `en.tsv` is a key into
+# `script/script.json`, and none of these are in `script.json` — the cinematic uses a
+# different character table (`13:$7FAA`, see FINDINGS.md) and the extractor has never been
+# able to read it. Merging these into `en.tsv` means teaching `extract.py` the second
+# table first, so that `lint_en`, `--check` and `build.py` can all see them. That is
+# session 11's engineering. **This file is the text, so the wording can be settled while
+# that happens** — edit it exactly as you would `prose_draft.tsv`.
+#
+# THE GEOMETRY IS NOT YET MEASURED, so treat the widths below as provisional. What IS
+# measured: the screen draws these two tilemap rows at a time (a text row plus a row of
+# dakuten above it), and the Japanese lines run to about 19 characters. The English
+# alphabet needs a table patch before any of this can be inserted at all — the cinematic
+# table reaches font codes $0B-$38, which is `A`-`Z` and `a`-`t`, so THERE IS NO
+# u, v, w, x, y AND NO `.` OR `-` until five of its 17 dead katakana slots are repointed.
+#
+# HOW THE JAPANESE WAS READ, since it is worth being able to check the work: combining
+# marks PRECEDE their kana here (`むら ゙ ひと` is むらびと), the opposite of the main script;
+# `$4D` takes one argument byte and `$4E` takes two, measured by drawing the line on the
+# real screen and reconciling it against the bytes, not inferred from the pattern.
+# `python3 tools/introtext.py build/_base_expanded.gb` dumps the program.
+#
+# WHAT I AM NOT SURE OF, and you will know better than I do: the program is ONE run of
+# seven scenes, and it reads like two halves. Scenes 1-4 are the sacrifice backstory.
+# Scenes 5-7 are Shiren and Koppa out on the road, past the village, talking about Keyaki
+# in the past tense. Whether that second half is the opening's framing or the ENDING
+# replayed in the attract loop, I cannot tell from the bytes — but either way it is in
+# these same 830 bytes, so it is not a separate thing still to be found.
+#
+# ---- scene 1-3: the mother, the villager, the mother again ----
+# ははおや「わたしのこが・・・」
+31:$5CEE	Mother: My child...
+# むらびと「かわいそうだが シキタリだ。 あきらめるしかねえ・・・」
+# シキタリ is written in katakana for weight -- 仕来り, the custom. Kept as a set phrase.
+31:$5D19	Villager: A pity, but it is the custom. There is nothing for it but to give her up...
+# ははおや「ああっ どうして・・・」
+31:$5D4D	Mother: Aah... why? Why her...?
+#
+# ---- scene 4: the narration. This is the story's premise ----
+# ここ すうねんまえから・・・
+31:$5D69	For some years now, in this place...
+# おさなごを かいぶつの いけにえにささげているという
+31:$5D7F	they say young children are given to the monsters as offerings.
+# ひとつの ちいさなむらが あった
+31:$5DA6	There was one small village.
+#
+# ---- scene 5-7: Shiren and Koppa on the road ----
+# コッパ「ふうっ、」「やっと でられたな。」
+31:$5E03	Koppa: Phew. We are out at last.
+# ほら、あそこ！  ササラやまが みえる！
+31:$5E46	Look, over there! You can see Mount Sasara!
+# ここまでくりゃ もうにどと もどされることも ないとおもうぜ」
+31:$5E6E	Come this far and they will never drag us back again.
+# コッパ「ケヤキちゃんのことか？」「けなげで いいこだったよな・・・」
+31:$5EA6	Koppa: You mean Keyaki? She was a brave, good girl...
+# コッパ「しょうがないよ。 オイラたち フウライニンだもンな。」
+# フウライニン = 風来人, a wanderer. The game's own word for what Shiren is.
+31:$5EE0	Koppa: It cannot be helped. We are wanderers, you and I.
+# 「さ、」「いこうぜ！」
+31:$5F2C	Right then. Let us go!

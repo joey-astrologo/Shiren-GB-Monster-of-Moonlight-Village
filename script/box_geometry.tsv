@@ -1,0 +1,60 @@
+# Menu box geometry — Shiren GB
+#
+# Box width is byte 3 of a descriptor in the table bank 31 indexes at $45D5, and x/y are
+# bytes 0 and 1, so making a menu box wider is a data edit. See extract.box_descriptors.
+#
+# The drawer (31:$40D8) writes a left border tile, `width` CELLS, then a right border
+# tile, so a box occupies columns x .. x+width+1 and rows y .. y+rows+1. Screen is 20x18.
+# A row shorter than `width` is blank-padded by the drawer, so widening a box never
+# requires re-padding its text.
+#
+# The first cell is the CURSOR SLOT on any selectable list -- those rows start with a
+# space in the original and the inserter re-adds it, so a 7-wide box holds 6 letters.
+#
+# build.py checks that every row fits `width` and that the box fits the screen. It CANNOT
+# check that the box looks right, or that it does not cover something another routine drew.
+# SCREENSHOT EVERY BOX LISTED HERE.
+#
+# A fifth field `nocursor` marks a box with no selection cursor (a header or a message).
+# Without it, moving a box makes build.py move the cursor entry too -- and refuse if the
+# box shares its cursor home with another, since the entries are keyed on position.
+#
+# box	x	y	width	[nocursor]
+
+# ---- item action menu (eat / throw / place / ...) --------------------------------
+# V4C restores the Japanese x=13,w=5 geometry. The first cell remains the cursor and Dot
+# VWF paints every complete staged verb into the remaining 32px; `Remove` is the exact
+# 40px edge case including that cursor cell. The cursor table at 4:$4E6E moves back with
+# both boxes (box 6 has three entries, one per category verb set).
+6	13	1	5
+39	13	3	5
+
+# ---- status / in-game menu pair --------------------------------------------------
+# `Floor` lets shared box 0 return to the Japanese width 5. Box 1 therefore returns to
+# x=7,w=11 and both boxes are packed exactly as in the original. Its live values remain
+# at their original absolute column 18 positions.
+0	0	0	5
+1	7	0	11	nocursor
+
+# ---- item / inventory titles and lists ------------------------------------------
+8	0	0	4	# "Which?" -- original geometry, exact 32px fit
+14	0	0	4	# "Items" -- one wider than original; needs 29px
+17	0	0	3	# "Pot"
+18	0	0	4	# "Floor" -- original geometry, exact 32px fit
+# Boxes 20/21 stay one cell wider than Japanese. Static analysis proves their descriptors
+# currently have no draw call, so there is no live route on which to validate a narrow
+# proportional scanner; keeping width 6 also preserves every English row if one is found.
+20	0	0	6	# Close / Quit
+21	0	0	6	# Close / Exit / Quit
+# The category pages return to the Japanese width 5 where possible. Box 33 fits exactly;
+# box 34 needs one extra cell because `Weapon` paints 43px including the cursor.
+33	0	0	5	# Herb / Scroll / Staff / Pot / Food
+34	0	0	6	# Weapon / Shield / Bracer / Arrow / Other
+
+# ---- title screen ---------------------------------------------------------------
+# Dot VWF lets `Normal` fit the Japanese x=12,w=6 geometry. Its cursor table entry moves
+# back with the box.
+29	12	6	6
+41	5	0	8	nocursor	# "Rankings" -- a screen header
+38	3	9	13	nocursor	# original width; x=3 keeps its VWF pool identity distinct
+47	5	7	10	# " Village Exit" -- original geometry

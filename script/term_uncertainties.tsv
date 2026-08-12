@@ -1,0 +1,46 @@
+# Monster and NPC terminology without a binding official-English or Shiren 2 fan-patch
+# ruling. These do not block mechanical checks: current_choice remains canonical until the
+# project owner resolves the row. Do not silently replace it with the wiki_candidate.
+#
+# The Moonlight Village wiki marks every candidate below `UT` (unofficial), or has no exact
+# entry for the Japanese spelling. Character-role entries on its character list are also
+# marked UT. Sources reviewed 2026-08-10:
+# https://mysterydungeonwiki.com/wiki/Moonlight_Village_GB%3AList_of_Monsters
+# https://mysterydungeonwiki.com/wiki/Moonlight_Village_GB%3AList_of_Characters
+# https://mysterydungeonwiki.com/wiki/Shiren_1_DS%3AList_of_Monsters
+# https://mysterydungeonwiki.com/wiki/Shiren_6%3AList_of_Monsters
+# https://mysterydungeonwiki.com/wiki/Community%3AShiren_2_Unofficial_Translation_Patch_%28Monsters%29
+#
+# loc	class	japanese	current_choice	wiki_candidate	question
+11:$4C15	monster	ちょうちんふぐ	Lantern Puffer	Paper-Lantern Pufferfish	Wiki candidate is unofficial and uses a spelling variant.
+11:$4C2E	monster	モラビー	Morabee	Morabi	Untranslated proper-name romanization differs.
+11:$4C34	monster	にらみヘビ	Glare Snake	Glare Snake	Wiki agrees, but explicitly marks the name unofficial.
+11:$4C4C	monster	かっとびイノシシ	Dash Boar	Wild Boar	No official English match; localization differs.
+11:$4C56	monster	かさタヌキ	Kasa Tanuki	Tanuki	No official English match; localization differs.
+11:$4C5C	monster	カラカイおさる	Teasing Monkey	Escape Monkey	No official English match; localization differs.
+11:$4D7B	monster	あんどんフグ	Lamp Puffer	Andon-Lantern Pufferfish	Wiki candidate is unofficial.
+11:$4D94	monster	ワラビー	Warabee	Warabi	Untranslated proper-name romanization differs.
+11:$4D9A	monster	ギョロつきヘビ	Goggle Snake	Bug-Eyed Snake	No official English match; localization differs.
+11:$4DB8	monster	げきとつイノシシ	Ram Boar	Clash Boar	No official English match; localization differs.
+11:$4DC2	monster	からかさタヌキ	Parasol Tanuki		No exact wiki entry; the wiki lists からからタヌキ instead.
+11:$4DCA	monster	チャカシおさる	Mocking Monkey	Flee Monkey	No official English match; localization differs.
+11:$4DF6	monster	ボウヤー3	Bowyer 3		No exact wiki entry; appears to be a GB-specific/placeholder tier.
+11:$4EDD	monster	かんてらフグ	Torch Puffer	Hand-Lantern Pufferfish	Wiki candidate is unofficial.
+11:$4EE5	monster	ダマシウッチー	Trick Uchi	Deceitful Eye	No official English match; localization differs.
+11:$4EF7	monster	タカビー	Takabee	Takabi	Untranslated proper-name romanization differs.
+11:$4EFD	monster	ガンたれヘビ	Leer Snake	Mean-Mug Snake	No official English match; localization differs.
+11:$4F18	monster	かいめつイノシシ	Ruin Boar	Demolish Boar	No official English match; localization differs.
+11:$4F21	monster	たんたんタヌキ	Tantan Tanuki	Tanuki Boss	No official English match; localization differs.
+11:$4F29	monster	ミクダシおさる	Scorn Monkey	Avoid Monkey	No official English match; localization differs.
+11:$4F56	npc	フミのはは	Fumi's Mom	Fumi's Mother	Wiki role is unofficial; tone/style choice.
+11:$4F63	npc	むらおさ	Village Chief	Village Mayor	Wiki role is unofficial; series terminology differs.
+11:$4F6C	npc	ニワトリ	Rooster	Chicken	Wiki ally name is unofficial; current name better distinguishes the character.
+11:$4F71	npc	かんぬし	Shrine Priest	Kannushi	Wiki role is unofficial; translated role versus loanword.
+11:$4F76	npc	ぱしりのゴン	Gon the Gofer	Errand Boy Gon	Wiki role is unofficial; localization differs.
+11:$4F7F	npc	おかみ	Innkeeper	Okami	Wiki role is unofficial; translated role versus loanword.
+11:$4F87	npc	だいくのマサ	Builder Masa	Carpenter Masa	Wiki role is unofficial; Carpenter is the closer occupation.
+11:$4F8F	npc	だいくのキンジ	Builder Kinji	Carpenter Kinji	Wiki role is unofficial; Carpenter is the closer occupation.
+11:$4F9E	npc	こどもマムル	Baby Mamel	Child Mamel	Wiki character name is unofficial; series-style choice.
+11:$4FA6	npc	うらないババ	Old Seer	Fortune Teller	Wiki role is unofficial; tone/style choice.
+11:$4FB4	npc	タグラ	Tagura	Tagra	Untranslated proper-name romanization differs.
+11:$4FB9	npc	ヨシゾウタ	Yoshizota	Yoshizouta	Untranslated proper-name romanization differs.

@@ -1,0 +1,176 @@
+{
+  "format": "shiren-gb-poppins-ending-credits-v1",
+  "name": "Poppins Medium Ending Credits",
+  "source": {
+    "font": "Poppins Medium v4.004 (Google Fonts)",
+    "font_sha256": "90373e7d838d32468438fc3e152dca0bdb12edcab99ea639f158790b1ba1fd05",
+    "license": "SIL Open Font License 1.1; see licenses/OFL-1.1-Poppins.txt",
+    "generator": "tools/endingcreditsaudition.py",
+    "card_count": 22,
+    "role_screen_y": 94,
+    "name_tile_screen_y": 110,
+    "native_end_mark": "preserved"
+  },
+  "credits": [
+    {
+      "role": "Shiren GB",
+      "name": "Development Staff",
+      "native_role": "- 風来のシレン -",
+      "native_name": "開発陣",
+      "duration": 71
+    },
+    {
+      "role": "Director",
+      "name": "Seiichiro Nagahata",
+      "native_role": "監督",
+      "native_name": "長畑 成一郎",
+      "duration": 71
+    },
+    {
+      "role": "Planning & Script",
+      "name": "Shin-ichiro Tomie",
+      "native_role": "企画・脚本",
+      "native_name": "冨江 慎一郎",
+      "duration": 71
+    },
+    {
+      "role": "Original Art",
+      "name": "Kaoru Hasegawa",
+      "native_role": "原画",
+      "native_name": "長谷川 薫",
+      "duration": 71
+    },
+    {
+      "role": "Music",
+      "name": "Koichi Sugiyama",
+      "native_role": "音楽",
+      "native_name": "すぎやま こういち",
+      "duration": 71
+    },
+    {
+      "role": "Development Director",
+      "name": "Masayoshi Saito",
+      "native_role": "開発監督",
+      "native_name": "斉藤 昌快",
+      "duration": 71
+    },
+    {
+      "role": "Chief Programmer",
+      "name": "Kazumi Ogawa",
+      "native_role": "チーフプログラマー",
+      "native_name": "小川 一美",
+      "duration": 71
+    },
+    {
+      "role": "Programming",
+      "name": "Yasuo Nakajima",
+      "native_role": "プログラム",
+      "native_name": "中島 康雄",
+      "duration": 71
+    },
+    {
+      "role": "Programming",
+      "name": "Masahiro Nii",
+      "native_role": "プログラム",
+      "native_name": "二位 真裕",
+      "duration": 71
+    },
+    {
+      "role": "Programming",
+      "name": "Nobuhiro Yamada",
+      "native_role": "プログラム",
+      "native_name": "山田 信洋",
+      "duration": 71
+    },
+    {
+      "role": "Art Director",
+      "name": "Shinji Tanaka",
+      "native_role": "美術監督",
+      "native_name": "田中 信二",
+      "duration": 71
+    },
+    {
+      "role": "Art",
+      "name": "E Sakurai",
+      "native_role": "美術",
+      "native_name": "桜井 絵",
+      "duration": 71
+    },
+    {
+      "role": "Art",
+      "name": "Kazuo Shimizu",
+      "native_role": "美術",
+      "native_name": "清水 一男",
+      "duration": 71
+    },
+    {
+      "role": "Sound",
+      "name": "Kojiro Nakashima",
+      "native_role": "音響",
+      "native_name": "中嶋 康二郎",
+      "duration": 71
+    },
+    {
+      "role": "Fay's Puzzles",
+      "name": "Yuichi Kanzawa",
+      "native_role": "フェイの問題",
+      "native_name": "神澤 諭一",
+      "duration": 71
+    },
+    {
+      "role": "Special Thanks",
+      "name": "Shinichi Koike",
+      "native_role": "協力",
+      "native_name": "小池 慎一",
+      "duration": 71
+    },
+    {
+      "role": "Special Thanks",
+      "name": "Hitomi Saito",
+      "native_role": "協力",
+      "native_name": "斉藤 ひとみ",
+      "duration": 71
+    },
+    {
+      "role": "Special Thanks",
+      "name": "Haruaki Kurokawa",
+      "native_role": "協力",
+      "native_name": "黒川 春秋",
+      "duration": 71
+    },
+    {
+      "role": "Special Thanks",
+      "name": "Chiharu Tanigawa",
+      "native_role": "協力",
+      "native_name": "谷川 千春",
+      "duration": 71
+    },
+    {
+      "role": "Developed by",
+      "name": "Aquamarine",
+      "native_role": "開発",
+      "native_name": "（株）アクアマリン",
+      "duration": 71
+    },
+    {
+      "role": "Producer",
+      "name": "Koichi Nakamura",
+      "native_role": "製作",
+      "native_name": "中村 光一",
+      "duration": 81
+    },
+    {
+      "role": "Production & Copyright",
+      "name": "Chunsoft",
+      "native_role": "制作・著作",
+      "native_name": "（株）チュンソフト",
+      "duration": 96
+    }
+  ],
+  "pack": {
+    "encoding": "zlib+base64",
+    "raw_bytes": 28160,
+    "sha256": "914ed285b8d5cdda2828232f1b528d7c583600b20f7a37c263114456f7825a97",
+    "data": "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"
+  }
+}
