@@ -101,6 +101,10 @@ LOG_PREFIX_LOC = '11:$537F'
 STRUCTURED_BOX_RAW = {2: {0xB6}}
 CONDITION_SOURCE_CAP = dialogue.HELP_WIDTH
 CONDITION_POOL_RUNS = (57, 11, 4)
+EQUIP_MESSAGE_LOC = '13:$465E'
+HERB_MESSAGE_LOC = '13:$46AC'
+HERB_ITEM_RANGE = (0x4232, 0x42E3)
+HERB_APPEARANCE_RANGE = (0x472C, 0x47EE)
 
 
 def _cost(value, arg):
@@ -437,6 +441,76 @@ def main():
         if len(variant) > lint_en.ITEM_ROW_CELLS:
             item_source_over.append(record)
 
+    # The weapon/shield result message can receive an item name with its live signed
+    # enhancement.  Measure every current worst-case item-row variant, plus every
+    # unidentified appearance name, against the dialogue composer's real limits.
+    equip_message_row = next((row for row in strings
+                              if row['loc'] == EQUIP_MESSAGE_LOC), None)
+    equip_results = []
+    equip_result_over = []
+    if equip_message_row and equip_message_row['id'] in translated:
+        template = translated[equip_message_row['id']]
+        selector = '<cE0:46>'
+        if not template.startswith(selector):
+            raise SystemExit('fontaudit: %s must retain its %s selector, found %r'
+                             % (EQUIP_MESSAGE_LOC, selector, template))
+        template = template[len(selector):]
+        if template.count('<cE3>') != 1:
+            raise SystemExit('fontaudit: %s must contain exactly one <cE3>, found %r'
+                             % (EQUIP_MESSAGE_LOC, template))
+        equip_names = [(record[6], record[4], record[5]) for record in item_variants]
+        for entry in (entry for entry in glossary if entry['cls'] == 'appearance'):
+            row = next((candidate for candidate in strings
+                        if candidate['loc'] == entry['loc']), None)
+            if row is not None and row['id'] in translated:
+                equip_names.append((translated[row['id']], row, entry))
+        for item_name, row, entry in equip_names:
+            expanded = template.replace('<cE3>', item_name)
+            try:
+                extent = font.text_extent(expanded)
+            except KeyError:
+                continue
+            record = (extent, len(expanded), row, entry, expanded)
+            equip_results.append(record)
+            if extent > COMPOSER_PX or len(expanded) > dialogue.WIDTH:
+                equip_result_over.append(record)
+
+    # The herb action stages a generic <cE3>, but that producer can only supply a herb
+    # or seed name (identified item table) or a colour-based herb appearance
+    # (unidentified item table).  Measure the real reachable domain so wording such as
+    # `Consumed the <cE3>` cannot fit with one herb and silently clip with another.  Do
+    # not charge arbitrary equipment variants: those cannot enter this action path.
+    herb_message_row = next((row for row in strings
+                             if row['loc'] == HERB_MESSAGE_LOC), None)
+    herb_consumption = []
+    herb_consumption_over = []
+    if herb_message_row and herb_message_row['id'] in translated:
+        template = translated[herb_message_row['id']]
+        if template.count('<cE3>') != 1:
+            raise SystemExit('fontaudit: %s must contain exactly one <cE3>, found %r'
+                             % (HERB_MESSAGE_LOC, template))
+        for entry in glossary:
+            address = int(entry['loc'].split('$', 1)[1], 16)
+            reachable = ((entry['cls'] == 'item' and
+                          HERB_ITEM_RANGE[0] <= address <= HERB_ITEM_RANGE[1]) or
+                         (entry['cls'] == 'appearance' and
+                          HERB_APPEARANCE_RANGE[0] <= address <= HERB_APPEARANCE_RANGE[1]))
+            if not reachable:
+                continue
+            row = next((candidate for candidate in strings
+                        if candidate['loc'] == entry['loc']), None)
+            if row is None or row['id'] not in translated:
+                continue
+            expanded = template.replace('<cE3>', translated[row['id']])
+            try:
+                extent = font.text_extent(expanded)
+            except KeyError:
+                continue
+            record = (extent, len(expanded), row, entry, expanded)
+            herb_consumption.append(record)
+            if extent > COMPOSER_PX or len(expanded) > dialogue.WIDTH:
+                herb_consumption_over.append(record)
+
     classified.update(glossary_ids)
     unproven = []
     for ident, data in encoded.items():
@@ -462,6 +536,10 @@ def main():
     item_variants.sort(key=lambda item: (-item[0], item[4]['loc']))
     item_variant_over.sort(key=lambda item: (-item[0], item[4]['loc']))
     item_source_over.sort(key=lambda item: (-item[3], -item[0], item[4]['loc']))
+    equip_results.sort(key=lambda item: (-item[0], -item[1], item[2]['loc']))
+    equip_result_over.sort(key=lambda item: (-item[0], -item[1], item[2]['loc']))
+    herb_consumption.sort(key=lambda item: (-item[0], -item[1], item[2]['loc']))
+    herb_consumption_over.sort(key=lambda item: (-item[0], -item[1], item[2]['loc']))
 
     # Box 44 displays five condition rows.  Its current top-five footprints total 56
     # tiles, so every possible five-row page fits wholly in the 57-tile primary run;
@@ -519,6 +597,18 @@ def main():
         print('  five widest current item variants: %d allocator tiles; + four '
               '4-tile verbs = %d/%d'
               % (top_five, top_five + 16, allocator_tiles))
+    if equip_results:
+        widest_equip = equip_results[0]
+        print('  equipment-result substitutions: %d representative names; widest '
+              '%d/%dpx, %d/%d source glyphs (%s)'
+              % (len(equip_results), widest_equip[0], COMPOSER_PX,
+                 widest_equip[1], dialogue.WIDTH, widest_equip[4]))
+    if herb_consumption:
+        widest_herb = herb_consumption[0]
+        print('  herb-consumption substitutions: %d reachable names; widest '
+              '%d/%dpx, %d/%d source glyphs (%s)'
+              % (len(herb_consumption), widest_herb[0], COMPOSER_PX,
+                 widest_herb[1], dialogue.WIDTH, widest_herb[4]))
     print()
 
     def line_fmt(item, use_cap=False):
@@ -576,6 +666,16 @@ def main():
                  lambda item: '%-11s %2d/%d chars %3dpx %2d tiles  %s' % (
                      item[4]['loc'], item[3], lint_en.ITEM_ROW_CELLS,
                      item[0], item[2], display_text(item[6])))
+    print_ranked('Equipment-result substitution overflow', equip_result_over,
+                 args.details,
+                 lambda item: '%-11s %3d/%dpx %2d/%d glyphs  %s' % (
+                     item[2]['loc'], item[0], COMPOSER_PX,
+                     item[1], dialogue.WIDTH, display_text(item[4])))
+    print_ranked('Herb-consumption substitution overflow', herb_consumption_over,
+                 args.details,
+                 lambda item: '%-11s %3d/%dpx %2d/%d glyphs  %s' % (
+                     item[2]['loc'], item[0], COMPOSER_PX,
+                     item[1], dialogue.WIDTH, display_text(item[4])))
     print()
 
     print_ranked('UNPROVEN runtime geometry', unproven, args.details,
@@ -609,6 +709,8 @@ def main():
                 + len(runtime_menu_over) + len(runtime_menu_source_over) + len(counter_over)
                 + len(condition_allocator_over)
                 + len(item_variant_over) + len(item_source_over)
+                + len(equip_result_over)
+                + len(herb_consumption_over)
                 + len(encode_errors) + len(unknown_locs))
     print()
     print('VERDICT: %d definite physical/source failure(s), %d legacy line-reservation '

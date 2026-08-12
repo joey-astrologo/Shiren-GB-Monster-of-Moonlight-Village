@@ -9,6 +9,10 @@
 *.sav.bak*
 *.state
 
+# Curated tester-created SRAM regressions are intentionally versioned. Personal saves
+# stay ignored everywhere else, and emulator machine states remain local/generated.
+!tests/fixtures/saves/*.srm
+
 # Gemini translation credentials. The tracked .example file documents the shape;
 # the real key must never enter history.
 /.gemini-credentials.json

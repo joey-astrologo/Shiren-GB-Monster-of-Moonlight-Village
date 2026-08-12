@@ -55,7 +55,7 @@ WEST = 190
 # first step out of the house, not from boot. It is a timed screen with no input to key
 # off, so an offset is the only handle there is; look at the `--png-dir` frame after any
 # change to the route above.
-BANNER_INTO_WALK = 940
+BANNER_INTO_WALK = 850
 
 
 def drive(pb, presses, upto, png=None):
@@ -185,6 +185,25 @@ def main():
     banner_moves = [(at, b) for at, b in moves if at <= banner_at]
     drive(pb, sched(banner_moves), banner_at, png('floorname'))
     floorname = os.path.join(a.out_dir, 'floorname.state')
+
+    # Do not accept a merely loadable state here. This timed checkpoint used to drift
+    # past the card while still producing a valid .state. The English card uploader owns
+    # three tile rows plus a blank guard row; their exact map proves we stopped while the
+    # card is live and that the route/source SRAM still starts in the expected house.
+    upper = bytes(pb.memory[0x9900:0x9914])
+    lower = bytes(pb.memory[0x9920:0x9934])
+    third = bytes(pb.memory[0x9940:0x9954])
+    blank = bytes(pb.memory[0x9960:0x9974])
+    expected_upper = bytes(range(0x80, 0xA8, 2))
+    expected_lower = bytes(range(0x81, 0xA8, 2))
+    expected_third = bytes(range(0xA8, 0xBC))
+    expected_blank = bytes((0xBC,)) * 20
+    if (upper, lower, third, blank) != (expected_upper, expected_lower,
+                                        expected_third, expected_blank):
+        pb.stop(save=False)
+        raise SystemExit('floorname.state route drifted: the arrival-card tilemap is '
+                         'not live at frame %d; update and inspect BANNER_INTO_WALK'
+                         % banner_at)
     with open(floorname, 'wb') as fh:
         pb.save_state(fh)
     lcdc = pb.memory[0xFF40]

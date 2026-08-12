@@ -62,7 +62,7 @@
 # V4C restores boxes 6/39 to the Japanese x=13,w=5 geometry. Byte 0 remains the raw
 # cursor cell, while the proportional reader scans the complete staged verb and paints
 # it into the remaining 32px. `Remove` is the exact-edge 40px row including the cursor.
-30:$7EC3	Drink
+30:$7EC3	Eat
 30:$7EC6	Read
 30:$7EC9	Wave
 30:$7ECC	See
@@ -323,7 +323,7 @@
 13:$4635	You can't put it here.
 13:$463F	There's nothing here.
 13:$464A	Your pack is full.
-13:$465E	<cE0:46>Took <cE3>
+13:$465E	<cE0:46>Equipped <cE3>
 13:$4666	<cE0:48>Equipped <cE3>
 13:$466E	<cE0:47>Removed <cE3>
 13:$4678	<cE0:49>Removed <cE3>
@@ -332,7 +332,7 @@
 13:$46A0	Stepped on <cE3>
 13:$46A6	Put down <cE3>
 # + pair: `<cE3>を` / `くすりにしてのんだ` -- the herb-into-medicine message.
-13:$46AC	Drank the <cE3>
+13:$46AC	Consumed the <cE3>
 13:$46AF	as medicine.
 13:$46BA	Ate <cE3>
 13:$46C1	Read <cE3>
@@ -421,7 +421,7 @@
 13:$4A6A	<cE0:5A>Monster speed doubled!
 13:$4A80	The wall broke!
 13:$4A90	<var> won't appear.
-# + pair: the Genocide Scroll's own instructions
+# + pair: the Removal Scroll's own instructions
 13:$4A9C	Throw this scroll unread
 13:$4AAF	to banish that species.
 13:$4AC1	<cE0:60>You forgot the map!
@@ -479,7 +479,7 @@
 13:$4D98	It possessed you!
 13:$4DA0	<var> warped away.
 13:$4DAA	<var> got help!
-13:$4DB6	You became a Big Rice Ball!
+13:$4DB6	You became a Big Onigiri!
 13:$4DCA	chanted a curse.
 13:$4DD9	Your shield was cursed!
 # + pair: either subject line completes with `すべて のろわれた！`
@@ -530,7 +530,7 @@
 13:$5073	But nothing changed.
 13:$5086	Lukewarm water gushed out!
 # + pair
-13:$5096	Rice Balls got soaked
+13:$5096	Onigiri got soaked
 13:$50A7	and turned to mush!
 13:$50B7	All your gear came off!
 13:$50CD	But nothing was equipped.
@@ -890,7 +890,7 @@
 14:$61BD	Tagura: Last night?<end><brk> I always sleep soundly,<br> though I have strange<br> dreams...
 14:$61F4	Nagi: To reach Normal or Hard,<br> check the map on the sign<end><brk> beside the Warehouse<br> entrance.<end><brk> It'll show you the way. We're<br> counting on you to save<br> Fumi!
 14:$6256	Kinji: Gran, building that<br> Warehouse made me hungry<br> again.<end><brk> Got anything to eat?
-14:$6291	Old Seer: Nope. Nothing but a<br> Rotten Rice Ball...
+14:$6291	Old Seer: Nope. Nothing but a<br> Rotten Onigiri...
 14:$62B6	Keyaki: Oh, you're awake!
 14:$62C6	Innkeeper: You're in Moonlight<br> Village.<end><brk> Didn't you leave?
 14:$62F8	Keyaki: What?<end><brk> You can't leave the village?!
@@ -994,7 +994,7 @@
 14:$7DBC	Strength 30+
 14:$7DCD	Reached max level
 14:$7DDD	Beat a Shopkeeper
-14:$7DE7	Rotten Rice Ball
+14:$7DE7	Rotten Onigiri
 14:$7DFA	Fell: Pitfall Trap
 14:$7E06	Fell: Poison Arrow
 14:$7E11	Fell: Boulder

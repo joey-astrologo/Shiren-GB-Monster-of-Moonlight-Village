@@ -312,28 +312,27 @@ sh build.sh
 ```
 
 It rebuilds `build/shiren_en.gb`, runs all static build/font/coverage gates, and runs every
-save-backed regression whose fixture exists locally. A successful exit is only the
-**complete local normal-build battery** when every fixture is present. The `saves/`
-directory is deliberately untracked, and a missing fixture makes its conditional block in
-`build.sh` skip rather than fail.
+SRAM-backed regression from the curated, hash-verified files under
+`tests/fixtures/saves/`. `build.sh` stages ignored links at the legacy `saves/` paths and
+refuses to overwrite a differing personal file.
 
-Before calling a run complete, this Bash snippet must print no `MISSING` lines. The generic
-`saves/shiren_en.srm` is excluded because it is an optional convenience copy, not a test
-fixture:
+Two tests also need PyBoy machine states. States are generated rather than tracked because
+they contain a complete emulator snapshot and silently become stale when WRAM/SRAM layouts
+move. On a fresh clone, build once, regenerate the states from the current ROM, inspect the
+four checkpoint images, then rerun the normal build:
 
 ```sh
-battery_missing=0
-while IFS= read -r battery_fixture; do
-    case "$battery_fixture" in
-        saves/shiren_en.srm) continue ;;
-    esac
-    if [ ! -f "$battery_fixture" ]; then
-        echo "MISSING $battery_fixture"
-        battery_missing=1
-    fi
-done < <(rg -o 'saves/[A-Za-z0-9_.-]+' build.sh | sort -u)
-test "$battery_missing" -eq 0
+sh build.sh
+python3 tools/fixtures.py states build/shiren_en.gb \
+    --png-dir build/fixture-state-shots
+python3 tools/fixtures.py preflight --require-states
+sh build.sh
 ```
+
+The preflight verifies all 24 public SRAM hashes, confirms every persisted log/Rankings
+name is the public default `Shiren` (or empty), checks for path/email metadata, and requires
+all four generated machine states. It therefore covers release-only fixtures such as
+`shiren_en_menu.srm`, not just paths mentioned conditionally by `build.sh`.
 
 ### Entire release battery
 
@@ -346,6 +345,9 @@ containment and the brittle menu/Rankings ownership routes on all three layouts.
 
 ```sh
 set -eu
+
+# Hash/privacy-check and stage all tracked SRAMs; require current generated states.
+python3 tools/fixtures.py preflight --require-states
 
 # Normal build and every available save-backed route.
 sh build.sh
@@ -511,15 +513,24 @@ Some strings are pasted into others, so an edit can fail somewhere you did not t
 one makes every description carrying it too wide. The address `--check` reports is where
 the text *lands*, which is the one that matters.
 
-**Everything that looks at a running game needs a save state, and states are not in the
-repo** — they are game data, so `.gitignore` blocks them. On a fresh clone `crashscan.py`
-exits with a traceback, `boxspill.py` reports that it measured nothing, and the screenshot
-tools below cannot start.
+**Everything that looks at a running game needs SRAM or a save state.** The curated SRAM
+inputs are tracked under `tests/fixtures/saves/`, hash/privacy-checked by
+`tools/fixtures.py`, and staged into the ignored `saves/` working directory. PyBoy machine
+states are not tracked: they carry WRAM and cartridge RAM and silently become wrong when a
+layout moves.
 
-To make your own: play `build/shiren_en.gb` in an emulator, save in-game, then hand the
-battery save to `tools/mkstate.py <rom> <your.srm>`, which walks the routes and writes
-`saves/*.state`. It must be an `.srm` **this** build wrote — the save format changed when
-player names widened from four characters to six.
+Regenerate the standard states from the current ROM with:
+
+```sh
+python3 tools/fixtures.py states build/shiren_en.gb \
+    --png-dir build/fixture-state-shots
+```
+
+This wraps `tools/mkstate.py`, using the curated repaired-ranking SRAM to walk from the
+first village house into Forest 1 and write `saves/*.state`. Inspect all four checkpoint
+images. The floor-card tilemap is also checked exactly, so a drifted timed checkpoint now
+fails generation. The source `.srm` must be one
+this save format supports—the player-name widening changed the persistent layout.
 
 `boxspill.py` announcing *"the box never opened in any run, so this measured nothing"* is
 it working correctly. Believe it over a green exit code.
@@ -548,6 +559,7 @@ playing the build rather than by a check.
 ```
 script/en.tsv             THE TRANSLATION. Edit this.
 script/prose_draft.tsv    dialogue as sentences; wrap_en.py turns it into en.tsv rows
+tests/fixtures/           tracked SRAM regressions, hashes, routes and setup instructions
 script/glossary.tsv       391 frozen item / monster / NPC names
 script/intro.tsv          canonical prologue/ending cinematics; edit only the English column
 script/intro_draft.tsv    historical decoding/research draft; not consumed by the build

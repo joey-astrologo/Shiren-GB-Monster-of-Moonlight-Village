@@ -122,7 +122,7 @@
 14:$61BD	Tagura: Last night?<brk>I always sleep soundly, though I have strange dreams...
 14:$61F4	Nagi: To reach Normal or Hard, check the map on the sign beside the Warehouse entrance.<brk>It'll show you the way. We're counting on you to save Fumi!
 14:$6256	Kinji: Gran, building that Warehouse made me hungry again.<brk>Got anything to eat?
-14:$6291	Old Seer: Nope. Nothing but a Rotten Rice Ball...
+14:$6291	Old Seer: Nope. Nothing but a Rotten Onigiri...
 
 # ============ bank 14 — trapped in the village (the post-clear loop) ============
 14:$62B6	Keyaki: Oh, you're awake!
@@ -238,7 +238,7 @@
 14:$7DBC	=Strength 30+
 14:$7DCD	=Reached max level
 14:$7DDD	=Beat a Shopkeeper
-14:$7DE7	=Rotten Rice Ball
+14:$7DE7	=Rotten Onigiri
 14:$7DFA	=Fell: Pitfall Trap
 14:$7E06	=Fell: Poison Arrow
 14:$7E11	=Fell: Boulder

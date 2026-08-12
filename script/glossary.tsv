@@ -126,10 +126,10 @@
 11:$41ED	item	きのや	Wood Arrow
 11:$41F1	item	てつのや	Iron Arrow
 11:$41F6	item	ぎんのや	Silver Arrow
-11:$41FC	item	おにぎり	Rice Ball
-11:$4202	item	おおきいおにぎり	Big Rice Ball
-11:$420C	item	くさったおにぎり	Rotten Rice Ball
-11:$4216	item	きょだいなおにぎり	Huge Rice Ball
+11:$41FC	item	おにぎり	Onigiri
+11:$4202	item	おおきいおにぎり	Big Onigiri
+11:$420C	item	くさったおにぎり	Rotten Onigiri
+11:$4216	item	きょだいなおにぎり	Huge Onigiri
 11:$4222	item	たまご	Egg
 11:$4227	item	しんきしょくりょう1	New Food 1
 
@@ -150,13 +150,13 @@
 11:$4294	item	いかくちょうのたね	Expansion Seed
 11:$429E	item	いしゅくしょうのたね	Shrink Seed
 11:$42A9	item	すばやさのたね	Speed Seed
-11:$42B2	item	ちからのたね	Strength Seed
+11:$42B2	item	ちからのたね	Strength Herb
 11:$42B9	item	どくけしそう	Antidote Herb
 11:$42C1	item	どくそう	Poison Herb
 11:$42C7	item	こんらんそう	Confusion Herb
 11:$42CE	item	すいみんそう	Sleep Herb
 11:$42D5	item	ざっそう	Weed
-11:$42DB	item	たかとびそう	Escape Herb
+11:$42DB	item	たかとびそう	Warp Herb
 11:$42E3	item	しんきくさ1	New Herb 1
 
 # ---------------------------------------------------------------- scrolls
@@ -176,7 +176,7 @@
 11:$4381	item	おおべやのまきもの	Big Room Scroll
 11:$438C	item	モンスターハウスのまきもの	Ambush Scroll
 11:$439A	item	こんらんのまきもの	Confusion Scroll
-11:$43A4	item	ジェノサイドのまきもの	Genocide Scroll
+11:$43A4	item	ジェノサイドのまきもの	Removal Scroll
 11:$43B2	item	はくしのまきもの	Blank Scroll
 11:$43BB	item	まいごのまきもの	Lost Scroll
 11:$43C5	item	てんのめぐみのまきもの	Heaven Scroll
@@ -363,7 +363,7 @@
 11:$4BD2	monster	とおせんりゅう	Floor Dragon
 11:$4BDA	monster	パコレプキン	Pumphantasm
 11:$4BE3	monster	オヤジせんしゃ	Popster Tank
-11:$4BEC	monster	にぎりへんげ	Rice Changer
+11:$4BEC	monster	にぎりへんげ	Nigiri Imp
 11:$4BF5	monster	ノロージョ	Curse Girl
 11:$4BFC	monster	ガイコツまどう	Skull Mage
 11:$4C06	monster	ゲイズ	Gazer
@@ -408,7 +408,7 @@
 11:$4D2E	monster	ドラゴンヘッド	Dragon Head
 11:$4D39	monster	パコレプキーナ	Pumpanshee
 11:$4D43	monster	ガンコせんしゃ	Dadster Tank
-11:$4D4C	monster	にぎりおやかた	Rice Boss
+11:$4D4C	monster	にぎりおやかた	Nigiri Boss
 11:$4D55	monster	ノロージョのあね	Curse Sis
 11:$4D5F	monster	ガイコツまじん	Skull Wizard
 11:$4D69	monster	スーパーゲイズ	Super Gazer
@@ -452,7 +452,7 @@
 11:$4E90	monster	スルードラゴン	Dragon Pit
 11:$4E9A	monster	パコレプキング	Pumplich
 11:$4EA5	monster	イッテツせんしゃ	Oldster Tank
-11:$4EAE	monster	にぎりもとじめ	Rice Master
+11:$4EAE	monster	にぎりもとじめ	Nigiri Lord
 11:$4EB8	monster	ノロージョのはは	Curse Mom
 11:$4EC2	monster	ガイコツまおう	Skullmancer
 11:$4ECB	monster	ハイパーゲイズ	Hyper Gazer

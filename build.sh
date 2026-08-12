@@ -1,6 +1,12 @@
 #!/bin/sh
 # Full build: base ROM -> MBC3 -> 1 MiB -> font + script -> verified English ROM
 set -e
+
+# Verify every public SRAM regression and stage ignored links at the legacy saves/ paths
+# consumed by the emulator tools. Personal saves and generated machine states remain
+# untracked. A differing local file is never overwritten.
+python3 tools/fixtures.py --quiet stage
+
 python3 tools/setmapper.py build/base.gb build/_m.gb --type 13 >/dev/null
 python3 tools/expand.py    build/_m.gb  build/_base_expanded.gb --size-code 5 >/dev/null
 python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en.gb \
@@ -45,15 +51,16 @@ python3 tools/titlelogospill.py build/shiren_en.gb
 python3 tools/markerspill.py build/shiren_en.gb
 python3 tools/newgamesmoke.py build/shiren_en.gb
 
-# Route-specific emulator regressions are conditional because saves/ is deliberately
-# untracked game data. Joey's fixtures make the local build enforce atomic item-page and
+# Curated route-specific SRAM regressions are tracked under tests/fixtures and staged at
+# the legacy saves/ paths above. Machine-state routes remain conditional because PyBoy
+# states are generated locally for the current ROM/WRAM layout. The fixtures enforce atomic item-page and
 # Floor action/Info transitions (including Gitan's shorter action box), the Log-2 Path
 # selector/status field, title/file-menu transitions (including Erase Log 3 rebuilding
 # Copy Log), cursed/plated/unidentified equipment-marker VWF, an exhaustive Items/Info
 # textual-glyph pass, the Copy/Erase/New-Log name-screen
 # restore, the Ground box-5 VWF path, the Decoy Staff live-name producer, and rescued-child
-# nested dialogue entries; a clean
-# translator checkout without those files still builds normally.
+# nested dialogue entries. A fresh clone therefore runs every SRAM-backed route; generate
+# town.state/dungeon.state with tools/fixtures.py to enable the remaining state routes.
 if [ -f saves/town.state ]; then
   # Exact Forest 1 reference plus all 50 live floor fields over every dungeon selector.
   python3 tools/floormarkerspill.py build/shiren_en.gb
@@ -161,8 +168,8 @@ fi
 
 # pyboy reads cartridge RAM from <rom>.ram, so drop the battery save in beside the ROM.
 # That is what lets tools/gbrun.py boot straight into a real file instead of a blank cart.
-# saves/ is gitignored (it is game data), so this is a no-op on a fresh clone -- copy a
-# Mesen .srm there as saves/shiren_en.srm to enable it.
+# This optional convenience save is personal and remains gitignored; copy a Mesen .srm
+# there as saves/shiren_en.srm to boot it automatically.
 if [ -f saves/shiren_en.srm ]; then
   cp -f saves/shiren_en.srm build/shiren_en.gb.ram
 fi

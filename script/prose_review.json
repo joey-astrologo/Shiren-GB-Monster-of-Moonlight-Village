@@ -3218,10 +3218,10 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "d152f64d8526d46248c81dba886cff09dff409f4afbc502fa79eb9d7b84e9318",
-      "current_en_sha256": "98cb0ff9ac4a5af44d40d3664f5fdf177f4063ad4cb3fac97ad13a73d37c9c75",
-      "candidate_en": "Old Seer: Nope. Nothing but a Rotten Rice Ball...",
+      "current_en_sha256": "1a30fbe563a18b0c1ebca6911be39696e74d8c06b62d2103974e8092df9d6a56",
+      "candidate_en": "Old Seer: Nope. Nothing but a Rotten Onigiri...",
       "ambiguities": [],
-      "translator_notes": "Used Old Seer and glossary term Rotten Rice Ball.",
+      "translator_notes": "Used Old Seer and glossary term Rotten Onigiri.",
       "provenance": {
         "provider": "google-gemini",
         "model": "gemini-3.5-flash-lite",
@@ -3244,8 +3244,8 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Old Seer: Nope. Nothing but a Rotten Rice Ball...",
-        "wrapped_en": "Old Seer: Nope. Nothing but a<br> Rotten Rice Ball...",
+        "candidate_en": "Old Seer: Nope. Nothing but a Rotten Onigiri...",
+        "wrapped_en": "Old Seer: Nope. Nothing but a<br> Rotten Onigiri...",
         "problems": [],
         "notes": []
       },

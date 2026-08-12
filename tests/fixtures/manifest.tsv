@@ -1,0 +1,25 @@
+filename	sha256	player_name	purpose
+shiren_en_ground.srm	b8e5a1a2b9db29e6f5070a349074d98b71d75d357a536940a6f1837d65264309	Shiren	Log 1 starts on an Iron Shield; validates the Ground/Floor header VWF path.
+shiren_en_item_menu.srm	26ba6e75a328943c46baf7617b6c52fde09a22ae4d87549be40ea4086b754412	Shiren	Populated inventory spanning multiple pages; validates atomic item-page transitions.
+shiren_en_item_menu_wood_arrow.srm	e6bf4514e9d56103d921a2083df11088c7f5a6bd40ac41d85a0914eb11cca663	Shiren	Log 1 starts on a Wood Arrow; validates Floor action and Info transitions.
+shiren_en_log_1_decoy_staff_enemy.srm	069397c0ee2da4b67718213a90b1a29f369fc91dc8a1e87728a3f848299e3107	Shiren	Shiren stands beside a Decoy Staff target; validates the live decoy-name producer.
+shiren_en_log_1_dragons_maw.srm	39ca2b4b09406cdaf142c08bc2eac364e03c78a38f7086847ff059b9fc88322a	Shiren	Dragon's Maw floor 19 with identity-hidden items and the Fumi companion route.
+shiren_en_log_1_fixed_width_save_info.srm	b42c4b79bd6bfe077ca83e004bddd4a4c25663bd887deb7c70c82c4a04ef4207	Shiren	Koma Cave floor 5 save summary; validates proportional location rendering.
+shiren_en_log_1_freeze_on_exit.srm	14bb4b15c23a8300a4f319e7a424d81e9880c09c0ea5b6d34b27742d080ba1bb	Shiren	One step from the rescued-child exit; guards the former white-screen freeze.
+shiren_en_log_1_hunger_bracer_message.srm	eb9957936f5337cf9533d2af16c5a1374b8ec377dcd2766221b25b537307dcf2	Shiren	No-Hunger Bracer pickup; validates both description lines.
+shiren_en_log_1_koppa_exit_pee.srm	49086d31a05695d156656b90ea60d394d23abb690f01c8e6f104d4021319f4ed	Shiren	Koppa stairs route; guards companion text selection.
+shiren_en_log_1_koppa_exit_pee_v2.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Second Koppa floor with the stairs immediately right of Shiren.
+shiren_en_log_1_orochi_symbol.srm	ea41082a249c5d42f3f82b6e049ebe6f09c39696fa767f1282f6727b3640f1b3	Shiren	Cleared-Orochi badge and Rankings/Adventure ownership cycle.
+shiren_en_log_1_password.srm	e316fe86ef52494d7ce88d45c19b1718534b413e124f45c10fa2a19787c30a57	Shiren	Pass/Awards screen fixture used for title, VWF and all-entry matrix checks.
+shiren_en_log_1_pot_see_action.srm	c2276bdcc144f7f25e1c66c543e185473f6cb8af119188e91ef892016dc5baa9	Shiren	Log 1 starts on an empty Storage Pot; validates the See result.
+shiren_en_log_1_quit_erase_copy_log_vwf.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Load, Quit, Erase Log 3 route; validates Copy Log VWF restoration.
+shiren_en_log_1_shield_VWF.srm	7ba00c75f4a4037e8b78f83e28cd116950dab245145cf7db8d73ef0175d986e4	Shiren	Two-star unidentified shield; validates list and item-information VWF.
+shiren_en_log_1_talk_to_koppa.srm	0783d931ac7a4a8e756b803c08471b81286a6af98afc2e8b8680a9f69e2ea17e	Shiren	Koppa is directly left of Shiren; guards the former extra empty dialogue box.
+shiren_en_log_1_trigger_ending.srm	ec8424c674b57a619dc9522f1f91aa2bbb5be9e30b82a90a52715788396f5426	Shiren	Talking to the adjacent elder triggers the Hard ending and full credit roll.
+shiren_en_log_2_action_pots.srm	c0d80326e65b8fcfeda65611175e02074a890eba1471f56bd1b24cdb1524ece9	Shiren	Log 2 contains Back and Todo Pots; validates per-charge Press rows.
+shiren_en_log_3_erase_copy_log_vwf.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Direct Erase Log 3 route; validates Copy Log VWF restoration.
+shiren_en_log_3_gitan_crash.srm	7219d68f45bea5f164f3e6830d4154750252c8b2b653785f903ff9e3282707f2	Shiren	Log 3 starts above 699 Gitan; guards Gitan Info return and Continue card.
+shiren_en_menu.srm	5968c93f19a453f1363ac84c9ff7c66590ec09dc9caeea996c5101ed906e9afc	Shiren	General menu/start-flow fixture and deterministic source for generated machine states.
+shiren_en_path_select.srm	c96a72324655701e68ae7538d0260aa02d03b0c4c02e214733ac080fc06a5bda	Shiren	Log 2 at the path sign; validates Easy, Normal and Hard plus name flow.
+shiren_en_ranking_repaired.srm	51a03e080d621375730eb7b0f5d3e36b73c80bf7b3ea9b7f64d25ca59f0f9988	Shiren	Repaired wide-name ranking table used by Rankings and structured-screen controls.
+shiren_en_rescue.srm	35b5cc5d031a3210636c3225508ac6bb3793de1248444655f293e3f865c66620	Shiren	Nagi follows Shiren beside the exit stairs; validates rescued-child messages.

@@ -38,8 +38,8 @@ LONG_ROWS = (
     'Unlucky Staff[77]',
 )
 MAIN_ROWS = ('Item', 'Floor', 'Map', 'Quit')
-# Remove is the widest live first action (Joey's equipment page), while the synthetic
-# herb flow happens to show Drink.  A candidate has to survive the hostile combination.
+# Remove is the widest live first action; herb and food flows both show the narrower Eat.
+# A candidate has to survive the hostile combination.
 ACTION_ROWS = ('Remove', 'Toss', 'Drop', 'Info')
 RUNS = (57, 11, 4, 1)
 

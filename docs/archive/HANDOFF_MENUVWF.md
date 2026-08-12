@@ -751,7 +751,7 @@ soft:
 
 Row mechanics, traced at `31:$40E4` (source `bc` ← `$C69F/$C6A0`, dest `hl` = shadow row,
 `d` = row#): item rows are consecutive `$FF`-terminated code strings staged in `$C616`
-("  Vision Herb", "  Big Rice Ball", 3 empty rows, then header box 14 from ROM `31:$4390`).
+("  Vision Herb", "  Big Onigiri", 3 empty rows, then header box 14 from ROM `31:$4390`).
 Item rows land on shadow rows 4,6,8,10,12 — five slots a page, width 18, cell 0 is the
 cursor slot. Redraws after closing an overlaying box also come through the drawer
 (f301-304) — the allocator must survive partial redraws, not just full screens.

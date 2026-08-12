@@ -63,10 +63,10 @@
 # STALE COMMENT REMOVED 2026-08-04: this said "the box is 4 cells wide, everything here is
 # therefore <= 4", which was measured on the JAPANESE box and stopped being true when
 # script/box_geometry.tsv widened boxes 6/39 from x=13,w=5 to x=9,w=9. The budget is
-# 8 CELLS, not 4 -- byte 0 is the cursor. That is what let Sip/Arm/Doff become
-# Drink/Equip/Remove (Joey, 2026-08-04). FINDINGS.md predicted exactly this: the box is
+# 8 CELLS, not 4 -- byte 0 is the cursor. That is what let the action labels expand to
+# Eat/Equip/Remove. FINDINGS.md predicted exactly this: the box is
 # right-aligned with slack to its left, and the item list beside it ends at column 10.
-30:$7EC3	Drink
+30:$7EC3	Eat
 30:$7EC6	Read
 30:$7EC9	Wave
 30:$7ECC	See
