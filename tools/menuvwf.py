@@ -1243,9 +1243,21 @@ fihelppublish:
 fiaction:
   ; Info's four-row body leaves its bottom border at shadow row 11. Pickers with
   ; five or six choices continue below it, so convert that stale edge to an
-  ; interior spacer and pre-stage the real bottom at row 13 or 15. Pickers with
-  ; four or fewer choices keep the established path ending at row 11.
+  ; interior spacer and pre-stage the real bottom at row 13 or 15. Four-choice
+  ; pickers end on row 11. Three-choice pickers already have their native bottom
+  ; on row 9, so erase the detached stale Info edge before publishing the map.
   ld a,[$C69C]
+  cp $03
+  jr nz,fiactiontall
+  ld hl,$C46D
+  xor a
+  ld b,$07
+fiactionclear:
+  ld [hl+],a
+  dec b
+  jr nz,fiactionclear
+  jr fipublish
+fiactiontall:
   cp $05
   jr c,fiactionnormal
   ld hl,$C46D

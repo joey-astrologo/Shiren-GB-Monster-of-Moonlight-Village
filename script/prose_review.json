@@ -642,10 +642,10 @@
       "section": "bank 14 — waking at the inn",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "cb88476b72bf3232a44c8be92367f0c2137a1dc29dcd9cb73fb458a50053dce6",
-      "current_en_sha256": "202a166f80ceea4c321723c00098d2e3c500a0c2b8568c51a92dc3fa83def6f4",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "e9124b4cc85be51b0aecbaba1dd319e8aa0836bc9526f83d620ef23c6314a2b0",
+      "current_en_sha256": "2622659c17d723a71bdcd439ee4e5695cc9af42fd68c549ddd954e08bb303cc9",
       "candidate_en": "<name> received <cE3>4.",
       "ambiguities": [],
       "translator_notes": "This is a standard system notification for receiving an item, where <cE3>4 is a placeholder for the item received.",
@@ -673,7 +673,8 @@
         "candidate_en": "<name> received <cE3>4.",
         "wrapped_en": "<name> received <cE3>4.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "",
       "verified_at": "2026-08-10T17:53:23+00:00"
@@ -828,6 +829,21 @@
       },
       "review_notes": "human-edited candidate",
       "verified_at": "2026-08-10T18:07:11+00:00"
+    },
+    "14:$52AB": {
+      "section": "bank 14 — waking at the inn",
+      "eligible": true,
+      "skip_reason": null,
+      "verified": false,
+      "state": "pending",
+      "source_sha256": "8eb82b76b3f3fbf986a1012b5654cf6b420a600e45fa6343aa84c6f81fbd8a1e",
+      "current_en_sha256": "4af90a791f1681c420ff8b3e003c29c889aa3b33eb4bce88bd1d893553dcfe57",
+      "candidate_en": null,
+      "ambiguities": [],
+      "translator_notes": "",
+      "provenance": null,
+      "checks": null,
+      "review_notes": ""
     },
     "14:$52B8": {
       "section": "bank 14 — Keyaki at the shrine, and Tanmomo",
@@ -1891,10 +1907,10 @@
       "section": "bank 14 — gifts, and Nagi at Kuyo Pass",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "a6f3c6ab7eac2583f770247032f4653686356f20632f177891583aee3acbcbe1",
-      "current_en_sha256": "1b16f66e1de5917bab5bebfbe02b7e500c5bec359b56839af6f8a4826c6135ba",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "4ca6f9ab952530b7f6697d1121a49b4791493478f4d57b6135005d7786f18821",
+      "current_en_sha256": "6b7dab1c4415ce44e2a774235e73264a81bd0c6d16db6724323e1d3a36613cf5",
       "candidate_en": "<name> received <cE3>1.",
       "ambiguities": [],
       "translator_notes": "Preserved control token and inseparable argument.",
@@ -1923,7 +1939,8 @@
         "candidate_en": "<name> received <cE3>1.",
         "wrapped_en": "<name> received <cE3>1.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "",
       "verified_at": "2026-08-10T18:11:56+00:00"
@@ -2043,10 +2060,10 @@
       "section": "bank 14 — gifts, and Nagi at Kuyo Pass",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "55ac2d6c1a4242538446f440d613ffe78f2d3702e03a59ea43fc2487f6dc2818",
-      "current_en_sha256": "926772666629f44263a3fb6eda8d7f78a6afc88528e876f5f5e28d8a5ded0745",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "853b53ec04ed3141f78a1da5108ae3e831bacd4a094918904ed1908944ee355f",
+      "current_en_sha256": "ccab3ec4f50d675ddf0f2b560d4356c1d620ecd1f1b7da43196718f8e1e7773d",
       "candidate_en": "<name> received <cE3>7.",
       "ambiguities": [],
       "translator_notes": "Preserved control order and inseparable argument.",
@@ -2075,7 +2092,8 @@
         "candidate_en": "<name> received <cE3>7.",
         "wrapped_en": "<name> received <cE3>7.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "",
       "verified_at": "2026-08-10T18:11:58+00:00"
@@ -3749,10 +3767,10 @@
       "section": "bank 14 — trapped in the village (the post-clear loop)",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "50f7b377eabca34c8462718af0b9d1145209c8c4d0e72e3e1ea16e078cbe4363",
-      "current_en_sha256": "076ea71bbba52e58b750435def1eabd3150df945232d7258e22758f93b78c076",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "a73e6a66d5c7f254d397d3ad058e66d2194b051ab18583d91f2317cbbde4226f",
+      "current_en_sha256": "ecba8991b1b878d96d343be3f0888966a4bebb19404ab8e093c2d3ffb322e489",
       "candidate_en": "<name> received <cE3>5.",
       "ambiguities": [],
       "translator_notes": "",
@@ -3769,7 +3787,8 @@
         "candidate_en": "<name> received <cE3>5.",
         "wrapped_en": "<name> received <cE3>5.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
       "verified_at": "2026-08-10T18:39:44+00:00"
@@ -5854,7 +5873,7 @@
       "verified": false,
       "state": "excluded",
       "source_sha256": "9d4240ce3653bb724e01a85fae848cbd706d2be311b684f413cfab4df5330695",
-      "current_en_sha256": "3faa59b67ef371193fc10a882726073edf2c00064de94554401d8bb965c4e26b",
+      "current_en_sha256": "82387f45760e51bed5cc4eea920256b1994d636c08205ac482c74a3837f3d628",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -8485,10 +8504,10 @@
       "section": "bank 11 — Yoshizota, and the village after Nagi",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "b9248e5c85d918e6d9ba1938fcaf37af172534dfc90632a1579361eb8345e8c5",
-      "current_en_sha256": "8f94e903e0d67d68281ad3daff471e9019301a947c09cc2ab1e7403c1e0f2905",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "ec77e995be32c3e5636e996d9a29586acc493884c09f99c877956783354b513d",
+      "current_en_sha256": "8cd03406f5634b4c2582ed412da098a1b1b76a9b5b62d61c7028cca8af04cb1f",
       "candidate_en": "<name> received <cE3>6.",
       "ambiguities": [],
       "translator_notes": "",
@@ -8505,7 +8524,8 @@
         "candidate_en": "<name> received <cE3>6.",
         "wrapped_en": "<name> received <cE3>6.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "Direct Japanese-to-English review by Codex; benchmark preferences incorporated where applicable; 2026-08-10",
       "verified_at": "2026-08-10T18:46:01+00:00"
@@ -8572,10 +8592,10 @@
       "section": "bank 11 — Yoshizota, and the village after Nagi",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "becd934b8ae4c029033b4ddbdab34658ab400fe2d9a145d63588044fa0a46c21",
-      "current_en_sha256": "095a0d27861ac197dde99e2f53ebcb631dc6e5b266113858a5b7cbbb6cbb87a5",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "944fc49116fb3dd64990147b35f04de8b16a26e1f012e8d955c60031ad435ad4",
+      "current_en_sha256": "531561528ade80feef720ab36ecb7568f690e550ede2bf70b84468b54d319a43",
       "candidate_en": "<name> received <cE3>3.",
       "ambiguities": [],
       "translator_notes": "",
@@ -8592,7 +8612,8 @@
         "candidate_en": "<name> received <cE3>3.",
         "wrapped_en": "<name> received <cE3>3.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "Direct Japanese-to-English review by Codex; benchmark preferences incorporated where applicable; 2026-08-10",
       "verified_at": "2026-08-10T18:46:01+00:00"
@@ -9082,8 +9103,8 @@
       "skip_reason": "verbatim layout/menu row",
       "verified": false,
       "state": "excluded",
-      "source_sha256": "28e16f234e157d69c06ad6b499bd7089125f6ffb20553816c0dd4415d7ef8bf1",
-      "current_en_sha256": "a87e63722ba585b356eabea2b19ba274378c841e9765dff1e223f9430ddd9afc",
+      "source_sha256": "882be26899c0c34a6973710fb82688dd8bb7e5d0337a8321e2da8e379acd5c7d",
+      "current_en_sha256": "30cb1da2e11d32c464603682ea72a60287d9b2e9d235fdfa386391d49d3c0a01",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -9530,10 +9551,10 @@
       "section": "bank 11 — Yoshizota, and the village after Nagi",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "8cc8bca3bc1a4978ec021f484390ce83026dacbdb8b6d93016d802363df3669b",
-      "current_en_sha256": "55c79ee4297dfe0ed837e866fdd4dedf758353b2b2b4501d944aed1744f9e7b9",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "77931f09e80a73fc12067f69102f9c76569df7fa49b548bbadd95468e30f1807",
+      "current_en_sha256": "fe9875d5b449b277ad1b95bd50e8dd4e644a4fe2d81ccde95fdb1ee72d471934",
       "candidate_en": "<name> received <cE3>2.",
       "ambiguities": [],
       "translator_notes": "",
@@ -9550,7 +9571,8 @@
         "candidate_en": "<name> received <cE3>2.",
         "wrapped_en": "<name> received <cE3>2.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
       "verified_at": "2026-08-10T18:47:51+00:00"
@@ -9663,8 +9685,8 @@
       "skip_reason": "verbatim layout/menu row",
       "verified": false,
       "state": "excluded",
-      "source_sha256": "1a2cfab9aa8496184a30c9054fbb97cb84cd631521a7f5e76c0ae08cbc1bc44d",
-      "current_en_sha256": "5f857f43275621ef18d0d1827568f37af29dad49136febb7a0a853e6f549a77e",
+      "source_sha256": "ecd18e2c8a4828a82a23e98c734cea64fac073540113c94f4bff5dba54010ad7",
+      "current_en_sha256": "0ddfd65bce79491c05127fff993e230850ee28ed235031ca6963744cd26bd63d",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -10024,10 +10046,10 @@
       "section": "bank 11 — Yoshizota, and the village after Nagi",
       "eligible": true,
       "skip_reason": null,
-      "verified": true,
-      "state": "accepted",
-      "source_sha256": "94be8cba6ce9ae7eaba1ae2bfc02f3ae2d09b52d27bee42ce15be31a61ccf1db",
-      "current_en_sha256": "cb172c888d14fd8428c9edb859a59a4cef1440a24892195c28a97570cc8edfe9",
+      "verified": false,
+      "state": "stale",
+      "source_sha256": "3f0fe54a7020ccb67fa8e3c567a46a1c0b68ad482c536ac255132fe75cbd7dcd",
+      "current_en_sha256": "b296c2040324ac65b9bc97e7c2d3969525b950dee1cdd74c4b146bafef9d81d4",
       "candidate_en": "<name> received <cE3><$00>.",
       "ambiguities": [],
       "translator_notes": "",
@@ -10044,7 +10066,8 @@
         "candidate_en": "<name> received <cE3><$00>.",
         "wrapped_en": "<name> received <cE3><$00>.",
         "problems": [],
-        "notes": []
+        "notes": [],
+        "stale": "Japanese source or current prose changed after this state was recorded"
       },
       "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
       "verified_at": "2026-08-10T18:47:53+00:00"
@@ -14577,6 +14600,21 @@
       "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
       "verified_at": "2026-08-10T18:58:18+00:00"
     },
+    "14:$77FD": {
+      "section": "bank 14: the companions",
+      "eligible": true,
+      "skip_reason": null,
+      "verified": false,
+      "state": "pending",
+      "source_sha256": "40f873e687b2d9a0b771f335c963b34e3f865297feb1fd7d333805c21147fd68",
+      "current_en_sha256": "d96eac6fd4853d80f8ed6b96b515d831dfcae454b8a5a21e7275655f3557e6bd",
+      "candidate_en": null,
+      "ambiguities": [],
+      "translator_notes": "",
+      "provenance": null,
+      "checks": null,
+      "review_notes": ""
+    },
     "14:$780A": {
       "section": "bank 14: the companions",
       "eligible": true,
@@ -14724,6 +14762,6 @@
     }
   },
   "source_file": "script/prose_draft.tsv",
-  "source_count": 519,
-  "updated_at": "2026-08-12T10:40:06+00:00"
+  "source_count": 521,
+  "updated_at": "2026-08-13T15:24:37+00:00"
 }

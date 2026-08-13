@@ -8,16 +8,17 @@ presentation; Gemini also produced candidates that required terminology and cont
 repairs. For speed and insertion safety, the remaining corpus was reviewed directly from
 the Japanese. Gemini stays useful as a second opinion on selected lines.
 
-The direct pass has verified all 435 eligible prose rows. The 供養/Kuyou place-name
-wordplay at `11:$5CE2` was resolved by the project owner as “Kuyo Pass, where the lost find
-rest.” Eighty-four byte-exact/layout rows remain excluded from the Gemini queue by design;
-they received a separate manual semantic/control-layout audit on 2026-08-10, with every
-edited row rechecked against the proportional source, pixel and shared-tile limits.
+The direct pass reviewed the eligible prose corpus. The synchronized ledger currently has
+521 rows: 426 accepted, 8 stale after later source/control-token edits, 2 pending, and 85
+excluded byte-exact/layout rows. The 供養/Kuyou place-name wordplay at `11:$5CE2` was
+resolved by the project owner as “Kuyo Pass, where the lost find rest.” The excluded rows
+received a separate manual semantic/control-layout audit on 2026-08-10, with every edited
+row rechecked against the proportional source, pixel and shared-tile limits.
 
-`tools/gemini_prose.py` is a proposal and review layer for the 519 rows in
+`tools/gemini_prose.py` is a proposal and review layer for the 521 rows in
 `script/prose_draft.tsv`. It does not translate menus, labels, item descriptions, the
-frozen glossary, or `script/intro.tsv`. Eighty-four byte-exact/layout rows whose draft
-starts with `=` are excluded automatically, leaving 435 ordinary story-prose candidates.
+frozen glossary, or `script/intro.tsv`. Eighty-five byte-exact/layout rows whose draft
+starts with `=` are excluded automatically, leaving 436 ordinary story-prose candidates.
 
 Gemini never writes `script/prose_draft.tsv` or `script/en.tsv`. A live request writes a
 candidate to the tracked `script/prose_review.json`; a human must review and accept it.

@@ -54,8 +54,8 @@ class GeminiProseTests(unittest.TestCase):
     def test_scope_is_prose_only(self):
         eligible = [row for row in self.rows if gp.classify(row)[0]]
         excluded = [row for row in self.rows if not gp.classify(row)[0]]
-        self.assertEqual(519, len(self.rows))
-        self.assertEqual(434, len(eligible))
+        self.assertEqual(521, len(self.rows))
+        self.assertEqual(436, len(eligible))
         self.assertEqual(85, len(excluded))
         self.assertTrue(all(row['verbatim'] for row in excluded))
 
@@ -158,13 +158,16 @@ class GeminiProseTests(unittest.TestCase):
         state = gp.sync_review(self.rows, self.by_loc,
                                {'schema_version': gp.SCHEMA_VERSION, 'entries': {}})
         targets = gp.select_batch(self.rows, state, count=8, loc='14:$5281')
-        self.assertEqual(['14:$5281', '14:$5294'], [row['loc'] for row in targets])
+        self.assertEqual(['14:$5281', '14:$5294', '14:$52AB'],
+                         [row['loc'] for row in targets])
         prompt = gp.prompt_for_batch(targets, self.rows, self.by_loc, state,
                                      gp.translation_terms())
         self.assertIn(self.by_loc['14:$5281']['jp'], prompt)
         self.assertIn(self.by_loc['14:$5294']['jp'], prompt)
+        self.assertIn(self.by_loc['14:$52AB']['jp'], prompt)
         self.assertNotIn(self.by_row['14:$5281']['text'], prompt)
         self.assertNotIn(self.by_row['14:$5294']['text'], prompt)
+        self.assertNotIn(self.by_row['14:$52AB']['text'], prompt)
         self.assertNotIn(self.by_loc['14:$52B8']['jp'], prompt)
 
     def test_short_name_and_variant_speaker_prefixes_are_required(self):

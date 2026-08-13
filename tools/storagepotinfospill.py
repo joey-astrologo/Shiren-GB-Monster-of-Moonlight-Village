@@ -29,19 +29,20 @@ SCRIPT_PREFIX = {
 }
 
 
-def navigation_script(action_count):
+def navigation_script(action_count, dismiss_button='b'):
     script = dict(SCRIPT_PREFIX)
     for index in range(action_count - 1):
         script[2480 + index * 60] = ('down',)
     info = 2480 + (action_count - 1) * 60
     script[info] = ('a',)
-    script[info + 420] = ('b',)
+    script[info + 420] = (dismiss_button,)
     return script, info + 420, info + 620
 
 
-def run(rom, ram, png=None, action_count=6, label='storagepotinfospill'):
+def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
+        dismiss_button='b'):
     action_shape = (13, 3, action_count, 5, 2)
-    script, return_frame, frame_count = navigation_script(action_count)
+    script, return_frame, frame_count = navigation_script(action_count, dismiss_button)
     profile = menuspill.renderer_profile(rom)
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('%s: requires the approved proportional renderer' % label)
@@ -129,6 +130,13 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill'):
     if cells(bottom_row) != bottom:
         problems.append('action bottom edge row %d is %s'
                         % (bottom_row, cells(bottom_row).hex(' ')))
+    # A shorter picker must not retain any edge from the taller Info body or a
+    # previously drawn picker. This is what catches Gitan's detached row-11 edge.
+    blank = bytes(7)
+    for row in range(bottom_row + 1, 18):
+        if cells(row) != blank:
+            problems.append('stale action-box cells remain on row %d: %s'
+                            % (row, cells(row).hex(' ')))
 
     print('%s: dispatches %s; action rows %s; %d white frame(s); '
           'row11=%s row%d=%s; %d problem(s)'

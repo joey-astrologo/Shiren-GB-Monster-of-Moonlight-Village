@@ -82,6 +82,9 @@ fi
 if [ -f saves/shiren_en_log2_scroll_menu.srm ]; then
   python3 tools/scrollinfospill.py build/shiren_en.gb
 fi
+if [ -f saves/shiren_en_log2_gitan_menu_boarder.srm ]; then
+  python3 tools/gitanmenuborderspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log_3_gitan_crash.srm ]; then
   python3 tools/waitcardspill.py build/shiren_en.gb
   python3 tools/gitaninfospill.py build/shiren_en.gb

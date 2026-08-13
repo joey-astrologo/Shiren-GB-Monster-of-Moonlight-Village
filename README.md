@@ -586,6 +586,7 @@ tools/itempagespill.py    real-save atomic item-page transition verifier
 tools/floorinfospill.py   real-save Floor action/Info transition verifier
 tools/scrollinfospill.py  Log-2 five-choice Scroll Info-return/border regression
 tools/storagepotinfospill.py Log-2 six-choice Pot Info-return/border regression
+tools/gitanmenuborderspill.py Log-2 three-choice Gitan Info-return/border regression
 tools/gitaninfospill.py   Log-3 three-choice Gitan Info-dismissal regression
 tools/decoyname.py        removes the runtime Japanese Decoy Staff name prefix
 tools/decoynamespill.py   Log-1 decoy attack/live-player-name regression
