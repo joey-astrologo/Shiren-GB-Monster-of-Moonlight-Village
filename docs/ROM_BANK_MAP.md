@@ -89,7 +89,7 @@ can consume more of a pool bank later.
 | 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 60 | `$5000-$747D` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |
-| 61 | `$7000-$77E0` | `tools/titlecard.py`: pre-intro copyright card | Exclusive tail |
+| 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
 | 62 | `$7000-$7F43` | `tools/titlelogo.py`: illustrated title screen | Exclusive tail |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |
 

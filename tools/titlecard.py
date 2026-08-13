@@ -8,8 +8,9 @@ embeds the resulting deduplicated 2bpp
 tiles and complete visible map, so it does not depend on a file outside the repository.
 
 The card is loaded after the native decompressor finishes while the LCD is off. Its native
-fade, timing, skip behavior, transition into cinematic scene 0, and the later illustrated
-title-screen dispatch remain unchanged.
+fade, timing, skip behavior, and transition into cinematic scene 0 remain unchanged. The
+same guarded wrapper also recognizes both native title layouts (fresh and completion-
+unlocked) before dispatching the illustrated English title.
 """
 import base64
 import hashlib
@@ -137,17 +138,37 @@ def _uploader(code_org, groups, group_addresses, map_org, logo_far=None):
 """ % (address, _vram_addr(tile), len(data)))
 
     title_target = 'title_check' if logo_far else 'done'
+    alternate_target = 'title_check_alt' if logo_far else 'done'
     title_check = ''
     if logo_far:
         far_index, far_bank = logo_far
         title_check = f"""
+title_check_alt:
+        ; The completion-unlocked alternate title finishes one map row earlier than the
+        ; ordinary title.  A still contains H from the failed ordinary-route check;
+        ; avoid slowing the timing-sensitive ordinary title/marker path.
+        cp $9B
+        jr nz,done
+        ld a,l
+        cp $C0
+        jr nz,done
+        ld a,d
+        cp $77
+        jr nz,done
+        ld a,e
+        cp $70
+        jr z,title_draw
+        jr done
 title_check:
+        ; Keep this ordinary-title path instruction-for-instruction equivalent to the
+        ; original hook: the same native pointer pair also occurs during marker fades.
         ld a,d
         cp $74
         jr nz,done
         ld a,e
         cp $99
         jr nz,done
+title_draw:
         ld a,[$FF40]
         and $80
         jr nz,done
@@ -166,7 +187,7 @@ upload:
 
         ld a,h
         cp $%02X
-        jr nz,done
+        jr nz,%s
         ld a,l
         and a
         jr nz,done
@@ -222,8 +243,9 @@ copy:
         or c
         jr nz,copy
         ret
-""" % (NATIVE_DECOMPRESS, FINAL_HL >> 8, FINAL_DE >> 8, title_target,
-       FINAL_DE & 0xFF, title_target, title_check, ''.join(calls), map_org, MAP_AT,
+""" % (NATIVE_DECOMPRESS, FINAL_HL >> 8, alternate_target,
+       FINAL_DE >> 8, title_target, FINAL_DE & 0xFF, title_target, title_check,
+       ''.join(calls), map_org, MAP_AT,
        MAP_HEIGHT, MAP_WIDTH)
     return gbasm.assemble(source, code_org)
 

@@ -47,7 +47,8 @@ python3 tools/coverage.py
 # The final test continues beyond the marker and proves the same New Log route still
 # reaches a live, walkable village.
 python3 tools/titlecardspill.py build/shiren_en.gb
-python3 tools/titlelogospill.py build/shiren_en.gb
+python3 tools/titlelogospill.py build/shiren_en.gb \
+  --ram saves/shiren_en096_broken_title_screen.srm
 python3 tools/markerspill.py build/shiren_en.gb
 python3 tools/newgamesmoke.py build/shiren_en.gb
 

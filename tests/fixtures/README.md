@@ -3,6 +3,8 @@
 This directory contains tester-created 32 KiB battery-backed SRAM snapshots used by the
 emulator regressions. They do not contain a ROM image. Every fixture uses the default
 player name `Shiren`; `manifest.tsv` records its SHA-256 and the route it protects.
+The progressed EverDrive snapshot also protects the save-dependent alternate native title
+route; both fresh and completion-unlocked boots must show the same localized title artwork.
 
 Personal saves still belong in the ignored top-level `saves/` directory. Stage links to
 the curated files and verify their hashes/privacy fields with:
