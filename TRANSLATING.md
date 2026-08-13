@@ -212,7 +212,7 @@ by whichever build last failed, which made a stale list of BADPOOL strings look 
 
 ## 3a. Control tokens — the one thing that fails SILENTLY
 
-`<var>`, `<name>`, `<cE3>` and `<cF0:xx>` inject runtime data: a monster name, the player's
+`<var>`, `<name>`, `<cE3>` (or dialogue `<cE3:xx>`) and `<cF0:xx>` inject runtime data: a monster name, the player's
 name, a table string. **A translation that drops one encodes cleanly, inserts cleanly, and
 passes every reference check and crash seed — and then prints "The  attacked!" on screen.**
 
@@ -221,7 +221,7 @@ rather than shipping it. Rules:
 
 | token | rule |
 |---|---|
-| `<var>` `<name>` `<cE3>` `<cE4>` `<cF0:xx>` `<cE0:xx>` `<cE7:xx>` `<cEC:xx>` `<mode0>` `<mode1>` `<cF1>` `<cF2>` `<cF3>` `<cF4>` | **must survive exactly** — same tokens, same arguments, same counts |
+| `<var>` `<name>` `<cE3>` / `<cE3:xx>` `<cE4>` `<cF0:xx>` `<cE0:xx>` `<cE7:xx>` `<cEC:xx>` `<mode0>` `<mode1>` `<cF1>` `<cF2>` `<cF3>` `<cF4>` | **must survive exactly** — same tokens, same arguments, same counts |
 | `<br>` `<brk>` `<end>` | **yours** — line breaks and pagination are a translation decision |
 | `<$XX>` | raw layout bytes; covered by `escape_is_dte_code`, not by parity |
 
@@ -530,9 +530,9 @@ Be aware of these; they will not fail a build.
 `dialogue_preview.py` draws the box.
 
 One decoding hazard, small but real, and **session 7's re-extraction roughly doubled it**:
-in banks 11 and 14 the codes `<cE3>` (10 strings) and `<mode1>` (**33**, was 17) each take
+in banks 11 and 14 the codes `<cE3:xx>` (12 strings) and `<mode1>` (**33**, was 17) each take
 an **argument byte** that `script.tsv` prints as an ordinary character — a stray digit after
-`<cE3>`, a stray kana after `<mode1>`. It is a pause length or an item selector, not text.
+`<cE3:xx>`, a stray kana after `<mode1>`. It is a pause length or an item selector, not text.
 **Leave it alone**; do not "tidy" a character that follows one of those two tokens.
 Engineering detail in `FINDINGS.md` → "The composer has TWO dispatch tables".
 

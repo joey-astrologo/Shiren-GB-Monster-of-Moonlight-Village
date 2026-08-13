@@ -76,6 +76,12 @@ fi
 if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   python3 tools/floorinfospill.py build/shiren_en.gb
 fi
+if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
+  python3 tools/storagepotinfospill.py build/shiren_en.gb
+fi
+if [ -f saves/shiren_en_log2_scroll_menu.srm ]; then
+  python3 tools/scrollinfospill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log_3_gitan_crash.srm ]; then
   python3 tools/waitcardspill.py build/shiren_en.gb
   python3 tools/gitaninfospill.py build/shiren_en.gb
@@ -85,6 +91,9 @@ if [ -f saves/shiren_en_log_1_decoy_staff_enemy.srm ]; then
 fi
 if [ -f saves/shiren_en_log_1_hunger_bracer_message.srm ]; then
   python3 tools/nohungerbracerspill.py build/shiren_en.gb
+fi
+if [ -f saves/shiren_en_log2_walk_left.srm ]; then
+  python3 tools/keyakigiftspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_path_select.srm ]; then
   python3 tools/pathspill.py build/shiren_en.gb
@@ -104,6 +113,8 @@ if [ -f saves/shiren_en_log_1_shield_VWF.srm ]; then
 fi
 if [ -f saves/shiren_en_log_1_pot_see_action.srm ]; then
   python3 tools/potseespill.py build/shiren_en.gb
+  python3 tools/potseespill.py build/shiren_en.gb \
+    --ram saves/shiren_en_log2_storage_pot_menu.srm
 fi
 if [ -f saves/shiren_en_log_2_action_pots.srm ]; then
   python3 tools/actionpotspill.py build/shiren_en.gb

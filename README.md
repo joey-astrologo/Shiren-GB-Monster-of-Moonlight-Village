@@ -220,10 +220,15 @@ writes a native-resolution looping GIF to `build/forced_ending_playback.gif`. It
 documents optional ROM and output paths.
 
 **Anything in angle brackets is a control code and must survive.** `<name>` is the player's
-name, `<var>` a monster or item name, `<cE3>` an item name with its count, `<br>` a line
+name, `<var>` a monster or item name, `<cE3>` (or dialogue `<cE3:xx>`) a selected item
+name with its count, `<br>` a line
 break, `<brk>` a page/window break, and `<end>` a message-end marker. `lint_en.py` fails
 the build if you drop one — the game substitutes real values into those slots at runtime,
 so a lost token is a lost word on screen, not a cosmetic difference.
+
+Keyaki's Otogiri Herb receipt (`14:$52AB`) is manifested from the public Log-2 walk-left
+route. Its `<cE3:FE>` token is an item substitution plus selector byte, not visible text;
+`tools/keyakigiftspill.py` verifies that hidden entry and the complete four-message event.
 
 Three Nagi interior rows (`14:$5AFD`, `$5B81`, `$70BE`) remain manifested conservatively:
 they were observed during investigation of the formerly corrupt stair pointer. The
@@ -329,7 +334,7 @@ python3 tools/fixtures.py preflight --require-states
 sh build.sh
 ```
 
-The preflight verifies all 24 public SRAM hashes, confirms every persisted log/Rankings
+The preflight verifies every public SRAM hash, confirms every persisted log/Rankings
 name is the public default `Shiren` (or empty), checks for path/email metadata, and requires
 all four generated machine states. It therefore covers release-only fixtures such as
 `shiren_en_menu.srm`, not just paths mentioned conditionally by `build.sh`.
@@ -579,9 +584,12 @@ tools/menuvwf.py          proportional menu/help/seal composer and guarded alloc
 tools/menuspill.py        plane-exact live verification of composed menu rows
 tools/itempagespill.py    real-save atomic item-page transition verifier
 tools/floorinfospill.py   real-save Floor action/Info transition verifier
+tools/scrollinfospill.py  Log-2 five-choice Scroll Info-return/border regression
+tools/storagepotinfospill.py Log-2 six-choice Pot Info-return/border regression
 tools/gitaninfospill.py   Log-3 three-choice Gitan Info-dismissal regression
 tools/decoyname.py        removes the runtime Japanese Decoy Staff name prefix
 tools/decoynamespill.py   Log-1 decoy attack/live-player-name regression
+tools/keyakigiftspill.py  Log-2 Keyaki Otogiri Herb reward/hidden-entry regression
 tools/pathspill.py        real Log-2 Path selection/alignment verifier
 tools/mainmenuspill.py    real-save atomic title/difficulty/Rankings verifier
 tools/nameflowspill.py    Copy -> Erase -> New Log native-tile lifetime verifier
@@ -590,7 +598,7 @@ tools/mesen_spawn_blank_scroll.lua  Mesen probe for the GB ROM's unused item-$66
 tools/mesen_spawn_action_pots.lua   safely adds Back + Todo pots for behavior fixtures
 tools/mesen_spawn_mouse_don.lua     live native level-3 Mouse Don/EXP diagnostic
 tools/enemyexp.py       guards all 303 native enemy-tier rewards against ROM collisions
-tools/potseespill.py      real Floor -> See shared empty-Pot source/plane regression
+tools/potseespill.py      real Log-1/Log-2 Floor -> See empty-Pot text and compact-title geometry
 tools/actionpotspill.py   real Back/Todo Pot three-charge `Press` VWF regression
 tools/conditionspill.py   real five-row clear-condition allocator/plane test
 tools/rescuespill.py      Nagi route; conservative interiors + ordinary-choice isolation

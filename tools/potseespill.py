@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Replay Floor -> See for the empty Storage Pot in Joey's Log-1 fixture.
+"""Replay Floor -> See for empty Storage Pots in the Log-1 and Log-2 fixtures.
 
 The pot-content viewer is a separate path from the translated item-help table.  This
 fixture keeps its empty-row source and rendered VWF planes observable so untranslated
-kana cannot silently reappear under the Latin font.
+kana cannot silently reappear under the Latin font. The Log-2 route additionally proves
+the compact Pot title's exact five-cell geometry after leaving the wider Floor header.
 """
 import argparse
 import os
@@ -23,14 +24,20 @@ import menuvwf                                                    # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log_1_pot_see_action.srm')
-SCRIPT = {
+STORAGE_RAM = os.path.join(ROOT, 'saves', 'shiren_en_log2_storage_pot_menu.srm')
+LOG1_SCRIPT = {
     60: ('start',), 120: ('start',), 180: ('start',), 240: ('start',),
     300: ('a',), 420: ('a',), 480: ('a',),
     2620: ('b',), 2700: ('down',), 2780: ('a',),       # Menu -> Floor
     2860: ('down',), 3000: ('a',),                    # See
 }
+LOG2_SCRIPT = {
+    60: ('start',), 120: ('start',), 180: ('start',), 240: ('start',),
+    300: ('a',), 360: ('down',), 420: ('a',), 500: ('a',),
+    2200: ('b',), 2280: ('down',), 2360: ('a',),       # Menu -> Floor
+    2480: ('down',), 2600: ('a',),                    # See
+}
 FRAMES = 3400
-CONTENT_SHAPE = (0, 3, 3, 18, 2)
 CONTENT_SOURCE = 0xC616
 TARGET = bytes(menuspill.encode(itemfix.EMPTY_POT_ROW))
 
@@ -67,20 +74,24 @@ def run(rom, ram=RAM, png=None, trace=False):
             dispatches.append((frame[0], pb.register_file.A))
 
         def far_entry(_context=None):
-            if frame[0] < 2950:
+            # Log 2 reaches See earlier than the original Log-1 fixture.
+            if frame[0] < 2500:
                 return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
             call = (frame[0], pb.register_file.D, pb.register_file.HL,
                     shape, source, staged_row(pb, source))
             calls.append(call)
-            if shape == CONTENT_SHAPE and pb.register_file.D == 0:
+            # Pot capacity changes the body height, but its first content row always
+            # begins at y=3 and spans the same 18-cell interior.
+            if (shape[0], shape[1], shape[3]) == (0, 3, 18) and pb.register_file.D == 0:
                 content_calls.append(call)
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        script = LOG2_SCRIPT if os.path.basename(ram) == os.path.basename(STORAGE_RAM) else LOG1_SCRIPT
         for frame[0] in range(FRAMES):
-            for button in SCRIPT.get(frame[0], ()):
+            for button in script.get(frame[0], ()):
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
 
@@ -107,6 +118,22 @@ def run(rom, ram=RAM, png=None, trace=False):
                 print('  f%d d%d key=$%04X shape=%s src=$%04X row=%s jp=%r'
                       % (at, rownum, key, shape, source, row.hex(' '),
                          codec.decode(row)))
+
+        # Pot is box 17: x=0, y=0, one text row, three interior cells. The preceding
+        # Floor header is much wider, so its row-2 bottom edge must be fully erased
+        # outside the compact five-cell title box.
+        tilemap = bytes(pb.memory[0x9800:0x9A40])
+        top = bytes((0xB8, 0xBC, 0xBC, 0xBC, 0xB9))
+        bottom = bytes((0xBA, 0xBD, 0xBD, 0xBD, 0xBB))
+        row0 = tilemap[0:20]
+        row1 = tilemap[32:52]
+        row2 = tilemap[64:84]
+        if row0[:5] != top or any(row0[5:]):
+            problems.append('Pot title top/tail is %s' % row0.hex(' '))
+        if row1[0] != 0xBE or row1[4] != 0xBF or any(row1[5:]):
+            problems.append('Pot title text/tail is %s' % row1.hex(' '))
+        if row2[:5] != bottom or any(row2[5:]):
+            problems.append('Pot title bottom/tail is %s' % row2.hex(' '))
         pb.stop(save=False)
 
     indices = [index for _at, index in dispatches]
@@ -116,7 +143,8 @@ def run(rom, ram=RAM, png=None, trace=False):
         problems.append('real route never dispatched Pot See screen 13')
     if not calls:
         problems.append('See never entered the proportional row renderer')
-    print('potseespill: dispatches %s; %d See-era row call(s); %d problem(s)'
+    print('potseespill: dispatches %s; %d See-era row call(s); compact title exact; '
+          '%d problem(s)'
           % (' '.join('f%d:%d' % event for event in dispatches), len(calls),
              len(problems)))
     for problem in problems:

@@ -97,7 +97,7 @@ CONTROL = {
     0xE0: 'cE0',           # reads 1 arg, then conditional call $3F84 (sound trigger?)
     0xE1: 'cE1',
     0xE2: 'var',           # pulls 3 bytes from the queue -- runtime variable
-    0xE3: 'cE3',           # pulls 6 bytes from the queue
+    0xE3: 'cE3',           # dialogue path consumes a selector, then substitutes an item
     0xE4: 'cE4',
     0xE5: 'cE5',
     0xE6: 'cE6',
@@ -134,6 +134,7 @@ ARITY = {0xE0: 1, 0xE7: 1, 0xEC: 1, 0xF0: 1}
 #
 #   $E0  ->  <cE0:0B>いう     the code AND one argument are staged     arity 1, agrees
 #   $EC  ->  <cEC:0B>いう     likewise                                 arity 1, agrees
+#   $E3  ->  item substitution; 13:$6942 consumes one selector byte          arity 1
 #   $E7  ->  あいう           the code vanishes, THE BYTE AFTER IT IS TEXT   arity 0
 #   $F0  ->  あいう           likewise                                       arity 0
 #   $F1-$F4 -> あいう         effect-only, as already recorded               arity 0
@@ -149,7 +150,7 @@ ARITY = {0xE0: 1, 0xE7: 1, 0xEC: 1, 0xF0: 1}
 # script as extracted THEN. Sessions 7 and 8b extracted 158 more strings and seven $F0
 # sites came with them, in six strings, every one of them still untranslated.
 DIALOGUE_PATH_BANKS = (11, 14)
-DIALOGUE_ARITY = {**ARITY, 0xE7: 0, 0xF0: 0}
+DIALOGUE_ARITY = {**ARITY, 0xE3: 1, 0xE7: 0, 0xF0: 0}
 
 
 def arity_for(bank=None):
@@ -308,6 +309,15 @@ if __name__ == '__main__':
                  'OK' if encode(dlg, 11) == blob and 'あ' in dlg else 'FAIL'))
         if encode(dlg, 11) != blob or 'あ' not in dlg:
             bad.append(code)
+    # The dialogue-path E3 handler at 13:$6942 consumes one selector byte. $FE is a
+    # special but legitimate selector used by Keyaki's Otogiri Herb reward.
+    e3 = bytes([0xE3, 0xFE, 0x0B])
+    e3_text = decode(e3, 14)
+    print('  $E3 $FE + あ dialogue %-14r  %s'
+          % (e3_text, 'OK' if e3_text == '<cE3:FE>あ' and encode(e3_text, 14) == e3
+             else 'FAIL'))
+    if e3_text != '<cE3:FE>あ' or encode(e3_text, 14) != e3:
+        bad.append(0xE3)
     # dakuten specifically
     for blob in (bytes([0x15, 0x79]), bytes([0x1F, 0x7A]), bytes([0x5B, 0x79, 0x68])):
         d = decode(blob)

@@ -39,8 +39,9 @@ CROSS_BANK_IMMEDIATES = {
     13 * BANKSZ + (0x54B5 - 0x4000): ('hl', 14, 0x46C1),
 }
 
-# Conservatively retained runtime-observed entry points that begin inside another
-# extracted conversation.
+# Conservatively retained runtime-observed entry points that static extraction cannot
+# prove. Most begin inside another extracted conversation; a few are standalone records
+# rejected by a conservative byte heuristic until their control semantics are known.
 #
 # Static byte coverage cannot discover these: a sequential walker quite reasonably sees
 # one $FF-terminated parent, and an immediate-reference scan cannot see a pointer assembled
@@ -56,6 +57,8 @@ CROSS_BANK_IMMEDIATES = {
 # nor a proven $EE/$EF line continuation; gbrun.py now reports that case as an error
 # instead of silently classifying every interior address as a continuation.
 RUNTIME_INTERIOR_ENTRIES = {
+    14 * BANKSZ + (0x52AB - 0x4000):
+        'Keyaki Otogiri Herb receipt; observed from Log 2 walk-left event',
     14 * BANKSZ + (0x5AFD - 0x4000):
         'conservative Nagi interior; observed during pre-fix stair-pointer investigation',
     14 * BANKSZ + (0x5B81 - 0x4000):
@@ -578,7 +581,20 @@ def impossible(data, bank=None):
     every caller outside banks 11/14 wants.
     """
     top = codec.CONTROL_MAX if bank in DIALOGUE_PATH_BANKS else 0xF0
-    return any(top < b <= 0xFE for b in data)
+    arity = codec.arity_for(bank)
+    i = 0
+    while i < len(data):
+        value = data[i]
+        if top < value <= 0xFE:
+            return True
+        arguments = arity.get(value, 0)
+        if i + arguments >= len(data):
+            return True
+        # Argument bytes are data, not opcodes. In particular dialogue-path $E3 may
+        # legally consume selector $FE; treating that selector as an impossible control
+        # hid Keyaki's Otogiri Herb receipt at 14:$52AB from extraction.
+        i += 1 + arguments
+    return False
 
 
 def script_starts_at(data, bank):

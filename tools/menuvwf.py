@@ -1016,25 +1016,34 @@ pagepublish:
   ld a,[$C1B1]
   cp $04
   ret nz
-  ld a,[$C0D9]
-  cp $20
-  ret nz
+  ; Only box 14's four-cell Items header may finish an item-page transaction.
+  ; Box 17 (Pot) shares this shadow-map position but is one cell narrower; treating
+  ; it as Items pre-stages a six-cell bottom edge, leaving a stray $BB at x=5.
+  ; Mode 4, an active page transaction, shadow bank $C3, and an exact width of three
+  ; (Pot) or four (Items) identify the only accepted completion paths. Omitting the
+  ; redundant $20 low-byte comparison keeps the helper inside its original allocation.
   ld a,[$C0DA]
-  cp $C3
+  sub $C3
   ret nz
+  ld a,[$C69D]
+  sub $03
+  jr z,pagefinish
+  dec a
+  ret nz
+  ld b,$04
   ; rborder runs before the native box drawer emits this one-row header's bottom
   ; edge. Pre-stage that exact asserted box-14 edge so the full map is complete now;
   ; the native drawer writes the same six bytes immediately after we return.
   ld hl,$C340
-  ld [hl],$BA
-  inc hl
-  ld b,$04
+  ld a,$BA
+  ld [hl+],a
 pebottom:
   ld [hl],$BD
   inc hl
   dec b
   jr nz,pebottom
   ld [hl],$BB
+pagefinish:
   xor a
 publishmap:
   ld [$C0D7],a
@@ -1232,7 +1241,34 @@ fihelppublish:
   ld a,$03
   jr fipublish
 fiaction:
+  ; Info's four-row body leaves its bottom border at shadow row 11. Pickers with
+  ; five or six choices continue below it, so convert that stale edge to an
+  ; interior spacer and pre-stage the real bottom at row 13 or 15. Pickers with
+  ; four or fewer choices keep the established path ending at row 11.
+  ld a,[$C69C]
+  cp $05
+  jr c,fiactionnormal
   ld hl,$C46D
+  ld [hl],$BE
+  inc hl
+  ld b,$05
+  xor a
+fipotcells:
+  ld [hl+],a
+  dec b
+  jr nz,fipotcells
+  ld [hl],$BF
+  ld a,[$C69C]
+  cp $05
+  jr nz,fiactionsix
+  ld hl,$C4AD
+  jr fiactiondraw
+fiactionsix:
+  ld hl,$C4ED
+  jr fiactiondraw
+fiactionnormal:
+  ld hl,$C46D
+fiactiondraw:
   ld [hl],$BA
   inc hl
   ld b,$05

@@ -19,7 +19,7 @@ stated rather than implied:
   information the English cannot carry by itself:
 
       <var>       $E2  pulls 3 bytes from the queue
-      <cE3>       $E3  pulls 6 bytes from the queue
+      <cE3>       $E3  substitutes an item; dialogue form consumes a selector byte
       <name>      $EA  copies the player's name from $CF81
       <cF0:xx>    $F0  passes xx to `11:$7E26`, which appends a table string
       <cE0:xx> <cE7:xx> <cEC:xx>   read an argument and act on it

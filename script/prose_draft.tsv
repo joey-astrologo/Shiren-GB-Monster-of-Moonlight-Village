@@ -15,7 +15,7 @@
 # What you DO write:
 #   <brk>          a page break you want for pacing. Put them where the Japanese does.
 #   <name> <var>   substitution tokens. lint_en checks these survive; the wrapper leaves
-#   <cE3>4         room for what they expand to. The character after <cE3> and the <$XX>
+#   <cE3:05>       room for what it expands to. The selector inside <cE3:xx> and the <$XX>
 #   <mode1><$3C>   after <mode1> are ARGUMENT BYTES, not text — see TRANSLATING.md §7.
 #
 # SPEAKER TAGS are the short form for the five compounds Joey ruled on 2026-08-05:
@@ -44,11 +44,12 @@
 14:$5146	Innkeeper: You mean Keyaki?<brk>Oh, please! She's not my daughter. I'm still single!<brk>She just wanders in now and then and helps around the inn.<brk>She's a little odd, but she's a good kid...
 14:$51D3	Keyaki: <name>! Wait up!
 14:$51DE	Keyaki: Haa... haa... I'm so glad I made it in time...<brk>You're going to rescue her, right? Here, take this!
-14:$5213	<name> received <cE3>4.
+14:$5213	<name> received <cE3:05>.
 14:$5220	Keyaki: I went up into the hills to get it. It took quite a while...<brk>Good luck!
 14:$525F	Keyaki: ...Are you okay?<brk>Please don't overdo it.
 14:$5281	Innkeeper: I believe in you.
 14:$5294	Keyaki: Hey, <name>!
+14:$52AB	<name> received <cE3:FE>.
 
 # ============ bank 14 — Keyaki at the shrine, and Tanmomo ============
 14:$52B8	Keyaki: Good luck!
@@ -83,11 +84,11 @@
 14:$5840	Keyaki: Lately, it seems like everyone in the village is starting to accept you, <name>.<brk>I'm so happy...
 14:$5875	Innkeeper: No matter how many times you get knocked down, you never give up...<brk>You're every bit the man I thought you were.<brk>Good luck out there!
 14:$58CC	Tagura: This is my most treasured toy, but...<brk>I'll give it to you.
-14:$58F6	<name> received <cE3>1.
+14:$58F6	<name> received <cE3:02>.
 14:$5902	Tagura: In return, please save Fumi. Promise me!
 14:$5924	Keyaki: Are you okay?<brk>...Thank goodness. I was so worried you might be hurt, <name>...
 14:$595B	Gon: Urgh...<brk>This is my prized possession, but I'll hand it over to you.
-14:$598A	<name> received <cE3>7.
+14:$598A	<name> received <cE3:08>.
 14:$5996	Gon: Whenever the Shrine Priest is about to scold me, I use this to get away.<brk>Urgh...<brk>It comes in pretty handy!
 14:$59E2	Nagi: Waaah!! Wh-what? You're not a monster? You scared me.<brk>...You came to rescue me?<brk>No! I'm not going back!<brk>I might if you promise to save Fumi...
 14:$5A59	=<cEC:08>Promise to save Fumi?<br><$81>Yes<br> No
@@ -142,7 +143,7 @@
 14:$6580	Nagi: Huh? You guys...<brk>I know! You had to pee so bad you turned back!
 14:$65B9	Keyaki: <name>! Wait!
 14:$65C4	Keyaki: Here, take this!
-14:$65D0	<name> received <cE3>5.
+14:$65D0	<name> received <cE3:06>.
 14:$65DD	Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that <name> came back to the village...
 14:$661D	Children: Ooh la la! Things are heating up!
 14:$6638	Koppa: Tch, they're just teasing us. Come on, <name>!
@@ -346,10 +347,10 @@
 11:$6D2B	Old Seer: About 15 floors from Moonlight Village<brk>lies a place called Dragon's Maw.<brk>Orochi is another 6 floors beyond that.<brk>In other words, about 21 floors from the village.<brk>You're wondering why I'm telling you this?<brk>I'm starting to think you might actually do something about it...
 11:$6DF5	Keyaki: <name>! Wait!
 11:$6E00	Keyaki: Now it's finally time to save Fumi.<brk>Here, take this!
-11:$6E21	<name> received <cE3>6.
+11:$6E21	<name> received <cE3:07>.
 11:$6E2E	Keyaki: Good luck! ...Oh.
 11:$6E42	Kinji: Hey.<brk>Take this.
-11:$6E58	<name> received <cE3>3.
+11:$6E58	<name> received <cE3:04>.
 11:$6E64	Kinji: It's my dinner, okay? Don't tell the others.
 11:$6E94	Keyaki: Even Kinji's cheering you on...<brk>That makes me happy.
 11:$6EB9	Chief: N-Nagi? ...No luck after all?<brk>At a child's pace, he must be about 10 floors in by now...<brk>The monsters around there are fearsome...<brk>Oh, I'm so worried...
@@ -367,7 +368,7 @@
 11:$71DE	Kinji: Are you okay after that fit?...<brk>You still look like you're in pain.
 11:$7216	Masa: ......<brk>I-I'm fine. It's finally passing.
 11:$7246	=Fumi's Mom: Um... take<br> this.<end><mode0>
-11:$7257	=<name> received<br> <cE3>8.<end><mode0>
+11:$7257	=<name> received<br> <cE3:09>.<end><mode0>
 11:$7264	Fumi's Mom: Please... Please save Fumi.
 11:$7280	Chief: I have seen the weasel you describe.<brk>He ran up the shrine steps and continued toward Kuyo Pass...
 11:$72CE	Gon: Urgh... That smelly weasel from the other day...<brk>So he's a friend of yours. Urgh...
@@ -383,12 +384,12 @@
 11:$7493	Nagi: Big bro! I still want to come with you!<brk>I'm going! You can't say no!<brk>...Or so I thought, but suddenly I have to pee really bad!<brk>Go on ahead!<brk>...Or so I thought, but now I feel like I have to go, but I can't.<brk>Hmm... What do I do?
 11:$7535	Innkeeper: Keyaki still hasn't come back.<brk>I wonder what happened.
 11:$755F	Fumi's Mom: <name>... Um, take this.
-11:$7575	<name> received <cE3>2.
+11:$7575	<name> received <cE3:03>.
 11:$7581	Fumi's Mom: I'm sorry this is all I can do. But please... save Fumi.
 11:$75B3	Kinji: Keyaki's gone missing?<brk>Nooooooo!!
 11:$75E1	Gon: Where could Keyaki have gone?<brk>Urgh... And I secretly had my eye on her, too.
 11:$761C	=Rokuro: Say <name>,<br> would this be of use?<end><mode0>
-11:$7639	=<name> received<br> <cE3>0.<end><mode0>
+11:$7639	=<name> received<br> <cE3:01>.<end><mode0>
 11:$7648	Rokuro: I found it lying in the hills out back.<brk>It's no use to me, so you can have it.
 11:$7682	Tagura: Good luck! You have to save Fumi!
 11:$76A4	Chief: What! The scroll is gone?<brk>It was definitely there yesterday...<brk>Come to think of it, I heard someone saw a figure last night,<brk>heading toward Dragon's Maw.<brk>Apparently they avoided the Easy road and took Normal or Hard.<brk>Why don't you try taking Normal or Hard too?<brk>Maybe you'll find something...<brk>Forgive me... That was terribly irresponsible of me to suggest...
@@ -401,7 +402,7 @@
 11:$79CC	Fumi's Mom: Please... Please save Fumi.
 11:$79EA	Rokuro: Don't you lose to Orochi.
 11:$79FF	Nagi: Hey, I picked up that shield I told you about yesterday. Here.
-11:$7A24	<name> received <cE3><$00>.
+11:$7A24	<name> received <cE3:00>.
 11:$7A31	Nagi: I'm not sure it'll help, but you can have it.
 11:$7A52	Masa: Hey, <name>.<brk>Kinji and I expanded the Warehouse yesterday.<brk>Now you can store a lot more items.<brk>Remember, you can only bring 5 items on an adventure,<brk>and Pots lose their contents, so be careful.
 11:$7AE2	Innkeeper: I'm sure Keyaki will come back.<brk>She'll smile like nothing ever happened.
@@ -603,6 +604,7 @@
 14:$774A	Tanmomo: Mew, mew.<brk>(I've gotten so strong that no one at Kuyo Pass can beat me.<brk>Will you make me your companion?)
 14:$778D	Baby Mamel: Please take me with you too...
 14:$77D3	Baby Mamel: Thank you for saving me.<brk>Here, take this as thanks!
+14:$77FD	<name> received <cE3:FD>!
 14:$780A	Baby Mamel: Bye! See you!
 14:$781F	Baby Mamel: Thank you for saving me.<brk>I'll send this to your Warehouse as thanks.
 14:$7850	Baby Mamel: Thank you for saving me.<brk>I'd like to give you something as thanks...<brk>but your pack and Warehouse are both full,<brk>so I can't give it to you. Bye! See you!
