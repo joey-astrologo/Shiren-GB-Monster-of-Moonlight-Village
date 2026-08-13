@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Fresh-boot regression for the English illustrated title-screen logo.
+"""Fresh and completion-unlocked boot regression for the English title-screen logo.
 
 The supplied ROM is compared with a temporary control whose bank-62 title-logo far entry
 returns without drawing. Every generated tile and visible map cell must match the
-approved viewer-supplied full-screen reference, and both cartridges must still settle on the same file
-menu after Start.
+approved viewer-supplied full-screen reference, and both cartridges must still settle on
+the same file menu after Start.  ``--ram`` adds the native save-dependent alternate title
+route; both native layouts must be replaced by the same English raster.
 
-usage: titlelogospill.py ROM [--png FILE]
+usage: titlelogospill.py ROM [--ram FILE] [--png FILE]
 """
 import argparse
 import os
@@ -57,7 +58,9 @@ def _native_control(rom, path):
     open(path, 'wb').write(data)
 
 
-def _run(PyBoy, rom, frame, route):
+def _run(PyBoy, rom, frame, route, ram=None):
+    if ram:
+        shutil.copyfile(ram, rom + '.ram')
     pb = PyBoy(rom, window='null')
     pb.set_emulation_speed(0)
     for current in range(frame + 1):
@@ -80,7 +83,36 @@ def _tile_offset(tile):
     return address - 0x8800
 
 
-def run(rom, png=None):
+def _check_title(problems, title, native, built, label):
+    exact = total = 0
+    for tile, expected in built['tiles'].items():
+        start = _tile_offset(tile)
+        actual = title['tiles'][start:start + 16]
+        total += 16
+        exact += sum(a == b for a, b in zip(actual, expected))
+        if actual != expected:
+            problems.append('%s title tile $%02X differs in %d/16 byte(s)'
+                            % (label, tile,
+                               sum(a != b for a, b in zip(actual, expected))))
+            break
+
+    for row in range(titlelogo.MAP_HEIGHT):
+        actual = title['map'][row * 32:row * 32 + 20]
+        expected = built['map'][row * 20:(row + 1) * 20]
+        if actual != expected:
+            problems.append('%s title map row %d differs' % (label, row))
+            break
+
+    if title['image'].tobytes() == native['image'].tobytes():
+        problems.append('%s English title is pixel-identical to the Japanese control' %
+                        label)
+    if not title['lcdc'] & 0x80 or title['bgp'] != 0xE4:
+        problems.append('%s settled title display state is LCDC=$%02X BGP=$%02X'
+                        % (label, title['lcdc'], title['bgp']))
+    return exact, total
+
+
+def run(rom, ram=None, png=None):
     PyBoy = _import_pyboy()
     with tempfile.TemporaryDirectory(prefix='titlelogospill-') as tmp:
         target = os.path.join(tmp, 'target.gb')
@@ -94,39 +126,46 @@ def run(rom, png=None):
         if png:
             title['image'].save(png)
 
+        progressed = native_progressed = None
+        progressed_menu = native_progressed_menu = None
+        if ram:
+            progressed_target = os.path.join(tmp, 'progressed_target.gb')
+            progressed_control = os.path.join(tmp, 'progressed_control.gb')
+            shutil.copyfile(rom, progressed_target)
+            _native_control(rom, progressed_control)
+            progressed = _run(PyBoy, progressed_target, TITLE_FRAME, TITLE_ROUTE, ram)
+            native_progressed = _run(PyBoy, progressed_control, TITLE_FRAME,
+                                     TITLE_ROUTE, ram)
+            progressed_menu = _run(PyBoy, progressed_target, MENU_FRAME,
+                                   MENU_ROUTE, ram)
+            native_progressed_menu = _run(PyBoy, progressed_control, MENU_FRAME,
+                                          MENU_ROUTE, ram)
+
     built = titlelogo.compile_graphics(dotfont.load_approved())
     problems = []
-    exact = total = 0
-    for tile, expected in built['tiles'].items():
-        start = _tile_offset(tile)
-        actual = title['tiles'][start:start + 16]
-        total += 16
-        exact += sum(a == b for a, b in zip(actual, expected))
-        if actual != expected:
-            problems.append('title tile $%02X differs in %d/16 byte(s)'
-                            % (tile, sum(a != b for a, b in zip(actual, expected))))
-            break
-
-    for row in range(titlelogo.MAP_HEIGHT):
-        actual = title['map'][row * 32:row * 32 + 20]
-        expected = built['map'][row * 20:(row + 1) * 20]
-        if actual != expected:
-            problems.append('title map row %d differs' % row)
-            break
-
-    if title['image'].tobytes() == native['image'].tobytes():
-        problems.append('English title is pixel-identical to the Japanese control')
-    if not title['lcdc'] & 0x80 or title['bgp'] != 0xE4:
-        problems.append('settled title display state is LCDC=$%02X BGP=$%02X'
-                        % (title['lcdc'], title['bgp']))
+    exact, total = _check_title(problems, title, native, built, 'fresh')
     if menu['image'].tobytes() != native_menu['image'].tobytes():
-        problems.append('file menu after PUSH START differs from the native-logo control')
+        problems.append('fresh file menu after PUSH START differs from native control')
 
-    print('titlelogospill: %d/%d generated tile byte(s) exact; %d unique tile(s); '
-          'full 160x144 reference map exact; file-menu transition %s; %d problem(s)'
-          % (exact, total, built['unique'],
-             'exact' if menu['image'].tobytes() == native_menu['image'].tobytes()
-             else 'DIFFERS', len(problems)))
+    routes = 1
+    if progressed is not None:
+        routes += 1
+        if native_progressed['image'].tobytes() == native['image'].tobytes():
+            problems.append('progressed fixture did not select the alternate native title')
+        progressed_exact, progressed_total = _check_title(
+            problems, progressed, native_progressed, built, 'progressed-save')
+        exact += progressed_exact
+        total += progressed_total
+        if progressed['image'].tobytes() != title['image'].tobytes():
+            problems.append('fresh and progressed-save English title rasters differ')
+        if progressed_menu['image'].tobytes() != native_progressed_menu['image'].tobytes():
+            problems.append('progressed-save file menu after PUSH START differs from '
+                            'native control')
+
+    print('titlelogospill: %d route(s), %d/%d generated tile byte(s) exact; %d unique '
+          'tile(s); full 160x144 reference maps exact; file-menu transitions exact; '
+          '%d problem(s)' %
+          (routes, exact, total, built['unique'], len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0
@@ -135,11 +174,14 @@ def run(rom, png=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('rom')
+    parser.add_argument('--ram')
     parser.add_argument('--png')
     args = parser.parse_args()
     if not os.path.exists(args.rom):
         raise SystemExit('titlelogospill: missing %s' % args.rom)
-    raise SystemExit(run(args.rom, args.png))
+    if args.ram and not os.path.exists(args.ram):
+        raise SystemExit('titlelogospill: missing %s' % args.ram)
+    raise SystemExit(run(args.rom, args.ram, args.png))
 
 
 if __name__ == '__main__':

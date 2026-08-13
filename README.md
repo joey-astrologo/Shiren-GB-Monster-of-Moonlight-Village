@@ -30,6 +30,9 @@ backlog. **V5A-V5C graphics are complete:** the pre-intro card reproduces the ap
 full-screen copyright-card mock-up; the illustrated title uses the approved four-colour
 `Mystery Dungeon / Shiren / The Wanderer / Monster of Moonlight Village / GB` design; and all
 eight town/dungeon arrival labels use the approved clean, 12px-cap Poppins treatment.
+Both the ordinary fresh-save title route and the alternate completion-unlocked route selected
+by progressed battery saves receive the same localized title; a curated EverDrive SRAM fixture
+guards the latter without changing either route's PUSH START transition.
 `Moonlight Village` and `1 Forest` reproduce the supplied mock-ups pixel-for-pixel; the
 three-row renderer keeps their descenders and combines the other six names with all 50
 live floor values. Every native numbered card now gives its number and name one shared
@@ -391,6 +394,8 @@ for battery_rom in \
     build/shiren_en_shuffle.gb \
     build/shiren_en_redirect_all.gb
 do
+    python3 tools/titlelogospill.py "$battery_rom" \
+        --ram saves/shiren_en096_broken_title_screen.srm
     python3 tools/logicdiff.py build/_base_expanded.gb "$battery_rom"
     python3 tools/enemyexp.py build/_base_expanded.gb "$battery_rom"
     python3 tools/introspill.py build/_base_expanded.gb "$battery_rom"
@@ -623,7 +628,7 @@ tools/waitcardspill.py    real Log-3 loading-card tile/map regression
 tools/titlecard.py        approved full-screen pre-intro copyright-card installer
 tools/titlecardspill.py   exact 160x144 card raster/palette/fade-path regression
 tools/titlelogo.py        approved four-colour title-screen installer
-tools/titlelogospill.py   full 160x144 title and PUSH START/file-menu regression
+tools/titlelogospill.py   fresh/progressed-save 160x144 title and PUSH START regression
 tools/endingcreditsaudition.py  generates/audits the complete 22-card Poppins roll
 tools/endingcredits.py    installs every translated card without changing native timing
 tools/endingcreditspill.py Hard-ending exact-card/order/timing/final-End regression

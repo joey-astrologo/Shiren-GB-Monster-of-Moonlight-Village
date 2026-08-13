@@ -1,4 +1,5 @@
 filename	sha256	player_name	purpose
+shiren_en096_broken_title_screen.srm	7ec29ebff9c3213e5115b4dd170a698c57dd2dca3d63884f4689e4c2a2c8849a	Shiren	EverDrive completion-progress snapshot; validates the alternate native title route receives the localized title overlay.
 shiren_en_ground.srm	b8e5a1a2b9db29e6f5070a349074d98b71d75d357a536940a6f1837d65264309	Shiren	Log 1 starts on an Iron Shield; validates the Ground/Floor header VWF path.
 shiren_en_item_menu.srm	26ba6e75a328943c46baf7617b6c52fde09a22ae4d87549be40ea4086b754412	Shiren	Populated inventory spanning multiple pages; validates atomic item-page transitions.
 shiren_en_item_menu_wood_arrow.srm	e6bf4514e9d56103d921a2083df11088c7f5a6bd40ac41d85a0914eb11cca663	Shiren	Log 1 starts on a Wood Arrow; validates Floor action and Info transitions.
