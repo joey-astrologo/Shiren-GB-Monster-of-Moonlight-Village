@@ -813,8 +813,10 @@ boundary, so neither 80-cell update can be scanned out partway; a frame-by-frame
 rejects any old/new mixture. Floor action -> Info, Info page -> page and Info -> action use
 the same contract, including the completed help border, arrow and page counter. Title,
 file and difficulty composites likewise stay hidden until the whole shadow map is ready.
-Rankings uses one proportional `$80-$A6` allocation for its five-tile heading, three-tile
-difficulty labels and five five-tile names. LCD-on title Rankings transfers each name
+Rankings uses one proportional `$80-$AE` allocation for its five-tile heading, three-tile
+difficulty labels, five five-tile names, and four-tile `Village` / `Dragon` special-floor
+labels. Those labels occupy columns 14-17 and stop before the native status/Orochi field.
+LCD-on title Rankings transfers each name
 through the native VBlank queue behind the blank `$9C00` map, then reveals the complete
 `$9800` board in one transition; LCD-off rescued-child results use the synchronous direct
 path. The Kuyo and Village Exit selectors temporarily use `$C0-$CB`, then the native
@@ -824,14 +826,16 @@ drives the supplied Log-3 and four-record Rankings routes and checks every trans
 frame plus persistent title-tile ownership. The five-row pool is admitted only when the
 whole page uses the approved name-picker alphabet; old kana records use the original
 writer byte-for-byte. `tools/rankspill.py` verifies five hostile names across 25 private
-tiles and exact 4+4+1 queue payload windows against the `--no-rankvwf` component control.
+tiles, full `Village` / `Dragon` labels, and exact 4+4+1 queue payload windows against the
+`--no-rankvwf` component control.
 Against the complete `--no-menuvwf` native control, legacy page 0 and nonzero page 1 each
 take the raw writer 5/5 with the full visible board, framebuffer, display state and OAM
 semantics exact. The page-1 fixture proves prevalidation starts at `C6AC * 12` and finds an
 unsupported code in the fifth selected row.
 `tools/orochisymbolspill.py` supplies the adjacent-screen ownership proof against a native
-control, including the real Orochi badge, complete Kuyo/Village boards, native status/OAM
-and repeated returns. All related checks pass on normal, shuffled and redirect-all layouts;
+control, including the full special-floor labels, real Orochi badge, complete Kuyo/Village
+boards, native status/OAM and repeated returns. All related checks pass on normal,
+shuffled and redirect-all layouts;
 the exact repeated route is also visually approved in Mesen. The fixed ranking fields now use `1.` ordinals,
 `F` floors, `x` attempt counts, and `Easy` / `Norm.` / `Hard`. The fixed fields eliminated the remaining
 Japanese suffix and difficulty tiles. A few fields intentionally remain fixed. The status

@@ -14,7 +14,8 @@ code only in the fifth selected record.  This proves prevalidation follows the n
 ``C6AC * 12`` page offset: treating ``C6AC`` as a byte offset misses that marker.
 
 The checks are plane-exact and queue-aware: all five private tiles per row, five shadow
-IDs in each six-cell name field, every non-name fixed cell, every queue
+IDs in each six-cell name field, the complete four-tile ``Village``/``Dragon`` reserved
+floor markers, every remaining fixed cell, every queue
 fingerprint/destination, VBlank consumer timing, park restoration and visible pool
 ownership are verified.  Legacy fallback is a whole-page contract: its complete visible
 shadow, BG map, resolved tile planes, framebuffer, display state and visible sprite
@@ -77,16 +78,22 @@ NONZERO_PAGE = 1
 NONZERO_LEGACY = (APPROVED[0],) * 5 + (LEGACY[0],)
 
 
-def _record(name, ordinal, score_base=100000):
+def _record(name, ordinal, score_base=100000, floor=None):
     assert len(name) == 6
     score = score_base + ordinal
     count = (ordinal + 1) | ((ordinal % 3) << 14)
-    return (name + score.to_bytes(3, 'little') + bytes((ordinal,))
+    floor = ordinal if floor is None else floor
+    return (name + score.to_bytes(3, 'little') + bytes((floor,))
             + count.to_bytes(2, 'little'))
 
 
 def records(names, score_base=100000):
-    data = b''.join(_record(name, i, score_base) for i, name in enumerate(names))
+    # Rows 0/1 deliberately exercise the native reserved floor values.  They must render
+    # as the full proportional English labels Village/Dragon, never as those kana codes'
+    # English-font aliases (`gm`/`n.C`).  Later rows keep ordinary numeric-floor coverage.
+    data = b''.join(_record(name, i, score_base,
+                            i if i < 2 else i + 1)
+                    for i, name in enumerate(names))
     assert len(data) == len(names) * rankvwf.RECORD_STRIDE
     return data
 
@@ -326,7 +333,7 @@ def run(PyBoy, rom, ram, names, patched, png=None, page_index=0,
         result['tiles'] = {
             tile: bytes(pb.memory[tile_addr(tile):tile_addr(tile) + 16])
             for tile in range(rankvwf.STATIC_POOL_BASE,
-                              rankvwf.POOL_BASE + rankvwf.ROWS * rankvwf.TILES_PER_ROW)
+                              rankvwf.SPECIAL_POOL_END)
         }
         pb.stop(save=False)
         return result
@@ -361,6 +368,7 @@ def check(rom, control, native_control, ram, png):
                         % (len(approved['arms']), len(approved['uploads'])))
 
     expected_ids = []
+    special_text = ('Village', 'Dragon')
     for row, (dest, codes) in enumerate(zip(DESTS, APPROVED)):
         base = rankvwf.POOL_BASE + row * rankvwf.TILES_PER_ROW
         ids = bytes(range(base, base + rankvwf.TILES_PER_ROW))
@@ -392,7 +400,27 @@ def check(rom, control, native_control, ram, png):
         if approved['shadow'][attempt_suffix] != EN_CODES['x']:
             problems.append('row %d attempt suffix is $%02X, expected x $%02X'
                             % (row, approved['shadow'][attempt_suffix], EN_CODES['x']))
-        if row >= 2:
+        if row < len(special_text):
+            first = dest - SHADOW + 33
+            base = rankvwf.SPECIAL_POOL_BASE + row * rankvwf.SPECIAL_TILES
+            got = approved['shadow'][first:first + rankvwf.SPECIAL_TILES]
+            want = bytes(range(base, base + rankvwf.SPECIAL_TILES))
+            if got != want:
+                problems.append('row %d special floor map is %s, expected %s for %s'
+                                % (row, got.hex(), want.hex(), special_text[row]))
+            want_tiles = menuspill.compose(
+                [EN_CODES[ch] for ch in special_text[row]], profile)
+            if len(want_tiles) != rankvwf.SPECIAL_TILES:
+                problems.append('%s raster needs %d tiles, expected %d'
+                                % (special_text[row], len(want_tiles),
+                                   rankvwf.SPECIAL_TILES))
+            for i, want_tile in enumerate(want_tiles):
+                got_tile = approved['tiles'][base + i]
+                if got_tile != bytes(want_tile):
+                    problems.append('row %d %s tile $%02X differs: want %s got %s'
+                                    % (row, special_text[row], base + i,
+                                       bytes(want_tile).hex(), got_tile.hex()))
+        else:
             floor_suffix = dest - SHADOW + 36
             if approved['shadow'][floor_suffix] != EN_CODES['F']:
                 problems.append('row %d floor suffix is $%02X, expected F $%02X'
@@ -420,6 +448,9 @@ def check(rom, control, native_control, ram, png):
         excluded.update(range(dest - SHADOW, dest - SHADOW + rankvwf.NAME_BYTES))
         difficulty = dest - SHADOW + 22
         excluded.update(range(difficulty, difficulty + 5))
+    for dest in DESTS[:len(special_text)]:
+        excluded.update(range(dest - SHADOW + 33,
+                              dest - SHADOW + 33 + rankvwf.SPECIAL_TILES))
     for i, (got, raw) in enumerate(zip(approved['shadow'], approved_control['shadow'])):
         if i not in excluded and got != raw:
             problems.append('fixed shadow cell $%04X changed: patched $%02X control $%02X'
@@ -432,11 +463,18 @@ def check(rom, control, native_control, ram, png):
         for i, tile in enumerate(expected_ids[row]):
             owners[first + i] = tile
     pool_end = rankvwf.POOL_BASE + rankvwf.ROWS * rankvwf.TILES_PER_ROW
+    for row, dest in enumerate(DESTS[:len(special_text)]):
+        first = dest - SHADOW + 33
+        base = rankvwf.SPECIAL_POOL_BASE + row * rankvwf.SPECIAL_TILES
+        for i in range(rankvwf.SPECIAL_TILES):
+            owners[first + i] = base + i
     for row in range(18):
         for col in range(20):
             offset = row * 32 + col
             tile = approved['bg'][offset]
-            if rankvwf.POOL_BASE <= tile < pool_end and owners.get(offset) != tile:
+            in_name_pool = rankvwf.POOL_BASE <= tile < pool_end
+            in_special_pool = rankvwf.SPECIAL_POOL_BASE <= tile < rankvwf.SPECIAL_POOL_END
+            if (in_name_pool or in_special_pool) and owners.get(offset) != tile:
                 problems.append('visible pool tile $%02X at row %d col %d has no owner'
                                 % (tile, row, col))
 

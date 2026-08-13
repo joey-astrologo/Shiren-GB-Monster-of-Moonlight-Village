@@ -114,6 +114,13 @@ DIFFICULTY_ROWS = (5, 8, 11, 14, 17)
 DIFFICULTY_COLUMNS = tuple(range(3, 8))
 DIFFICULTY_BY_FIRST_CODE = {0x0F: 'Easy', 0x18: 'Norm.', 0x12: 'Hard'}
 
+# Native floor values 0 and 1 are words rather than numbers: ``Village`` and ``Dragon``.
+# The native drawer starts its three kana cells at column 15.  The English renderer uses
+# the otherwise-empty column 14 as well, giving each complete label four tiles while
+# retaining the live clear/status graphic at column 18.
+SPECIAL_FLOOR_COLUMNS = tuple(range(14, 18))
+SPECIAL_FLOOR_BY_FIRST_CODE = {0x2B: 'Village', 0x32: 'Dragon'}
+
 # Name fields begin at column 13.  The first Kuyo row's sixth name cell is replaced by
 # the live native Orochi badge at column 18, so it is emphatically NOT a VWF mask cell.
 KUYO_NAME_ROWS = ((4, tuple(range(13, 18))),
@@ -414,13 +421,25 @@ def _difficulty_vwf_rows(problems, control, label):
     return tuple(rows)
 
 
-def _board_mask(name_rows, difficulty_rows):
+def _special_floor_vwf_rows(control):
+    rows = []
+    for row in DIFFICULTY_ROWS:
+        first_code = control['selected_map'][row * 32 + 15]
+        text = SPECIAL_FLOOR_BY_FIRST_CODE.get(first_code)
+        if text is not None:
+            rows.append((row, SPECIAL_FLOOR_COLUMNS, text))
+    return tuple(rows)
+
+
+def _board_mask(name_rows, difficulty_rows, special_floor_rows):
     row, columns, _text = HEADER_VWF_ROW
     mask = {(row, col) for col in columns}
     for difficulty_row, difficulty_columns, _text in difficulty_rows:
         mask.update((difficulty_row, col) for col in difficulty_columns)
     for name_row, name_columns in name_rows:
         mask.update((name_row, col) for col in name_columns)
+    for floor_row, floor_columns, _text in special_floor_rows:
+        mask.update((floor_row, col) for col in floor_columns)
     return mask
 
 
@@ -433,6 +452,10 @@ def _check_board(problems, production, control, profile, label, board):
     for difficulty_row, difficulty_columns, difficulty_text in difficulty_rows:
         _check_vwf_row(problems, production, profile, label,
                        difficulty_row, difficulty_columns, difficulty_text)
+    special_floor_rows = _special_floor_vwf_rows(control)
+    for floor_row, floor_columns, floor_text in special_floor_rows:
+        _check_vwf_row(problems, production, profile, label,
+                       floor_row, floor_columns, floor_text)
 
     name_rows = KUYO_NAME_ROWS if board == 'kuyo' else VILLAGE_NAME_ROWS
     for name_row, name_columns in name_rows:
@@ -459,7 +482,9 @@ def _check_board(problems, production, control, profile, label, board):
                                 'control' % (label, status_row, status_col))
 
     return _compare_region(problems, production, control, label,
-                           VISIBLE_CELLS, _board_mask(name_rows, difficulty_rows))
+                           VISIBLE_CELLS,
+                           _board_mask(name_rows, difficulty_rows,
+                                       special_floor_rows))
 
 
 def _visible_resolved(snapshot):

@@ -7,9 +7,10 @@ the real title-screen route reaches that writer with the LCD enabled.  This patc
 that VBlank queue path, but packs its native 4+4+1 transfer as identical overlapping
 windows so each proportional name owns exactly five physical planes.
 
-The complete settled screen is one allocation at ``$80-$A6``: five tiles for
-``Rankings``, three shared tiles apiece for ``Easy``/``Norm.``/``Hard``, and five tiles
-for each of five names.  The native clear/status graphics at ``$B7`` and ``$CB-$D2``
+The complete settled screen is one allocation at ``$80-$AE``: five tiles for
+``Rankings``, three shared tiles apiece for ``Easy``/``Norm.``/``Hard``, five tiles for
+each of five names, and four shared tiles apiece for the native special-floor markers
+``Village``/``Dragon``.  The native clear/status graphics at ``$B7`` and ``$CB-$D2``
 are disjoint while the board is visible.  The earlier category selector temporarily
 uses ``$C0-$CB``; the cartridge's LCD-off native font loader restores that whole slice
 before any result map is revealed, and restores ``$80-$D2`` again before a title or
@@ -22,8 +23,9 @@ page delegates to the original bank-31 writer through its existing far entry.  T
 Japanese saves remain byte-identical and a page can never display raw kana while the same
 tile IDs hold composed pixels.
 
-Only the header, difficulty labels and six-cell name fields are replaced.  Score, floor,
-count, icons and every other fixed cell continue through the original rankings renderer.
+The header, difficulty labels, six-cell name fields, and the two reserved nonnumeric floor
+markers are replaced.  Score, numeric floors, count, icons and every other fixed cell
+continue through the original rankings renderer.
 """
 import os
 import sys
@@ -56,6 +58,13 @@ TRANSITION_BANK = 0x2B        # pool bank 43: reader ends $405A, text starts $41
 TRANSITION_INDEX = 0x05
 TRANSITION_AT = 0x405A
 TRANSITION_LIMIT = 0x4100
+# The two 4-tile special-floor rasters and their uploader fit in the standard reader-to-
+# text gap of pool bank 47.  This is explicit same-subsystem ownership, not an inference
+# from the region's filler bytes.
+SPECIAL_BANK = 0x2F
+SPECIAL_INDEX = 0x05
+SPECIAL_AT = 0x405A
+SPECIAL_LIMIT = 0x4100
 # Dedicated screen-manager helper in the next otherwise-unused text-pool bank.  It owns
 # the complete Rankings allocation and the ROM-backed native-font restore; no VRAM bank
 # or unproven WRAM snapshot is involved.
@@ -80,11 +89,15 @@ RAW_ENTRY = 0x4A5F
 POOL_BASE = 0x8E
 STATIC_POOL_BASE = 0x80
 STATIC_POOL_END = POOL_BASE
+SPECIAL_POOL_BASE = 0xA7
+SPECIAL_TILES = 4
+SPECIAL_POOL_END = SPECIAL_POOL_BASE + 2 * SPECIAL_TILES
 ROWS = 5
 # Six approved picker characters paint at most five tiles with the production Dot font.
 # The sixth map cell stays blank (or is replaced by the native clear/status graphic), so
 # the five name rows use exactly $8E-$A6.  $80-$8D belong to the same screen manager's
-# deduplicated Rankings header and Easy/Norm./Hard labels.
+# deduplicated Rankings header and Easy/Norm./Hard labels.  $A7-$AE are the four-tile
+# Village/Dragon floor markers; their fields stop before the live status tile at column 18.
 TILES_PER_ROW = 5
 RECORD_STRIDE = 12
 NAME_BYTES = 6
@@ -103,34 +116,54 @@ def _off(bank, addr):
     return bank * BANKSZ + (addr - BANKSZ)
 
 
+def _raster_tiles(font, text):
+    """Return the approved-font two-plane tiles for one proportional label."""
+    extent = font.text_extent(text)
+    tiles = [bytearray(16) for _ in range((extent + 7) >> 3)]
+    pen = 0
+    for ch in text:
+        glyph = font.glyphs[ch]
+        for y, bits in enumerate(glyph):
+            for x in range(8):
+                if not bits & (0x80 >> x):
+                    continue
+                pixel = pen + x
+                if pixel >= len(tiles) * 8:
+                    continue
+                tile = tiles[pixel >> 3]
+                mask = 0x80 >> (pixel & 7)
+                tile[y * 2] |= mask
+                tile[y * 2 + 1] |= mask
+        pen += font.advance(ch)
+    return tiles
+
+
 def _static_tile_data(font):
     """Build the one screen-scoped header/difficulty raster, deduplicating labels."""
     chunks = []
     for text, expected_tiles in (('Rankings', 5), ('Easy', 3),
                                  ('Norm.', 3), ('Hard', 3)):
-        extent = font.text_extent(text)
-        tiles = [bytearray(16) for _ in range((extent + 7) >> 3)]
-        pen = 0
-        for ch in text:
-            glyph = font.glyphs[ch]
-            for y, bits in enumerate(glyph):
-                for x in range(8):
-                    if not bits & (0x80 >> x):
-                        continue
-                    pixel = pen + x
-                    if pixel >= len(tiles) * 8:
-                        continue
-                    tile = tiles[pixel >> 3]
-                    mask = 0x80 >> (pixel & 7)
-                    tile[y * 2] |= mask
-                    tile[y * 2 + 1] |= mask
-            pen += font.advance(ch)
+        tiles = _raster_tiles(font, text)
         if len(tiles) != expected_tiles:
             raise SystemExit('rankvwf: static %r needs %d tiles, expected %d' %
                              (text, len(tiles), expected_tiles))
         chunks.extend(tiles)
     data = b''.join(bytes(tile) for tile in chunks)
     assert len(data) == (STATIC_POOL_END - STATIC_POOL_BASE) * 16
+    return data
+
+
+def _special_tile_data(font):
+    """Build the exact four-tile ``Village`` and ``Dragon`` ranking markers."""
+    chunks = []
+    for text in ('Village', 'Dragon'):
+        tiles = _raster_tiles(font, text)
+        if len(tiles) != SPECIAL_TILES:
+            raise SystemExit('rankvwf: special marker %r needs %d tiles, expected %d' %
+                             (text, len(tiles), SPECIAL_TILES))
+        chunks.extend(tiles)
+    data = b''.join(bytes(tile) for tile in chunks)
+    assert len(data) == (SPECIAL_POOL_END - SPECIAL_POOL_BASE) * 16
     return data
 
 
@@ -159,9 +192,18 @@ def _assert_name_extent(font):
 def manager_src(font):
     data = _static_tile_data(font)
     native_header = bytes(propvwf.EN_CODES[ch] for ch in 'Rankings')
-    return MANAGER_SRC % (menuvwf.START_AUX_INDEX, menuvwf.START_AUX_BANK,
+    return MANAGER_SRC % (SPECIAL_POOL_BASE + SPECIAL_TILES, SPECIAL_POOL_BASE,
+                          menuvwf.START_AUX_INDEX, menuvwf.START_AUX_BANK,
+                          SPECIAL_INDEX, SPECIAL_BANK,
                           ','.join('$%02X' % value for value in data),
                           ','.join('$%02X' % value for value in native_header))
+
+
+def special_src(font):
+    data = _special_tile_data(font)
+    vram = 0x8800 + (SPECIAL_POOL_BASE - 0x80) * 16
+    return SPECIAL_SRC % (vram,
+                          ','.join('$%02X' % value for value in data))
 
 
 VALIDATE_SRC = """
@@ -330,6 +372,20 @@ staticvwf:
   call writedifficulty
   ld hl,$C523
   call writedifficulty
+  ; The native drawer stores three kana cells for its two reserved floor states.  Their
+  ; English-font aliases look like `gm` and `n.C`.  Read that native first code at col 15,
+  ; then use the otherwise-empty col 14 so the faithful four-tile English labels end at
+  ; the same col 17.  The live status/Orochi cell at col 18 is never touched.
+  ld hl,$C3AF
+  call writespecial
+  ld hl,$C40F
+  call writespecial
+  ld hl,$C46F
+  call writespecial
+  ld hl,$C4CF
+  call writespecial
+  ld hl,$C52F
+  call writespecial
   ; Five name tiles leave a sixth fixed-width cell.  Preserve row 1's native clear icon;
   ; clear only the ordinary trailing cells on later rows.
   ld hl,$C392
@@ -370,6 +426,21 @@ diffwrite:
   ld [hl+],a
   ld [hl],a
   ret
+
+writespecial:
+  ld a,[hl]
+  cp $2B
+  jr z,specialvillage
+  cp $32
+  ret nz
+  ld a,$%02X
+  jr specialwrite
+specialvillage:
+  ld a,$%02X
+specialwrite:
+  dec hl
+  ld b,$04
+  jp writeloop
 
 write5:
   ld b,$05
@@ -423,6 +494,12 @@ staticcopy:
   ld a,b
   or c
   jr nz,staticcopy
+  ; Validation succeeded and the LCD is still disabled after nativerestore, so upload
+  ; the two special-floor rasters now.  Legacy fallback skips this call and retains all
+  ; native planes byte-for-byte.
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
 skipstatic:
   pop de
   bit 7,e
@@ -479,6 +556,27 @@ copybytes:
 staticdata:
   db %s
 nativeheader:
+  db %s
+"""
+
+
+SPECIAL_SRC = """
+speciallabels:
+  and a
+  ret z
+  ld hl,specialdata
+  ld de,$%04X
+  ld bc,$0080
+specialcopy:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec bc
+  ld a,b
+  or c
+  jr nz,specialcopy
+  ret
+specialdata:
   db %s
 """
 
@@ -805,6 +903,7 @@ def install(buf, notes=None, font=None):
     validator, validate_labels = gbasm.assemble(VALIDATE_SRC, VALIDATE_AT)
     uploader, upload_labels = gbasm.assemble(UPLOAD_SRC, UPLOAD_AT)
     transition, transition_labels = gbasm.assemble(TRANSITION_SRC, TRANSITION_AT)
+    special, special_labels = gbasm.assemble(special_src(font), SPECIAL_AT)
     manager, manager_labels = gbasm.assemble(manager_src(font), MANAGER_AT)
     page_code, page_labels = page_finish()
     entry_src = _entry_src(menu_labels)
@@ -821,6 +920,9 @@ def install(buf, notes=None, font=None):
     if TRANSITION_AT + len(transition) > TRANSITION_LIMIT:
         raise SystemExit('rankvwf: transition helper needs %d bytes, only %d available'
                          % (len(transition), TRANSITION_LIMIT - TRANSITION_AT))
+    if SPECIAL_AT + len(special) > SPECIAL_LIMIT:
+        raise SystemExit('rankvwf: special-label helper needs %d bytes, only %d available'
+                         % (len(special), SPECIAL_LIMIT - SPECIAL_AT))
     if MANAGER_AT + len(manager) > MANAGER_LIMIT:
         raise SystemExit('rankvwf: screen manager needs %d bytes, only %d available'
                          % (len(manager), MANAGER_LIMIT - MANAGER_AT))
@@ -833,6 +935,8 @@ def install(buf, notes=None, font=None):
                                    (AUX_BANK, UPLOAD_AT, uploader, 'uploader'),
                                    (TRANSITION_BANK, TRANSITION_AT, transition,
                                     'transition helper'),
+                                   (SPECIAL_BANK, SPECIAL_AT, special,
+                                    'special-label helper'),
                                    (MANAGER_BANK, MANAGER_AT, manager,
                                     'screen manager')):
         at = _off(bank, addr)
@@ -856,6 +960,15 @@ def install(buf, notes=None, font=None):
                          % (TRANSITION_INDEX, TRANSITION_BANK))
     buf[transition_index] = transition_labels['rankupload'] & 0xFF
     buf[transition_index + 1] = transition_labels['rankupload'] >> 8
+
+    if buf[_off(SPECIAL_BANK, 0x4000)] != SPECIAL_BANK:
+        raise SystemExit('rankvwf: bank %d pool code is not installed' % SPECIAL_BANK)
+    special_index = _off(SPECIAL_BANK, 0x4000) + SPECIAL_INDEX - 1
+    if bytes(buf[special_index:special_index + 2]) != b'\xff\xff':
+        raise SystemExit('rankvwf: far index $%02X in bank %d is already used'
+                         % (SPECIAL_INDEX, SPECIAL_BANK))
+    buf[special_index] = special_labels['speciallabels'] & 0xFF
+    buf[special_index + 1] = special_labels['speciallabels'] >> 8
 
     if buf[_off(MANAGER_BANK, 0x4000)] != MANAGER_BANK:
         raise SystemExit('rankvwf: bank %d pool code is not installed' % MANAGER_BANK)
@@ -919,19 +1032,22 @@ def install(buf, notes=None, font=None):
     buf[call:call + 3] = bytes((0xD7, FAR_INDEX, FAR_BANK))
 
     if notes is not None:
-        notes.append('rankvwf: unified Rankings allocation uses $80-$A6: five static '
+        notes.append('rankvwf: unified Rankings allocation uses $80-$AE: five static '
                      'header tiles, nine deduplicated difficulty tiles and five private '
-                     'queued tiles per name; '
+                     'queued tiles per name, plus four shared tiles each for Village and '
+                     'Dragon; '
                      'whole-page legacy-name fallback retains the original writer')
         notes.append('rankvwf: %d-byte entry at 32:$%04X + %d-byte validator at '
                      '33:$%04X + %d-byte uploader at 33:$%04X + %d-byte atomic '
-                     'transition helper at %d:$%04X + %d-byte screen manager at '
+                     'transition helper at %d:$%04X + %d-byte special-label helper at '
+                     '%d:$%04X + %d-byte screen manager at '
                      '%d:$%04X + page finalizer 31:$%04X; LCD-on rows use the game '
                      'VBlank transfer queue and LCD-off rescue results copy five tiles '
                      'synchronously'
                      % (len(entry), ENTRY_AT, len(validator), VALIDATE_AT,
                         len(uploader), UPLOAD_AT, len(transition), TRANSITION_BANK,
-                        TRANSITION_AT, len(manager), MANAGER_BANK, MANAGER_AT,
+                        TRANSITION_AT, len(special), SPECIAL_BANK, SPECIAL_AT,
+                        len(manager), MANAGER_BANK, MANAGER_AT,
                         PAGE_FINISH_AT))
     return entry_labels, validate_labels, upload_labels
 

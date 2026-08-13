@@ -86,6 +86,7 @@ can consume more of a pool bank later.
 | 34-45 | `$405A-$40FF` when assigned | VWF carry/transition helpers | See per-module constants; otherwise reader-owned |
 | 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fei restore | Exclusive |
 | 46 | `$4100-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: rank-screen helpers | Exclusive |
+| 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 60 | `$5000-$747D` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |
 | 61 | `$7000-$77E0` | `tools/titlecard.py`: pre-intro copyright card | Exclusive tail |
