@@ -259,7 +259,7 @@ and hooks. Use it instead of hand-driving Mesen.
 **Translated and confirmed on screen:** file menu, difficulty select, place names, status
 screen (`Gitan / Floor / Mode`, `Weapon / Shield / Str / Exp`), the in-game menu
 (`Item / Floor / Map / Quit`), inventory titles, Close/Exit/Quit, No/Yes,
-Continue/New Game, Rankings, `No passwords.`, name-entry labels, and `BELLY`.
+Continue/New Game, Rankings, `No passwords.`, name-entry labels, and the `FULLNESS` bar art.
 
 Added 2026-07-31 and **photographed on the real screen**: nine combat fragments, four
 hunger warnings, and three village dialogue strings including the 190-byte four-box

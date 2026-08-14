@@ -23,7 +23,7 @@ WHAT COUNTS AS EXPLAINED. A rewritten byte outside a text arena must be one of:
   * a message-queue push -- `ld bc,nn` whose `call $028B` follows, directly or through the
     `jr` chain extract.py counts (233 direct, 9 chained)
   * a byte inside a string this ROM still lists, or a reference operand pointing at one
-  * a declared patch: script/tile_patches.tsv (the BELLY strip at 2:$7D42), the code
+  * a declared patch: script/tile_patches.tsv (the fullness strip at 2:$7D42), the code
     patchers name6, rank6, vwf and itemfix, which own known address ranges, the Fay's
     Puzzles header row build.py mirrors into bank 4 (see build.QUIZ_ROW_AT), the status
     Path padding table build.py patches in bank 4 (see build.PATH_PADDING_AT), and the
@@ -119,7 +119,7 @@ def main():
         return 1
     print('OK: banks %s have zero unexplained rewrites.'
           % ', '.join(str(b) for b in PURE_LOGIC))
-    print('Note: banks 2, 5, 6 legitimately carry message-queue pushes and the BELLY tile '
+    print('Note: banks 2, 5, 6 legitimately carry message-queue pushes and the fullness tile '
           'patch; their "unexplained" column counts what this script cannot model, not '
           'necessarily damage. The zero-tolerance claim is the PURE_LOGIC banks only.')
     return 0

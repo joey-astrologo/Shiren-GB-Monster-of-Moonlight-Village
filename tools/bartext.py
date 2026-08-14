@@ -7,7 +7,7 @@ rather than sitting one-per-cell, the constraint is 32 PIXELS of width, not 5 ch
 — which is roomier than it first looks.
 
 usage: bartext.py <rom> <bank:$addr> <ntiles> <text> [--out rom] [--preview png]
-       bartext.py build/base.gb 2:\\$7D42 4 BELLY --preview build/x.png
+       bartext.py build/base.gb 2:\\$7D42 4 FULLNESS
 """
 import sys, os
 
@@ -15,6 +15,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from latinfont import G
 
 BANKSZ = 0x4000
+
+
+# Hand-drawn labels sized specifically for the status bar. FULLNESS reproduces the
+# compact 31x7 artwork supplied for the English bar. The leading blank row keeps the
+# tall F clear of the upper divider; the remaining column in its four-tile strip stays
+# blank, so the surrounding fields do not need to move.
+BITMAPS = {
+    'FULLNESS': (
+        '...............................',
+        '####...........................',
+        '#..............................',
+        '#...#..#.#..#..#..#.###..##..##',
+        '###.#..#.#..#..##.#.#...#...#..',
+        '#...#..#.#..#..#.##.##...#...#.',
+        '#...#..#.#..#..#..#.#.....#...#',
+        '#....##..##.##.#..#.###.##..##.',
+    ),
+}
 
 
 def parse_loc(s):
@@ -25,24 +43,34 @@ def parse_loc(s):
 def render(text, width_px, pitch=6, top=1):
     """-> list of 8-row bitmaps, one per tile. `pitch` is per-character advance."""
     rows = [[0] * width_px for _ in range(8)]
-    x = 0
-    for ch in text:
-        if ch == ' ':
-            x += 3
-            continue
-        if ch not in G:
-            raise SystemExit("no glyph for %r (have: %s)" % (ch, ''.join(sorted(G))))
-        gl = G[ch]
-        for gy, line in enumerate(gl):
-            y = gy + top
-            if y >= 8:
+    if text in BITMAPS:
+        art = BITMAPS[text]
+        need = max(map(len, art))
+        if need > width_px:
+            raise SystemExit("bitmap %r needs %dpx, strip is %dpx" %
+                             (text, need, width_px))
+        for y, line in enumerate(art):
+            for x, c in enumerate(line):
+                rows[y][x] = c == '#'
+    else:
+        x = 0
+        for ch in text:
+            if ch == ' ':
+                x += 3
                 continue
-            for gx, c in enumerate(line):
-                if c == '#' and x + gx < width_px:
-                    rows[y][x + gx] = 1
-        x += pitch
-    if x - pitch + 5 > width_px:
-        print("WARNING: text needs ~%dpx, strip is %dpx" % (x - pitch + 5, width_px))
+            if ch not in G:
+                raise SystemExit("no glyph for %r (have: %s)" % (ch, ''.join(sorted(G))))
+            gl = G[ch]
+            for gy, line in enumerate(gl):
+                y = gy + top
+                if y >= 8:
+                    continue
+                for gx, c in enumerate(line):
+                    if c == '#' and x + gx < width_px:
+                        rows[y][x + gx] = 1
+            x += pitch
+        if x - pitch + 5 > width_px:
+            print("WARNING: text needs ~%dpx, strip is %dpx" % (x - pitch + 5, width_px))
     tiles = []
     for t in range(width_px // 8):
         tile = bytearray()
