@@ -29,9 +29,12 @@ STAGING = menuspill.STAGING
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
 INFO_SHAPE = (0, 3, 5, 18, 0x00)
 TEXT_CODES = tuple(code for code in propvwf.DOT_CODES if code != 0x81)
-# Round-robin distribution mixes narrow/wide/core/sparse codes and stays under both
-# source ceilings.  In the approved font it occupies 53/72 allocator tiles in total.
-ROWS = tuple(tuple(TEXT_CODES[index::5]) for index in range(5))
+# Start with a round-robin distribution to mix narrow/wide/core/sparse codes.  Move one
+# glyph out of row 1 so every synthetic Item row respects the runtime's exact 11-tile
+# slice contract; all rows remain below both source-character ceilings.
+_ROUND_ROBIN = tuple(tuple(TEXT_CODES[index::5]) for index in range(5))
+ROWS = (_ROUND_ROBIN[0], _ROUND_ROBIN[1][1:], _ROUND_ROBIN[2],
+        _ROUND_ROBIN[3] + _ROUND_ROBIN[1][:1], _ROUND_ROBIN[4])
 
 
 def packed_rows(raw):
@@ -126,7 +129,10 @@ def run_case(rom, profile, kind, png=None):
         if not matching:
             problems.append('%s row %d fell back to fixed width' % (kind, row_number))
             continue
-        if not menuspill.visible_row_matches(pb, profile, key, list(codes), raw=raw):
+        allowed_runs = menuspill.INFO_LOW_RUN if kind == 'info' else None
+        if not menuspill.visible_row_matches(
+                pb, profile, key, list(codes), raw=raw,
+                allowed_runs=allowed_runs):
             problems.append('%s row %d visible planes differ' % (kind, row_number))
     if png:
         pb.screen.image.save(png)
@@ -147,8 +153,16 @@ def main():
     profile = menuspill.renderer_profile(args.rom)
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('menuglyphspill: requires the proportional renderer')
-    if any(len(row) > 18 for row in ROWS) or set().union(*map(set, ROWS)) != set(TEXT_CODES):
+    partition = tuple(code for row in ROWS for code in row)
+    if (any(len(row) > 18 for row in ROWS) or
+            len(partition) != len(TEXT_CODES) or
+            len(set(partition)) != len(partition) or
+            set(partition) != set(TEXT_CODES)):
         raise SystemExit('menuglyphspill: internal repertoire partition is invalid')
+    tile_counts = tuple(len(menuspill.compose(row, profile)) for row in ROWS)
+    if any(count > 11 for count in tile_counts):
+        raise SystemExit('menuglyphspill: synthetic Item rows exceed the 11-tile '
+                         'runtime contract: %s' % (tile_counts,))
 
     problems = []
     for kind in ('item', 'info'):

@@ -3,8 +3,9 @@
 
 ``saves/shiren_en_item_menu_wood_arrow.srm`` has Log 1 standing on a Wood Arrow.
 The route opens Menu -> Floor, selects Info, advances its two pages, and returns to
-the action picker.  Every text transition must be atomic: an exposed frame may be the
-old screen, the uniform LCD-off screen, or the complete new screen, never a blend.
+the action picker.  The Japanese game keeps the LCD enabled and progressively publishes
+complete tile rows.  Each rendered row may therefore come from either endpoint, but a
+white LCD-off frame or a row matching neither complete endpoint is a regression.
 """
 import argparse
 import os
@@ -45,14 +46,38 @@ def staged_row(pb, source, limit=32):
     return bytes(out)
 
 
-def visual_key(image):
-    """Text and boxes, excluding independently written sprites/cursors/pagers/HUD."""
+def visual_rows(image):
+    """Exact full-width rendered tile rows, with no text-cell exemptions."""
     rgb = image.convert('RGB')
-    rgb.paste((0, 0, 0), (64, 56, 96, 96))       # Wood Arrow floor sprite
-    rgb.paste((0, 0, 0), (104, 24, 120, 96))     # action cursor / Info down arrow
-    rgb.paste((0, 0, 0), (120, 96, 160, 112))    # Info page counter
-    rgb.paste((0, 0, 0), (0, 128, 160, 144))     # animated dungeon HUD
-    return rgb.tobytes()
+    return tuple(rgb.crop((0, row * 8, 160, row * 8 + 8)).tobytes()
+                 for row in range(18))
+
+
+def row_states(image, old_rows, new_rows):
+    states = []
+    for got, old, new in zip(visual_rows(image), old_rows, new_rows):
+        if got == old == new:
+            states.append('=')
+        elif got == old:
+            states.append('O')
+        elif got == new:
+            states.append('N')
+        else:
+            states.append('X')
+    return ''.join(states)
+
+
+def row_backtracks(observations):
+    """Rows which returned to the old raster after first showing the new raster."""
+    seen_new = set()
+    backtracks = []
+    for at, states in observations:
+        for row, state in enumerate(states):
+            if state == 'N':
+                seen_new.add(row)
+            elif state == 'O' and row in seen_new:
+                backtracks.append((at, row))
+    return backtracks
 
 
 def run(rom_path, ram_path, png_dir=None, frames=3900, trace=False):
@@ -77,11 +102,16 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, trace=False):
         before = {}
         samples = {name: [] for name, _at in TRANSITIONS}
         white = {name: [] for name, _at in TRANSITIONS}
+        state_traces = {}
 
         def dispatch(_ctx=None):
             dispatches.append((frame[0], pb.register_file.A))
 
         def far_entry(_ctx=None):
+            # The fixed-font restorer calls menurow with A=$FD to read one source
+            # byte.  Ignore those calls in the rendered-row trace.
+            if pb.register_file.A == 0xFD and pb.register_file.D & 0x80:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
             calls.append((frame[0], pb.register_file.D, pb.register_file.HL,
@@ -132,28 +162,42 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, trace=False):
         if not transition or name not in before:
             problems.append('%s has no frame samples' % name)
             continue
-        old = visual_key(before[name])
-        new = visual_key(transition[-1][1])
+        old = visual_rows(before[name])
+        new = visual_rows(transition[-1][1])
+        if old == new:
+            problems.append('%s produced no rendered change' % name)
+        observations = []
+        for at, image in transition:
+            states = row_states(image, old, new)
+            if not observations or observations[-1][1] != states:
+                observations.append((at, states))
+        state_traces[name] = observations
         first_new = next((i for i, (_frame, image) in enumerate(transition)
-                          if visual_key(image) == new), None)
+                          if all(state in '=N' for state in
+                                 row_states(image, old, new))), None)
         if first_new is None:
-            problems.append('%s never reaches its settled image' % name)
-            continue
-        bad = []
-        for at, image in transition[:first_new + 1]:
-            key = visual_key(image)
-            if key not in (old, new) and len(set(image.convert('RGB').getdata())) != 1:
-                bad.append(at)
+            problems.append('%s never reaches its settled tile rows' % name)
+        bad = [(at, states) for at, states in observations if 'X' in states]
         if bad:
-            problems.append('%s has blended/partial text frame(s) %s'
-                            % (name, ' '.join('f%d' % at for at in bad[:16])))
-        if not white[name]:
-            problems.append('%s never enters the white LCD-off state' % name)
+            problems.append('%s exposes blended/incomplete tile row(s) %s'
+                            % (name, ' '.join('f%d:%s' % event for event in bad[:16])))
+        backtracks = row_backtracks(observations)
+        if backtracks:
+            problems.append('%s returns published row(s) to old pixels %s'
+                            % (name, ' '.join('f%d:r%d' % event
+                                              for event in backtracks[:16])))
+        if white[name]:
+            problems.append('%s disables the LCD at %s'
+                            % (name, ' '.join('f%d' % at for at in white[name][:16])))
 
     print('floorinfospill: dispatches %s' %
           ' '.join('f%d:%d' % event for event in dispatches))
-    print('floorinfospill: white-frame counts %s' %
+    print('floorinfospill: LCD-off frame counts %s' %
           ' '.join('%s=%d' % (name, len(white[name])) for name, _at in TRANSITIONS))
+    print('floorinfospill: rendered row states %s' % ' | '.join(
+          '%s %s' % (name, ' '.join('f%d:%s' % event
+                                     for event in state_traces.get(name, ())))
+          for name, _at in TRANSITIONS))
     if trace:
         for call in calls:
             at, rownum, key, mode, shape, source, row = call
@@ -164,7 +208,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, trace=False):
         print('  ' + problem)
     if problems:
         raise SystemExit('floorinfospill: %d problem(s)' % len(problems))
-    print('floorinfospill: real Wood Arrow action/Info transitions are atomic')
+    print('floorinfospill: LCD-on transitions contain only complete old/new tile rows')
 
 
 def main():

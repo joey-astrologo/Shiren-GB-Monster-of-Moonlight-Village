@@ -29,9 +29,9 @@ derives allocation expectations from the installed ROM instead of hard-coding ei
 font's outcome.
 
 --ram boots Joey's floor-7 fixture, checks three real pages and the equipped `Remove`
-overlay plane-exact, and audits every page-change frame. A legal V4F transition is old
-text, an LCD-off interval (reported as `WWWWW`), then the complete new page; any old/new
-mixture while the LCD is on fails. ``itempagespill.py`` owns rendered-frame acceptance.
+overlay plane-exact, and audits every page-change frame.  Native-style progressive
+publication may mix complete old and new rows while the LCD remains on.  An unexplained
+row or any LCD-off frame fails. ``itempagespill.py`` owns rendered-frame acceptance.
 
 --help-seals forces the real box-7 item-information screen and all five groups of box-19
 equipment seals. It also injects one 16-tile row and one 21-character narrow row, checks
@@ -71,7 +71,11 @@ from latinfont import EN_CODES                               # noqa: E402
 POOL_LO, POOL_HI = menuvwf.POOL_BASE, menuvwf.POOL_END - 1   # $43-$7B inclusive
 LEGACY_RUNS = ((0x43, 0x7C),)
 PROP_RUNS = ((menuvwf.POOL_BASE, menuvwf.POOL_END),
-             (0x8B, 0x96), (0x9A, 0x9E))
+             (0x8B, 0x96), (0x9A, 0xA2))
+ACTION_RUNS = tuple((base, base + cap)
+                    for base, cap in zip(menuvwf.ITEM_ACTION_BASES,
+                                         menuvwf.ITEM_ACTION_CAPS))
+INFO_LOW_RUN = ((0x04, 0x43),)
 SHADOW = 0xC300
 BGMAP = 0x9800
 VISIBLE_ROWS, VISIBLE_COLS = 18, 20
@@ -108,8 +112,28 @@ def renderer_profile(rom_path):
                              else LEGACY_REC_COUNT)}
 
 
-def in_pool(profile, tile):
-    return any(lo <= tile < hi for lo, hi in profile['runs'])
+def in_pool(profile, tile, runs=None):
+    """Whether ``tile`` belongs to the runs owned by this exact check.
+
+    The native fixed-font IDs are intentionally not part of ``profile['runs']``.
+    Low Info pages own them in state 2 and remain visible during state-4 return;
+    state 5 may briefly use them for an Item return before the completed row is
+    normalized.  Callers
+    which inspect those precise lifetimes opt in through ``active_runs`` or an explicit
+    ``runs`` argument instead of weakening every menu ownership check.
+    """
+    return any(lo <= tile < hi for lo, hi in (profile['runs'] if runs is None else runs))
+
+
+def active_runs(pb, profile):
+    runs = profile['runs']
+    if profile['mode'] == 'dot-proportional' and pb.memory[0xC0D7] in (2, 4, 5):
+        runs = INFO_LOW_RUN + runs
+    if (profile['mode'] == 'dot-proportional' and
+            pb.memory[menuvwf.ITEM_STATE_AT] in
+            (menuvwf.ITEM_STATE_ACTION, menuvwf.ITEM_STATE_POT)):
+        runs = ACTION_RUNS + runs
+    return runs
 
 
 def tile_data_addr(tile):
@@ -178,13 +202,13 @@ def status_fragment_problems(pb):
     return problems
 
 
-def visible_row_matches(pb, profile, key, codes, raw=2):
+def visible_row_matches(pb, profile, key, codes, raw=2, allowed_runs=None):
     """Does the row's currently displayed tilemap resolve to these exact pixels?"""
     want = compose(codes, profile)
     first = key + 1 + raw - SHADOW
     for i, tile_bytes in enumerate(want):
         tile = pb.memory[BGMAP + first + i]
-        if not in_pool(profile, tile):
+        if not in_pool(profile, tile, allowed_runs):
             return False
         at = tile_data_addr(tile)
         if bytes(pb.memory[at:at + 16]) != bytes(tile_bytes):
@@ -297,13 +321,14 @@ def frame_invariant(pb, profile, fallback_rows=None):
     """[(row, col, tile, why)] for every visible pool-index cell that does not sit
     exactly where a live record says it must."""
     recs = records(pb, profile)
+    runs = active_runs(pb, profile)
     bad = []
     bg = bytes(pb.memory[BGMAP:BGMAP + 0x400])
     sh = bytes(pb.memory[SHADOW:SHADOW + 32 * VISIBLE_ROWS])
     for row in range(VISIBLE_ROWS):
         for col in range(VISIBLE_COLS):
             v = bg[32 * row + col]
-            if not in_pool(profile, v):
+            if not in_pool(profile, v, runs):
                 continue
             if sh[32 * row + col] != v:
                 # the shadow no longer says this: a menu is not up (terrain tiles
@@ -369,6 +394,7 @@ def settled_check(pb, profile, label, report, drawn):
     record whose dest row still shows exactly its slice is verified. A gate-skip
     cannot silently pass: zero verified rows fails the whole run."""
     recs = records(pb, profile)
+    runs = active_runs(pb, profile)
     checked = 0
     problems = []
     sh = bytes(pb.memory[SHADOW:SHADOW + 32 * VISIBLE_ROWS])
@@ -378,7 +404,7 @@ def settled_check(pb, profile, label, report, drawn):
             continue
         shown = 0
         while (shown < 17 and first + shown < len(sh)
-               and in_pool(profile, sh[first + shown])):
+               and in_pool(profile, sh[first + shown], runs)):
             shown += 1
         if sh[first] != base or not shown:
             continue
@@ -423,11 +449,11 @@ def settled_check(pb, profile, label, report, drawn):
 LONG_ROWS = [
     # The exact row-0 regression followed by four REAL glossary staff/pot names. Every
     # True Rapier is the real glossary weapon; the remaining four rows retain the hostile
-    # widest two-digit counter class and paint 11 approved-font tiles each. Each widest
-    # two-digit counter row. The current hostile peak is 9 + 11*4 item tiles plus 4*4
-    # action tiles = 69/72
-    # usable tiles. The old row-number policy forced row 0 into the 11-run, fell back to
-    # fixed width, and spilled the last digit into row 1. Row 0 carries Joey's $84 marker.
+    # widest two-digit counter class and paint at most 11 approved-font tiles each.  Every
+    # settled Item row now reserves one fixed 11-tile owner, including the shorter first
+    # row.  Four Action rows own independent four-tile slices, for 55+16 = 71 tiles.
+    # The old row-number policy fell back to fixed width and spilled the last digit into
+    # row 1. Row 0 carries Joey's $84 marker.
     'True Rapier-99',
     'Stopgap Staff[77]',
     'Weakening Pot[77]',
@@ -597,9 +623,9 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
             # so a short fixed tail would miss the actual settle point.
             if flip is page_build['value'] and not flip['settled']:
                 if not pb.memory[0xFF40] & 0x80:
-                    # V4F deliberately composes into VRAM while the LCD is white. The
-                    # changing bytes are not visible and therefore are not mixed-screen
-                    # ownership; itempagespill separately verifies the rendered frames.
+                    # The Japanese item-menu route never disables the LCD. Preserve an
+                    # explicit state so the trace rejects a reintroduced white-frame
+                    # workaround; itempagespill separately verifies framebuffer rows.
                     states = 'W' * len(flip['old']['rows'])
                 else:
                     states = []
@@ -679,13 +705,13 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
             trace = ', '.join('f%d:%s' % observation for observation in changes)
             print('  page flip f%d: %s' % (flip['start'], trace))
             for at, states in flip['observations']:
+                if 'W' in states:
+                    problems.append('--ram: page flip f%d disables the LCD at f%d'
+                                    % (flip['start'], at))
+                    break
                 if 'X' in states:
                     problems.append('--ram: page flip f%d has unowned pixels at f%d (%s)'
                                     % (flip['start'], at, states))
-                    break
-                if 'N' in states and 'O' in states:
-                    problems.append('--ram: page flip f%d mixes new and old rows at '
-                                    'f%d (%s)' % (flip['start'], at, states))
                     break
             settled = flip['observations'][-1][1] if flip['observations'] else ''
             if any(state not in 'N=' for state in settled):
@@ -701,13 +727,10 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
                             % (sorted(long_seen), len(LONG_ROWS) - 1))
         recs = long_records or []
         by_key = {key: (base, cap, raw) for key, base, cap, raw in recs}
-        used = 0
         for i, text in enumerate(LONG_ROWS):
             tiles = len(compose(encode(text), profile))
-            cap = capneed(tiles)
-            expected = used + cap <= menuvwf.POOL_END - menuvwf.POOL_BASE
-            if expected:
-                used += cap
+            cap = menuvwf.ITEM_ROW_TILES
+            expected = tiles <= cap
             key = SHADOW + 32 * (4 + 2 * i)
             record = by_key.get(key)
             if expected and record is None:
@@ -729,10 +752,9 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
                 problems.append('--long: no worst-page action-overlay snapshot captured')
             else:
                 caps = [cap for _key, _base, cap, _raw in action_records]
-                expected_caps = [
-                    capneed(len(compose(encode(text), profile)))
-                    for text in LONG_ROWS + list(LONG_ACTION_ROWS)
-                ]
+                expected_caps = ([menuvwf.ITEM_ROW_TILES] * len(LONG_ROWS) +
+                                 list(menuvwf.ITEM_ACTION_CAPS[
+                                     :len(LONG_ACTION_ROWS)]))
                 if len(caps) != len(expected_caps) or sum(caps) != sum(expected_caps):
                     problems.append('--long: worst item+action residency is %d record(s), '
                                     '%d cap tiles; expected %d and %d'
@@ -741,7 +763,7 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
                 occupied = []
                 for _key, base, cap, _raw in action_records:
                     if not any(lo <= base and base + cap <= hi
-                               for lo, hi in profile['runs']):
+                               for lo, hi in ACTION_RUNS + profile['runs']):
                         problems.append('--long: slice $%02X+%d crosses a proven pool run'
                                         % (base, cap))
                     occupied.extend(range(base, base + cap))
@@ -848,11 +870,12 @@ def drive_info_screen(rom, profile, kind, seals=(), synthetic=False, png=None,
     recs = records(pb, profile)
     if not recs:
         problems.append('%s: no proportional record was allocated' % kind)
+    runs = active_runs(pb, profile)
     for key, base, cap, raw in recs:
         if raw != 0 and key in drawn:
             problems.append('%s: row $%04X recorded raw prefix %d, expected 0'
                             % (kind, key, raw))
-        if not any(lo <= base and base + cap <= hi for lo, hi in profile['runs']):
+        if not any(lo <= base and base + cap <= hi for lo, hi in runs):
             problems.append('%s: slice $%02X+%d crosses a proven pool run'
                             % (kind, base, cap))
     if synthetic:

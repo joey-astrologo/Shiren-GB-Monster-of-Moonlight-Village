@@ -5,6 +5,7 @@ Log 2 in ``shiren_en_log2_storage_pot_menu.srm`` stands on a Storage Pot. The ro
 opens Floor, selects Info, then presses B. Info's bottom edge occupies screen row 11;
 the restored six-choice picker must turn that row back into an interior spacer and put
 its only bottom edge on row 15. This catches the former extra border below ``Toss``.
+Like the Japanese route, the redraw must keep the LCD enabled throughout.
 """
 import argparse
 import os
@@ -19,6 +20,7 @@ sys.path.insert(0, HERE)
 from gbrun import PRESS_FRAMES, _import_pyboy                  # noqa: E402
 import menuspill                                                # noqa: E402
 import menuvwf                                                  # noqa: E402
+from floorinfospill import row_backtracks, row_states, visual_rows  # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log2_storage_pot_menu.srm')
@@ -60,11 +62,18 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
         action_rows = []
         white = []
         halts = []
+        before = None
+        samples = []
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
 
         def far_entry(_context=None):
+            # The fixed-font restorer reuses menurow with the private $FD byte-read
+            # mode.  Its source pointer can coincide with a stale Action shape, but it
+            # is not a composed menu row and must not enter the lifecycle census.
+            if pb.register_file.A == 0xFD and pb.register_file.D & 0x80:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if frame[0] >= return_frame and shape == action_shape:
                 action_rows.append((frame[0], pb.register_file.D, pb.memory[0xC0D7]))
@@ -72,6 +81,8 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
         for frame[0] in range(frame_count):
+            if frame[0] == return_frame:
+                before = pb.screen.image.copy()
             for button in script.get(frame[0], ()):
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
@@ -80,6 +91,8 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
                     white.append(frame[0])
                 if pb.register_file.PC == 0x0038:
                     halts.append(frame[0])
+            if return_frame <= frame[0] <= return_frame + 100:
+                samples.append((frame[0], pb.screen.image.copy()))
 
         final = pb.screen.image.copy()
         final_state = pb.memory[0xC0D7]
@@ -103,14 +116,41 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
     if rows != list(range(action_count)):
         problems.append('returned action rows are %s, expected 0..%d'
                         % (rows, action_count - 1))
-    if not white:
-        problems.append('return never entered its atomic LCD-off interval')
+    if white:
+        problems.append('return disabled the LCD at frame(s) %s' % white[:12])
     if final_state != 0:
         problems.append('Floor/Info transaction ended in state %d, expected 0' % final_state)
     if not final_lcdc & 0x80:
         problems.append('LCD remained disabled after the action redraw')
     if halts:
         problems.append('CPU reached rst $38 at frame(s) %s' % halts[:8])
+
+    state_trace = []
+    if before is None or not samples:
+        problems.append('Info return has no rendered-frame samples')
+    else:
+        old = visual_rows(before)
+        new = visual_rows(samples[-1][1])
+        if old == new:
+            problems.append('Info return produced no rendered change')
+        for at, image in samples:
+            states = row_states(image, old, new)
+            if not state_trace or state_trace[-1][1] != states:
+                state_trace.append((at, states))
+        first_new = next((i for i, (_at, image) in enumerate(samples)
+                          if all(state in '=N' for state in
+                                 row_states(image, old, new))), None)
+        if first_new is None:
+            problems.append('Info return never reaches its settled tile rows')
+        bad = [(at, states) for at, states in state_trace if 'X' in states]
+        if bad:
+            problems.append('Info return exposes blended/incomplete tile row(s) %s'
+                            % ' '.join('f%d:%s' % event for event in bad[:12]))
+        backtracks = row_backtracks(state_trace)
+        if backtracks:
+            problems.append('Info return returns published row(s) to old pixels %s'
+                            % ' '.join('f%d:r%d' % event
+                                       for event in backtracks[:12]))
 
     def cells(row):
         start = row * 32 + 13
@@ -138,10 +178,12 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
             problems.append('stale action-box cells remain on row %d: %s'
                             % (row, cells(row).hex(' ')))
 
-    print('%s: dispatches %s; action rows %s; %d white frame(s); '
+    print('%s: dispatches %s; action rows %s; %d LCD-off frame(s); '
           'row11=%s row%d=%s; %d problem(s)'
           % (label, ' '.join('f%d:%d' % event for event in dispatches), rows, len(white),
              cells(11).hex(' '), bottom_row, cells(bottom_row).hex(' '), len(problems)))
+    print('%s: rendered return row states %s' %
+          (label, ' '.join('f%d:%s' % event for event in state_trace)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

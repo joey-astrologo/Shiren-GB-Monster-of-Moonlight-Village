@@ -78,7 +78,8 @@ def staged_row(pb, source, limit=32):
     return tuple(row)
 
 
-def exact_visible(pb, profile, event, codes, raw, label, problems):
+def exact_visible(pb, profile, event, codes, raw, label, problems,
+                  allowed_runs=None):
     if event is None:
         problems.append('%s never reached the proportional renderer' % label)
         return False
@@ -92,7 +93,15 @@ def exact_visible(pb, profile, event, codes, raw, label, problems):
                for record in menuspill.records(pb, profile)):
         problems.append('%s has no raw=%d proportional allocation' % (label, raw))
         return False
-    if not menuspill.visible_row_matches(pb, profile, key, list(codes), raw=raw):
+    # Info alternates between the proportional high generation and the fixed-font
+    # low generation.  The latter deliberately owns $04-$42, outside the ordinary
+    # menu profile runs, so verify against an explicit generation when the caller
+    # knows it, or against the ranges active for the current transaction otherwise.
+    runs = (menuspill.active_runs(pb, profile)
+            if allowed_runs is None else allowed_runs)
+    if not menuspill.visible_row_matches(
+            pb, profile, key, list(codes), raw=raw,
+            allowed_runs=runs):
         problems.append('%s visible planes differ from proportional composition' % label)
         return False
     return True
@@ -123,6 +132,11 @@ def run_case(rom_path, ram_path, case, png=None):
             dispatches.append((frame[0], pb.register_file.A))
 
         def far_entry(_ctx=None):
+            # The fixed-font restorer reads bank 32 one byte at a time through the
+            # menurow entry with this magic register pair.  It is not a row draw and
+            # may retain a stale Item/Info descriptor in C69A-C69E.
+            if pb.register_file.A == 0xFD and pb.register_file.D & 0x80:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if shape not in (ITEM_SHAPE, INFO_SHAPE):
                 return
@@ -155,10 +169,12 @@ def run_case(rom_path, ram_path, case, png=None):
             if current == case['info_check']:
                 checks['title'] = exact_visible(
                     pb, profile, events['title'], case['title'], 0,
-                    case['label'] + ' Info title', problems)
+                    case['label'] + ' Info title', problems,
+                    allowed_runs=menuspill.INFO_LOW_RUN)
                 checks['body'] = exact_visible(
                     pb, profile, events['body'], BODY_CODES, 0,
-                    case['label'] + ' Info body', problems)
+                    case['label'] + ' Info body', problems,
+                    allowed_runs=menuspill.INFO_LOW_RUN)
         if png:
             stem, ext = os.path.splitext(png)
             pb.screen.image.save(stem + '_' + case['label'].lower().replace(' ', '_') +

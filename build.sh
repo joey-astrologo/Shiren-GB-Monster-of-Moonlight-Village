@@ -58,8 +58,9 @@ python3 tools/newgamesmoke.py build/shiren_en.gb
 
 # Curated route-specific SRAM regressions are tracked under tests/fixtures and staged at
 # the legacy saves/ paths above. Machine-state routes remain conditional because PyBoy
-# states are generated locally for the current ROM/WRAM layout. The fixtures enforce atomic item-page and
-# Floor action/Info transitions (including Gitan's shorter action box), the Log-2 Path
+# states are generated locally for the current ROM/WRAM layout. The fixtures enforce
+# LCD-on item-page and Floor action/Info transitions with only complete old/new rows
+# visible (including Gitan's shorter action box), the Log-2 Path
 # selector/status field, title/file-menu transitions (including Erase Log 3 rebuilding
 # Copy Log), cursed/plated/unidentified equipment-marker VWF, an exhaustive Items/Info
 # textual-glyph pass, the Copy/Erase/New-Log name-screen
@@ -78,6 +79,12 @@ if [ -f saves/dungeon.state ]; then
 fi
 if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/itempagespill.py build/shiren_en.gb
+fi
+if [ -f saves/shiren_en_log_1_dragons_maw.srm ] &&
+   [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
+  # Five/six-row Item Action pickers and low/high Info returns after page-history
+  # changes exercise ownership cases that the ordinary first-page route cannot reach.
+  python3 tools/itemsubmenuspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   python3 tools/floorinfospill.py build/shiren_en.gb

@@ -35,7 +35,7 @@ WRAM-staged row must also have:
     left and put the cursor over their first tile,
   * row number `d` <= 4 and a valid prefix; the raw cursor cells stay raw so the game
     cursor writer keeps working,
-  * 1..18 SOURCE characters for menus/items or 1..21 for item information, seals, and
+  * 1..18 SOURCE characters for WRAM menus/items or 1..21 for item information, seals, and
     clear-condition rows; every code
     is < $43 or one of the explicitly admitted punctuation/status glyphs. Equipment
     unidentified-equipment suffix `$88` and plating suffix `$8A` are composed as their
@@ -67,29 +67,36 @@ and hold (base, cap, raw cells), with cap = 4 for <=4 tiles, 8 for 5-8, the exac
 9-13 tile queue footprint, or 16 for a 14-16-tile wide row. The proportional build adds
 only census-unseen `$8B-$95`
 (11) and `$9A-$9D` (4); `$87` is isolated and cannot satisfy capneed's minimum 4. The
-first ITEM ROW THAT FITS uses the 11-run; 12-16-tile rows use the base run regardless of
-their page position. This matters because row 0 is only an epoch-reset signal, not a
-width class: forcing it into 11 tiles made the former 12-tile longest weapon fall back only at
-the top of a page. The hostile measured permutation (12 + four 11-tile item rows plus
-four 4-tile verbs) packs all 72 usable tiles without crossing or overlap. Item row 0
-resets the hidden prior epoch;
-same-destination redraws reuse a cap or fall back if they grow.
+ordinary allocator uses the 11-run first, with 12-16-tile rows using the base run. Exact
+Items pages rotate five visible rows plus one free owner through six settled 11-tile
+slices. `$25-$2F` is a guarded transition-only slice: Action-cancel and three-row Pot
+contents borrow it for returned row 0, while high-Info return may borrow it for whichever
+row has no released high slice. The completed Items/Pot map then releases a high owner;
+the borrowed row is pixel-identically migrated there before input resumes and the native
+`$25-$36` font is restored. Initial and repeated Main -> Items instead choose the five
+high slices not owned by Main and never borrow the low slice. Action rows use a
+page-independent generation `$9A-$A1,$C7-$CD,$D6-$DC`; the compact Name/Info tail uses
+three tiles per row.  It never borrows an Item high slice, so Info paging and return can
+rebuild Items without repainting text still referenced by the resident Action box.
 
 PAGE FLIPS. Fresh pixels uploaded into reused tiles used to show through the old map.
-At exact item row 0 the proportional path waits for VBlank and disables the LCD; the
-screen stays white while all five item rows and the following Items header are composed.
-The header completion publishes the full 20x18 shadow map and re-enables the LCD. A
-short final page pre-stages its empty row 4 before taking the same completion path. The
-visible text transition is therefore old -> white -> complete new page; the native
-cursor and page-arrow writers may follow, but no mixed old/new text can be exposed.
+Each replacement item row is now composed into the one slice absent from the five shadow
+rows, then its complete 20-cell shadow row is copied to the visible map at VBlank. Only
+after that commit can the outgoing row's slice become the scratch for the following row.
+Blank trailing rows take the same commit path. The LCD remains on and complete old/new
+rows progress like the Japanese renderer; no glyph tile visible in the outgoing row is
+modified. Before each complete-row commit, the restored selection in `$C6A5` pre-stages
+the `$81` cursor in its final shadow row, so no later native cursor write creates a
+partially published frame.
 
 FLOOR ACTION / INFO. The same reused-tile exposure occurred on action -> Info, Info page
-1 -> 2, and Info -> action. Exact help row 0 now starts an LCD-off transaction; its last
-row pre-stages an empty interior, bottom border, arrow and page counter before publishing
-the complete map. A settled-Info marker survives the intermediate screen-0 redraw on the
-return route; screen 20's final action row pre-stages its bottom edge and publishes. The
-155-byte controller and 105-byte finalizer live before text in pool banks 39/40 and share
-the item helper's full-map publisher at bank 37 far index 7.
+1 -> 2, and Info -> action. Alternating low/high Info generations keep every outgoing
+glyph immutable while the next page is composed. Each painted row is published whole at
+a fresh VBlank; the last row stages the native border/pager and uses bank 4's own 18-row
+map producer. A settled-Info marker survives the intermediate screen-0 redraw on return;
+that transient map is suppressed, and screen 20's real Action rows progressively release
+the old Info slices before reusing them. Low-generation fixed glyphs are restored only
+after the completed map no longer refers to their proportional pixels. The LCD stays on.
 
 THE UPLOAD. Composition goes into the `$C006` queue payloads (the three 66-byte slots,
 a flat 12-tile space with 2-byte dest gaps) plus a 16-byte extension buffer for TILE 12
@@ -136,11 +143,14 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    15 records (`$C163-$C1AD`) and puts three watermarks, shape kind and
                    count at `$C1AE-$C1B2`; 15 exceeds the measured 13-row stacked peak
                    and prevents propvwf's ephemeral `$C0D7/$C0D8` from corrupting them.
-                   V4F uses `$C0D7` as a synchronous transaction state: 1 is item-page
-                   pending; 2/3 are pending/settled Info; 4 is Info-return pending;
+                   `$C0D7` is the synchronous Floor/Info and start-screen transaction
+                   byte: 2/3 are settled low/high Info generations, 4/5 are their
+                   respective return-pending states, and
                    `$10/$11/$12/$13/$14` are title/file, difficulty, proportional
                    Rankings, Fay-screen and native Rankings transactions. It is cleared
-                   after the corresponding map publication.
+                   after the corresponding map publication. Item ownership is disjoint:
+                   `$C1BA` holds lifecycle magics `$A0-$A9` (invalid, settled, page,
+                   entry, Action, cancel, low/high Info return, Main, and Pot build).
   * `$C12C-$C13B`  tile 12's composition buffer
   ($C0E0-$C0FB, the first 7-record table, is proven free but no longer used.)
 The game's own park at `$C0DE` writes to `$C0DE/DF` and `$C0FE/FF`, next to the first
@@ -162,6 +172,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gbasm
+import dialogue_preview as dialogue
+import pool as textpool
 import propvwf
 
 BANKSZ = 0x4000
@@ -200,6 +212,131 @@ ITEM_PAGE_INDEX = 0x05
 ITEM_PAGE_AT = 0x405A
 ITEM_PAGE_LIMIT = 0x4100
 ITEM_PUBLISH_INDEX = 0x07
+# Five settled Item rows rotate through six high slices.  `$25-$2F` is a guarded
+# transition-only slice: it is normalized into a free high slice before input resumes,
+# then the shared fixed-font restorer repaints its canonical native glyphs.
+ITEM_ROW_TILES = 11
+ITEM_SOURCE_CHARS = 18       # proportional staged scan accepts through E=$12, rejects $13
+ITEM_HIGH_SLICES = (0x43, 0x4E, 0x59, 0x64, 0x6F, 0x8B)
+ITEM_TRANSIENT_BASE = 0x25
+ITEM_ROW_SLICES = ITEM_HIGH_SLICES + (ITEM_TRANSIENT_BASE,)
+ITEM_MAIN_VIRGIN_ROWS = ITEM_HIGH_SLICES[1:]
+ITEM_INFO_LOW_ROWS = ITEM_HIGH_SLICES[2:] + ITEM_HIGH_SLICES[1:2]
+# High-Info return must work for every page-history permutation.  The Action box owns its
+# disjoint generation while Info is open, so the chooser may consider all six high Item
+# slices plus the transient without a page-history-dependent exclusion.
+ITEM_INFO_HIGH_CANDIDATES = ITEM_HIGH_SLICES + (ITEM_TRANSIENT_BASE,)
+ITEM_NAME_BANK = 11
+ITEM_NAME_TABLE = 0x4537
+ITEM_NAME_COUNT = 145
+ITEM_INFO_TOPIC_COUNT = 157  # final twelve table slots alias the Kasa Tanuki name
+ITEM_ENHANCEMENT_COUNT = 34
+ITEM_COUNTER_NAME_COUNT = 23  # terminal-noun Staff/Pot names; not numbered placeholders
+# Equipment has 199 signed states including bare zero; counter classes have [1]..[99];
+# every other live name has one bare form: 34*199 + 23*99 + 88 = 9,131.
+ITEM_VARIANT_COUNT = (ITEM_ENHANCEMENT_COUNT * 199 +
+                      ITEM_COUNTER_NAME_COUNT * 99 +
+                      ITEM_NAME_COUNT - ITEM_ENHANCEMENT_COUNT - ITEM_COUNTER_NAME_COUNT)
+
+
+def _asm_bytes(values):
+    """Format one canonical Python tile tuple as an RGBDS-style byte list."""
+    return ','.join('$%02X' % value for value in values)
+
+
+# Measured-free persistent ownership state.  Five current row bases, the free high
+# slice, transient-row index, lifecycle, then five context bytes (cancel/Pot roll state
+# or Info's outgoing row caps).
+ITEM_ROWS_AT = 0xC1B3
+ITEM_FREE_AT = 0xC1B8
+ITEM_LOW_ROW_AT = 0xC1B9
+ITEM_STATE_AT = 0xC1BA
+ITEM_CONTEXT_AT = 0xC1BB
+ITEM_STATE_INVALID = 0xA0
+ITEM_STATE_SETTLED = 0xA1
+ITEM_STATE_PAGE = 0xA2
+ITEM_STATE_ENTRY = 0xA3
+ITEM_STATE_ACTION = 0xA4
+ITEM_STATE_CANCEL = 0xA5
+ITEM_STATE_INFO_LOW = 0xA6
+ITEM_STATE_INFO_HIGH = 0xA7
+ITEM_STATE_MAIN = 0xA8
+# Exact three-row Pot contents use a separate build/finalization state. They borrow the
+# Action-cancel release sequence, normalize their transient row, then settle back to
+# Action ownership; the later B route returns to Items through an ordinary page rotation.
+ITEM_STATE_POT = 0xA9
+# Item Action pickers have up to six rows.  Keeping every row in a context-local run is
+# essential: Info remains over the Action map, so borrowing ITEM_FREE_AT would leave a
+# page-history-dependent high slice visibly live during Info -> Items.  Rows 4/5 are the
+# native tail choices Name/Info and have a proved three-tile VWF cap; the first four keep
+# four tiles.  The ranges avoid checkbox `$A4`, Pot-header `$C7-$C8` while its three-row
+# picker is live, and transient screen-0 users `$CE,$D0-$D5`.
+ITEM_ACTION_BASE = 0x9A
+ITEM_ACTION_BASES = (ITEM_ACTION_BASE, ITEM_ACTION_BASE + 4,
+                     0xD6, 0xC7, 0xCB, 0xDA)
+ITEM_ACTION_ROWS = 6
+ITEM_ACTION_CAPS = (4, 4, 4, 4, 3, 3)
+# Row commit is separate from allocation so both helpers fit before their banks' text.
+# Bank 46's prefix is explicitly outside its Rankings text/helper region at $4100+.
+ITEM_COMMIT_BANK = 0x2E
+ITEM_COMMIT_INDEX = 0x0B
+ITEM_COMMIT_AT = 0x405A
+ITEM_COMMIT_LIMIT = 0x4100
+# The completed Items header owns the transient-to-settled migration. Pool bank 48 is
+# otherwise text-only from $4100 onward; its reader-to-text prefix is explicitly reserved.
+ITEM_FINISH_BANK = 0x30
+ITEM_FINISH_INDEX = 0x05
+ITEM_FINISH_AT = 0x405A
+ITEM_FINISH_LIMIT = 0x4100
+# Complex ownership selection is split out of the tiny bank-37 allocator entry.
+ITEM_STATE_BANK = 0x32
+ITEM_STATE_INDEX = 0x05
+ITEM_STATE_AT_ROM = 0x405A
+ITEM_STATE_LIMIT = 0x4100
+ITEM_CHOICE_BANK = 0x33
+ITEM_CHOICE_INDEX = 0x05
+ITEM_CHOICE_AT = 0x405A
+ITEM_CHOICE_LIMIT = 0x4100
+ITEM_INFO_CHOICE_BANK = 0x34
+ITEM_INFO_CHOICE_INDEX = 0x05
+ITEM_INFO_CHOICE_AT = 0x405A
+ITEM_INFO_CHOICE_LIMIT = 0x4100
+ITEM_MIGRATE_BANK = 0x35
+ITEM_MIGRATE_INDEX = 0x05
+ITEM_MIGRATE_AT = 0x405A
+ITEM_MIGRATE_LIMIT = 0x4100
+ITEM_TRANSITION_BANK = 0x36
+ITEM_TRANSITION_INDEX = 0x05
+ITEM_TRANSITION_AT = 0x405A
+ITEM_TRANSITION_LIMIT = 0x4100
+ITEM_FIXED_BANK = 0x37
+ITEM_FIXED_INDEX = 0x05
+ITEM_FIXED_AT = 0x405A
+ITEM_FIXED_LIMIT = 0x4100
+# The completed Item header publishes four complete 20-cell rows per VBlank from the
+# same bank tail as the fixed return allocator.
+ITEM_MAP_BANK = ITEM_FIXED_BANK
+ITEM_MAP_INDEX = 0x07
+ITEM_VALIDATE_BANK = 0x38
+ITEM_VALIDATE_INDEX = 0x05
+ITEM_VALIDATE_AT = 0x405A
+ITEM_VALIDATE_LIMIT = 0x4100
+ITEM_ACTION_BANK = ITEM_STATE_BANK
+ITEM_ACTION_INDEX = 0x07
+ITEM_POT_FINISH_BANK = ITEM_STATE_BANK
+ITEM_POT_FINISH_INDEX = 0x09
+ITEM_MAIN_BANK = 0x3A
+# Ending credits own index 5 and $4100+ in this bank; Item Main fits in the otherwise
+# free pre-text prefix and uses the adjacent far slot.
+ITEM_MAIN_INDEX = 0x07
+ITEM_POT_HEADER_INDEX = 0x09
+ITEM_MAIN_AT = 0x405A
+ITEM_MAIN_LIMIT = 0x4100
+# Shared with the Floor/Info fixed-font restorer.
+FIXED_RESTORE_BANK = 0x31
+FIXED_RESTORE_INDEX = 0x05
+FIXED_RESTORE_AT = 0x405A
+FIXED_RESTORE_LIMIT = 0x4100
 FLOOR_INFO_BANK = 0x27      # pool banks 39/40: reader ends $405A, text starts at $4100
 FLOOR_INFO_INDEX = 0x05
 FLOOR_INFO_AT = 0x405A
@@ -208,6 +345,21 @@ FLOOR_INFO_FINISH_BANK = 0x28
 FLOOR_INFO_FINISH_INDEX = 0x05
 FLOOR_INFO_FINISH_AT = 0x4060
 FLOOR_INFO_FINISH_LIMIT = 0x4100
+# Floor/Info mode 1/2 work and allocation are split into free pre-text prefixes.  Bank
+# $3B's index 5 and $4100+ belong to endingcredits; index 7 is independently free.
+FLOOR_INFO_POST_BANK = 0x39
+FLOOR_INFO_POST_INDEX = 0x05
+FLOOR_INFO_POST_AT = 0x405A
+FLOOR_INFO_POST_LIMIT = 0x4100
+FLOOR_ALLOC_BANK = 0x3B
+FLOOR_ALLOC_INDEX = 0x07
+FLOOR_ALLOC_AT = 0x405A
+FLOOR_ALLOC_LIMIT = 0x4100
+# Native bank 4's map producer at $44A2 copies C6A2 rows starting at C6A1, up to five
+# per mode-8 VBlank.  Far index $4F is unused in the base and points at that routine.
+NATIVE_MAP_BANK = 0x04
+NATIVE_MAP_INDEX = 0x4F
+NATIVE_MAP_AT = 0x44A2
 START_TRANSITION_BANK = 0x29  # pool banks 41/42: reader ends $405A, text starts $4100
 START_TRANSITION_INDEX = 0x05
 START_TRANSITION_AT = 0x405A
@@ -261,6 +413,12 @@ ROM_POOL_BASE = 0xCB
 ROM_POOL_END = 0xDE          # exclusive: nineteen contiguous tiles; $CA stays native
 ROM_ONE_BASE = 0xC0
 ROM_ONE_END = 0xC9           # one-row labels avoid the game's $D1-$D6 graphics reload
+# Box 17 is the one-row header shown over three-row Pot contents.  `$C0-$C3` remain
+# visible in the outgoing Items header and are repainted again by the returning Items
+# header, while `$C5/$C6` belong to settled Item status cells.  `$C7/$C8` are absent at
+# both endpoints, giving this exact header a disjoint two-tile generation.
+ROM_POT_HEADER_BASE = 0xC7
+ROM_POT_HEADER_CAP = 2
 # Box 32 (Fay's co-resident "Which task?" prompt) cannot use $C0-$C8: completed
 # quiz cells are native tile $C4.  Its measured eight-tile row uses a disjoint slice
 # above the unstable $D1-$D6 range; menuromspill and structspill own this exception.
@@ -953,51 +1111,974 @@ summaryclear:
 """
 
 
-# V4F item-page transitions cannot publish 80 name cells atomically inside VBlank: the
-# copy spans visible scan time, and a short final page never reaches the proportional
-# row-4 publisher because its empty row correctly falls back to the native drawer.  Keep
-# the exact five-row item list dark from its row-0 entry until the complete 20x18 shadow
-# map is ready, then enable the LCD with one finished page.  Mode 2 pre-stages an empty
-# final row before the native fallback writes the same bytes, so short pages share the
-# same completion boundary.  This helper needs no glyph tables and lives in pool bank 37.
+# Seven 11-tile slices provide five live Item rows plus transition headroom. Mode 0
+# chooses a run absent from the complete visible map (ordinary Action rows also use a
+# small context-local run); mode 1
+# commits one complete shadow row at a fresh VBlank, making its outgoing slice reusable;
+# mode 2 pre-stages and commits an empty trailing row before native fallback advances the
+# source.  The LCD stays on.  Index 7 retains the synchronous full-map publisher used by
+# Rankings after it has disabled the LCD; the independent Floor/Info controller no longer
+# calls that compatibility entry.
 ITEM_PAGE_SRC = """
 itempage:
   and a
-  jr z,pageblank
-  dec a
-  jr z,pagepublish
-  jr pageempty
-pageblank:
+  jr z,itemalloc
+  cp $02
+  jr z,itemblank
+  rst $10
+  db $%02X,$%02X
+  ret
+itemalloc:
+  ld a,[$C1B1]
+  cp $01
+  jr z,itemrow
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+itemrow:
+  ld a,[$C0D0]
+  cp $02
+  jr nz,itemunused
+  ; Only the exact five-row Items list and exact three-row Pot contents may enter the
+  ; rolling ownership state machine.  Other raw-prefix-2 boxes retain the generic
+  ; allocator and cannot mutate the persistent Item lifecycle.
+  ld a,[$C69A]
+  and a
+  jr nz,itemunused
+  ld a,[$C69B]
+  cp $03
+  jr nz,itemunused
+  ld a,[$C69C]
+  cp $03
+  jr z,itemshape
+  cp $05
+  jr nz,itemunused
+itemshape:
+  ld a,[$C69D]
+  cp $12
+  jr nz,itemunused
+  ld a,[$C69E]
+  cp $02
+  jr nz,itemunused
+  ld a,[$C0D3]
+  cp $0C
+  ret nc
+  ld a,[$C0D6]
+  cp $05
+  ret nc
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret nc
+  ld c,$0B
+  ret
+itemblank:
+  ld a,[$C1B1]
+  cp $01
+  jr nz,itemcommitblank
+  ld a,[$C0D0]
+  cp $02
+  jr nz,itemcommitblank
+  ld a,$02
+  rst $10
+  db $%02X,$%02X
+itemcommitblank:
+  ld a,$02
+  rst $10
+  db $%02X,$%02X
+  ld a,$02
+  rst $10
+  db $%02X,$%02X
+  ret
+itemunused:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+publishmap:
+  ; Rankings calls this entry with A=0 after disabling the LCD.  Its page finalizer
+  ; still needs the old synchronous shadow publication and transaction-state clear;
+  ; a queued/VBlank publisher cannot run while the LCD is off.
+  ld [$C0D7],a
+  ld hl,$C300
+  ld de,$9800
+  ld b,$12
+ippubrow:
+  ld c,$14
+ippubcell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,ippubcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,ippubsrc
+  inc h
+ippubsrc:
+  ld a,e
+  add a,$0C
+  ld e,a
+  jr nc,ippubdest
+  inc d
+ippubdest:
+  dec b
+  jr nz,ippubrow
+  ldh a,[$FF40]
+  set 7,a
+  ldh [$FF40],a
+  ret
+""" % (ITEM_VALIDATE_INDEX, ITEM_VALIDATE_BANK,
+       ITEM_STATE_INDEX, ITEM_STATE_BANK,
+       ITEM_CHOICE_INDEX, ITEM_CHOICE_BANK,
+       ITEM_CHOICE_INDEX, ITEM_CHOICE_BANK,
+       ITEM_COMMIT_INDEX, ITEM_COMMIT_BANK,
+       FLOOR_INFO_INDEX, FLOOR_INFO_BANK,
+       FLOOR_ALLOC_INDEX, FLOOR_ALLOC_BANK)
+
+
+ITEM_STATE_SRC = """
+itemstate:
+  ld a,[$C1B1]
+  cp $02
+  jr z,istateaction
+  and a
+  jr nz,istateunused
+  rst $10
+  db $%02X,$%02X
+  ret
+istateaction:
+  ld a,$02
+  rst $10
+  db $%02X,$%02X
+  ret
+istateunused:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (ITEM_MAIN_INDEX, ITEM_MAIN_BANK,
+       ITEM_ACTION_INDEX, ITEM_ACTION_BANK,
+       FLOOR_ALLOC_INDEX, FLOOR_ALLOC_BANK)
+
+
+ITEM_ACTION_SRC = """
+itemaction:
+  ld a,[$C69B]
+  cp $01
+  jr nz,iaunused
+  ld a,[$C0D6]
+  cp $%02X
+  ret nc
+  ld e,a
+  ld a,[$%04X]
+  cp $%02X
+  jr z,iactionready
+  cp $%02X
+  jr nz,iaunused
+  ld a,e
+  and a
+  jr nz,iaunused
+  rst $10
+  db $%02X,$%02X
+  jr nc,iaforced
+  ld a,$%02X
+  ld [$%04X],a
+iactionready:
+  ld a,[$C0D6]
+  ld e,a
+  ld d,$00
+  ld hl,iactionbases
+  add hl,de
+  ld b,[hl]
+  ld c,$04
+  ld a,e
+  cp $04
+  jr c,iactiondone
+  dec c
+iactiondone:
+  scf
+  ret
+iaforced:
+  ld a,$01
+  and a
+  ret
+iaunused:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+iactionbases:
+  db %s
+""" % (ITEM_ACTION_ROWS,
+       ITEM_STATE_AT, ITEM_STATE_ACTION, ITEM_STATE_SETTLED,
+       ITEM_VALIDATE_INDEX, ITEM_VALIDATE_BANK,
+       ITEM_STATE_ACTION, ITEM_STATE_AT,
+       FLOOR_ALLOC_INDEX, FLOOR_ALLOC_BANK,
+       _asm_bytes(ITEM_ACTION_BASES))
+
+
+# The exact three-row Pot screen first uses the Action-cancel release schedule
+# T,R0,R1.  Its completed shadow map releases R2 as well, so normalize T into R2 before
+# restoring the native low font.  Keeping the five reserved row owners as
+# [R2,R0,R1,R3,R4] lets the ordinary cancel transition return to Items progressively
+# without repainting a tile that the Pot map still exposes.
+ITEM_POT_FINISH_SRC = """
+potfinish:
+  ld a,[$%04X]
+  cp $%02X
+  ret nz
+  ; Content rows are at Y=3.  The following exact Pot header is the only Y=0 row while
+  ; this lifecycle state is active, and its rborder hook is the full-screen boundary.
+  ld a,[$C69B]
+  and a
+  ret nz
+  ld hl,$C340
+  ld [hl],$BA
+  inc hl
+  ld a,$BD
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl],$BB
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+  ld a,[$%04X]
+  ld b,a
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret nc
+  ld a,$05
+  rst $10
+  db $%02X,$%02X
+  ld b,$25
+  ld c,$02
+  ld a,$80
+  rst $10
+  db $%02X,$%02X
+  ld a,$FF
+  ld [$%04X],a
+  ld a,$%02X
+  ld [$%04X],a
+  ret
+""" % (ITEM_STATE_AT, ITEM_STATE_POT,
+       NATIVE_MAP_INDEX, NATIVE_MAP_BANK,
+       ITEM_CONTEXT_AT, ITEM_MIGRATE_INDEX, ITEM_MIGRATE_BANK,
+       ITEM_VALIDATE_INDEX, ITEM_VALIDATE_BANK,
+       FIXED_RESTORE_INDEX, FIXED_RESTORE_BANK,
+       ITEM_LOW_ROW_AT, ITEM_STATE_ACTION, ITEM_STATE_AT)
+
+
+ITEM_MAIN_SRC = """
+itemmain:
+  ld a,[$C69B]
+  and a
+  jr nz,imunused
+  ld a,[$C0D6]
+  cp $04
+  ret nc
+  ld e,a
+  ld a,[$C0D7]
+  cp $04
+  jr z,imsuppress
+  cp $05
+  jr z,imsuppress
+  ld a,[$%04X]
+  cp $%02X
+  jr z,imsuppress
+  cp $%02X
+  jr z,imsuppress
+  cp $%02X
+  jr z,imainready
+  cp $%02X
+  jr z,imainstart
+  cp $%02X
+  jr nz,imunused
+  ld a,e
+  and a
+  jr nz,imunused
+  ld hl,imvirginrows
+  ld de,$%04X
+  ld b,$05
+imvirgincopy:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,imvirgincopy
+  ld a,$43
+  ld [$%04X],a
+  jr imainset
+imainstart:
+  ld a,e
+  and a
+  jr nz,imunused
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jr nc,imforced
+imainset:
+  ld a,$%02X
+  ld [$%04X],a
+imainready:
+  ld a,[$C0D6]
+  ld e,a
+  ld a,e
+  cp $02
+  jr nc,imainfixed
+  add a,a
+  add a,a
+  ld b,a
+  ld a,[$%04X]
+  add a,b
+  ld b,a
+  jr imainbase
+imainfixed:
+  sub $02
+  add a,a
+  add a,a
+  add a,$%02X
+  ld b,a
+imainbase:
+  ld c,$04
+  scf
+  ret
+imsuppress:
+imforced:
+  ld a,$01
+  and a
+  ret
+imunused:
+  xor a
+  ret
+itempotheader:
+  ld a,[$%04X]
+  cp $%02X
+  ld a,$%02X
+  jr z,iphstore
+  ld a,$%02X
+iphstore:
+  ld [$C0DB],a
+  ret
+imvirginrows:
+  db %s
+""" % (ITEM_STATE_AT, ITEM_STATE_ACTION, ITEM_STATE_POT, ITEM_STATE_MAIN,
+       ITEM_STATE_SETTLED, ITEM_STATE_INVALID,
+       ITEM_ROWS_AT, ITEM_FREE_AT,
+       ITEM_VALIDATE_INDEX, ITEM_VALIDATE_BANK,
+       ITEM_STATE_MAIN, ITEM_STATE_AT,
+       ITEM_FREE_AT, ITEM_ACTION_BASES[0],
+       ITEM_STATE_AT, ITEM_STATE_POT, ROM_POT_HEADER_BASE, ROM_ONE_BASE,
+       _asm_bytes(ITEM_MAIN_VIRGIN_ROWS))
+
+
+ITEM_CHOICE_SRC = """
+itemchoice:
+  cp $02
+  jr nz,ichoicepainted
+  ld a,$01
+  ld [$C0D5],a
+  xor a
+  jr ichoicenormal
+ichoicepainted:
+  xor a
+  ld [$C0D5],a
+ichoicenormal:
+  ld a,[$C0D6]
+  ld e,a
+  and a
+  jr nz,ichoicenext
+  ld a,[$C0D7]
+  cp $04
+  jr z,iinfolowstart
+  cp $05
+  jr z,iinfohighstart
+  ld a,[$%04X]
+  cp $%02X
+  jr z,ipagestart
+  cp $%02X
+  jr nz,ichoicenotaction
+  ; Only the exact three-row Pot contents route enters the Pot lifecycle.  Five-row
+  ; Items returns keep the ordinary Action-cancel allocator below.
+  ld a,[$C69C]
+  cp $03
+  jr nz,icancelstart
+  ld a,$07
+  jr ichoicechecked
+ichoicenotaction:
+  cp $%02X
+  jr z,imainentrystart
+  ld a,$01
+  and a
+  ret
+imainentrystart:
+  ld a,$06
+  jr ichoicechecked
+iinfolowstart:
+  ; Reuse Main-entry mode 6: it selects all five high slices except the persistent
+  ; Action owner at ITEM_FREE_AT.  A fixed `$43` exclusion is wrong after paging.
+  ld a,$06
+  jr ichoicecall
+iinfohighstart:
+  ld a,$02
+  jr ichoicefixedcall
+ipagestart:
+  ld a,$03
+  jr ichoicechecked
+icancelstart:
+  ld a,$04
+ichoicechecked:
+  ld [$C0D4],a
+  ld a,[$C0D5]
+  ; The proportional renderer owns C0CC as its saved source-pointer low byte.
+  ; Preserve the painted/blank flag on the stack while the validator uses C0D5.
+  push af
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ; POP does not alter the validator's carry result; B receives the saved flag.
+  pop bc
+  jr nc,ichoiceinvalid
+  ld a,b
+  ld [$C0D5],a
+  ld a,[$C0D4]
+  jr ichoicecall
+ichoiceinvalid:
+  ld a,$01
+  and a
+  ret
+ichoicenext:
+  ld a,[$%04X]
+  cp $%02X
+  jr z,ientrynext
+  cp $%02X
+  jr z,iinfolownext
+  cp $%02X
+  jr z,iinfohighnext
+  cp $%02X
+  jr z,ipagenext
+  cp $%02X
+  jr z,icancelnext
+  cp $%02X
+  jr z,icancelnext
+  xor a
+  ret
+ientrynext:
+  ld a,$06
+  jr ichoicecall
+iinfolownext:
+  ld a,$06
+  jr ichoicecall
+iinfohighnext:
+  ld a,$02
+  jr ichoicefixedcall
+icancelnext:
+  ld a,$04
+  jr ichoicecall
+ipagenext:
+  ld a,$03
+ichoicecall:
+  rst $10
+  db $%02X,$%02X
+  ret
+ichoicefixedcall:
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (ITEM_STATE_AT, ITEM_STATE_SETTLED, ITEM_STATE_ACTION,
+       ITEM_STATE_MAIN,
+       ITEM_VALIDATE_INDEX, ITEM_VALIDATE_BANK,
+       ITEM_STATE_AT, ITEM_STATE_ENTRY, ITEM_STATE_INFO_LOW,
+       ITEM_STATE_INFO_HIGH, ITEM_STATE_PAGE, ITEM_STATE_CANCEL, ITEM_STATE_POT,
+       ITEM_TRANSITION_INDEX, ITEM_TRANSITION_BANK,
+       ITEM_FIXED_INDEX, ITEM_FIXED_BANK)
+
+
+ITEM_TRANSITION_SRC = """
+itemtransition:
+  cp $07
+  jr z,itpot
+  cp $06
+  jr z,itmainentry
+  cp $04
+  jr z,itcancel
+itrotate:
+  ld a,[$C0D6]
+  and a
+  jr nz,itrotateready
+  ld a,$%02X
+  ld [$%04X],a
+itrotateready:
+  ld a,[$C0D6]
+  ld e,a
+  call itrowptr
+  ld a,[$%04X]
+  ld b,a
+  ld a,[hl]
+  ld [$%04X],a
+  ld [hl],b
+  scf
+  ret
+itpot:
+  ; Mode 7 is used only for row 0 of the exact three-row Pot contents screen.  Its
+  ; following rows call the ordinary mode-4 continuation without changing this state.
+  ld a,$%02X
+  ld [$%04X],a
+  jr itcancelbody
+itcancel:
+  ld a,[$C0D6]
+  and a
+  jr nz,itcancelnext
+  ld a,$%02X
+  ld [$%04X],a
+itcancelbody:
   ld a,[$C0D5]
   and a
-  ret z
-  ld a,[$C0D9]
-  cp $80
-  ret nz
+  ld a,$00
+  jr nz,itcancellow
+  or $80
+itcancellow:
+  ld [$%04X],a
+  xor a
+  ld e,a
+  call itrowptr
+  ld a,[hl]
+  ld [$%04X],a
+  ld b,$%02X
+  ld [hl],b
+  scf
+  ret
+itcancelnext:
+  ld e,a
+  call itrowptr
+  ld a,[$%04X]
+  ld b,a
+  ld a,[hl]
+  ld [$%04X],a
+  ld [hl],b
+  scf
+  ret
+itmainentry:
+  ld a,[$C0D6]
+  and a
+  jr nz,itmainready
+  ld a,$%02X
+  ld [$%04X],a
+itmainready:
+  ld a,[$C0D6]
+  ld c,a
+  ld hl,itmainbases
+itmainnext:
+  ld b,[hl]
+  inc hl
+  ld a,[$%04X]
+  cp b
+  jr z,itmainnext
+  ld a,c
+  and a
+  jr z,itmainstore
+  dec c
+  jr itmainnext
+itmainstore:
+  ld a,[$C0D6]
+  ld e,a
+  call itrowptr
+  ld [hl],b
+  scf
+  ret
+itrowptr:
+  ld d,$00
+  ld hl,$%04X
+  add hl,de
+  ret
+itmainbases:
+  db %s
+""" % (ITEM_STATE_PAGE, ITEM_STATE_AT,
+       ITEM_FREE_AT, ITEM_FREE_AT,
+       ITEM_STATE_POT, ITEM_STATE_AT,
+       ITEM_STATE_CANCEL, ITEM_STATE_AT,
+       ITEM_LOW_ROW_AT, ITEM_CONTEXT_AT,
+       ITEM_TRANSIENT_BASE,
+       ITEM_CONTEXT_AT, ITEM_CONTEXT_AT,
+       ITEM_STATE_ENTRY, ITEM_STATE_AT, ITEM_FREE_AT,
+       ITEM_ROWS_AT, _asm_bytes(ITEM_HIGH_SLICES))
+
+
+ITEM_FIXED_SRC = """
+itemfixed:
+  ld e,a
+  ld a,[$C0D6]
+  and a
+  jr nz,ifixedprepared
+  call ifixedclear
+  ld a,e
+  dec a
+  jr z,ifixedlowinit
+  ld a,$%02X
+  ld [$%04X],a
+  jr ifixedhigh
+ifixedlowinit:
+  ld a,$%02X
+  ld [$%04X],a
+  ld hl,ifixedlowbases
+  jr ifixedselect
+ifixedprepared:
+  ld a,e
+  dec a
+  jr z,ifixedlow
+ifixedhigh:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+ifixedlow:
+  ld hl,ifixedlowbases
+ifixedselect:
+  ld a,[$C0D6]
+  ld e,a
+  ld d,$00
+  add hl,de
+  ld b,[hl]
+  ld a,b
+  cp $%02X
+  jr nz,ifixedstore
+  ld a,e
+  ld [$%04X],a
+ifixedstore:
+  ld hl,$%04X
+  add hl,de
+  ld [hl],b
+  scf
+  ret
+ifixedclear:
+  ld hl,$%04X
+  ld b,$05
+  ld a,$FF
+ifixedclearloop:
+  ld [hl+],a
+  dec b
+  jr nz,ifixedclearloop
+  ld [$%04X],a
+  ret
+ifixedlowbases:
+  ; Low-generation proportional Info ends at $42, but its outgoing screen still maps a
+  ; separate static $43-$45 row until ITEM_MAP settles.  Do not claim $43 early.
+  db %s
+""" % (ITEM_STATE_INFO_HIGH, ITEM_STATE_AT,
+       ITEM_STATE_INFO_LOW, ITEM_STATE_AT,
+       ITEM_INFO_CHOICE_INDEX, ITEM_INFO_CHOICE_BANK,
+       ITEM_TRANSIENT_BASE, ITEM_LOW_ROW_AT,
+       ITEM_ROWS_AT, ITEM_ROWS_AT, ITEM_LOW_ROW_AT,
+       _asm_bytes(ITEM_INFO_LOW_ROWS))
+
+
+ITEM_MAP_SRC = """
+itemmap:
+  ; Drain the pending native header upload before waiting for our first fresh VBlank.
+  ; Without this, row 0 can be copied while that upload still owns the transfer queue.
+  rst $18
+  ld hl,$C340
+  ld [hl],$BA
+  inc hl
+  ld a,$BD
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl],$BB
+  ld hl,$C300
+  ld de,$9800
+  ld b,$04
+imapbatch:
+  push bc
+  call imapwait
+  ld b,$04
+imaprow:
+  ld c,$14
+imapcell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,imapcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,imaphready
+  inc h
+imaphready:
+  ld a,e
+  add a,$0C
+  ld e,a
+  jr nc,imapdready
+  inc d
+imapdready:
+  dec b
+  jr nz,imaprow
+  pop bc
+  dec b
+  jr nz,imapbatch
+  scf
+  ret
+imapwait:
   ldh a,[$FF40]
   bit 7,a
   ret z
-pbwait:
+imapvisible:
   ldh a,[$FF44]
   cp $90
-  jr c,pbwait
-  ldh a,[$FF40]
-  res 7,a
-  ldh [$FF40],a
-  ld a,$01
-  ld [$C0D7],a
+  jr nc,imapvisible
+imapblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,imapblank
   ret
-pageempty:
+"""
+
+
+ITEM_VALIDATE_SRC = """
+itemvalidate:
+  cp $03
+  jr z,ivfindfree
+  cp $05
+  jr z,ivlowowner
+  cp $06
+  jr z,ivlowtarget
+  cp $FE
+  jr z,ivinit
+  ld hl,$%04X
+  ld b,$06
+  xor a
+  ld [$C0D5],a
+ivnext:
+  ld a,[hl+]
+  ld e,a
+  push hl
+  ld hl,ivbases
+  ld c,$06
+  ld d,$01
+ivfind:
+  ld a,[hl+]
+  cp e
+  jr z,ivfound
+  sla d
+  dec c
+  jr nz,ivfind
+  jr ivinvalid
+ivfound:
+  ld a,[$C0D5]
+  and d
+  jr nz,ivinvalid
+  ld a,[$C0D5]
+  or d
+  ld [$C0D5],a
+  pop hl
+  dec b
+  jr nz,ivnext
+  scf
+  ret
+ivinvalid:
+  pop hl
+  ld a,$%02X
+  ld [$%04X],a
+  ld a,$01
+  and a
+  ret
+ivfindfree:
+  ld hl,ivbases
+  ld c,$06
+ivfnext:
+  ld b,[hl]
+  inc hl
+  push hl
+  ld hl,$%04X
+  ld d,$05
+ivfrow:
+  ld a,[hl+]
+  cp b
+  jr z,ivfused
+  dec d
+  jr nz,ivfrow
+  pop hl
+  scf
+  ret
+ivfused:
+  pop hl
+  dec c
+  jr nz,ivfnext
+  xor a
+  ret
+ivlowowner:
+  ld a,[$%04X]
+  and $7F
+  ld e,a
+  ld d,$00
+  ld hl,$%04X
+  add hl,de
+  ld a,[$C0D4]
+  ld [hl],a
+  scf
+  ret
+ivlowtarget:
+  ld a,[$%04X]
+  cp $%02X
+  jr nz,ivfindfree
+  ld a,[$%04X]
+  ld b,a
+  scf
+  ret
+ivinit:
+  ld hl,$%04X
+  ld b,$07
+  ld a,$FF
+ivinitloop:
+  ld [hl+],a
+  dec b
+  jr nz,ivinitloop
+  ld a,$%02X
+  ld [$%04X],a
+  ret
+ivbases:
+  db %s
+""" % (ITEM_ROWS_AT, ITEM_STATE_INVALID, ITEM_STATE_AT,
+       ITEM_ROWS_AT,
+       ITEM_LOW_ROW_AT, ITEM_ROWS_AT,
+       ITEM_STATE_AT, ITEM_STATE_CANCEL, ITEM_CONTEXT_AT,
+       ITEM_ROWS_AT, ITEM_STATE_INVALID, ITEM_STATE_AT,
+       _asm_bytes(ITEM_HIGH_SLICES))
+
+
+ITEM_INFO_CHOICE_SRC = """
+iteminfochoice:
+  ld a,[$C0D5]
+  ; Scan already saved this row's next source pointer at C0CC/C0CD.  Keep the
+  ; painted/blank flag on the stack instead of corrupting that renderer state.
+  push af
+  ld a,[$C0D6]
+  ld c,a
+  ld hl,$%04X
+  ld b,$05
+  ld de,$0000
+iicsum:
+  ld a,[hl+]
+  ld [$C0D4],a
+  add a,e
+  ld e,a
+  ld a,c
+  and a
+  jr z,iicnorelease
+  dec c
+  ld a,[$C0D4]
+  add a,d
+  ld d,a
+iicnorelease:
+  dec b
+  jr nz,iicsum
+  ld a,d
+  add a,$43
+  ld [$C0D4],a
+  ld a,e
+  add a,$43
+  ld [$C0D5],a
+  ld hl,iiccandidates
+  ld c,$%02X
+iicnext:
+  ld b,[hl]
+  inc hl
+  push hl
+  ld hl,$%04X
+  ld a,[$C0D6]
+  ld d,a
+iicusedloop:
+  ld a,d
+  and a
+  jr z,iicunused
+  ld a,[hl+]
+  cp b
+  jr z,iicused
+  dec d
+  jr iicusedloop
+iicunused:
+  ld a,b
+  cp $%02X
+  jr z,iicchoose
+  add a,$0B
+  ld e,a
+  ld a,[$C0D4]
+  cp e
+  jr nc,iicchoose
+  ld a,[$C0D5]
+  cp b
+  jr z,iicchoose
+  jr c,iicchoose
+iicused:
+  pop hl
+  dec c
+  jr nz,iicnext
+  pop af
+  ld a,$01
+  and a
+  ret
+iicchoose:
+  pop hl
+  ld a,[$C0D6]
+  ld e,a
+  ld d,$00
+  ld hl,$%04X
+  add hl,de
+  ld [hl],b
+  ld a,b
+  cp $%02X
+  jr z,iictransient
+  ; Discard the saved flag on ordinary high-slice success.
+  pop af
+  jr iicready
+iictransient:
+  ; Consume the saved flag only when recording transient ownership.
+  pop af
+  and a
+  ld a,e
+  jr nz,iiclowready
+  or $80
+iiclowready:
+  ld [$%04X],a
+iicready:
+  scf
+  ret
+iiccandidates:
+  ; State 5 is reachable only from odd/high Info pages.  Action rows use disjoint
+  ; context-local tiles, so the live-interval proof only needs to avoid outgoing Info.
+  db %s
+""" % (ITEM_CONTEXT_AT, len(ITEM_INFO_HIGH_CANDIDATES),
+       ITEM_ROWS_AT, ITEM_TRANSIENT_BASE,
+       ITEM_ROWS_AT, ITEM_TRANSIENT_BASE, ITEM_LOW_ROW_AT,
+       _asm_bytes(ITEM_INFO_HIGH_CANDIDATES))
+
+
+ITEM_COMMIT_SRC = """
+itemcommit:
+  dec a
+  jr z,icommit
+  dec a
+  jr z,itemempty
+  dec a
+  jr z,iforced
+  ret
+itemempty:
   ld a,[$C1B1]
   cp $01
   ret nz
+  ld a,[$C0D0]
+  cp $02
+  ret nz
   ld a,[$C0D9]
-  cp $80
-  ret nz
+  ld l,a
   ld a,[$C0DA]
-  cp $C4
-  ret nz
-  ld hl,$C480
+  ld h,a
   ld a,[$C0E0]
   ld [hl+],a
   ld a,[$C0E1]
@@ -1009,102 +2090,11 @@ perow:
   dec c
   jr nz,perow
   ld [hl],$BF
-pagepublish:
-  ld a,[$C0D7]
-  and a
-  ret z
+icommit:
   ld a,[$C1B1]
+  cp $01
+  jr z,irowcommit
   cp $04
-  ret nz
-  ; Only box 14's four-cell Items header may finish an item-page transaction.
-  ; Box 17 (Pot) shares this shadow-map position but is one cell narrower; treating
-  ; it as Items pre-stages a six-cell bottom edge, leaving a stray $BB at x=5.
-  ; Mode 4, an active page transaction, shadow bank $C3, and an exact width of three
-  ; (Pot) or four (Items) identify the only accepted completion paths. Omitting the
-  ; redundant $20 low-byte comparison keeps the helper inside its original allocation.
-  ld a,[$C0DA]
-  sub $C3
-  ret nz
-  ld a,[$C69D]
-  sub $03
-  jr z,pagefinish
-  dec a
-  ret nz
-  ld b,$04
-  ; rborder runs before the native box drawer emits this one-row header's bottom
-  ; edge. Pre-stage that exact asserted box-14 edge so the full map is complete now;
-  ; the native drawer writes the same six bytes immediately after we return.
-  ld hl,$C340
-  ld a,$BA
-  ld [hl+],a
-pebottom:
-  ld [hl],$BD
-  inc hl
-  dec b
-  jr nz,pebottom
-  ld [hl],$BB
-pagefinish:
-  xor a
-publishmap:
-  ld [$C0D7],a
-  ld hl,$C300
-  ld de,$9800
-  ld b,$12
-pprow:
-  ld c,$14
-ppcell:
-  ld a,[hl+]
-  ld [de],a
-  inc de
-  dec c
-  jr nz,ppcell
-  ld a,l
-  add a,$0C
-  ld l,a
-  jr nc,ppsrcok
-  inc h
-ppsrcok:
-  ld a,e
-  add a,$0C
-  ld e,a
-  jr nc,ppdestok
-  inc d
-ppdestok:
-  dec b
-  jr nz,pprow
-  ldh a,[$FF40]
-  set 7,a
-  ldh [$FF40],a
-  ret
-"""
-
-
-# The Floor item action picker and its two-page Info box reuse VWF tiles and the visible
-# map while their replacement is still being drawn.  The exact Wood Arrow route proves
-# three mixed-text transitions: action -> Info, Info page -> page, and Info -> action.
-# The Gitan route separately proves that a shorter three-choice action box also reaches
-# the final publication boundary after its one-page description closes.
-# Keep the LCD dark across those synchronous redraws.  A settled Info screen is marked
-# with state 3 so its intermediate screen-0 redraw can begin the return transaction; the
-# following screen-20 action row completes it.  State 1 remains the item-page transaction.
-#
-# The controller and finalizer occupy the standard pre-text helper slots in pool banks
-# 39/40.  The final full-map copy is shared with ITEM_PAGE_SRC through bank 37 index 7.
-FLOOR_INFO_SRC = """
-floorinfo:
-  and a
-  jr z,fiblank
-  dec a
-  jr z,fiborder
-  jr fiempty
-fiblank:
-  ld a,[$C1B1]
-  cp $03
-  jr z,fihelpblank
-  and a
-  ret nz
-  ld a,[$C0D7]
-  cp $03
   ret nz
   ld a,[$C0D9]
   cp $20
@@ -1112,83 +2102,750 @@ fiblank:
   ld a,[$C0DA]
   cp $C3
   ret nz
+  ld a,[$C69D]
+  cp $04
+  jr z,iitemsheader
+  ; The exact Pot header is one cell narrower.  Its completed rborder is the Pot
+  ; lifecycle's map-publication and transient-normalization boundary.
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+  ret
+iitemsheader:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+irowcommit:
+  ld a,[$C0D0]
+  cp $02
+  ret nz
+  ld a,[$C0D9]
+  ld l,a
+  ld a,[$C0DA]
+  ld h,a
+  ; Screen 1 restores the Item selection in C6A5 before any returned row is drawn.
+  ; Stage its cursor before every complete-row commit. C0D6 is composer scratch by
+  ; this point, so derive the destination directly instead of comparing row numbers.
+  push hl
+  ld a,[$C6A5]
+  ld l,a
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  ld de,$C382
+  add hl,de
+  ld [hl],$81
+  pop hl
+  ld e,l
+  ld a,h
+  sub $2B
+  ld d,a
+  jr icwait
+iforced:
+  ld a,l
+  and $E0
+  ld l,a
+  ld e,a
+  ld a,h
+  sub $2B
+  ld d,a
+icwait:
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,icopy
+  ; Always begin at line 144, rather than risking a call late in an existing VBlank.
+icwaitvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,icwaitvisible
+icwaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,icwaitblank
+icopy:
+  ld c,$14
+icopycell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,icopycell
+  ret
+"""
+ITEM_COMMIT_SRC %= (ITEM_POT_FINISH_INDEX, ITEM_POT_FINISH_BANK,
+                    ITEM_FINISH_INDEX, ITEM_FINISH_BANK)
+
+
+ITEM_FINISH_SRC = """
+itemfinish:
+  ld a,[$%04X]
+  cp $%02X
+  ret z
+  cp $%02X
+  ret z
+  ; At the Item-header boundary the native shadow is complete except for its bottom
+  ; border and page indicator.  Stage the pager, then reveal rows 0-15 in four
+  ; VBlanks before any transition-only glyph slice is retired.
+  ld hl,$C36F
+  ld a,$C5
+  ld b,$04
+ifpagerclear:
+  ld [hl+],a
+  dec b
+  jr nz,ifpagerclear
+  ld a,[$C6AC]
+  cp $14
+  ret nc
+  ld b,$FF
+ifpagerindex:
+  inc b
+  sub $05
+  jr nc,ifpagerindex
+  ld e,b
+  ld d,$00
+  ld hl,$C36F
+  add hl,de
+  ld [hl],$C6
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret nc
+  ld a,[$%04X]
+  cp $FF
+  jr z,ifnormalized
+  ld a,$06
+  rst $10
+  db $%02X,$%02X
+  ret nc
+  ld a,[$%04X]
+  bit 7,a
+  jr z,ifowneronly
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ret nc
+  jr ifsetowner
+ifowneronly:
+  ld a,b
+  ld [$C0D4],a
+ifsetowner:
+  ld a,$05
+  rst $10
+  db $%02X,$%02X
+ifnormalized:
+  ld a,[$%04X]
+  cp $%02X
+  jr z,iffindfree
+  cp $%02X
+  jr nz,iffreeready
+iffindfree:
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+  jr nc,iffreeready
+  ld a,b
+  ld [$%04X],a
+iffreeready:
+  ld a,[$C0D7]
+  cp $04
+  jr z,iffullrestore
+  cp $05
+  jr z,iffullrestore
+  ld a,[$%04X]
+  cp $FF
+  jr z,ifsettle
+  bit 7,a
+  jr z,ifsettle
+  ld b,$25
+  ld c,$02
+  jr ifrestore
+iffullrestore:
+  ld b,$04
+  ld c,$07
+ifrestore:
+  ld a,$80
+  rst $10
+  db $%02X,$%02X
+  xor a
+  ld [$C0D7],a
+ifsettle:
+  ld a,$FF
+  ld [$%04X],a
+  ld a,$%02X
+  ld [$%04X],a
+  ret
+""" % (ITEM_STATE_AT, ITEM_STATE_SETTLED, ITEM_STATE_INVALID,
+       ITEM_MAP_INDEX, ITEM_MAP_BANK,
+       ITEM_LOW_ROW_AT, ITEM_PAGE_INDEX, ITEM_PAGE_BANK,
+       ITEM_LOW_ROW_AT,
+       ITEM_MIGRATE_INDEX, ITEM_MIGRATE_BANK,
+       ITEM_PAGE_INDEX, ITEM_PAGE_BANK,
+       ITEM_STATE_AT, ITEM_STATE_INFO_LOW, ITEM_STATE_INFO_HIGH,
+       ITEM_PAGE_INDEX, ITEM_PAGE_BANK, ITEM_FREE_AT,
+       ITEM_LOW_ROW_AT, FIXED_RESTORE_INDEX, FIXED_RESTORE_BANK,
+       ITEM_LOW_ROW_AT, ITEM_STATE_SETTLED, ITEM_STATE_AT)
+
+
+ITEM_MIGRATE_SRC = """
+itemmigrate:
+  ld a,b
+  ld [$C0D4],a
+  ld a,[$C1B2]
+  and a
+  ret z
+  ld c,a
+  ld hl,$C163
+imrecord:
+  ld a,[hl+]
+  ld [$C0CC],a
+  ld a,[hl+]
+  ld [$C0CD],a
+  ld a,[hl]
+  cp $%02X
+  jr z,imfound
+  inc hl
+  inc hl
+  inc hl
+  dec c
+  jr nz,imrecord
+  xor a
+  ret
+imfound:
+  ld a,[$C0D4]
+  ld [hl],a
+  ld l,a
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  ld a,h
+  bit 3,a
+  jr z,imlowtarget
+  add a,$80
+  jr imtargetready
+imlowtarget:
+  add a,$90
+imtargetready:
+  ld h,a
+  ld d,h
+  ld e,l
+  ld hl,$9250
+  call imwait
+  ld c,$60
+imcopyfirst:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,imcopyfirst
+  call imwait
+  ld c,$50
+imcopylast:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,imcopylast
+  ld a,[$C0CC]
+  add a,$03
+  ld l,a
+  ld e,a
+  ld a,[$C0CD]
+  ld h,a
+  sub $2B
+  ld d,a
+  ld b,$0B
+imtranslate:
+  ld a,[hl]
+  sub $%02X
+  cp $0B
+  jr nc,imnext
+  ld c,a
+  ld a,[$C0D4]
+  add a,c
+  ld [hl],a
+imnext:
+  inc hl
+  dec b
+  jr nz,imtranslate
+  call imwait
+  ld a,[$C0CC]
+  add a,$03
+  ld l,a
+  ld e,a
+  ld a,[$C0CD]
+  ld h,a
+  sub $2B
+  ld d,a
+  ld c,$0B
+immap:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,immap
+  scf
+  ret
+imwait:
+  ldh a,[$FF40]
+  bit 7,a
+  ret z
+imwaitvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,imwaitvisible
+imwaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,imwaitblank
+  ret
+""" % (ITEM_TRANSIENT_BASE, ITEM_TRANSIENT_BASE)
+
+
+# Floor Action and Info use two fixed Info generations.  Low Info owns the native
+# fixed-font IDs $04-$42; high Info owns the 57-tile proportional run $43-$7B.  Row 0
+# switches generation and clears the five saved caps before any pixels are uploaded.
+# Painted rows are committed as complete aligned 20-cell rows with the LCD on.  The last
+# row stages the native border/pager and invokes bank 4's four-VBlank full-map producer.
+#
+# Returning Info first draws a transient screen-0 picker at C320/C360/C3A0/C3E0 (and
+# C420/C460 for taller shapes).  It must never be published: state 4/5 makes the Item Main
+# allocator force native fallback for that shadow-only draw.  The real screen-20 Action
+# rows at C38D/C3CD/C40D/C44D/C48D/C4CD then publish progressively.  Each aligned commit
+# releases the matching outgoing Info row, so high-return Action can use the deterministic
+# bases $9A,$9E,$43,$47,$4B,$4F without a low-tile fallback.  install() exhaustively proves
+# every built Info page has cap(row0)+cap(row1) >= 12, which is stronger than the 4/8/12
+# released-prefix requirements for rows 2/3/4; row 5 begins after all five Info rows have
+# been committed.  Low Info's fixed font is restored only after the completed map no
+# longer references it.
+FLOOR_INFO_SRC = """
+floorinfo:
+  and a
+  jr z,fipre
+  rst $10
+  db $%02X,$%02X
+  ret
+fipre:
   ld a,d
   and a
   ret nz
+  ld a,[$C1B1]
+  cp $03
+  jr z,fihelp
+  and a
+  ret nz
+  ; Only the transient screen-0 x0 action shape may convert settled Info to return state.
+  ld a,[$C0D9]
+  cp $20
+  ret nz
+  ld a,[$C0DA]
+  cp $C3
+  ret nz
+  ld a,[$C69A]
+  or a
+  ret nz
+  ld a,[$C69B]
+  or a
+  ret nz
+  ld a,[$C69D]
+  cp $05
+  ret nz
+  ld a,[$C69E]
+  cp $02
+  ret nz
+  ld a,[$C0D7]
+  cp $02
+  jr z,fireturnlow
+  cp $03
+  ret nz
+  ld a,$05
+  jr fistore
+fireturnlow:
   ld a,$04
-  jr fioff
-fihelpblank:
+fistore:
+  ld [$C0D7],a
+  ret
+fihelp:
   ld a,[$C0D9]
   cp $80
   ret nz
   ld a,[$C0DA]
   cp $C3
   ret nz
-  ld a,d
-  and a
+  ld a,[$C69A]
+  or a
   ret nz
+  ld a,[$C69B]
+  cp $03
+  ret nz
+  ld a,[$C69C]
+  cp $05
+  ret nz
+  ld a,[$C69D]
+  cp $12
+  ret nz
+  ld a,[$C69E]
+  or a
+  ret nz
+  ; The row scanner still owns BC (source) and HL (shadow destination) here.
+  push bc
+  push hl
+  ld a,[$C0D7]
+  cp $02
+  ld a,$03
+  jr z,fihelpstate
   ld a,$02
-fioff:
+fihelpstate:
   ld [$C0D7],a
-  ldh a,[$FF40]
-  bit 7,a
-  ret z
-fiwait:
-  ldh a,[$FF44]
-  cp $90
-  jr c,fiwait
-  ldh a,[$FF40]
-  res 7,a
-  ldh [$FF40],a
+  cp $03
+  ld a,$04
+  jr nz,fiwatermark
+  ld a,$43
+fiwatermark:
+  ld [$C1AE],a
+  ld hl,$C1BB
+  ld b,$05
+  xor a
+ficlearcaps:
+  ld [hl+],a
+  dec b
+  jr nz,ficlearcaps
+  pop hl
+  pop bc
   ret
-fiborder:
+""" % (FLOOR_INFO_POST_INDEX, FLOOR_INFO_POST_BANK)
+
+
+FLOOR_INFO_POST_SRC = """
+floorpost:
+  dec a
+  jr z,fppainted
+  dec a
+  jp z,fpempty
+  ret
+fppainted:
   ld a,[$C1B1]
   cp $03
-  jr z,fihelpborder
+  jr z,fphelpcheck
   cp $02
-  ret nz
+  jr z,fpactioncheck
+  ; Mode 1 is an earlier, incomplete header pass.  The same row arrives complete in
+  ; mode 2; publishing the first pass exposes partially drawn Action text.
+  ret
+fpactioncheck:
   ld a,[$C0D7]
-  cp $04
-  ret nz
-  ; Action boxes are not all four rows high. Equipment has four choices, while
-  ; Gitan has three. Finish on the descriptor's last row instead of assuming D=3;
-  ; otherwise the one-page Gitan Info return leaves state 4 and the LCD disabled.
+  sub $04
+  cp $02
+  ret nc
+  ; Info is always the final Action choice.  Native restores its cursor only after
+  ; the text rows, so put the cursor in that last row before the atomic map commit.
   ld a,[$C69C]
   dec a
   cp d
-  ret nz
-  ld a,$02
-  jr fifinish
-fihelpborder:
-  call fihelpcheck
-  ret nz
-  xor a
-fifinish:
+  jr nz,fpcommit
+  ; Post-render HL is six cells past the Action key; its cursor is key+1.
+  ld a,l
+  sub $05
+  ld l,a
+  ld [hl],$81
+  jr fpcommit
+fphelpcheck:
+  ld a,[$C0D7]
+  sub $02
+  cp $02
+  ret nc
+fpcommit:
+  ; ITEM_COMMIT mode 3 clobbers AF/C/DE/HL but deliberately preserves B.
+  ld b,d
+  ld a,$03
   rst $10
   db $%02X,$%02X
+  ld a,[$C1B1]
+  cp $03
+  jr z,fphelpafter
+  ld a,[$C69C]
+  dec a
+  cp b
+  ret nz
+  ld a,$02
+  call fpcallfinish
+  ld a,[$C0D7]
+  cp $04
+  call z,fprestore
+  xor a
+  ld [$C0D7],a
   ret
-fiempty:
+fphelpafter:
+  ld a,b
+  cp $04
+  ret nz
+  xor a
+  call fpcallfinish
+  ld a,[$C0D7]
+  cp $03
+  ret nz
+  jp fprestore
+fpempty:
   ld a,[$C1B1]
   cp $03
   ret nz
-  call fihelpcheck
-  ret nz
-  ld a,$01
-  jr fifinish
-fihelpcheck:
   ld a,[$C0D7]
+  sub $02
   cp $02
-  ret nz
+  ret nc
   ld a,d
   cp $04
   ret nz
-  ld a,[$C0D9]
-  cp $80
+  ld a,$01
+  call fpcallfinish
+  ld a,[$C0D7]
+  cp $03
   ret nz
-  ld a,[$C0DA]
-  cp $C4
+  jp fprestore
+fpcallfinish:
+  push af
+  xor a
+  ld [$C6A1],a
+  ld a,$12
+  ld [$C6A2],a
+  pop af
+  rst $10
+  db $%02X,$%02X
   ret
-""" % (FLOOR_INFO_FINISH_INDEX, FLOOR_INFO_FINISH_BANK)
+fprestore:
+  ld b,$04
+  ld c,$07
+  ld a,$80
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (ITEM_COMMIT_INDEX, ITEM_COMMIT_BANK,
+       FLOOR_INFO_FINISH_INDEX, FLOOR_INFO_FINISH_BANK,
+       FIXED_RESTORE_INDEX, FIXED_RESTORE_BANK)
+
+
+FLOOR_ALLOC_SRC = """
+flooralloc:
+  ld a,[$C0D7]
+  sub $02
+  cp $04
+  jr c,facontext
+  xor a
+  ret
+facontext:
+  ld e,a
+  ld a,[$C1B1]
+  cp $03
+  jr z,fainfo
+  cp $02
+  jr nz,famodeother
+  bit 1,e
+  jr z,fainfo
+  jr faaction
+famodeother:
+  cp $01
+  jp z,faheader
+  xor a
+  ret
+fainfo:
+  ld a,[$C0D7]
+  cp $02
+  ld e,$43
+  jr z,fainfostate
+  cp $03
+  jr nz,faforce
+  ld e,$7C
+fainfostate:
+  ld a,d
+  cp $05
+  jr nc,faforce
+  ld a,[$C1AE]
+  ld b,a
+  add a,c
+  cp e
+  jr c,fastoreinfo
+  jr nz,faforce
+fastoreinfo:
+  ld [$C1AE],a
+  ld e,d
+  ld d,$00
+  ld hl,$C1BB
+  add hl,de
+  ld [hl],c
+  scf
+  ret
+faaction:
+  ld a,[$C0D7]
+  cp $04
+  jr z,faactionstate
+  cp $05
+  jr nz,faforce
+faactionstate:
+  ld a,c
+  cp $04
+  jr nz,faforce
+  ld a,d
+  cp $06
+  jr nc,faforce
+  ld e,a
+  ld d,$00
+  ld hl,falowbases
+  ld a,[$C0D7]
+  cp $04
+  jr z,faactionbase
+  ld hl,fahighbases
+faactionbase:
+  add hl,de
+  ld b,[hl]
+  scf
+  ret
+faforce:
+  ld a,$01
+  and a
+  ret
+faheader:
+  bit 1,e
+  jr z,faforce
+faheaderstate:
+  ld a,[$C69E]
+  cp $20
+  jr nz,faforce
+  ld a,d
+  or a
+  jr nz,faforce
+  ld a,c
+  cp $0C
+  jr nc,faforce
+  ld b,$8B
+  scf
+  ret
+falowbases:
+  db $43,$47,$4B,$4F,$53,$57
+fahighbases:
+  db $9A,$9E,$43,$47,$4B,$4F
+"""
+
+
+# Bank 13's native menu font and propvwf's bank-32 shift-0 source are byte-identical for
+# codes $04-$42.  A magic guarded menurow entry below exposes one source byte at a time to
+# this other-bank helper.  Each mode-$0A pass uploads exactly nine complete 2bpp tiles.
+# ABI: B=first tile ID, C=number of nine-tile batches.  Thus $25,2 restores $25-$36 and
+# $04,7 restores the complete $04-$42 native font.  C000/C001 are put back afterward.
+FIXED_RESTORE_SRC = """
+fixedrestore:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,[$C000]
+  push af
+  ld a,[$C001]
+  push af
+frbatch:
+  ld a,[$C11A]
+  and a
+  jr z,frbuild
+  call $06F7
+  jr frbatch
+frbuild:
+  push bc
+  ld l,b
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  ld a,h
+  add a,$44
+  ld h,a
+  ld c,$09
+  ld de,$C008
+frtile:
+  push bc
+  ld b,$08
+frbyte:
+  ld a,$FD
+  rst $10
+  db $%02X,$%02X
+  ld [de],a
+  inc de
+  ld [de],a
+  inc de
+  dec b
+  jr nz,frbyte
+  pop bc
+  dec c
+  jr z,frbuilt
+  ld a,c
+  cp $05
+  jr z,frskip
+  cp $01
+  jr nz,frstride
+frskip:
+  inc de
+  inc de
+frstride:
+  ld a,l
+  add a,$78
+  ld l,a
+  jr nc,frtile
+  inc h
+  jr frtile
+frbuilt:
+  pop bc
+  ld a,b
+  swap a
+  and $F0
+  ld l,a
+  ld a,b
+  swap a
+  and $0F
+  add a,$90
+  ld h,a
+  ld a,l
+  ld [$C000],a
+  ld [$C006],a
+  ld a,h
+  ld [$C001],a
+  ld [$C007],a
+  ld de,$0040
+  add hl,de
+  ld a,l
+  ld [$C048],a
+  ld a,h
+  ld [$C049],a
+  add hl,de
+  ld a,l
+  ld [$C08A],a
+  ld a,h
+  ld [$C08B],a
+  ld a,$0A
+  ld [$C11A],a
+  call $06F7
+  ld a,b
+  add a,$09
+  ld b,a
+  dec c
+  jp nz,frbatch
+  pop af
+  ld [$C001],a
+  pop af
+  ld [$C000],a
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+""" % (FAR_INDEX, FAR_BANK)
 
 
 FLOOR_INFO_FINISH_SRC = """
@@ -1244,8 +2901,8 @@ fiaction:
   ; Info's four-row body leaves its bottom border at shadow row 11. Pickers with
   ; five or six choices continue below it, so convert that stale edge to an
   ; interior spacer and pre-stage the real bottom at row 13 or 15. Four-choice
-  ; pickers end on row 11. Three-choice pickers already have their native bottom
-  ; on row 9, so erase the detached stale Info edge before publishing the map.
+  ; pickers end on row 11. Three-choice native staging reaches row 9 only after
+  ; this finalizer, so pre-stage that bottom too before publishing the map.
   ld a,[$C69C]
   cp $03
   jr nz,fiactiontall
@@ -1256,7 +2913,9 @@ fiactionclear:
   ld [hl+],a
   dec b
   jr nz,fiactionclear
-  jr fipublish
+  ; Clearing through C473 leaves H=$C4, so only L must move to row 9 x13.
+  ld l,$2D
+  jr fiactiondraw
 fiactiontall:
   cp $05
   jr c,fiactionnormal
@@ -1273,10 +2932,11 @@ fipotcells:
   ld a,[$C69C]
   cp $05
   jr nz,fiactionsix
-  ld hl,$C4AD
+  ; The spacer setup above already established H=$C4.
+  ld l,$AD
   jr fiactiondraw
 fiactionsix:
-  ld hl,$C4ED
+  ld l,$ED
   jr fiactiondraw
 fiactionnormal:
   ld hl,$C46D
@@ -1295,7 +2955,7 @@ fipublish:
   rst $10
   db $%02X,$%02X
   ret
-""" % (ITEM_PUBLISH_INDEX, ITEM_PAGE_BANK)
+""" % (NATIVE_MAP_INDEX, NATIVE_MAP_BANK)
 
 
 # Title/file screens are composites, not independent boxes: the parent title remains
@@ -1303,7 +2963,8 @@ fipublish:
 # lifetimes therefore have to be changed atomically.  Mode 0 starts an exact allowlisted
 # multi-row transaction (or the Rankings transaction) before row 0 changes any pixels.
 # The finalizer below pre-stages the native bottom border and publishes the complete
-# 20x18 shadow map.  States $10-$13 stay disjoint from V4F's item/Floor states 1-4.
+# 20x18 shadow map. C0D7 states $10-$14 stay disjoint from Floor/Info states 2-5;
+# Items use the separate C1BA lifecycle range $A0-$A9.
 START_TRANSITION_SRC = """
 starttransition:
   push af
@@ -1523,6 +3184,15 @@ OLD_ENTRY = bytes.fromhex('f5c5d5e5fa9fc64ffaa0c647')
 
 SRC = """
 menurow:
+  ; The fixed-font restorer reads bank-32's shift-0 glyph bytes through this guarded
+  ; one-byte mode.  Normal menu calls never arrive with both A=$FD and D bit 7 set.
+  cp $FD
+  jr nz,menunormal
+  bit 7,d
+  jr z,menunormal
+  ld a,[hl+]
+  ret
+menunormal:
   push hl
   push de
   ld a,[$C69F]
@@ -2627,12 +4297,9 @@ itemdynamic:
   adc a,$00
   ld [$C0D0],a
   ld a,d
-  ld [$C0D6],a
   and a
   jr nz,itemresetdone
   call resetalloc
-  ld a,$01
-  ld [$C0D5],a
 itemresetdone:
   ld a,$01
   ld [$C1B1],a
@@ -2696,6 +4363,7 @@ romshape:
   ld [$C0D0],a
 shapeok:
   ld a,d
+  ld [$C0D6],a
   cp $06
   jp nc,fallback
 titleok:
@@ -3002,11 +4670,9 @@ composenext:
     assert old in src
     src = src.replace(old, new, 1)
 
-    # V4F makes the exact item-page transition an auxiliary-bank transaction. Row 0
-    # disables the LCD at VBlank before any reused tile changes; the following Items
-    # header publishes the complete visible shadow map and enables it. Calling the helper
-    # unconditionally is safe: it checks the item-mode/key/reset tuple, so Floor and
-    # non-page rows return.
+    # Wide rows re-enter upload for their second pen.  Item rows no longer blank here:
+    # their allocator chose a slice absent from the visible page before composition, and
+    # rborder commits the complete replacement row below.
     old = """upload:
   ldh a,[$FF40]
 """
@@ -3014,11 +4680,8 @@ composenext:
   ld a,[$C0DC]
   and a
   jp nz,widetail
-  xor a
-  rst $10
-  db $%02X,$%02X
   ldh a,[$FF40]
-""" % (ITEM_PAGE_INDEX, ITEM_PAGE_BANK)
+"""
     assert old in src
     src = src.replace(old, new, 1)
 
@@ -3041,14 +4704,14 @@ composenext:
   db $%02X,$%02X
   ld a,[$C0CC]
 """ % (START_FINISH_INDEX, START_FINISH_BANK,
-         ITEM_PAGE_INDEX, ITEM_PAGE_BANK, FLOOR_INFO_INDEX, FLOOR_INFO_BANK)
+         ITEM_COMMIT_INDEX, ITEM_COMMIT_BANK,
+         FLOOR_INFO_INDEX, FLOOR_INFO_BANK)
     assert old in src
     src = src.replace(old, new, 1)
 
-    # Empty trailing rows take the native fallback, but a short page still needs the
-    # same row-4 completion boundary.  Mode 2 writes that one blank shadow row exactly as
-    # the fallback is about to, publishes the full page, then lets native source-pointer
-    # advancement proceed unchanged.
+    # Empty trailing rows take the native fallback. Mode 2 writes and visibly commits
+    # that exact blank row first, releasing its outgoing rolling slice without changing
+    # native source-pointer advancement.
     old = """scanend:
   ld a,e
   and a
@@ -3105,10 +4768,10 @@ scan:
   jr c,vmid
   cp $9A
   jp c,fallback
-  cp $9E
+  cp $A2
   jp nc,fallback
   ld a,e
-  cp $9F
+  cp $A3
   jp nc,fallback
   jr vslice
 vbase:
@@ -3130,17 +4793,20 @@ reuseok:
 """
     src = src[:start] + reuse + src[end:]
 
-    # Deterministic packing policy for the measured 57+11+4 runs. The first ITEM ROW
-    # whose cap actually fits 11 tiles goes in the middle run. A wider row uses base
-    # regardless of row number; this keeps page position from changing VWF eligibility.
-    # The exact regression case is 12 + 11*4 item tiles plus four 4-tile action rows:
-    # middle gets one 11, base gets 12+11*3+4*3 = 57, and small gets the final 4.
-    # The isolated $87 tile cannot satisfy a queue cap and remains unused.
+    # Exact Item and Action rows use the bank-37 rolling allocator. Other shapes retain
+    # the deterministic 57+11+4 packing policy. The helper returns carry with B=base and
+    # C=cap; carry clear falls through to the ordinary allocator unchanged.
     start = src.index("anew:\n")
     end = src.index("capfits:\n", start) + len("capfits:\n")
     allocate = """anew:
   call capneed
   ld c,a
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jr c,capfits
+  and a
+  jp nz,fallback
   ld a,[$C1B1]
   cp $01
   jr nz,trybase
@@ -3180,7 +4846,7 @@ trysmall:
   jp nc,fallback
   ld [$C1B0],a
 capfits:
-"""
+""" % (ITEM_PAGE_INDEX, ITEM_PAGE_BANK)
     src = src[:start] + allocate + src[end:]
     old = """  ld a,b
   ld [$C0DB],a
@@ -3279,8 +4945,11 @@ romonefei:
   ld [$C0DB],a
   jr allocok
 romonecommon:
-  ld a,$%02X
-  ld [$C0DB],a
+  ; Pot contents are composed over an Items/Action header that still maps `$C0-$C3`.
+  ; A tiny context helper selects/stores its disjoint two-tile generation while POT is
+  ; active and retains the ordinary one-row base everywhere else.
+  rst $10
+  db $%02X,$%02X
   jr allocok
 romtwo:
   rst $10
@@ -3298,7 +4967,7 @@ allocok:
 """ % (START_AUX_INDEX, START_AUX_BANK, fei_prompt_y, rank_header_x,
          ROM_RANK_HEADER_CAP + 1, ROM_RANK_HEADER_BASE,
          ROM_FEI_PROMPT_CAP + 1, ROM_FEI_PROMPT_BASE,
-         ROM_ONE_BASE,
+         ITEM_POT_HEADER_INDEX, ITEM_MAIN_BANK,
          RANK_CATEGORY_INDEX, RANK_SCREEN_BANK,
          ROM_POOL_BASE, ROM_POOL_BASE + 4, ROM_POOL_BASE + 8,
          ROM_POOL_BASE + 12, ROM_POOL_BASE + 16)
@@ -3534,12 +5203,16 @@ resetalloc:
   ld [$C1B2],a
   ret
 menureset:
+  ld a,$FE
+  rst $10
+  db $%02X,$%02X
   call resetalloc
   ld hl,$9000
   ret
     """ % (propvwf.CORE_CODES, propvwf.CORE_WIDTH_ORG & 0xFF,
            propvwf.CORE_WIDTH_ORG >> 8,
-           propvwf.META_ORG, propvwf.CORE_CODES, propvwf.META_ORG)
+           propvwf.META_ORG, propvwf.CORE_CODES, propvwf.META_ORG,
+           ITEM_PAGE_INDEX, ITEM_PAGE_BANK)
     assert old in src
     src = src.replace(old, new, 1)
     if '$C0D7' in src or '$C0D8' in src:
@@ -3552,6 +5225,304 @@ menureset:
 
 def _off(bank, addr):
     return bank * BANKSZ + (addr - BANKSZ)
+
+
+def _info_text_at(buf, bank, addr):
+    """Read one built item-name/help string, following a pool redirect if present."""
+    at = _off(bank, addr)
+    if buf[at] == textpool.MARK:
+        return textpool.record_text(buf[at:at + textpool.RECORD_LEN], buf)
+    end = at
+    bank_end = (bank + 1) * BANKSZ
+    while end < bank_end and buf[end] != 0xFF:
+        end += 1
+    if end == bank_end:
+        raise SystemExit('menuvwf: %d:$%04X item text has no $FF terminator' %
+                         (bank, addr))
+    return bytes(buf[at:end + 1])
+
+
+def _info_pointer_text(buf, bank, table, index):
+    at = _off(bank, table) + 2 * index
+    addr = buf[at] | (buf[at + 1] << 8)
+    if not 0x4000 <= addr < 0x8000:
+        raise SystemExit('menuvwf: %d:$%04X item pointer %d is $%04X' %
+                         (bank, table, index, addr))
+    return _info_text_at(buf, bank, addr)
+
+
+def _info_pages(data):
+    """Split one built help stream without treating control arguments as terminators."""
+    pages, lines, line = [], [], bytearray()
+    arity = dialogue.codec.arity_for(13)
+    at = 0
+    while at < len(data):
+        code = data[at]
+        argc = (arity.get(code, 0)
+                if dialogue.codec.CONTROL_MIN <= code <= dialogue.codec.CONTROL_MAX
+                else 0)
+        if at + argc >= len(data):
+            raise SystemExit('menuvwf: truncated control $%02X in item help' % code)
+        if code in textpool.TERMINATORS:
+            lines.append(bytes(line))
+            line.clear()
+            at += 1
+            if code in (0xEE, 0xFF):
+                pages.append(tuple(lines))
+                lines = []
+            if code == 0xFF:
+                return tuple(pages)
+            continue
+        line.extend(data[at:at + argc + 1])
+        at += argc + 1
+    raise SystemExit('menuvwf: item help stream has no $FF terminator')
+
+
+def _item_name_text(data, index):
+    """Decode one built item-table name, rejecting anything the Dot path cannot paint."""
+    unknown = sorted(set(data) - set(propvwf.dotfont.CODE_TO_EN))
+    if unknown:
+        raise SystemExit('menuvwf: item name %d contains non-Dot code(s) %s' %
+                         (index, ' '.join('$%02X' % code for code in unknown)))
+    return ''.join(propvwf.dotfont.CODE_TO_EN[code] for code in data)
+
+
+def _item_suffix_domain(index, name_text):
+    """Return every suffix the live Item-row producer can append to this built name."""
+    encode = lambda text: bytes(propvwf.EN_CODES[ch] for ch in text)
+    if index < ITEM_ENHANCEMENT_COUNT:
+        # itemfix patches the negative producer at 4:$5D20 to the English `$42`
+        # hyphen. Zero has no visible suffix; every other signed value emits its sign.
+        return tuple(('%+d' % value if value else '',
+                      encode('%+d' % value) if value else b'')
+                     for value in range(-99, 100))
+    # Mirror lint_en.carries_counter exactly. The numbered New Staff/Pot placeholders
+    # are not runtime counter classes because their terminal noun is the number.
+    if name_text.endswith(' Staff') or name_text.endswith(' Pot'):
+        return tuple(('[%d]' % value, encode('[%d]' % value))
+                     for value in range(1, 100))
+    return (('', b''),)
+
+
+def _item_tile_violation(tiles):
+    """Single predicate shared by the corpus gate and its negative self-check."""
+    return tiles > ITEM_ROW_TILES
+
+
+def _assert_item_slice_constants():
+    """Keep every generated runtime table tied to the six canonical high slices."""
+    if len(ITEM_HIGH_SLICES) != 6 or len(set(ITEM_HIGH_SLICES)) != 6:
+        raise SystemExit('menuvwf: Item high-slice list must contain six unique bases')
+    ordered = sorted(ITEM_HIGH_SLICES)
+    if any(left + ITEM_ROW_TILES > right
+           for left, right in zip(ordered, ordered[1:])):
+        raise SystemExit('menuvwf: Item high slices overlap at the 11-tile contract')
+    if ITEM_ROW_SLICES != ITEM_HIGH_SLICES + (ITEM_TRANSIENT_BASE,):
+        raise SystemExit('menuvwf: Item transient slice diverged from row-slice table')
+    if (set(ITEM_MAIN_VIRGIN_ROWS) != set(ITEM_HIGH_SLICES[1:]) or
+            len(ITEM_MAIN_VIRGIN_ROWS) != 5):
+        raise SystemExit('menuvwf: virgin Main -> Items rows are not five high owners')
+    if (len(ITEM_INFO_LOW_ROWS) != 5 or
+            set(ITEM_INFO_LOW_ROWS) != set(ITEM_HIGH_SLICES) - {ITEM_HIGH_SLICES[0]}):
+        raise SystemExit('menuvwf: low-Info return table is not five high owners')
+    if ITEM_INFO_HIGH_CANDIDATES != ITEM_HIGH_SLICES + (ITEM_TRANSIENT_BASE,):
+        raise SystemExit('menuvwf: high-Info chooser must consider six highs + transient')
+    if (len(ITEM_ACTION_BASES) != ITEM_ACTION_ROWS or
+            len(ITEM_ACTION_CAPS) != ITEM_ACTION_ROWS):
+        raise SystemExit('menuvwf: Item Action row tables have the wrong length')
+    action_runs = tuple((base, base + cap)
+                        for base, cap in zip(ITEM_ACTION_BASES, ITEM_ACTION_CAPS))
+    if any(left_hi > right_lo and right_hi > left_lo
+           for index, (left_lo, left_hi) in enumerate(action_runs)
+           for right_lo, right_hi in action_runs[index + 1:]):
+        raise SystemExit('menuvwf: Item Action extra-row tile runs overlap')
+
+
+def _assert_item_row_contract(buf, font):
+    """Exhaust every reachable built Item name/suffix against the 11-tile slices."""
+    _assert_item_slice_constants()
+    # Make a future inverted/off-by-one predicate fail even if the current corpus happens
+    # to remain narrow. This is intentionally a negative check: 12 must be rejected.
+    if _item_tile_violation(ITEM_ROW_TILES) or not _item_tile_violation(ITEM_ROW_TILES + 1):
+        raise SystemExit('menuvwf: Item-row tile-limit negative self-check failed')
+
+    table_names = [_info_pointer_text(buf, ITEM_NAME_BANK, ITEM_NAME_TABLE, index)[:-1]
+                   for index in range(ITEM_INFO_TOPIC_COUNT)]
+    names = table_names[:ITEM_NAME_COUNT]
+    if len(set(names)) != ITEM_NAME_COUNT:
+        raise SystemExit('menuvwf: first %d built Item-name pointers are not distinct' %
+                         ITEM_NAME_COUNT)
+    if any(name != names[-1] for name in table_names[ITEM_NAME_COUNT:]):
+        raise SystemExit('menuvwf: Item-name table tail no longer aliases topic %d; '
+                         'recensus the %d live-name boundary' %
+                         (ITEM_NAME_COUNT - 1, ITEM_NAME_COUNT))
+    variant_count = counter_count = max_tile_count = max_extent_count = 0
+    max_tiles = max_extent = max_source = -1
+    peak_sample = None
+    for index, name in enumerate(names):
+        name_text = _item_name_text(name, index)
+        suffixes = _item_suffix_domain(index, name_text)
+        if index >= ITEM_ENHANCEMENT_COUNT and len(suffixes) == 99:
+            counter_count += 1
+        for suffix_text, suffix in suffixes:
+            source_chars = len(name) + len(suffix)
+            if source_chars > ITEM_SOURCE_CHARS:
+                raise SystemExit(
+                    'menuvwf: Item row %d `%s%s` uses %d source glyphs, exceeding '
+                    'the exact %d-glyph WRAM scanner contract' %
+                    (index, name_text, suffix_text, source_chars, ITEM_SOURCE_CHARS))
+            _advance, extent, unknown = dialogue.dot_metrics(
+                name + suffix, font, bank=ITEM_NAME_BANK)
+            if unknown:
+                raise SystemExit(
+                    'menuvwf: Item row %d `%s%s` contains non-Dot code(s) %s' %
+                    (index, name_text, suffix_text,
+                     ' '.join('$%02X' % code for code in sorted(unknown))))
+            tiles = (extent + 7) >> 3
+            if _item_tile_violation(tiles):
+                raise SystemExit(
+                    'menuvwf: Item row %d `%s%s` paints %dpx/%d tiles, exceeding '
+                    'the exact %d-tile rolling-slice contract' %
+                    (index, name_text, suffix_text, extent, tiles, ITEM_ROW_TILES))
+            variant_count += 1
+            max_source = max(max_source, source_chars)
+            if tiles > max_tiles:
+                max_tiles = tiles
+                max_tile_count = 1
+            elif tiles == max_tiles:
+                max_tile_count += 1
+            if extent > max_extent:
+                max_extent = extent
+                max_extent_count = 1
+                peak_sample = name_text + suffix_text
+            elif extent == max_extent:
+                max_extent_count += 1
+
+    if counter_count != ITEM_COUNTER_NAME_COUNT:
+        raise SystemExit('menuvwf: built Item table has %d terminal-noun Staff/Pot '
+                         'counter names, expected %d; recensus the suffix classes' %
+                         (counter_count, ITEM_COUNTER_NAME_COUNT))
+    if variant_count != ITEM_VARIANT_COUNT:
+        raise SystemExit('menuvwf: built Item proof enumerated %d variants, expected %d' %
+                         (variant_count, ITEM_VARIANT_COUNT))
+    # Five/six-row Item Action pickers end in Name/Info.  Those two rows deliberately
+    # use adjacent three-tile runs in the context-local Action generation.
+    for label in ('Name', 'Info'):
+        encoded = bytes(propvwf.EN_CODES[ch] for ch in label)
+        _advance, extent, unknown = dialogue.dot_metrics(encoded, font, bank=30)
+        tiles = (extent + 7) >> 3
+        if unknown or tiles > 3:
+            raise SystemExit('menuvwf: Item Action tail `%s` needs %dpx/%d tiles; '
+                             'three-tile Action run is insufficient' %
+                             (label, extent, tiles))
+    return (len(names), variant_count, counter_count, max_tiles, max_tile_count,
+            max_extent, max_extent_count, max_source, peak_sample)
+
+
+def _info_cap(data, font, controls=None, bank=None, title=False):
+    """Return the proportional allocator cap for this exact non-raw row."""
+    if not data:
+        return 0
+    if title:
+        # The native item formatter's two title delimiters are rendered as the approved
+        # English hyphen by menurow's shape-specific normalizer.
+        hyphen = propvwf.EN_CODES['-']
+        data = bytes(hyphen if code == 0x7D else code for code in data)
+    _advance, extent, unknown = dialogue.dot_metrics(
+        data, font, bank=bank, controls=controls)
+    if unknown:
+        raise SystemExit('menuvwf: Info ownership proof found non-Dot codes %s' %
+                         ' '.join('$%02X' % code for code in sorted(unknown)))
+    tiles = (extent + 7) >> 3
+    if tiles > 16:
+        raise SystemExit('menuvwf: Info ownership proof found a %d-tile row' % tiles)
+    if tiles <= 4:
+        return 4
+    if tiles <= 8:
+        return 8
+    return tiles if tiles <= 13 else 16
+
+
+def _assert_info_ownership(buf, font):
+    """Prove Info generations plus both high-generation return allocators.
+
+    Page zero starts in the 63-tile low generation and each native page step toggles the
+    generation, so odd continuation pages use the 57-tile high generation.  Titles are
+    charged with both native delimiters and every live -99..+99/[1]..[99] suffix, not just
+    the bare pointer-table name.  The three prefix inequalities prove that the fixed high
+    Action bases are released before they are composed.  State 5 is reachable only from
+    odd continuation pages; simulate its exact Item-row chooser while the disjoint
+    Action generation and outgoing high Info generation remain visible.
+    """
+    topics = ITEM_INFO_TOPIC_COUNT
+    names = [_info_pointer_text(buf, ITEM_NAME_BANK, ITEM_NAME_TABLE, index)[:-1]
+             for index in range(topics)]
+    fragments = {index: _info_pointer_text(buf, 11, 0x55AC, index)[:-1]
+                 for index in range(13)}
+    controls = dialogue.dot_help_widths(font, fragments)
+    delimiter = bytes([0x7D])
+    page_count = 0
+    min_first_two = 0xFF
+    max_low = max_high = 0
+    for topic, name in enumerate(names):
+        name_text = _item_name_text(name, topic)
+        suffixes = tuple(data for _label, data in _item_suffix_domain(topic, name_text))
+        title_cap = max(_info_cap(delimiter + name + suffix + delimiter, font,
+                                  bank=11, title=True)
+                        for suffix in suffixes)
+        help_data = _info_pointer_text(buf, 13, 0x554A, topic)
+        pages = _info_pages(help_data)
+        if not pages:
+            raise SystemExit('menuvwf: item topic %d has no Info page' % topic)
+        for page, lines in enumerate(pages):
+            if not 1 <= len(lines) <= 4:
+                raise SystemExit('menuvwf: item topic %d page %d has %d body rows' %
+                                 (topic, page, len(lines)))
+            caps = [title_cap]
+            caps.extend(_info_cap(line, font, controls=controls, bank=13)
+                        for line in lines)
+            caps.extend([0] * (5 - len(caps)))
+            first_two = caps[0] + caps[1]
+            released = (sum(caps[:2]), sum(caps[:3]), sum(caps[:4]))
+            required = (4, 8, 12)
+            if first_two < 12 or any(have < need
+                                     for have, need in zip(released, required)):
+                raise SystemExit(
+                    'menuvwf: item topic %d page %d caps %s do not release the fixed '
+                    'high-Info Action bases (%s < %s)' %
+                    (topic, page, '/'.join(map(str, caps)), released, required))
+            total = sum(caps)
+            capacity = 57 if page & 1 else 63
+            if total > capacity:
+                raise SystemExit('menuvwf: item topic %d page %d caps %s need %d/%d '
+                                 'Info-generation tiles' %
+                                 (topic, page, '/'.join(map(str, caps)), total, capacity))
+            if page & 1:
+                candidates = ITEM_INFO_HIGH_CANDIDATES
+                live_end = 0x43 + total
+                claimed = []
+                for row in range(5):
+                    released = 0x43 + sum(caps[:row])
+                    choice = next((base for base in candidates
+                                   if base not in claimed and
+                                   (base == ITEM_TRANSIENT_BASE or
+                                    base + ITEM_ROW_TILES <= released or
+                                    live_end <= base)), None)
+                    if choice is None:
+                        raise SystemExit(
+                            'menuvwf: item topic %d high page %d caps %s cannot '
+                            'allocate returned Item row %d from %s after %s' %
+                            (topic, page, '/'.join(map(str, caps)), row,
+                             '/'.join('$%02X' % base for base in candidates),
+                             '/'.join('$%02X' % base for base in claimed)))
+                    claimed.append(choice)
+            page_count += 1
+            min_first_two = min(min_first_two, first_two)
+            if page & 1:
+                max_high = max(max_high, total)
+            else:
+                max_low = max(max_low, total)
+    return topics, page_count, min_first_two, max_low, max_high
 
 
 def _box_row_starts(buf, box):
@@ -3584,11 +5555,18 @@ def _box_geometry(buf, box):
 def install(buf, notes=None, font=None):
     proportional = font is not None
     code_at = PROP_CODE_AT if proportional else CODE_AT
+    item_contract = None
+    info_ownership = None
     if proportional:
-        item_header = _box_geometry(buf, 14)
-        if item_header != (0, 0, 1, 4, 0):
-            raise SystemExit('menuvwf: item header box 14 geometry %s no longer matches '
-                             'the V4F full-map publish boundary' % (item_header,))
+        item_contract = _assert_item_row_contract(buf, font)
+        info_ownership = _assert_info_ownership(buf, font)
+        pot_header = _box_geometry(buf, 17)
+        if pot_header[:4] != (0, 0, 1, 3):
+            raise SystemExit('menuvwf: Pot header box 17 geometry %s no longer matches '
+                             'the disjoint $C7-$C8 transition slice' %
+                             (pot_header,))
+        if ROM_POT_HEADER_BASE + ROM_POT_HEADER_CAP > ROM_ONE_END:
+            raise SystemExit('menuvwf: Pot header slice exceeds the one-row ROM pool')
         fei_prompt_rows = _box_row_starts(buf, 32)
         if len(fei_prompt_rows) != 1:
             raise SystemExit('menuvwf: Fay prompt box 32 no longer has one row')
@@ -3842,6 +5820,143 @@ def install(buf, notes=None, font=None):
         buf[item_publish_ix] = item_page_labels['publishmap'] & 0xFF
         buf[item_publish_ix + 1] = item_page_labels['publishmap'] >> 8
 
+        item_commit_code, item_commit_labels = gbasm.assemble(
+            ITEM_COMMIT_SRC, ITEM_COMMIT_AT)
+        if ITEM_COMMIT_AT + len(item_commit_code) > ITEM_COMMIT_LIMIT:
+            raise SystemExit('menuvwf: item-row commit helper needs %d bytes, only %d '
+                             'available' %
+                             (len(item_commit_code), ITEM_COMMIT_LIMIT - ITEM_COMMIT_AT))
+        if buf[_off(ITEM_COMMIT_BANK, 0x4000)] != ITEM_COMMIT_BANK:
+            raise SystemExit('menuvwf: bank %d item-row commit pool is not installed' %
+                             ITEM_COMMIT_BANK)
+        item_commit_at = _off(ITEM_COMMIT_BANK, ITEM_COMMIT_AT)
+        if any(b != 0xFF for b in
+               buf[item_commit_at:item_commit_at + len(item_commit_code)]):
+            raise SystemExit('menuvwf: bank %d item-row commit region at $%04X is not '
+                             'free' % (ITEM_COMMIT_BANK, ITEM_COMMIT_AT))
+        item_commit_ix = (_off(ITEM_COMMIT_BANK, 0x4000) +
+                          ITEM_COMMIT_INDEX - 1)
+        if bytes(buf[item_commit_ix:item_commit_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                             % (ITEM_COMMIT_INDEX, ITEM_COMMIT_BANK))
+        buf[item_commit_at:item_commit_at + len(item_commit_code)] = item_commit_code
+        buf[item_commit_ix] = item_commit_labels['itemcommit'] & 0xFF
+        buf[item_commit_ix + 1] = item_commit_labels['itemcommit'] >> 8
+
+        item_finish_code, item_finish_labels = gbasm.assemble(
+            ITEM_FINISH_SRC, ITEM_FINISH_AT)
+        if ITEM_FINISH_AT + len(item_finish_code) > ITEM_FINISH_LIMIT:
+            raise SystemExit('menuvwf: item-row finalizer needs %d bytes, only %d '
+                             'available' %
+                             (len(item_finish_code), ITEM_FINISH_LIMIT - ITEM_FINISH_AT))
+        if buf[_off(ITEM_FINISH_BANK, 0x4000)] != ITEM_FINISH_BANK:
+            raise SystemExit('menuvwf: bank %d item-row finalizer pool is not installed' %
+                             ITEM_FINISH_BANK)
+        item_finish_at = _off(ITEM_FINISH_BANK, ITEM_FINISH_AT)
+        if any(b != 0xFF for b in
+               buf[item_finish_at:item_finish_at + len(item_finish_code)]):
+            raise SystemExit('menuvwf: bank %d item-row finalizer region at $%04X is not '
+                             'free' % (ITEM_FINISH_BANK, ITEM_FINISH_AT))
+        item_finish_ix = (_off(ITEM_FINISH_BANK, 0x4000) +
+                          ITEM_FINISH_INDEX - 1)
+        if bytes(buf[item_finish_ix:item_finish_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                             % (ITEM_FINISH_INDEX, ITEM_FINISH_BANK))
+        buf[item_finish_at:item_finish_at + len(item_finish_code)] = item_finish_code
+        buf[item_finish_ix] = item_finish_labels['itemfinish'] & 0xFF
+        buf[item_finish_ix + 1] = item_finish_labels['itemfinish'] >> 8
+
+        def install_item_aux(name, bank, at, limit, source, entries):
+            """Install one privately owned Item helper prefix and its far entries."""
+            helper_code, helper_labels = gbasm.assemble(source, at)
+            if at + len(helper_code) > limit:
+                raise SystemExit('menuvwf: %s needs %d bytes, only %d available' %
+                                 (name, len(helper_code), limit - at))
+            if buf[_off(bank, 0x4000)] != bank:
+                raise SystemExit('menuvwf: bank %d %s pool is not installed' %
+                                 (bank, name))
+            helper_at = _off(bank, at)
+            if any(b != 0xFF for b in
+                   buf[helper_at:helper_at + len(helper_code)]):
+                raise SystemExit('menuvwf: bank %d %s region at $%04X is not free' %
+                                 (bank, name, at))
+            for index, label in entries:
+                helper_ix = _off(bank, 0x4000) + index - 1
+                if bytes(buf[helper_ix:helper_ix + 2]) != b'\xff\xff':
+                    raise SystemExit('menuvwf: far index $%02X in bank %d is already '
+                                     'used by %s' % (index, bank, name))
+                if label not in helper_labels:
+                    raise SystemExit('menuvwf: %s has no entry label %s' %
+                                     (name, label))
+            buf[helper_at:helper_at + len(helper_code)] = helper_code
+            for index, label in entries:
+                helper_ix = _off(bank, 0x4000) + index - 1
+                helper_addr = helper_labels[label]
+                buf[helper_ix] = helper_addr & 0xFF
+                buf[helper_ix + 1] = helper_addr >> 8
+            return helper_code, helper_labels
+
+        item_state_code, item_state_labels = install_item_aux(
+            'Item state/Action/Pot allocator', ITEM_STATE_BANK, ITEM_STATE_AT_ROM,
+            ITEM_STATE_LIMIT,
+            ITEM_STATE_SRC + '\n' + ITEM_ACTION_SRC + '\n' + ITEM_POT_FINISH_SRC,
+            ((ITEM_STATE_INDEX, 'itemstate'), (ITEM_ACTION_INDEX, 'itemaction'),
+             (ITEM_POT_FINISH_INDEX, 'potfinish')))
+        item_main_code, item_main_labels = install_item_aux(
+            'Item Main allocator', ITEM_MAIN_BANK, ITEM_MAIN_AT, ITEM_MAIN_LIMIT,
+            ITEM_MAIN_SRC, ((ITEM_MAIN_INDEX, 'itemmain'),
+                            (ITEM_POT_HEADER_INDEX, 'itempotheader')))
+        item_choice_code, item_choice_labels = install_item_aux(
+            'Item ownership chooser', ITEM_CHOICE_BANK, ITEM_CHOICE_AT,
+            ITEM_CHOICE_LIMIT, ITEM_CHOICE_SRC,
+            ((ITEM_CHOICE_INDEX, 'itemchoice'),))
+        item_info_choice_code, item_info_choice_labels = install_item_aux(
+            'Item Info-return chooser', ITEM_INFO_CHOICE_BANK, ITEM_INFO_CHOICE_AT,
+            ITEM_INFO_CHOICE_LIMIT, ITEM_INFO_CHOICE_SRC,
+            ((ITEM_INFO_CHOICE_INDEX, 'iteminfochoice'),))
+        item_migrate_code, item_migrate_labels = install_item_aux(
+            'Item transient-slice migrator', ITEM_MIGRATE_BANK, ITEM_MIGRATE_AT,
+            ITEM_MIGRATE_LIMIT, ITEM_MIGRATE_SRC,
+            ((ITEM_MIGRATE_INDEX, 'itemmigrate'),))
+        item_transition_code, item_transition_labels = install_item_aux(
+            'Item transition allocator', ITEM_TRANSITION_BANK, ITEM_TRANSITION_AT,
+            ITEM_TRANSITION_LIMIT, ITEM_TRANSITION_SRC,
+            ((ITEM_TRANSITION_INDEX, 'itemtransition'),))
+        item_fixed_code, item_fixed_labels = install_item_aux(
+            'Item fixed-return allocator/map publisher', ITEM_FIXED_BANK,
+            ITEM_FIXED_AT, ITEM_FIXED_LIMIT, ITEM_FIXED_SRC + '\n' + ITEM_MAP_SRC,
+            ((ITEM_FIXED_INDEX, 'itemfixed'), (ITEM_MAP_INDEX, 'itemmap')))
+        item_validate_code, item_validate_labels = install_item_aux(
+            'Item ownership validator', ITEM_VALIDATE_BANK, ITEM_VALIDATE_AT,
+            ITEM_VALIDATE_LIMIT, ITEM_VALIDATE_SRC,
+            ((ITEM_VALIDATE_INDEX, 'itemvalidate'),))
+        fixed_restore_code, fixed_restore_labels = install_item_aux(
+            'shared fixed-font restorer', FIXED_RESTORE_BANK, FIXED_RESTORE_AT,
+            FIXED_RESTORE_LIMIT, FIXED_RESTORE_SRC,
+            ((FIXED_RESTORE_INDEX, 'fixedrestore'),))
+        floor_post_code, floor_post_labels = install_item_aux(
+            'Floor/Info post-commit controller', FLOOR_INFO_POST_BANK,
+            FLOOR_INFO_POST_AT, FLOOR_INFO_POST_LIMIT, FLOOR_INFO_POST_SRC,
+            ((FLOOR_INFO_POST_INDEX, 'floorpost'),))
+        floor_alloc_code, floor_alloc_labels = install_item_aux(
+            'Floor/Info generation allocator', FLOOR_ALLOC_BANK, FLOOR_ALLOC_AT,
+            FLOOR_ALLOC_LIMIT, FLOOR_ALLOC_SRC,
+            ((FLOOR_ALLOC_INDEX, 'flooralloc'),))
+
+        native_map_at = _off(NATIVE_MAP_BANK, NATIVE_MAP_AT)
+        native_map_expect = bytes.fromhex('f5c5d5e5dffa')
+        if bytes(buf[native_map_at:native_map_at + len(native_map_expect)]) != \
+                native_map_expect:
+            raise SystemExit('menuvwf: native map producer at %d:$%04X moved' %
+                             (NATIVE_MAP_BANK, NATIVE_MAP_AT))
+        native_map_ix = (_off(NATIVE_MAP_BANK, 0x4000) +
+                         NATIVE_MAP_INDEX - 1)
+        if bytes(buf[native_map_ix:native_map_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (NATIVE_MAP_INDEX, NATIVE_MAP_BANK))
+        buf[native_map_ix] = NATIVE_MAP_AT & 0xFF
+        buf[native_map_ix + 1] = NATIVE_MAP_AT >> 8
+
         floor_info_code, floor_info_labels = gbasm.assemble(
             FLOOR_INFO_SRC, FLOOR_INFO_AT)
         if FLOOR_INFO_AT + len(floor_info_code) > FLOOR_INFO_LIMIT:
@@ -4017,6 +6132,8 @@ def install(buf, notes=None, font=None):
         code_to_char = {code: ch for ch, code in propvwf.EN_CODES.items()}
 
         def rom_cap(box, rows, row):
+            if box == 17:
+                return ROM_POT_HEADER_CAP
             if box in (46, 48, 50):
                 return (DIFFICULTY_ROW0_CAP, DIFFICULTY_ROW1_CAP)[row]
             if rows == 1:
@@ -4195,27 +6312,53 @@ def install(buf, notes=None, font=None):
                 notes.append('menuvwf: title and Log-selector rows use the keyed VWF '
                              'allocator; summary/confirm/Rank+Pass/difficulty rows use '
                              'fixed-cell fallback')
-            notes.append('menuvwf: %d-byte item-page transaction helper at '
-                         '%d:$%04X; item text transitions are old -> white -> '
-                         'complete shadow map'
-                         % (len(item_page_code), ITEM_PAGE_BANK, ITEM_PAGE_AT))
-            notes.append('menuvwf: %d+%d-byte Floor/Info transaction at '
-                         '%d:$%04X + %d:$%04X; action/page transitions publish one '
-                         'complete shadow map'
-                         % (len(floor_info_code), len(floor_finish_code),
+            notes.append('menuvwf: %d-byte item rolling allocator at %d:$%04X + '
+                         '%d-byte complete-row VBlank committer at %d:$%04X + '
+                         '%d-byte transient-slice finalizer at %d:$%04X; LCD-on '
+                         'transitions expose only complete old/new rows'
+                         % (len(item_page_code), ITEM_PAGE_BANK, ITEM_PAGE_AT,
+                            len(item_commit_code), ITEM_COMMIT_BANK, ITEM_COMMIT_AT,
+                            len(item_finish_code), ITEM_FINISH_BANK, ITEM_FINISH_AT))
+            (item_names, item_variants, counter_names, item_max_tiles,
+             item_max_tile_count, item_max_extent, item_max_extent_count, item_max_source,
+             item_peak_sample) = item_contract
+            notes.append('menuvwf: exhaustive Item-row contract: %d built names / '
+                         '%d reachable variants (%d Staff/Pot counter names); peak '
+                         '%d/%d tiles across %d variants; widest %dpx across %d, '
+                         'source peak %d/%d glyphs (`%s`); synthetic 12-tile negative '
+                         'guard rejects'
+                         % (item_names, item_variants, counter_names, item_max_tiles,
+                            ITEM_ROW_TILES, item_max_tile_count, item_max_extent,
+                            item_max_extent_count,
+                            item_max_source, ITEM_SOURCE_CHARS, item_peak_sample))
+            notes.append('menuvwf: %d+%d+%d+%d-byte Floor/Info transaction at '
+                         '%d:$%04X + %d:$%04X + %d:$%04X + %d:$%04X; LCD-on '
+                         'row commits finish through native bank-4 map publication'
+                         % (len(floor_info_code), len(floor_post_code),
+                            len(floor_alloc_code), len(floor_finish_code),
                             FLOOR_INFO_BANK, FLOOR_INFO_AT,
+                            FLOOR_INFO_POST_BANK, FLOOR_INFO_POST_AT,
+                            FLOOR_ALLOC_BANK, FLOOR_ALLOC_AT,
                             FLOOR_INFO_FINISH_BANK, FLOOR_INFO_FINISH_AT))
+            topics, pages, min_prefix, max_low, max_high = info_ownership
+            notes.append('menuvwf: exhaustive Info ownership: %d topics / %d pages; '
+                         'min first-two-row release %d tiles; low/high peaks %d/63 and '
+                         '%d/57; %d-byte native fixed-font restorer at %d:$%04X'
+                         % (topics, pages, min_prefix, max_low, max_high,
+                            len(fixed_restore_code), FIXED_RESTORE_BANK,
+                            FIXED_RESTORE_AT))
             notes.append('menuvwf: %d+%d-byte title/file transition at '
                          '%d:$%04X + %d:$%04X; layered title, Log, difficulty and '
                          'Rank/Pass redraws publish one complete shadow map'
                          % (len(start_transition_code), len(start_finish_code),
                             START_TRANSITION_BANK, START_TRANSITION_AT,
                             START_FINISH_BANK, START_FINISH_AT))
-            pool = '$43-$7B + $8B-$95 + $9A-$9D (72 usable; isolated $87 unused)'
+            pool = ('$43-$7B + $8B-$95, with six Item-Action rows isolated in '
+                    '$9A-$A1/$C7-$CD/$D6-$DC (isolated $87 unused)')
         else:
             notes.append('menuvwf: item-list rows composed at uniform 6px')
             pool = '$43-$7B'
-        cap = ('18-source-char menu/item + 21-source-char help/seal/condition guards'
+        cap = ('18-source-char WRAM menu/item + 21-source-char help/seal/condition guards'
                if proportional else '17-source-char guard')
         notes.append('menuvwf: %s, guarded allocator over %s '
                      '(the , \' - + [ ] glyph tiles are excluded); %d bytes '

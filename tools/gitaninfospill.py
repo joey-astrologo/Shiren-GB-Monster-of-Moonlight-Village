@@ -4,7 +4,8 @@
 ``saves/shiren_en_log_3_gitan_crash.srm`` starts Log 3 one tile above 699 Gitan.
 Holding B while moving down steps onto it without opening the menu. The route then
 opens Floor, selects Info, and dismisses the one-page description. The three-choice
-Gitan action box must return with the LCD enabled and the Floor/Info transaction clear.
+Gitan action box must return with the LCD enabled throughout and the Floor/Info
+transaction clear.
 
 The original transaction finalizer assumed every Floor action box had four rows. Gitan
 has only Take/Toss/Info, so its redraw ended on row 2 and state 4 was never published;
@@ -69,6 +70,9 @@ def run(rom, ram, png=None):
             dispatches.append((frame[0], pb.register_file.A))
 
         def far_entry(_context=None):
+            # $FD is the fixed-font restorer's guarded byte-read mode, not a row.
+            if pb.register_file.A == 0xFD and pb.register_file.D & 0x80:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if frame[0] >= DISMISS and shape == ACTION_SHAPE:
                 action_rows.append((frame[0], pb.register_file.D, pb.register_file.HL,
@@ -110,8 +114,8 @@ def run(rom, ram, png=None):
     rows = [row for _at, row, _key, _state in action_rows]
     if rows != [0, 1, 2]:
         problems.append('returned Gitan action rows are %s, expected [0, 1, 2]' % rows)
-    if not white:
-        problems.append('dismissal never entered its atomic LCD-off interval')
+    if white:
+        problems.append('dismissal disabled the LCD at frame(s) %s' % white[:12])
     if final_state != 0:
         problems.append('Floor/Info transaction ended in state %d, expected 0' % final_state)
     if not final_lcdc & 0x80:
@@ -123,7 +127,7 @@ def run(rom, ram, png=None):
     if halts:
         problems.append('CPU reached rst $38 at frame(s) %s' % halts[:8])
 
-    print('gitaninfospill: dispatches %s; action rows %s; %d white frame(s); '
+    print('gitaninfospill: dispatches %s; action rows %s; %d LCD-off frame(s); '
           'final state=%d LCDC=$%02X PC=$%04X dark=%d; %d problem(s)'
           % (' '.join('f%d:%d' % event for event in dispatches), rows, len(white),
              final_state, final_lcdc, final_pc, dark_pixels(final), len(problems)))
