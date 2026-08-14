@@ -9,6 +9,7 @@ runs, containment, and the brittle menu/Rankings ownership routes on every layou
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -26,7 +27,9 @@ def section(title: str) -> None:
 def run(*args: str) -> None:
     shown = " ".join(args)
     print(f"\n+ {shown}", flush=True)
-    subprocess.run(args, cwd=ROOT, check=True)
+    env = os.environ.copy()
+    env.setdefault("PYTHONPYCACHEPREFIX", str(ROOT / "build" / "pycache"))
+    subprocess.run(args, cwd=ROOT, check=True, env=env)
 
 
 def py(tool: str, *args: str) -> None:
@@ -116,6 +119,10 @@ def main() -> int:
         py("menuspill.py", rom, "--long")
         py("menuspill.py", rom, "--ram", "saves/shiren_en_menu.srm")
         py("menuspill.py", rom, "--help-seals")
+        py("menuglyphspill.py", rom)
+        py("equipmentmarkerspill.py", rom)
+        py("fusioncountspill.py", rom)
+        py("playernamedspill.py", rom)
         py("conditionspill.py", rom)
         py("menuromspill.py", rom, "--ram", "saves/shiren_en_menu.srm")
         py("mainmenuspill.py", rom)

@@ -38,9 +38,11 @@ WRAM-staged row must also have:
   * 1..18 SOURCE characters for menus/items or 1..21 for item information, seals, and
     clear-condition rows; every code
     is < $43 or one of the explicitly admitted punctuation/status glyphs. Equipment
-    unidentified-equipment suffix `$88` and plating suffix `$8A` are composed as their
-    native marks at an 8px advance; the cursed prefix `$87` remains a separate raw status
-    cell. `$7D` is normalized to the approved font's `-` glyph.
+    unidentified-equipment suffix `$88`, plating suffix `$8A`, and fusion-count suffixes
+    `$8C-$94` (one through nine seals) are composed as native marks at an 8px advance;
+    the cursed prefix `$87` remains a separate raw status cell. The fusion digits use a
+    compact auxiliary shifter because bank 32 has no room for nine more 128-byte
+    eight-shift slots. `$7D` is normalized to the approved font's `-` glyph.
     Kana, dakuten and DTE bytes all fall back. These scanner ceilings are not visual
     budgets: the row is accepted only after a separate font-pixel scan and allocator fit.
     The current 17-character fixture includes a staff/pot name plus two-digit `[NN]`.
@@ -142,7 +144,8 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    Rankings, Fay-screen and native Rankings transactions. It is cleared
                    after the corresponding map publication.
   * `$C12C-$C13B`  tile 12's composition buffer
-  ($C0E0-$C0FB, the first 7-record table, is proven free but no longer used.)
+  (`$C0E2-$C0E6` is ephemeral fusion-digit shifter scratch; the rest of the former
+   `$C0E0-$C0FB` record table remains unused.)
 The game's own park at `$C0DE` writes to `$C0DE/DF` and `$C0FE/FF`, next to the first
 run — those bytes are excluded on purpose. THE RAW-CELL PREFIX IS SHAPE-DEPENDENT:
 w18 boxes stage TWO leading zero cells (cursor slot + the cell the cursor writer
@@ -228,6 +231,35 @@ SUMMARY_HELPER_INDEX = 0x05
 SUMMARY_HELPER_AT = 0x405A
 SUMMARY_HELPER_LIMIT = 0x4100
 SUMMARY_PRODUCER_AT = 0x6985
+
+# A fused item appends `$8B + seal_count` after its name.  Canonical weapon/shield masks
+# admit nine ability bits, so the complete live range is `$8C-$94`.  Bank 32 is packed to
+# within two bytes once the menu renderer is installed, so ordinary 128-byte pre-shift
+# slots would overlap code.  The bank-48 helper shifts the selected native digit directly
+# into the queue; bank 49 supplies the nine unshifted eight-byte glyphs and payload mapper.
+FUSED_FIRST = 0x8C
+FUSED_LAST = 0x94
+FUSED_CODES = tuple(range(FUSED_FIRST, FUSED_LAST + 1))
+FUSED_CODE = FUSED_FIRST              # compatibility name for the one-seal fixture
+FUSED_BANK = 0x30
+FUSED_INDEX = 0x05
+FUSED_AT = 0x405A
+FUSED_LIMIT = 0x4100
+FUSED_DATA_BANK = 0x31
+FUSED_READ_INDEX = 0x05
+FUSED_PAYLOAD_INDEX = 0x07
+FUSED_DATA_AT = 0x405A
+FUSED_DATA_LIMIT = 0x4100
+FUSED_NATIVE = bytes.fromhex(
+    '00 00 00 30 10 10 10 10 '
+    '00 00 00 38 08 38 20 38 '
+    '00 00 00 38 08 38 08 38 '
+    '00 00 00 28 28 38 08 08 '
+    '00 00 00 38 20 38 08 38 '
+    '00 00 00 38 20 38 28 38 '
+    '00 00 00 38 08 08 08 08 '
+    '00 00 00 38 28 38 28 38 '
+    '00 00 00 38 28 38 08 38')
 
 GLYPHS = 0x4400             # vwf DATA_ORG: 4 shifts x $B3 codes x 16 bytes (8 + 8 spill)
 SHIFT_STRIDE = 0xB30        # $B3 * 16
@@ -2204,6 +2236,153 @@ menureset:
 """
 
 
+def _fused_src():
+    """Render native fusion-count digits $8C-$94 at any pixel residue."""
+    return """
+fusedglyph:
+  add a,a
+  add a,a
+  add a,a
+  ld [$C0E2],a
+  ld a,$08
+  ld [$C0DD],a
+  ld a,[$C0CF]
+  and $07
+  ld [$C0E3],a
+  ld b,a
+  ld a,$08
+  sub b
+  ld [$C0E6],a
+  ld a,[$C0CF]
+  srl a
+  srl a
+  srl a
+  rst $10
+  db $%02X,$%02X
+  push de
+  ld a,[$C0CF]
+  srl a
+  srl a
+  srl a
+  inc a
+  rst $10
+  db $%02X,$%02X
+  ld a,e
+  ld [$C0E4],a
+  ld a,d
+  ld [$C0E5],a
+  pop de
+  ld b,$08
+fusedrows:
+  ld a,[$C0E2]
+  rst $10
+  db $%02X,$%02X
+  ld c,a
+  ld hl,$C0E2
+  inc [hl]
+  push bc
+  ld a,[$C0E3]
+  ld b,a
+  inc b
+  ld a,c
+fusedright:
+  dec b
+  jr z,fusedrightdone
+  srl a
+  jr fusedright
+fusedrightdone:
+  ld c,a
+  call fusedpair
+  pop bc
+  ld a,[$C0E3]
+  and a
+  jr z,fusednext
+  push de
+  ld a,[$C0E4]
+  ld e,a
+  ld a,[$C0E5]
+  ld d,a
+  push bc
+  ld a,[$C0E6]
+  ld b,a
+  inc b
+  ld a,c
+fusedleft:
+  dec b
+  jr z,fusedleftdone
+  sla a
+  jr fusedleft
+fusedleftdone:
+  ld c,a
+  call fusedpair
+  ld a,e
+  ld [$C0E4],a
+  ld a,d
+  ld [$C0E5],a
+  pop bc
+  pop de
+fusednext:
+  dec b
+  jr nz,fusedrows
+  ret
+fusedpair:
+  ld a,[de]
+  or c
+  ld [de],a
+  inc de
+  ld a,[de]
+  or c
+  ld [de],a
+  inc de
+  ret
+""" % (FUSED_PAYLOAD_INDEX, FUSED_DATA_BANK,
+       FUSED_PAYLOAD_INDEX, FUSED_DATA_BANK,
+       FUSED_READ_INDEX, FUSED_DATA_BANK)
+
+
+def _fused_data_src():
+    """Reader/data shared by the compact fusion-count residue shifter."""
+    table = ','.join('$%02X' % value for value in FUSED_NATIVE)
+    return """
+fusedread:
+  push de
+  ld l,a
+  ld h,$00
+  ld de,fuseddigits
+  add hl,de
+  ld a,[hl]
+  pop de
+  ret
+fusedpayload:
+  cp $0C
+  jr c,fusedpnorm
+  ld de,$C12C
+  ret
+fusedpnorm:
+  push hl
+  ld l,a
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  srl a
+  srl a
+  add a,a
+  ld e,a
+  ld d,$00
+  add hl,de
+  ld de,$C008
+  add hl,de
+  ld e,l
+  ld d,h
+  pop hl
+  ret
+fuseddigits:
+  db %s
+""" % table
+
+
 def _proportional_src(font, fei_prompt_y, rank_header_x):
     """Return the item-row renderer retargeted to propvwf's font tables.
 
@@ -2272,6 +2451,8 @@ fallback:
   ret
 fallback:
 """ % (SUMMARY_HELPER_INDEX, SUMMARY_HELPER_BANK)
+
+
     assert old in src
     src = src.replace(old, new, 1)
 
@@ -2287,18 +2468,21 @@ fallback:
   jr z,scanok
   cp $8A
   jr z,scanok
+  cp $%02X
+  jr c,scanhighbad
+  cp $%02X
+  jr c,scanok
   cp $9E
-  jr z,scanok
-  cp $9F
-  jr z,scanok
-  cp $A0
-  jr z,scanok
+  jr c,scanhighbad
+  cp $A1
+  jr c,scanok
   cp $B0
-  jp c,fallback
+  jr c,scanhighbad
   cp $B6
   jr c,scanok
+scanhighbad:
   jp fallback
-"""
+""" % (FUSED_FIRST, FUSED_LAST + 1)
     assert old in src
     src = src.replace(old, new, 1)
 
@@ -3390,7 +3574,15 @@ shiftdone:
   pop de
   add hl,de
 """
-    new = """  call widthfor
+    new = """  ld a,c
+  sub $%02X
+  cp $%02X
+  jr nc,composetable
+  rst $10
+  db $%02X,$%02X
+  jr nospill
+composetable:
+  call widthfor
   ld [$C0DD],a
   ld a,c
   call slotfor
@@ -3410,7 +3602,8 @@ sloteven:
 slotready:
   ld de,$%04X
   add hl,de
-""" % propvwf.GLYPH_ORG
+""" % (FUSED_FIRST, len(FUSED_CODES),
+       FUSED_INDEX, FUSED_BANK, propvwf.GLYPH_ORG)
     assert old in src
     src = src.replace(old, new, 1)
 
@@ -3635,6 +3828,62 @@ def install(buf, notes=None, font=None):
         if bytes(buf[start:start + len(widths)]) != widths:
             raise SystemExit('menuvwf: proportional core-width page does not match '
                              'the approved font')
+
+        # 6:$4C2C masks weapons to $01FF and shields to $06FD before 6:$4C61
+        # counts the live ability bits.  Both domains therefore top out at nine; the
+        # producer at 4:$5765/$5D8B adds $8B and can emit exactly $8C-$94.
+        fused_masks = (0x01FF, 0x06FD)
+        fused_max = max(bin(mask).count('1') for mask in fused_masks)
+        if fused_max != len(FUSED_CODES) or FUSED_FIRST + fused_max - 1 != FUSED_LAST:
+            raise SystemExit('menuvwf: fusion-count range no longer matches the '
+                             'canonical nine-bit equipment masks')
+        fused_native_at = propvwf.FONT_BASE + FUSED_FIRST * propvwf.GLYPH_BYTES
+        got_fused = bytes(buf[fused_native_at:fused_native_at + len(FUSED_NATIVE)])
+        if got_fused != FUSED_NATIVE:
+            raise SystemExit('menuvwf: native fusion-count glyphs $%02X-$%02X changed: %s'
+                             % (FUSED_FIRST, FUSED_LAST, got_fused.hex()))
+        fused_code, fused_labels = gbasm.assemble(_fused_src(), FUSED_AT)
+        if FUSED_AT + len(fused_code) > FUSED_LIMIT:
+            raise SystemExit('menuvwf: fused-item shifter needs %d bytes, only %d '
+                             'available' %
+                             (len(fused_code), FUSED_LIMIT - FUSED_AT))
+        if buf[_off(FUSED_BANK, 0x4000)] != FUSED_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' % FUSED_BANK)
+        fused_at = _off(FUSED_BANK, FUSED_AT)
+        if any(value != 0xFF for value in buf[fused_at:fused_at + len(fused_code)]):
+            raise SystemExit('menuvwf: bank %d fused-item region at $%04X is not free'
+                             % (FUSED_BANK, FUSED_AT))
+        fused_ix = _off(FUSED_BANK, 0x4000) + FUSED_INDEX - 1
+        if bytes(buf[fused_ix:fused_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                             % (FUSED_INDEX, FUSED_BANK))
+        buf[fused_at:fused_at + len(fused_code)] = fused_code
+        buf[fused_ix] = fused_labels['fusedglyph'] & 0xFF
+        buf[fused_ix + 1] = fused_labels['fusedglyph'] >> 8
+
+        fused_data, fused_data_labels = gbasm.assemble(_fused_data_src(), FUSED_DATA_AT)
+        if FUSED_DATA_AT + len(fused_data) > FUSED_DATA_LIMIT:
+            raise SystemExit('menuvwf: fusion-count data helper needs %d bytes, only %d '
+                             'available' %
+                             (len(fused_data), FUSED_DATA_LIMIT - FUSED_DATA_AT))
+        if buf[_off(FUSED_DATA_BANK, 0x4000)] != FUSED_DATA_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed'
+                             % FUSED_DATA_BANK)
+        fused_data_at = _off(FUSED_DATA_BANK, FUSED_DATA_AT)
+        if any(value != 0xFF
+               for value in buf[fused_data_at:fused_data_at + len(fused_data)]):
+            raise SystemExit('menuvwf: bank %d fusion-count data region at $%04X is not free'
+                             % (FUSED_DATA_BANK, FUSED_DATA_AT))
+        for index, label in ((FUSED_READ_INDEX, 'fusedread'),
+                             (FUSED_PAYLOAD_INDEX, 'fusedpayload')):
+            at = _off(FUSED_DATA_BANK, 0x4000) + index - 1
+            if bytes(buf[at:at + 2]) != b'\xff\xff':
+                raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                                 % (index, FUSED_DATA_BANK))
+            target = fused_data_labels[label]
+            buf[at] = target & 0xFF
+            buf[at + 1] = target >> 8
+        buf[fused_data_at:fused_data_at + len(fused_data)] = fused_data
 
         normal_rows = _box_row_starts(buf, 48)
         if len(normal_rows) != 2:
@@ -4187,6 +4436,11 @@ def install(buf, notes=None, font=None):
             notes.append('menuvwf: main/item/Floor-header/action/help/seal/condition '
                          'rows use approved %s advances, painted extents, and shared '
                          '8-shift tables' % font.name)
+            notes.append('menuvwf: native fusion-count suffixes $%02X-$%02X use a '
+                         '%d-byte residue shifter at %d:$%04X and %d-byte glyph/data '
+                         'helper at %d:$%04X'
+                         % (FUSED_FIRST, FUSED_LAST, len(fused_code), FUSED_BANK, FUSED_AT,
+                            len(fused_data), FUSED_DATA_BANK, FUSED_DATA_AT))
             if CONTEXT_STATIC_ROWS:
                 notes.append('menuvwf: title/file shapes use %d-byte helper at '
                              '33:$%04X; context-static start rows enabled'

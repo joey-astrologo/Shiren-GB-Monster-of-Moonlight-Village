@@ -79,11 +79,13 @@ RECORDS = 0xC163            # records are (key lo, key hi, base, cap, raw cells)
 LEGACY_REC_COUNT = 0xC0D8
 PROP_REC_COUNT = 0xC1B2
 STAGING = 0xC616
-# Exact high codes that both the proportional scanner and Dot metadata support.  The
-# scanner's wider native range also contains $B1/$B3, but those have no proportional
-# font slot and are therefore deliberately excluded from stress fixtures.
+# Exact high codes supported by the proportional menu scanner and its pixel model.
+# Most use Dot metadata; fusion-count $8C-$94 uses menuvwf's compact auxiliary shifter.
+# The scanner's wider native range also contains $B1/$B3, but those have no proportional
+# implementation and are therefore deliberately excluded from stress fixtures.
 ELIGIBLE_EXTRA = {0x7C, 0x7D, 0x7E, 0x7F, 0x80, 0xA0,
-                  0x88, 0x8A, 0x9E, 0x9F, 0xB0, 0xB2, 0xB4, 0xB5}
+                  0x88, 0x8A, *menuvwf.FUSED_CODES,
+                  0x9E, 0x9F, 0xB0, 0xB2, 0xB4, 0xB5}
 
 FAR_BANK = menuvwf.FAR_BANK
 
@@ -232,16 +234,23 @@ def _dot_metric(profile, code):
     if code == 0x7D:       # item-information title delimiter -> approved Dot hyphen
         code = EN_CODES['-']
     bank = profile['bank']
-    if code < propvwf.CORE_CODES:
+    if code in menuvwf.FUSED_CODES:
+        width = 8
+        slot = None
+        start = propvwf.NATIVE_ORG - 0x4000 + code * propvwf.GLYPH_BYTES
+        rows = bank[start:start + propvwf.GLYPH_BYTES]
+    elif code < propvwf.CORE_CODES:
         slot = code
         width = bank[propvwf.CORE_WIDTH_ORG - 0x4000 + code]
+        unshifted = propvwf.GLYPH_ORG - 0x4000 + slot * propvwf.DOT_GLYPH_STRIDE
+        rows = bank[unshifted:unshifted + 8]
     else:
         at = propvwf.META_ORG - 0x4000 + 2 * code
         slot, width = bank[at:at + 2]
         if slot == 0xFF:
             raise AssertionError('unsupported proportional menu code $%02X' % code)
-    unshifted = propvwf.GLYPH_ORG - 0x4000 + slot * propvwf.DOT_GLYPH_STRIDE
-    rows = bank[unshifted:unshifted + 8]
+        unshifted = propvwf.GLYPH_ORG - 0x4000 + slot * propvwf.DOT_GLYPH_STRIDE
+        rows = bank[unshifted:unshifted + 8]
     ink = [x for x in range(8) if any(row & (0x80 >> x) for row in rows)]
     return slot, width, (max(ink) + 1 if ink else width)
 
@@ -261,9 +270,17 @@ def compose(codes, profile):
         else:
             slot, width, ink_width = _dot_metric(profile, c)
             shift = pen & 7
-            at = (propvwf.GLYPH_ORG - 0x4000
-                  + slot * propvwf.DOT_GLYPH_STRIDE + shift * 16)
-            entry = profile['bank'][at:at + 16]
+            if slot is None:
+                at = (propvwf.NATIVE_ORG - 0x4000
+                      + c * propvwf.GLYPH_BYTES)
+                glyph = profile['bank'][at:at + propvwf.GLYPH_BYTES]
+                entry = (bytes(value >> shift for value in glyph) +
+                         bytes(((value << (8 - shift)) & 0xFF) if shift else 0
+                               for value in glyph))
+            else:
+                at = (propvwf.GLYPH_ORG - 0x4000
+                      + slot * propvwf.DOT_GLYPH_STRIDE + shift * 16)
+                entry = profile['bank'][at:at + 16]
         for r in range(8):
             tiles[t][2 * r] |= entry[r]
             tiles[t][2 * r + 1] |= entry[r]

@@ -75,6 +75,7 @@ if [ -f saves/dungeon.state ]; then
   python3 tools/menuspill.py build/shiren_en.gb
   python3 tools/menuglyphspill.py build/shiren_en.gb
   python3 tools/equipmentmarkerspill.py build/shiren_en.gb
+  python3 tools/fusioncountspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/itempagespill.py build/shiren_en.gb
@@ -137,6 +138,9 @@ fi
 if [ -f saves/shiren_en_log_1_dragons_maw.srm ]; then
   python3 tools/dragonmawmarkerspill.py build/shiren_en.gb
   python3 tools/identityhiddenspill.py build/shiren_en.gb
+fi
+if [ -f saves/shiren_en_log1_player_named_items.srm ]; then
+  python3 tools/playernamedspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log_1_talk_to_koppa.srm ] &&
    [ -f saves/shiren_en_log_1_dragons_maw.srm ] &&

@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Prove cursed/plated equipment rows stay on the proportional item path.
 
-The curse case appends a genuine canonical Nagamaki record with byte-3 flags $94.  The
-plating case temporarily substitutes the exact 18-glyph hostile row from playtesting:
+The curse case appends a genuine canonical Nagamaki record with byte-3 flags $94.  Two
+rows are temporarily substituted: the exact 18-glyph hostile plating row from playtesting,
 ``E True Rapier+99★`` ($84 raw equipment marker, cursor cell, VWF text, native $8A
-star).  The original staging bytes and next-row pointer are restored immediately after
-that one row returns, so the remaining real item page draws normally.
+star), and ``Cyclops Bane+1`` followed by native fused-item mark $8C.  The original
+staging bytes and next-row pointer are restored immediately after each row returns, so
+the remaining real item page draws normally.
 
-Both rows must receive allocator records and match the installed approved-font/native-star
-planes exactly. Exit 1 on fixed-width fallback, wrapping, corrupt raw markers, or pixels.
+All three status cases must receive allocator records and match the installed
+approved-font/native-symbol planes exactly. Exit 1 on fixed-width fallback, wrapping,
+corrupt raw markers, or pixels.
 """
 import argparse
 import os
@@ -28,6 +30,8 @@ CURSED_NAGAMAKI = (0x01, 0x00, 0x00, 0x94, 0x00, 0x00, 0xFF, 0xFF)
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
 PLATED_TEXT = tuple(menuspill.encode('True Rapier+99')) + (0x8A,)
 PLATED_ROW = (0x84, 0x00) + PLATED_TEXT + (0xFF,)
+FUSED_TEXT = tuple(menuspill.encode('Cyclops Bane+1')) + (menuvwf.FUSED_CODE,)
+FUSED_ROW = (0x00, 0x00) + FUSED_TEXT + (0xFF,)
 CURSED_TEXT = tuple(menuspill.encode('Nagamaki'))
 
 
@@ -52,7 +56,7 @@ def run(rom, state, png=None, frames=500):
     with open(state, 'rb') as source:
         pb.load_state(source)
 
-    status = {'injected': False, 'rewritten': False, 'pending': None}
+    status = {'injected': False, 'rewritten': set(), 'pending': None}
     keys = {}
     drawn = {}
 
@@ -77,18 +81,24 @@ def run(rom, state, png=None, frames=500):
         source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
         row_number = pb.register_file.D
         key = pb.register_file.HL
-        if row_number == 0 and not status['rewritten']:
+        replacement = None
+        if row_number == 0 and 'plated' not in status['rewritten']:
+            replacement = ('plated', PLATED_ROW)
+        elif row_number == 1 and 'fused' not in status['rewritten']:
+            replacement = ('fused', FUSED_ROW)
+        if replacement is not None:
+            kind, replacement_row = replacement
             original = read_row(pb, source)
             saved = [pb.memory[source + offset]
-                     for offset in range(max(len(original), len(PLATED_ROW)))]
-            for offset, value in enumerate(PLATED_ROW):
+                     for offset in range(max(len(original), len(replacement_row)))]
+            for offset, value in enumerate(replacement_row):
                 pb.memory[source + offset] = value
             # The far renderer advances the outer drawer's source pointer. Restore both
             # the bytes and that pointer at 31:$4118 before the next native row begins.
             status['pending'] = (source, saved, source + len(original))
-            status['rewritten'] = True
-            keys['plated'] = key
-            drawn[key] = list(PLATED_ROW[:-1])
+            status['rewritten'].add(kind)
+            keys[kind] = key
+            drawn[key] = list(replacement_row[:-1])
             return
         row = read_row(pb, source)
         drawn[key] = row[:-1]
@@ -120,15 +130,17 @@ def run(rom, state, png=None, frames=500):
     problems = []
     if not status['injected']:
         problems.append('canonical cursed Nagamaki was not injected')
-    if not status['rewritten'] or status['pending'] is not None:
-        problems.append('plated hostile row was not drawn and restored')
-    for kind in ('plated', 'cursed'):
+    if status['rewritten'] != {'plated', 'fused'} or status['pending'] is not None:
+        problems.append('plated/fused synthetic rows were not both drawn and restored')
+    for kind in ('plated', 'fused', 'cursed'):
         if kind not in keys:
             problems.append('%s equipment row never reached the renderer' % kind)
 
     records = menuspill.records(pb, profile)
     for kind, codes, marker in (
-            ('plated', PLATED_TEXT, 0x84), ('cursed', CURSED_TEXT, 0x87)):
+            ('plated', PLATED_TEXT, 0x84),
+            ('fused', FUSED_TEXT, 0x00),
+            ('cursed', CURSED_TEXT, 0x87)):
         key = keys.get(kind)
         if key is None:
             continue
@@ -150,13 +162,15 @@ def run(rom, state, png=None, frames=500):
         print('  wrote ' + png)
     pb.stop(save=False)
 
-    print('equipmentmarkerspill: plated/cursed keys %s; %d plane-exact row check(s); '
+    print('equipmentmarkerspill: plated/fused/cursed keys %s; '
+          '%d plane-exact row check(s); '
           '%d problem(s)' % (keys, checked[0], len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:
         raise SystemExit('equipmentmarkerspill: failed')
-    print('equipmentmarkerspill: native status symbols and proportional names coexist')
+    print('equipmentmarkerspill: native plating, fused and curse status symbols coexist '
+          'with proportional names')
 
 
 def main():

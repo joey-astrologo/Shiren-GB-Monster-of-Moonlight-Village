@@ -22,7 +22,7 @@ it, wrapping or wording must change.
 | Renderer | Physical geometry | Production source contract | Temporary/runtime constraint | Acceptance evidence |
 |---|---|---|---|---|
 | Dialogue composer | 144px × 3 lines | **30 staged glyphs per line** | Runtime substitutions share both 30 glyphs and 144px | 30-entry reveal map; 625 plane cases / 30,090 checks; worst renderer pass 153/154 scanlines |
-| Item list | 128px payload in an 18-tile row | **18 glyphs including suffix** | 72 allocator tiles in runs 57+11+4; each row needs 4, 8, 9–13 or 16 contiguous tiles | All 145 names and every signed/`[NN]` representative; exact `True Rapier+99★` and curse-marker regression in `equipmentmarkerspill`; six atomic real-save transitions in `itempagespill` |
+| Item list | 128px payload in an 18-tile row | **18 glyphs including suffix** | 72 allocator tiles in runs 57+11+4; each row needs 4, 8, 9–13 or 16 contiguous tiles | All 145 names and every signed/`[NN]` representative; exact plating/curse regressions; canonical fused counts 1–9 on two pages; all nine fusion glyphs at all eight pixel residues in Items and Info |
 | Item descriptions | 144px × 4 lines | **21 staged glyphs** | Shared `$C616` staging and overlapping queue pens | Real help plus synthetic-wide plane checks |
 | Equipment seals | 144px × 1 line per seal | **21 staged glyphs** | Up to four seal rows after one item name | All 20 seals photographed and plane-exact |
 | Clear-condition list | 144px × 5 visible rows | **21 staged glyphs per row** | 72 allocator tiles in runs 57+11+4; widest possible current five need 56 primary-run tiles | `conditionspill.py`: widest five plus exact 21-glyph edge, plane-exact |
@@ -96,8 +96,22 @@ The item-list version is a different path. `True Rapier-77` is 14 source glyphs,
 hostile page uses that row, four 11-tile counter rows and four 4-tile verbs: 69/72. The allocator
 gives the 11-tile run to the first row that fits it rather than assuming page row 0 is
 always narrow. Runtime plating can append native `★`; `equipmentmarkerspill.py` proves
-that `True Rapier+99★` remains proportional alongside the cursed-item prefix. The 18-glyph
-source guard remains available for other long names plus runtime suffixes.
+that `True Rapier+99★` remains proportional alongside the cursed-item prefix. Fused
+weapons and shields append one native count glyph: the canonical masks contain at most
+nine bits, so the complete emitted range is `$8C-$94` (counts 1–9) and `$95` is rejected.
+`fusioncountspill.py` constructs all nine canonical counts over two real Item pages and
+opens count 9 in Info; `menuglyphspill.py` additionally renders all nine at every pixel
+residue in both consumers. The 18-glyph source guard remains available for other long
+names plus runtime suffixes.
+
+Player-assigned identities use a separate native producer: it emits a category prefix,
+then copies the six-character name stored in SRAM. The translated prefixes are
+`Bracer: `, `Herb: `, `Scroll: `, `Staff: `, `Pot: ` and `Blank: `. The shared helper is
+executed for every category at build and regression time, including categories that must
+emit no prefix. `playernamedspill.py` also combines every translated prefix with a widest
+six-character nickname and requires no more than the Item row's 11-tile slice, then boots
+the supplied Log-1 fixture and checks real `Bracer: Food` and `Staff: Poop` rows
+plane-exact on the last Items page.
 
 ## Runtime substitutions
 
@@ -133,8 +147,8 @@ Known fixed variants are stricter:
 - `lint_en.py` protects token/glossary semantics plus the real 18-glyph item-row scanner;
   it has no universal glossary-name length failure.
 - `menuspill.py`, `itempagespill.py`, `floorinfospill.py`, `conditionspill.py`, `boxspill.py`,
-  `menuromspill.py`, `startspill.py`, `rankspill.py`, and `structspill.py` remain the
-  live acceptance tests for allocation and screen behavior.
+  `menuromspill.py`, `playernamedspill.py`, `startspill.py`, `rankspill.py`, and
+  `structspill.py` remain the live acceptance tests for allocation and screen behavior.
 
 The policy is deliberately close to the edge: accept exact 30-glyph or 144-painted-pixel
 fits, then correct concrete visual/pacing conflicts rather than preserving speculative

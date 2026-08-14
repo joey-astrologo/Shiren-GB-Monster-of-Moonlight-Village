@@ -71,7 +71,17 @@ The SNES English convention is ``Press``. The shorter centered ``Empty`` replace
 leaves two asserted `$FF` bytes immediately before this literal, so its pointer can move
 from `$7473` to `$7471` and hold ``  Press`` without relocating code or changing the
 three-row producer.
+
+PLAYER-NAMED UNIDENTIFIED ITEMS HAVE A SHARED CATEGORY PREFIX PRODUCER. ``11:$5244``
+first calls ``11:$526D`` with the item's category, then appends the player's six-character
+nickname from SRAM. Its native table emits ``うでわ：``, ``くさ：``, ``まきもの：``,
+``つえ：``, ``つぼ：`` or ``はくし：``. With the Latin font those bytes appear as
+garbage before otherwise-correct names such as ``Food`` and ``Poop``. The replacement
+keeps the established producer and colon, but writes ``Bracer: ``, ``Herb: ``,
+``Scroll: ``, ``Staff: ``, ``Pot: `` or ``Blank: `` from an expanded-bank helper.
 """
+import gbasm
+import gbemu
 from latinfont import EN_CODES
 
 
@@ -109,9 +119,85 @@ ACTION_POT_ROW = '  ' + ACTION_POT_TEXT
 ACTION_POT_EN = bytes(EN_CODES[ch] for ch in ACTION_POT_ROW) + bytes([0xFF])
 assert len(ACTION_POT_EN) == 8
 
+PLAYER_PREFIX_ENTRY = 0x526D
+PLAYER_PREFIX_OLD = bytes.fromhex(
+    'F5 C5 E5 CB 27 4F 06 00 21 83 52 09 2A 66 6F CD BC 52 E1 C1 F1 C9')
+PLAYER_PREFIX_BANK = 0x32
+PLAYER_PREFIX_INDEX = 0x05
+PLAYER_PREFIX_AT = 0x405A
+PLAYER_PREFIX_LIMIT = 0x4100
+PLAYER_PREFIXES = {
+    0x02: 'Bracer: ',
+    0x05: 'Herb: ',
+    0x06: 'Scroll: ',
+    0x07: 'Staff: ',
+    0x08: 'Pot: ',
+    0x0C: 'Blank: ',
+}
+
 
 def _off(bank, addr):
     return bank * BANKSZ + (addr - 0x4000)
+
+
+def _player_prefix_helper():
+    branches = []
+    loads = []
+    strings = []
+    for category, text in sorted(PLAYER_PREFIXES.items()):
+        label = 'category%02x' % category
+        branches += ['  cp $%02X' % category, '  jr z,%s' % label]
+        loads += ['%s:' % label, '  ld hl,text%02x' % category, '  jr copy']
+        payload = [EN_CODES[ch] for ch in text] + [0xFF]
+        strings += ['text%02x:' % category,
+                    '  db ' + ','.join('$%02X' % value for value in payload)]
+    source = '\n'.join([
+        'prefix:',
+        '  push af',
+        '  push bc',
+        '  push hl',
+    ] + branches + [
+        '  jr done',
+    ] + loads + [
+        'copy:',
+        '  ld a,[hl+]',
+        '  cp $FF',
+        '  jr z,done',
+        '  ld [de],a',
+        '  inc de',
+        '  jr copy',
+        'done:',
+        '  pop hl',
+        '  pop bc',
+        '  pop af',
+        '  ret',
+    ] + strings)
+    return gbasm.assemble(source, PLAYER_PREFIX_AT)
+
+
+def _assert_player_prefix_helper(code, labels):
+    """Run every category through the exact assembled helper before installing it."""
+    bank = bytearray(BANKSZ)
+    start = PLAYER_PREFIX_AT - 0x4000
+    bank[start:start + len(code)] = code
+    for category in range(0x0D):
+        cpu = gbemu.Cpu({0: bytes(BANKSZ), PLAYER_PREFIX_BANK: bank},
+                        bank=PLAYER_PREFIX_BANK)
+        cpu.a = category
+        cpu.b, cpu.c = 0xB1, 0xC2
+        cpu.hl = 0xD345
+        cpu.de = 0xC100
+        cpu.call(labels['prefix'])
+        expected = bytes(EN_CODES[ch] for ch in PLAYER_PREFIXES.get(category, ''))
+        got = bytes(cpu.read(0xC100 + offset) for offset in range(len(expected)))
+        if got != expected or cpu.de != 0xC100 + len(expected):
+            raise SystemExit('itemfix: player-name category $%02X helper emitted %s at '
+                             '$C100 and ended at $%04X; expected %s / $%04X'
+                             % (category, got.hex(' '), cpu.de, expected.hex(' '),
+                                0xC100 + len(expected)))
+        if (cpu.a, cpu.b, cpu.c, cpu.hl) != (category, 0xB1, 0xC2, 0xD345):
+            raise SystemExit('itemfix: player-name category $%02X helper clobbered '
+                             'AF/BC/HL' % category)
 
 
 def install(buf, notes):
@@ -214,10 +300,41 @@ def install(buf, notes):
     buf[pointer:pointer + 3] = ACTION_POT_POINTER_EN
     buf[action:action + len(ACTION_POT_EN)] = ACTION_POT_EN
 
+    # Preserve the native category-prefix semantics for player-assigned identities, but
+    # emit the category through the English code page. The original 22-byte selector is
+    # guarded in full and replaced by a far-call stub. Bank 50's prefix is outside the
+    # redirected-text arena, which begins at $4100.
+    helper, labels = _player_prefix_helper()
+    if PLAYER_PREFIX_AT + len(helper) > PLAYER_PREFIX_LIMIT:
+        raise SystemExit('itemfix: %d-byte player-name prefix helper exceeds %d:$%04X'
+                         % (len(helper), PLAYER_PREFIX_BANK, PLAYER_PREFIX_LIMIT))
+    _assert_player_prefix_helper(helper, labels)
+    entry = _off(11, PLAYER_PREFIX_ENTRY)
+    got = bytes(buf[entry:entry + len(PLAYER_PREFIX_OLD)])
+    if got != PLAYER_PREFIX_OLD:
+        raise SystemExit('itemfix: expected player-name category producer at 11:$%04X, '
+                         'found %s' % (PLAYER_PREFIX_ENTRY, got.hex(' ')))
+    stub = bytes((0xD7, PLAYER_PREFIX_INDEX, PLAYER_PREFIX_BANK, 0xC9))
+    buf[entry:entry + len(PLAYER_PREFIX_OLD)] = (
+        stub + bytes([NOP]) * (len(PLAYER_PREFIX_OLD) - len(stub)))
+    helper_at = _off(PLAYER_PREFIX_BANK, PLAYER_PREFIX_AT)
+    if any(value != 0xFF for value in buf[helper_at:helper_at + len(helper)]):
+        raise SystemExit('itemfix: player-name helper site %d:$%04X is occupied'
+                         % (PLAYER_PREFIX_BANK, PLAYER_PREFIX_AT))
+    table = _off(PLAYER_PREFIX_BANK, 0x4000) + PLAYER_PREFIX_INDEX - 1
+    if bytes(buf[table:table + 2]) != bytes((0xFF, 0xFF)):
+        raise SystemExit('itemfix: player-name far entry $%02X in bank %d is occupied'
+                         % (PLAYER_PREFIX_INDEX, PLAYER_PREFIX_BANK))
+    buf[helper_at:helper_at + len(helper)] = helper
+    buf[table:table + 2] = bytes((labels['prefix'] & 0xFF,
+                                  labels['prefix'] >> 8))
+
     notes.append('itemfix: runtime equipment minus (4:$5D20) $7D -> English hyphen $%02X; '
                  'arrow counter `本の` (4:$5D3D) -> one space; the row charges $C6DC '
                  'one cell instead of two; shared unidentified-item help (13:$5537) -> '
                  '`%s`; title (4:$5773) -> `%s`; shared empty-Pot See row (4:$7464) -> '
-                 '`%s`; Back/Todo charge rows (4:$7473 -> $7471) -> `%s`, all in place' %
+                 '`%s`; Back/Todo charge rows (4:$7473 -> $7471) -> `%s`; player-named '
+                 'item prefixes -> Bracer/Herb/Scroll/Staff/Pot/Blank via %d:$%04X' %
                  (MINUS, UNIDENTIFIED_HELP_TEXT, UNIDENTIFIED_TITLE_TEXT,
-                  EMPTY_POT_TEXT, ACTION_POT_TEXT))
+                  EMPTY_POT_TEXT, ACTION_POT_TEXT, PLAYER_PREFIX_BANK,
+                  PLAYER_PREFIX_AT))

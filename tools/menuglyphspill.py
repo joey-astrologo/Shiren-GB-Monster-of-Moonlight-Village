@@ -11,7 +11,8 @@ planes against the installed shared pre-shift table.
 remains raw outside the VWF payload.  Existing item/Floor route checks cover that raw
 cell.  Tilde is intentionally absent from the shipped font contract.  Everything else
 in ``propvwf.DOT_CODES``—letters, digits, punctuation, parentheses, `$88` unidentified
-star and `$8A` plating star—must allocate and render proportionally in both paths.
+star and `$8A` plating star—plus every menu-only fusion-count digit `$8C-$94` (one
+through nine seals) must allocate and render proportionally in both paths.
 """
 import argparse
 import os
@@ -28,15 +29,21 @@ import propvwf                                                    # noqa: E402
 STAGING = menuspill.STAGING
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
 INFO_SHAPE = (0, 3, 5, 18, 0x00)
-TEXT_CODES = tuple(code for code in propvwf.DOT_CODES if code != 0x81)
-# Round-robin distribution mixes narrow/wide/core/sparse codes and stays under both
-# source ceilings.  In the approved font it occupies 53/72 allocator tiles in total.
-ROWS = tuple(tuple(TEXT_CODES[index::5]) for index in range(5))
+TEXT_CODES = (tuple(code for code in propvwf.DOT_CODES if code != 0x81) +
+              menuvwf.FUSED_CODES)
+# Round-robin distribution mixes narrow/wide/core/sparse codes.  Exchange one 8px
+# fusion digit with the narrow right bracket so the fifth row fits the allocator's
+# separate 11-tile run after the first four rows consume the main run.
+_rows = [list(TEXT_CODES[index::5]) for index in range(5)]
+_narrow = _rows[0].index(0x41)
+_fusion = _rows[4].index(menuvwf.FUSED_FIRST + 1)
+_rows[0][_narrow], _rows[4][_fusion] = _rows[4][_fusion], _rows[0][_narrow]
+ROWS = tuple(tuple(row) for row in _rows)
 
 
-def packed_rows(raw):
+def packed_rows(raw, rows=ROWS):
     out = bytearray()
-    for codes in ROWS:
+    for codes in rows:
         if raw:
             out += bytes((0, 0))
         out += bytes(codes) + b'\xFF'
@@ -53,7 +60,7 @@ def read_row(pb, source, limit=32):
     return tuple(out)
 
 
-def run_case(rom, profile, kind, png=None):
+def run_case(rom, profile, kind, rows=ROWS, label='repertoire', png=None):
     if kind not in ('item', 'info'):
         raise ValueError(kind)
     PyBoy = _import_pyboy()
@@ -64,7 +71,7 @@ def run_case(rom, profile, kind, png=None):
 
     shape = ITEM_SHAPE if kind == 'item' else INFO_SHAPE
     raw = 2 if kind == 'item' else 0
-    payload = packed_rows(raw)
+    payload = packed_rows(raw, rows)
     rewritten = [False]
     events = {}
     dispatches = []
@@ -108,7 +115,7 @@ def run_case(rom, profile, kind, png=None):
     if not rewritten[0]:
         problems.append('%s five-row payload was never injected' % kind)
     records = menuspill.records(pb, profile)
-    for row_number, codes in enumerate(ROWS):
+    for row_number, codes in enumerate(rows):
         event = events.get(row_number)
         if event is None:
             problems.append('%s row %d never reached the renderer' % (kind, row_number))
@@ -132,9 +139,40 @@ def run_case(rom, profile, kind, png=None):
         pb.screen.image.save(png)
         print('menuglyphspill: wrote ' + png)
     pb.stop(save=False)
-    print('  %-4s: %d/5 row calls, %d allocator record(s), %d problem(s)'
-          % (kind, len(events), len(records), len(problems)))
+    print('  %-4s %-20s: %d/5 row calls, %d allocator record(s), %d problem(s)'
+          % (kind, label, len(events), len(records), len(problems)))
     return problems
+
+
+def residue_prefix(profile, target):
+    """Shortest approved-text prefix whose proportional advance has this residue."""
+    candidates = tuple(dict.fromkeys(menuspill.encode(
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-[]')))
+    reached = {0: ()}
+    for _length in range(3):
+        expanded = dict(reached)
+        for residue, prefix in reached.items():
+            for code in candidates:
+                width = menuspill._dot_metric(profile, code)[1]
+                expanded.setdefault((residue + width) & 7, prefix + (code,))
+        reached = expanded
+        if target in reached:
+            return reached[target]
+    raise AssertionError('no short prefix produces pixel residue %d' % target)
+
+
+def fusion_residue_rows(profile, residues):
+    """Five rows, each exercising all counts at one exact starting pixel residue."""
+    rows = [residue_prefix(profile, residue) + menuvwf.FUSED_CODES
+            for residue in residues]
+    filler = tuple(menuspill.encode('A'))
+    rows += [filler] * (5 - len(rows))
+    for residue, row in zip(residues, rows):
+        pen = sum(menuspill._dot_metric(profile, code)[1]
+                  for code in row[:-len(menuvwf.FUSED_CODES)])
+        if pen & 7 != residue:
+            raise AssertionError('fusion residue row %d starts at %d' % (residue, pen & 7))
+    return tuple(rows)
 
 
 def main():
@@ -150,21 +188,32 @@ def main():
     if any(len(row) > 18 for row in ROWS) or set().union(*map(set, ROWS)) != set(TEXT_CODES):
         raise SystemExit('menuglyphspill: internal repertoire partition is invalid')
 
+    cases = (
+        ('repertoire', ROWS),
+        ('fusion residues 0-4', fusion_residue_rows(profile, range(5))),
+        ('fusion residues 5-7', fusion_residue_rows(profile, range(5, 8))),
+    )
     problems = []
-    for kind in ('item', 'info'):
-        shot = None
-        if args.png:
-            stem, ext = os.path.splitext(args.png)
-            shot = stem + '_' + kind + (ext or '.png')
-        problems += ['%s: %s' % (kind, problem)
-                     for problem in run_case(args.rom, profile, kind, shot)]
-    print('menuglyphspill: %d textual codes across both paths; raw `$81` cursor covered '
-          'by route tests; %d problem(s)' % (len(TEXT_CODES), len(problems)))
+    for label, rows in cases:
+        for kind in ('item', 'info'):
+            shot = None
+            if args.png:
+                stem, ext = os.path.splitext(args.png)
+                suffix = label.replace(' ', '_').replace('-', '_')
+                shot = stem + '_' + kind + '_' + suffix + (ext or '.png')
+            problems += ['%s %s: %s' % (kind, label, problem)
+                         for problem in run_case(args.rom, profile, kind, rows,
+                                                 label, shot)]
+    combinations = len(menuvwf.FUSED_CODES) * 8
+    print('menuglyphspill: %d textual codes plus %d fusion count/residue combinations '
+          'across both paths; raw `$81` cursor covered by route tests; %d problem(s)'
+          % (len(TEXT_CODES), combinations, len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:
         raise SystemExit('menuglyphspill: failed')
-    print('menuglyphspill: every admitted textual glyph is VWF in Items and item Info')
+    print('menuglyphspill: every admitted textual glyph is VWF in Items and item Info; '
+          'fusion counts 1-9 pass at all eight pixel residues')
 
 
 if __name__ == '__main__':
