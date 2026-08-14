@@ -4583,8 +4583,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "b740892dc415cab6d1204fc0a8fb6dfeb0f3755cf13b36bdb1d6aefa98936e43",
-      "current_en_sha256": "150a770a35c4ce26bbac51623eacb69398ebe53b2d5b6618800cfbfb4fab8d82",
-      "candidate_en": "Pochi: Woof, wuff! (Leave <var> to me!)",
+      "current_en_sha256": "efb30968fba409c457f32578ed50c326021793537b41f2f4aad6f8d753c3a778",
+      "candidate_en": "Pochi: Woof, wuff!<br>(Leave <var> to me!)",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -4597,13 +4597,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Pochi: Woof, wuff! (Leave <var> to me!)",
-        "wrapped_en": "Pochi: Woof, wuff! (Leave <var> to<br> me!)",
+        "candidate_en": "Pochi: Woof, wuff!<br>(Leave <var> to me!)",
+        "wrapped_en": "Pochi: Woof, wuff!<br> (Leave <var> to me!)",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:41:15+00:00"
+      "review_notes": "Approved dynamic-name-safe Pochi wrap; 2026-08-13",
+      "verified_at": "2026-08-13T22:01:05+00:00"
     },
     "14:$72EA": {
       "section": "bank 14 — companions",
@@ -4670,8 +4670,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "fb02bed417f51b94decda3775ed875d6f9afd3a8501538b9f04b4b3006bb8840",
-      "current_en_sha256": "93cde082df6aca0d8d48b10d2e30f9e407c0ed0868be71af1f5d767bf1b7f5eb",
-      "candidate_en": "Rooster: Cock-a-doodle-doo! Cock-a-doodle-doo!<brk>(<var> is mere small fry! Bring me Orochi!)",
+      "current_en_sha256": "68aa2c11a828aeebece85d894adcdc4635f7c4b7c129306cee4a7829653662d3",
+      "candidate_en": "Rooster: Cock-a-doodle-doo! Cock-a-doodle-doo!<brk>(<var> is mere<br>small fry! Bring me Orochi!)",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -4684,13 +4684,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Rooster: Cock-a-doodle-doo! Cock-a-doodle-doo!<brk>(<var> is mere small fry! Bring me Orochi!)",
-        "wrapped_en": "Rooster: Cock-a-doodle-doo!<br> Cock-a-doodle-doo!<end><brk> (<var> is mere small fry! Bring<br> me Orochi!)",
+        "candidate_en": "Rooster: Cock-a-doodle-doo! Cock-a-doodle-doo!<brk>(<var> is mere<br>small fry! Bring me Orochi!)",
+        "wrapped_en": "Rooster: Cock-a-doodle-doo!<br> Cock-a-doodle-doo!<end><brk> (<var> is mere<br> small fry! Bring me Orochi!)",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:41:15+00:00"
+      "review_notes": "Rewrapped after live Mamel substitution proved 149px/32 glyph overflow; wording unchanged.",
+      "verified_at": "2026-08-13T20:32:10+00:00"
     },
     "14:$756B": {
       "section": "bank 14 — companions",
@@ -4757,8 +4757,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "6cf12332d403f4793e8161a3460e4a011b342e44b8092195523a81cf91ccc6cc",
-      "current_en_sha256": "2f10ecc69071216637fc406b790d8943aa15e008f8dd3fa4a185492022974add",
-      "candidate_en": "Tanmomo: Mew, me-mew! (<var> is a pushover!)",
+      "current_en_sha256": "f00c5b56633408a008c80482599141e3633a518584c8fbd928307546792f6fbe",
+      "candidate_en": "Tanmomo: Mew, me-mew!<br>(<var> is no match!)",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -4771,13 +4771,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Tanmomo: Mew, me-mew! (<var> is a pushover!)",
-        "wrapped_en": "Tanmomo: Mew, me-mew! (<var> is a<br> pushover!)",
+        "candidate_en": "Tanmomo: Mew, me-mew!<br>(<var> is no match!)",
+        "wrapped_en": "Tanmomo: Mew, me-mew!<br> (<var> is no match!)",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:41:15+00:00"
+      "review_notes": "Approved two-line Tanmomo wording; 2026-08-13",
+      "verified_at": "2026-08-13T22:01:05+00:00"
     },
     "14:$767A": {
       "section": "bank 14 — companions",
@@ -14763,5 +14763,5 @@
   },
   "source_file": "script/prose_draft.tsv",
   "source_count": 521,
-  "updated_at": "2026-08-13T15:24:37+00:00"
+  "updated_at": "2026-08-13T22:01:05+00:00"
 }

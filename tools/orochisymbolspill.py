@@ -105,7 +105,7 @@ SELECTOR_VWF_CELLS = {(row, col) for row, cols, _text in SELECTOR_VWF_ROWS
 
 HEADER_VWF_ROW = (1, tuple(range(6, 14)), 'Rankings')
 
-# The unified Rankings renderer owns three deduplicated difficulty rasters at $85-$8D.
+# The unified Rankings renderer owns three deduplicated difficulty rasters at $87-$8F.
 # Derive each row's semantics from the matching native control: this save's Kuyo board
 # is Hard/Easy/Easy/Easy/Easy, while Village has no difficulty fields at all.  A
 # populated field owns five intentional text cells: three composed tiles and two blank

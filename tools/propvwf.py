@@ -532,10 +532,15 @@ nglineend:
         jp passdone
 
 buildmap:
+        ; Build the typewriter reveal map with DE as the direct output pointer.  This is
+        ; scheduler-critical: recomputing a destination and calling a helper per glyph
+        ; exceeded the 154-scanline budget under --redirect-all placement.  The last two
+        ; entries still move to measured-safe scratch because $C0FE/$C0FF are live state.
         push bc
         push de
         push hl
         ld hl,$CF07
+        ld de,${REVEAL_MAP:04X}
         ld b,$00
         ld c,$00
 bmcheck:
@@ -554,11 +559,11 @@ bmcheck:
         jr z,bmfill
         call nextglyph
         push hl
-        ld e,a
+        ld [${S_CODE:04X}],a
         ld a,[${S_MODE:04X}]
         and a
         jr z,bmnative
-        ld a,e
+        ld a,[${S_CODE:04X}]
         cp ${CORE_CODES:02X}
         jr nc,bmsparse
         add a,${CORE_WIDTH_ORG & 0xFF:02X}
@@ -567,11 +572,16 @@ bmcheck:
         ld a,[hl]
         jr bmwidth
 bmsparse:
-        ld d,$00
-        sla e
-        rl d
-        ld hl,${META_ORG:04X}
-        add hl,de
+        ld a,[${S_CODE:04X}]
+        ld l,a
+        ld h,$00
+        add hl,hl
+        ld a,l
+        add a,${META_ORG & 0xFF:02X}
+        ld l,a
+        ld a,h
+        adc a,${META_ORG >> 8:02X}
+        ld h,a
         inc hl
         ld a,[hl]
         jr bmwidth
@@ -588,52 +598,38 @@ bmwidth:
         jr c,bmkeep
         ld a,${CELLS - 1:02X}
 bmkeep:
-        ld e,a
-        call bmstore
+        ld [${S_LOCAL:04X}],a
         pop hl
         ld a,[${S_WIDTH:04X}]
         add a,b
         ld b,a
-        inc c
-        jr bmcheck
+        ld a,[${S_LOCAL:04X}]
+        jr bmstore
 bmfill:
         ld a,c
         cp ${CHARS:02X}
         jr nc,bmdone
-        ld e,${CELLS - 1:02X}
-bmfillloop:
-        call bmstore
+        ld a,${CELLS - 1:02X}
+bmstore:
+        ld [de],a
+        inc de
         inc c
         ld a,c
-        cp ${CHARS:02X}
-        jr c,bmfillloop
+        cp ${REVEAL_MAIN_COUNT:02X}
+        jr z,bmsettail0
+        cp ${REVEAL_MAIN_COUNT + 1:02X}
+        jr z,bmsettail1
+        jr bmcheck
+bmsettail0:
+        ld de,${REVEAL_TAIL0:04X}
+        jp bmcheck
+bmsettail1:
+        ld de,${REVEAL_TAIL1:04X}
+        jp bmcheck
 bmdone:
         pop hl
         pop de
         pop bc
-        ret
-
-; Store reveal cell E for ordinal C.  The last two entries use measured-safe scratch;
-; a contiguous 30-byte run would overwrite live game state at $C0FE/$C0FF.
-bmstore:
-        ld a,c
-        cp ${REVEAL_MAIN_COUNT:02X}
-        jr nc,bmstoretail
-        add a,${REVEAL_MAP & 0xFF:02X}
-        ld l,a
-        ld h,${REVEAL_MAP >> 8:02X}
-        ld a,e
-        ld [hl],a
-        ret
-bmstoretail:
-        sub ${REVEAL_MAIN_COUNT:02X}
-        jr nz,bmstoretail1
-        ld a,e
-        ld [${REVEAL_TAIL0:04X}],a
-        ret
-bmstoretail1:
-        ld a,e
-        ld [${REVEAL_TAIL1:04X}],a
         ret
 
 place:  ld a,[${S_PEN:04X}]

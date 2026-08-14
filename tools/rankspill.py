@@ -367,6 +367,26 @@ def check(rom, control, native_control, ram, png):
         problems.append('approved queue coverage: %d arm(s), %d upload(s), expected 5/5'
                         % (len(approved['arms']), len(approved['uploads'])))
 
+    # The native result arrow owns tile $81, so the screen-scoped static allocation no
+    # longer shares the no-rankvwf control's private header IDs.  Prove the production
+    # map and planes semantically instead of requiring those private IDs to be equal.
+    header = 0xC326 - SHADOW
+    header_ids = bytes(range(rankvwf.HEADER_POOL_BASE,
+                             rankvwf.HEADER_POOL_BASE + 5))
+    if approved['shadow'][header:header + 8] != header_ids + b'\0\0\0':
+        problems.append('proportional header map is %s, expected %s + three blanks'
+                        % (approved['shadow'][header:header + 8].hex(),
+                           header_ids.hex()))
+    header_tiles = menuspill.compose([EN_CODES[ch] for ch in 'Rankings'], profile)
+    if len(header_tiles) != 5:
+        problems.append('Rankings raster needs %d tiles, expected 5' % len(header_tiles))
+    for i, want_tile in enumerate(header_tiles):
+        got_tile = approved['tiles'][rankvwf.HEADER_POOL_BASE + i]
+        if got_tile != bytes(want_tile):
+            problems.append('header tile $%02X differs: want %s got %s'
+                            % (rankvwf.HEADER_POOL_BASE + i,
+                               bytes(want_tile).hex(), got_tile.hex()))
+
     expected_ids = []
     special_text = ('Village', 'Dragon')
     for row, (dest, codes) in enumerate(zip(DESTS, APPROVED)):
@@ -427,7 +447,8 @@ def check(rom, control, native_control, ram, png):
                                 % (row, approved['shadow'][floor_suffix], EN_CODES['F']))
 
         difficulty = dest - SHADOW + 22
-        difficulty_base = (0x85, 0x88, 0x8B)[row % 3]
+        difficulty_base = (rankvwf.EASY_POOL_BASE, rankvwf.NORM_POOL_BASE,
+                           rankvwf.HARD_POOL_BASE)[row % 3]
         got_difficulty = approved['shadow'][difficulty:difficulty + 5]
         want_difficulty = bytes(range(difficulty_base, difficulty_base + 3)) + b'\0\0'
         if got_difficulty != want_difficulty:
@@ -443,7 +464,7 @@ def check(rom, control, native_control, ram, png):
                                 % (row, difficulty_base + i,
                                    bytes(want_tile).hex(), got_tile.hex()))
 
-    excluded = set()
+    excluded = set(range(header, header + 8))
     for dest, codes in zip(DESTS, APPROVED):
         excluded.update(range(dest - SHADOW, dest - SHADOW + rankvwf.NAME_BYTES))
         difficulty = dest - SHADOW + 22

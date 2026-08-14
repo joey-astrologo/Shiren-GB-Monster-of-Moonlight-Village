@@ -24,6 +24,10 @@ python3 tools/enemyexp.py build/_base_expanded.gb build/shiren_en.gb
 # every current signed/[NN] item variant against its measured menu path.
 python3 tools/lint_en.py
 python3 tools/fontaudit.py --details 4
+# `<var>` has route-specific runtime producers. Exact domains and exhaustive actor-role
+# contracts are enforced while every unclassified dynamic line is regenerated as a
+# complete human-review TSV.
+python3 tools/varaudit.py
 python3 tools/propvwf.py --selftest
 python3 tools/unidentifiedhelp.py build/shiren_en.gb
 rm -f build/_m.gb
@@ -59,8 +63,9 @@ python3 tools/newgamesmoke.py build/shiren_en.gb
 # selector/status field, title/file-menu transitions (including Erase Log 3 rebuilding
 # Copy Log), cursed/plated/unidentified equipment-marker VWF, an exhaustive Items/Info
 # textual-glyph pass, the Copy/Erase/New-Log name-screen
-# restore, the Ground box-5 VWF path, the Decoy Staff live-name producer, and rescued-child
-# nested dialogue entries. A fresh clone therefore runs every SRAM-backed route; generate
+# restore, the Ground box-5 VWF path, the Decoy Staff live-name producer, rescued-child
+# nested dialogue entries and the one-HP death-result Rankings page. A fresh clone
+# therefore runs every SRAM-backed route; generate
 # town.state/dungeon.state with tools/fixtures.py to enable the remaining state routes.
 if [ -f saves/town.state ]; then
   # Exact Forest 1 reference plus all 50 live floor fields over every dungeon selector.
@@ -155,7 +160,8 @@ if [ -f saves/shiren_en_log_1_freeze_on_exit.srm ]; then
   python3 tools/rescueexitspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log_1_orochi_symbol.srm ] ||
-   [ -f saves/shiren_en_ranking_repaired.srm ]; then
+   [ -f saves/shiren_en_ranking_repaired.srm ] ||
+   [ -f saves/shiren_en_log2_about_to_die.srm ]; then
   python3 tools/build.py build/_base_expanded.gb script/en.tsv \
           build/orochisymbolspill_native_control.gb \
           --dot-font --no-menuvwf
@@ -165,6 +171,10 @@ if [ -f saves/shiren_en_ranking_repaired.srm ]; then
           build/rankvwf_control.gb --dot-font --no-rankvwf
   python3 tools/rankspill.py build/shiren_en.gb \
           --control build/rankvwf_control.gb \
+          --native-control build/orochisymbolspill_native_control.gb
+fi
+if [ -f saves/shiren_en_log2_about_to_die.srm ]; then
+  python3 tools/deathrankspill.py build/shiren_en.gb \
           --native-control build/orochisymbolspill_native_control.gb
 fi
 if [ -f saves/shiren_en_log_1_orochi_symbol.srm ]; then

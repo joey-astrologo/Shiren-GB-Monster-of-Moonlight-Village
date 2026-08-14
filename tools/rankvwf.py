@@ -7,11 +7,12 @@ the real title-screen route reaches that writer with the LCD enabled.  This patc
 that VBlank queue path, but packs its native 4+4+1 transfer as identical overlapping
 windows so each proportional name owns exactly five physical planes.
 
-The complete settled screen is one allocation at ``$80-$AE``: five tiles for
+The complete settled screen is one allocation at ``$82-$B0``: five tiles for
 ``Rankings``, three shared tiles apiece for ``Easy``/``Norm.``/``Hard``, five tiles for
 each of five names, and four shared tiles apiece for the native special-floor markers
-``Village``/``Dragon``.  The native clear/status graphics at ``$B7`` and ``$CB-$D2``
-are disjoint while the board is visible.  The earlier category selector temporarily
+``Village``/``Dragon``.  Tile ``$81`` remains native because the result page uses it for
+the current-entry arrow; the native clear/status graphics at ``$B7`` and ``$CB-$D2`` are
+also disjoint while the board is visible.  The earlier category selector temporarily
 uses ``$C0-$CB``; the cartridge's LCD-off native font loader restores that whole slice
 before any result map is revealed, and restores ``$80-$D2`` again before a title or
 Adventure map is revealed.
@@ -86,18 +87,23 @@ OLD_CALL = bytes.fromhex('cd5f4a')
 RAW_INDEX = 0x11                 # existing bank-31 far entry -> original $4A5F writer
 RAW_ENTRY = 0x4A5F
 
-POOL_BASE = 0x8E
-STATIC_POOL_BASE = 0x80
+STATIC_POOL_BASE = 0x82
+HEADER_POOL_BASE = STATIC_POOL_BASE
+EASY_POOL_BASE = STATIC_POOL_BASE + 5
+NORM_POOL_BASE = EASY_POOL_BASE + 3
+HARD_POOL_BASE = NORM_POOL_BASE + 3
+POOL_BASE = HARD_POOL_BASE + 3
 STATIC_POOL_END = POOL_BASE
-SPECIAL_POOL_BASE = 0xA7
+SPECIAL_POOL_BASE = POOL_BASE + 5 * 5
 SPECIAL_TILES = 4
 SPECIAL_POOL_END = SPECIAL_POOL_BASE + 2 * SPECIAL_TILES
 ROWS = 5
 # Six approved picker characters paint at most five tiles with the production Dot font.
 # The sixth map cell stays blank (or is replaced by the native clear/status graphic), so
-# the five name rows use exactly $8E-$A6.  $80-$8D belong to the same screen manager's
-# deduplicated Rankings header and Easy/Norm./Hard labels.  $A7-$AE are the four-tile
+# the five name rows use exactly $90-$A8.  $82-$8F belong to the same screen manager's
+# deduplicated Rankings header and Easy/Norm./Hard labels.  $A9-$B0 are the four-tile
 # Village/Dragon floor markers; their fields stop before the live status tile at column 18.
+# The native result arrow owns $81 and is deliberately outside this screen allocation.
 TILES_PER_ROW = 5
 RECORD_STRIDE = 12
 NAME_BYTES = 6
@@ -192,8 +198,12 @@ def _assert_name_extent(font):
 def manager_src(font):
     data = _static_tile_data(font)
     native_header = bytes(propvwf.EN_CODES[ch] for ch in 'Rankings')
-    return MANAGER_SRC % (SPECIAL_POOL_BASE + SPECIAL_TILES, SPECIAL_POOL_BASE,
+    static_vram = 0x8800 + (STATIC_POOL_BASE - 0x80) * 16
+    return MANAGER_SRC % (HEADER_POOL_BASE,
+                          HARD_POOL_BASE, EASY_POOL_BASE, NORM_POOL_BASE,
+                          SPECIAL_POOL_BASE + SPECIAL_TILES, SPECIAL_POOL_BASE,
                           menuvwf.START_AUX_INDEX, menuvwf.START_AUX_BANK,
+                          static_vram,
                           SPECIAL_INDEX, SPECIAL_BANK,
                           ','.join('$%02X' % value for value in data),
                           ','.join('$%02X' % value for value in native_header))
@@ -335,6 +345,8 @@ rankmanager:
   jp z,nativerestore
   cp $03
   jp z,packpayload
+  cp $04
+  jp z,publishname
   ret
 
 staticmap:
@@ -356,7 +368,7 @@ staticvwf:
   ; difficulty rows (Village Exit) stay native; populated Kuyo rows select one of the
   ; three shared rasters from their actual first character.
   ld hl,$C326
-  ld a,$80
+  ld a,$%02X
   call write5
   xor a
   ld [hl+],a
@@ -412,13 +424,13 @@ writedifficulty:
   jr z,diffnorm
   cp $12
   ret nz
-  ld a,$8B
+  ld a,$%02X
   jr diffwrite
 diffeasy:
-  ld a,$85
+  ld a,$%02X
   jr diffwrite
 diffnorm:
-  ld a,$88
+  ld a,$%02X
 diffwrite:
   ld b,$03
   call writeloop
@@ -451,13 +463,23 @@ writeloop:
   jr nz,writeloop
   ret
 
+publishname:
+  ; LCD-off result pages bypass the ordinary queue uploader, so publish the same five
+  ; private IDs into the row's shadow field after rankdirect has copied their planes.
+  ld a,[$C0D1]
+  ld l,a
+  ld a,[$C0D2]
+  ld h,a
+  ld a,[$C0D4]
+  jp write5
+
 rankprepare:
   push af
   push bc
   push de
   push hl
   ; This replaces the native call at 31:$4671.  LCD-on title Rankings and LCD-off
-  ; rescued-child results share the same restore/static work, without waiting on LY
+  ; result pages share the same restore/static work, without waiting on LY
   ; while the display is off.  Run the replaced multiplication exactly once now:
   ; FF90=C6AC and FF91=12 on entry, and the native caller consumes FF90's product.
   call $19E5
@@ -484,7 +506,7 @@ rankprepare:
   db $%02X,$%02X
   jr c,skipstatic
   ld hl,staticdata
-  ld de,$8800
+  ld de,$%04X
   ld bc,$00E0
 staticcopy:
   ld a,[hl+]
@@ -639,8 +661,8 @@ rfready:
   db $%02X,$%02X
   ; The page loop has finished every shadow write, while the native screen copier would
   ; still reveal $9800 over several frames.  Disable at VBlank, publish that complete
-  ; shadow synchronously, then select $9800 again in the same blank interval.  Rescue
-  ; exits enter the Rankings result with the LCD already disabled, so that route must
+  ; shadow synchronously, then select $9800 again in the same blank interval.  Result
+  ; pages enter Rankings with the LCD already disabled, so that route must
   ; skip the LY wait -- an off LCD never reaches VBlank and used to deadlock here.
   ldh a,[$FF40]
   bit 7,a
@@ -664,7 +686,7 @@ rfpublish:
   ret
 rankdirect:
   ; The ordinary title-menu Rankings route uploads each composed name through the
-  ; game's VBlank queue.  The rescue-result route has deliberately turned the LCD off,
+  ; game's VBlank queue.  Result pages have deliberately turned the LCD off,
   ; so copy the same five private tiles directly instead of arming a queue whose
   ; consumer cannot run.  Slot 1 contains 0..3 and slot 2 contains 1..4.
   ld a,[$C0D4]
@@ -695,10 +717,14 @@ rdslot2:
   inc de
   dec b
   jr nz,rdslot2
+  ld a,$04
+  rst $10
+  db $%02X,$%02X
   ret
 """ % (AUX_INDEX, AUX_BANK,
          MANAGER_INDEX, MANAGER_BANK,
-         menuvwf.ITEM_PUBLISH_INDEX, menuvwf.ITEM_PAGE_BANK)
+         menuvwf.ITEM_PUBLISH_INDEX, menuvwf.ITEM_PAGE_BANK,
+         MANAGER_INDEX, MANAGER_BANK)
 
 
 PAGE_FINISH_SRC = """
@@ -863,7 +889,7 @@ composed:
   ld a,$03
   rst $10
   db $%02X,$%02X
-  ; Normal Rankings pages run with the LCD on and use uploader mode 0.  Rescue-result
+  ; Normal Rankings pages run with the LCD on and use uploader mode 0.  Result
   ; pages arrive LCD-off; mode 3 performs the equivalent direct VRAM copy in the
   ; transition helper, avoiding a wait on the disabled VBlank consumer.
   ldh a,[$FF40]
@@ -1032,7 +1058,8 @@ def install(buf, notes=None, font=None):
     buf[call:call + 3] = bytes((0xD7, FAR_INDEX, FAR_BANK))
 
     if notes is not None:
-        notes.append('rankvwf: unified Rankings allocation uses $80-$AE: five static '
+        notes.append('rankvwf: unified Rankings allocation uses $82-$B0 while preserving '
+                     'native result-arrow tile $81: five static '
                      'header tiles, nine deduplicated difficulty tiles and five private '
                      'queued tiles per name, plus four shared tiles each for Village and '
                      'Dragon; '
@@ -1042,8 +1069,8 @@ def install(buf, notes=None, font=None):
                      'transition helper at %d:$%04X + %d-byte special-label helper at '
                      '%d:$%04X + %d-byte screen manager at '
                      '%d:$%04X + page finalizer 31:$%04X; LCD-on rows use the game '
-                     'VBlank transfer queue and LCD-off rescue results copy five tiles '
-                     'synchronously'
+                     'VBlank transfer queue and LCD-off result pages synchronously copy '
+                     'and publish five tiles'
                      % (len(entry), ENTRY_AT, len(validator), VALIDATE_AT,
                         len(uploader), UPLOAD_AT, len(transition), TRANSITION_BANK,
                         TRANSITION_AT, len(special), SPECIAL_BANK, SPECIAL_AT,

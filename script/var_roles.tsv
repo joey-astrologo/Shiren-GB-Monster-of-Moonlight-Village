@@ -1,0 +1,17 @@
+# Role-scoped review domains for dialogue <var> ($E2) substitutions.
+#
+# loc<TAB>box<TAB>line<TAB>occurrence<TAB>role<TAB>evidence
+#
+# These role domains are exhaustive build contracts after the native producer class has
+# been established. They replace impossible item/appearance candidates with the complete
+# actor class established by the Japanese sentence, native append routine, observed game
+# context and approved glossary. Any overflow is fatal; unclassified substitutions remain
+# non-fatal broad review rows in build/var_review.tsv.
+# 13:$4B66 intentionally remains unscoped: its native producer appends both actor values
+# to one queue row. Adding <br> creates a third row and crashes existing Log-2 fixtures;
+# the exact set of reachable actor pairs still needs an engine-level producer contract.
+13:$4C3B	1	1	1	monster	Native steal producers append the Froggo or Thiefwalrus family actor before the hard-coded player victim.
+13:$4C58	1	1	1	monster	Native 15:$63D0 appends the acting Mudkin-family entity.
+14:$72CB	1	2	1	monster	Japanese companion battle boast and play context identify the substituted target as an enemy.
+14:$753A	2	1	1	monster	Japanese companion battle boast and live Mamel report identify the substituted target as an enemy.
+14:$7620	1	2	1	monster	Japanese companion battle boast and play context identify the substituted target as an enemy.

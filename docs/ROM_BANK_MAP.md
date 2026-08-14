@@ -97,6 +97,36 @@ Banks 34-62 are addressable by the redirected-text allocator, but the graphics/h
 listed above take precedence. Their installers assert the reserved spans are still untouched;
 a collision must be solved by changing allocation policy, never by weakening that assertion.
 
+## Script-bank text is executable data
+
+Changing text in banks 11, 13, or 14 can move every later entry in that bank. That is not
+automatically safe merely because the redirected English pool has room. Native code can hold
+an address, branch into a parent record, or supply a runtime value for a control token that a
+static extractor cannot fully infer.
+
+The combat pair at `13:$4B66` and `13:$4B6B` is the clearest current example. Native code
+constructs the attacker, target, and damage substitutions before entering those records. A
+`<var>`, `<cE4>`, `<br>`, or terminator is therefore part of the producer/consumer ABI, not
+ordinary punctuation. Changing the visible template without changing and proving the native
+producer can make queued pointers or control bytes render as glyphs. Even a token-safe length
+change repacks later bank-13 records and must be treated as a ROM-layout change.
+
+Rules for dynamic records:
+
+1. Keep control-token count and order identical unless the native producer is disassembled,
+   patched, and covered by a live route.
+2. Run `tools/varaudit.py`; unresolved broad domains are a warning that the widest runtime
+   substitution is not yet known.
+3. Add an emulator fixture for the actual producer. A preview of the literal TSV cannot prove
+   a runtime message.
+4. Run all normal, shuffled, and redirect-all layouts with `tools/release_battery.py`.
+
+The redirect-all layout is also a timing proof. It exposed a real 160-scanline second-pass
+reveal-map build for the existing combat damage line even though normal placement passed. The
+bank-32 VWF builder now keeps a direct destination pointer and the same case completes within
+143 scanlines while `tools/propupload.py` remains byte-exact. Do not replace that loop with a
+per-character address helper without rerunning the complete timing/upload matrix.
+
 ## Safe allocation procedure
 
 1. Prefer an already owned pool belonging to the same subsystem.
@@ -105,7 +135,7 @@ a collision must be solved by changing allocation policy, never by weakening tha
 4. Add an exact expected-byte or SHA-256 guard before replacing native bytes.
 5. Add a semantic regression for the displaced risk. For gameplay tables, compare the whole
    table against `build/_base_expanded.gb`, as `tools/enemyexp.py` does.
-6. Update this map and run the complete battery documented in `README.md`.
+6. Update this map and run `python3 tools/release_battery.py`.
 
 For a quick overlap search, use both hexadecimal styles because modules vary:
 

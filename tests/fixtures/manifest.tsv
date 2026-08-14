@@ -19,6 +19,7 @@ shiren_en_log_1_talk_to_koppa.srm	0783d931ac7a4a8e756b803c08471b81286a6af98afc2e
 shiren_en_log_1_trigger_ending.srm	ec8424c674b57a619dc9522f1f91aa2bbb5be9e30b82a90a52715788396f5426	Shiren	Talking to the adjacent elder triggers the Hard ending and full credit roll.
 shiren_en_log2_scroll_menu.srm	9405e0d675dc863d99d735cffd86ca6c86f6d94fe3bd478937e6b7b51b2bdefe	Shiren	Log 2 stands on a Scroll; validates five-choice Floor action-box restoration after Info.
 shiren_en_log2_gitan_menu_boarder.srm	3e5cf35c6fd2f748707fdc499ccee65fef744c0528f43259a4606d15736590a6	Shiren	Log 2 stands above Gitan; validates the three-choice Floor action box has one bottom border after Info.
+shiren_en_log2_about_to_die.srm	51416aaa371db97cdb665427c95b1c712b3881709d09ff849de411d028559c53	Shiren	Log 2 dies in one turn; validates the LCD-off Rankings result, all five names and the native current-result marker.
 shiren_en_log2_storage_pot_menu.srm	155b5925830a2ba48c400482f3b32a337a25d2f8f8ca1d99380b13f7be0753a5	Shiren	Log 2 stands on a Storage Pot; validates six-choice Floor action-box restoration after Info.
 shiren_en_log2_walk_left.srm	b26f3aaac61342dbfe3ddc7ef9d0cdc37bf7c256f58f92486f7301f8e1b932c8	Shiren	Log 2 triggers Keyaki one step left; validates the hidden Otogiri Herb receipt and E3 selector.
 shiren_en_log_2_action_pots.srm	c0d80326e65b8fcfeda65611175e02074a890eba1471f56bd1b24cdb1524ece9	Shiren	Log 2 contains Back and Todo Pots; validates per-charge Press rows.
