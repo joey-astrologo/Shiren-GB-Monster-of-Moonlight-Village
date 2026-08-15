@@ -3800,8 +3800,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "a4175dd5a3bdffb7bf658738914f11332b0e110df762a04a7a4813fbc29ebda3",
-      "current_en_sha256": "6b1ffa0f69d7e649387ebc82fa65c6f831d7b1ac98a91d7d24e33361b59c25b8",
-      "candidate_en": "Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that <name> came back to the village...",
+      "current_en_sha256": "f995b7a30e62299849762416f43e3dbf61838c54570a625ceaa36036b7a23354",
+      "candidate_en": "Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that you came back to the village, <name>.",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -3814,13 +3814,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that <name> came back to the village...",
-        "wrapped_en": "Keyaki: I hope you find a way<br> out.<end><brk> ...But I was happy. Happy<br> that <name> came back to the<br> village...",
+        "candidate_en": "Keyaki: I hope you find a way out.<brk>...But I was happy. Happy that you came back to the village, <name>.",
+        "wrapped_en": "Keyaki: I hope you find a way<br> out.<end><brk> ...But I was happy. Happy<br> that you came back to the<br> village, <name>.",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:39:44+00:00"
+      "review_notes": "User-approved dialogue polish; 2026-08-15",
+      "verified_at": "2026-08-15T20:45:56+00:00"
     },
     "14:$661D": {
       "section": "bank 14 — trapped in the village (the post-clear loop)",
@@ -4090,8 +4090,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "b71167469de91d8c3b138571f961c557a73a6bf52fa4cfcfe9fd81246a2e3eda",
-      "current_en_sha256": "fc1ade3c4ebe9caf87b659b7d5dc8ba1a9145ec9cf26418238611c1443618e69",
-      "candidate_en": "Kinji: ...Didn't <name> come back for Keyaki?<brk>Then why is she acting so cheerful...?",
+      "current_en_sha256": "b11ec7794392db57381467f6eee6598a9a516adb142945a9d3022966049dd9c9",
+      "candidate_en": "Kinji: ...Didn't you come back for Keyaki, <name>?<brk>Then why is she acting so cheerful...?",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -4104,13 +4104,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Kinji: ...Didn't <name> come back for Keyaki?<brk>Then why is she acting so cheerful...?",
-        "wrapped_en": "Kinji: ...Didn't <name> come back<br> for Keyaki?<end><brk> Then why is she acting so<br> cheerful...?",
+        "candidate_en": "Kinji: ...Didn't you come back for Keyaki, <name>?<brk>Then why is she acting so cheerful...?",
+        "wrapped_en": "Kinji: ...Didn't you come back<br> for Keyaki, <name>?<end><brk> Then why is she acting so<br> cheerful...?",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:39:45+00:00"
+      "review_notes": "User-approved dialogue polish; 2026-08-15",
+      "verified_at": "2026-08-15T20:45:57+00:00"
     },
     "14:$67E0": {
       "section": "bank 14 — trapped in the village (the post-clear loop)",
@@ -4206,8 +4206,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "634ef0c8d7b5b58c08bfc0f78eb60b40cd64d8385de7fc0dd837fe6d5e0e9a4f",
-      "current_en_sha256": "b07a2248a0a8803c70ade098d0e0e022ae5f063dddff4871c01f4466f968114e",
-      "candidate_en": "Innkeeper: Kinji stopped by earlier looking for <name>.<brk>He wants you to meet him at the shrine.",
+      "current_en_sha256": "458665616f8333eeec28d049fcd0486fa4d4e0f16062accc28fcd65cb6fb5b49",
+      "candidate_en": "Innkeeper: Kinji stopped by earlier looking for you, <name>.<brk>He wants you to meet him at the shrine.",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -4220,13 +4220,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Innkeeper: Kinji stopped by earlier looking for <name>.<brk>He wants you to meet him at the shrine.",
-        "wrapped_en": "Innkeeper: Kinji stopped by<br> earlier looking for <name>.<end><brk> He wants you to meet him at<br> the shrine.",
+        "candidate_en": "Innkeeper: Kinji stopped by earlier looking for you, <name>.<brk>He wants you to meet him at the shrine.",
+        "wrapped_en": "Innkeeper: Kinji stopped by<br> earlier looking for you, <name>.<end><brk> He wants you to meet him at<br> the shrine.",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:39:45+00:00"
+      "review_notes": "User-approved dialogue polish; 2026-08-15",
+      "verified_at": "2026-08-15T20:45:57+00:00"
     },
     "14:$68C6": {
       "section": "bank 14 — trapped in the village (the post-clear loop)",
@@ -14763,5 +14763,5 @@
   },
   "source_file": "script/prose_draft.tsv",
   "source_count": 521,
-  "updated_at": "2026-08-15T12:43:34+00:00"
+  "updated_at": "2026-08-15T20:45:57+00:00"
 }

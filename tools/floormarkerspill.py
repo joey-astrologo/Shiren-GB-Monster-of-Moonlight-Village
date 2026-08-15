@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """Exact runtime regression for all English town/dungeon arrival-card forms.
 
-The real ``saves/town.state`` route reaches Forest 1F. That proves the native selector and
-floor byte still feed the replacement and gives a pixel-exact check of Joey's second
-approved mock-up. Every native selector/floor pairing is replayed, then isolated runs
+The real ``saves/town.state`` route reaches F1 Forest. That proves the native selector and
+floor byte still feed the replacement and gives a pixel-exact check of Joey's source
+mock-up. Every native selector/floor pairing is replayed, then isolated runs
 substitute every floor value 1-50 while rotating across the seven dungeon selectors. This
-exercises all eleven bases, all fifty live number fields, the three visible tile rows and
-the extra blank guard row through the game's actual VBlank queue. A separate raster
-invariant requires number/name top alignment and balanced outer ink margins.
+exercises all twelve bases, all fifty live number fields, the three visible tile rows and
+the extra blank guard row through the game's actual VBlank queue. A separate source-raster
+check proves all eight supplied cards independently of the generated JSON.
 
 usage: floormarkerspill.py ROM [--state FILE] [--png FILE]
 """
 import argparse
 import os
 import sys
+
+from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -30,13 +32,40 @@ STEP = 6
 OUT_OF_HOUSE = 40
 WEST = 190
 
-# Forest 1F is the unmodified real route. First cover the native floor/selector table,
-# including numberless Dragon's Maw and Moon Exit; 1-50 then rotate over every selector
+# F1 Forest is the unmodified real route. First cover the native floor/selector table,
+# including numberless Dragon's Maw and Moonlight Exit; 1-50 then rotate over every selector
 # so all shared live fields still reach the actual uploader.
 CASES = tuple(dict.fromkeys(
     ((None, None),) + markers.ACTIVE_CARD_CASES + tuple(
         (1 + (number - 1) % 7, number)
         for number in range(1, markers.MAX_FLOOR + 1))))
+SOURCE_CASES = ((0, 0), (1, 1), (2, 5), (3, 10),
+                (4, 12), (5, 19), (6, 21), (7, 50))
+
+
+def _source_raster(index):
+    """Encode one tight source card at the native y64 strip boundary."""
+    if index == 7:
+        doubled = Image.open(markers.MOONLIGHT_EXIT_SOURCE_PATH).convert('L').crop(
+            (0, 1, 320, 289)).point(lambda value: 255 if value < 128 else 0, mode='1')
+        card = doubled.resize((160, 144), Image.Resampling.NEAREST)
+    else:
+        source = Image.open(markers.SOURCE_ARTWORK_PATH).convert('L').point(
+            lambda value: 255 if value == 0 else 0, mode='1')
+        left = (index % 4) * 160
+        top = (index // 4) * 144
+        card = source.crop((left, top, left + 160, top + 144))
+    box = card.getbbox()
+    if box is None:
+        raise SystemExit('floormarkerspill: source card %d is empty' % index)
+    block = card.crop(box)
+    pixels = [[0] * markers.STRIP_WIDTH for _ in range(markers.STRIP_HEIGHT)]
+    mask = block.load()
+    for y in range(block.height):
+        for x in range(block.width):
+            if mask[x, y]:
+                pixels[y][box[0] + x] = 1
+    return markers._two_plane(markers._onebit(pixels))
 
 
 def _schedule():
@@ -104,7 +133,7 @@ def _run_case(PyBoy, rom, state, force_selector, force_number, font, png=None):
     if len(observed) != 1:
         problems.append('observed %d card entries, expected one' % len(observed))
     if force_selector is None and (selector, number) != (1, 1):
-        problems.append('real route selected (%d, %d), expected Forest 1F' %
+        problems.append('real route selected (%d, %d), expected F1 Forest' %
                         (selector, number))
     if actual != expected:
         problems.append('%d/%d VRAM byte(s) differ' %
@@ -130,22 +159,28 @@ def run(rom, state, png=None):
                 for selector, number, case_problems in results
                 for problem in case_problems]
 
-    aligned = 0
+    source_exact = 0
+    for index, (selector, number) in enumerate(SOURCE_CASES):
+        if markers.render_card(font, selector, number) != _source_raster(index):
+            problems.append((selector, number, 'installed raster differs from source card'))
+        else:
+            source_exact += 1
+
+    positioned = 0
     for selector, number in markers.ACTIVE_CARD_CASES:
         metrics = markers.card_metrics(selector, number)
         left, _top, right, _bottom = metrics['bounds']
+        if not 0 <= left <= right < markers.STRIP_WIDTH:
+            problems.append((selector, number, 'ink bounds leave the 160px strip'))
+            continue
         if number:
-            if metrics['number_top'] != metrics['name_top']:
+            expected_top = markers._asset()['number_tops'][markers.LABELS[selector]]
+            if metrics['number_top'] != expected_top or metrics['name_top'] != 0:
                 problems.append((selector, number,
-                                 'number top %s differs from name top %s' %
-                                 (metrics['number_top'], metrics['name_top'])))
+                                 'component tops are number=%s/name=%s, expected %s/0' %
+                                 (metrics['number_top'], metrics['name_top'], expected_top)))
             else:
-                aligned += 1
-        margin_delta = abs(left - (markers.STRIP_WIDTH - 1 - right))
-        if margin_delta > 4:
-            problems.append((selector, number,
-                             'ink bounds x=%d..%d have %dpx outer-margin imbalance' %
-                             (left, right, margin_delta)))
+                positioned += 1
     if missing:
         problems.append((-1, -1, 'stored form(s) untested: %s' % sorted(missing)))
     if numbers != set(range(1, markers.MAX_FLOOR + 1)):
@@ -153,10 +188,10 @@ def run(rom, state, png=None):
 
     exact = len(results) - len({(selector, number) for selector, number, _ in problems
                                 if selector >= 0})
-    print('floormarkerspill: real route Forest 1F; %d/%d card cases exact; '
-          '%d/%d active numbered cards top-aligned/centered; '
+    print('floormarkerspill: real route F1 Forest; %d/%d card cases exact; '
+          '%d/%d source cards exact; %d/%d active numbered cards source-positioned; '
           '%d/%d live number fields exercised; %d problem(s)' %
-          (exact, len(results), aligned,
+          (exact, len(results), source_exact, len(SOURCE_CASES), positioned,
            sum(len(floors) for floors in markers.ACTIVE_NUMBERED_FLOORS.values()),
            len(numbers), markers.MAX_FLOOR, len(problems)))
     for selector, number, problem in problems:

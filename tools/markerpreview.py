@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Render a contact sheet of all eight installed arrival-card forms.
 
-This reads the same packed masks as the ROM installer, including the exact Moonlight
-Village and Forest 1 reference paths. It is an artwork audition, while markerspill.py and
-floormarkerspill.py prove the actual emulator VRAM/map results.
+This reads the same source-raster masks as the ROM installer, including the exact F1
+Forest path. It is an artwork audition, while markerspill.py and floormarkerspill.py
+prove the actual emulator VRAM/map results.
 
 usage: markerpreview.py [OUTPUT.png] [--scale N]
 """
@@ -59,7 +59,7 @@ def render(output, scale):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('output', nargs='?', default='build/arrival_cards_poppins.png')
+    parser.add_argument('output', nargs='?', default='build/arrival_cards_source.png')
     parser.add_argument('--scale', type=int, default=2)
     args = parser.parse_args()
     if args.scale < 1:

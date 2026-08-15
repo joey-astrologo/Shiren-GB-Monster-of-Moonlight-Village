@@ -66,6 +66,11 @@ TITLE_MENU_LOCS = {
     '11:$5330', '11:$533B', '11:$5344', '11:$534D', '11:$5355',
     '11:$535E', '11:$536E', '11:$5374', '11:$5387', '11:$5398',
 }
+SUMMARY_PLACE_LOCS = (
+    '11:$53B1', '11:$53B9', '11:$53C1', '11:$53CB',
+    '11:$53D4', '11:$53DC', '11:$53E5', '11:$53ED',
+)
+SUMMARY_FLOORS = range(1, 51)
 # Measured by menuresidency.prefix_for from the live bank-31 drawer.  The descriptor
 # width includes the one raw cursor cell, so the proportional text owns the remainder.
 RUNTIME_MENU_PX = {
@@ -88,12 +93,13 @@ RUNTIME_MENU_PX = {
     # 4:$4AE0 copies this label to shadow $C4A1 (row 13, column 1), leaving 19 cells.
     '4:$4AFE': (19 * 8, 'absolute status label at shadow $C4A1'),
     # Save-summary box 26 (x4,y4,w14) is built by 4:$68A3.  Once its 16-source-character
-    # Log/name header is consumed as one VWF row, the third logical row contains the
-    # place name selected by 4:$6941-$698B from table entries $0E-$15.  The proportional
-    # summary allocator gives that row its measured final eight-tile slice.
-    **{loc: (8 * 8, 'save-summary box 26 row 2; staged at $C62D, 8-tile slice')
-       for loc in ('11:$53B1', '11:$53B9', '11:$53C1', '11:$53CB',
-                   '11:$53D4', '11:$53DC', '11:$53E5', '11:$53ED')},
+    # Log/name header is consumed as one VWF row, logical row 1 contains the place name
+    # selected by 4:$6941-$698B from table entries $0E-$15.  The proportional summary
+    # allocator gives that row an eleven-tile slice; long rows may be redirected from
+    # native staging at $C625 to private staging at $C648.
+    **{loc: (menuvwf.SUMMARY_POOL_CAPS[1] * 8,
+             'save-summary box 26 row 1; 11-tile slice')
+       for loc in SUMMARY_PLACE_LOCS},
 }
 LOG_PREFIX_LOC = '11:$537F'
 # V3 composes the words on both sides while deliberately retaining box 2's divider tile.
@@ -366,6 +372,39 @@ def main():
             condition_rows.append(((used + 7) // 8, source, row,
                                    translated[row['id']]))
 
+    # The saved-summary producer emits Moonlight Village without a floor number at
+    # 4:$6976. Every other place can carry a right-aligned 1F..50F prefix. Enumerate the
+    # exact reachable cross-product instead of auditing only the standalone table names:
+    # the added floor prefix is what makes Moonlight Exit the eleven-tile maximum.
+    summary_variants = []
+    summary_variant_over = []
+    summary_by_loc = {row['loc']: row for row in strings
+                      if row['loc'] in SUMMARY_PLACE_LOCS}
+    missing_summary = [loc for loc in SUMMARY_PLACE_LOCS
+                       if loc not in summary_by_loc or
+                       summary_by_loc[loc]['id'] not in encoded]
+    if missing_summary:
+        raise SystemExit('fontaudit: missing translated save-summary place(s): %s' %
+                         ', '.join(missing_summary))
+    for index, loc in enumerate(SUMMARY_PLACE_LOCS):
+        row = summary_by_loc[loc]
+        base = encoded[row['id']]
+        variants = [('', base)]
+        if index:
+            variants.extend(('%2dF ' % floor,
+                             bytes(EN_CODES[ch] for ch in '%2dF ' % floor) + base)
+                            for floor in SUMMARY_FLOORS)
+        for prefix, data in variants:
+            used, raw_codes = pixels(data, font, row['bank'])
+            source = dialogue.Line(data, 'end', 0, 0, row['bank']).cells(
+                dialogue.floor_widths())
+            record = (used, (used + 7) // 8, source, row,
+                      prefix + translated[row['id']], raw_codes)
+            summary_variants.append(record)
+            if (used > menuvwf.SUMMARY_POOL_CAPS[1] * 8 or
+                    source > menuvwf.SUMMARY_SOURCE_CAP or raw_codes):
+                summary_variant_over.append(record)
+
     # Shared help fragments have no standalone screen geometry, but every use was
     # measured inline above through <cF0:xx>.  Do not count them as unproven twice.
     cf0_ids = {row['id'] for row in strings if row['loc'] in dialogue.CF0_LOCS}
@@ -531,6 +570,8 @@ def main():
     runtime_menu.sort(key=lambda item: (-item[0] / item[1], item[2]['loc']))
     runtime_menu_over.sort(key=lambda item: (-item[0] + item[1], item[2]['loc']))
     runtime_menu_source_over.sort(key=lambda item: (-item[0], item[2]['loc']))
+    summary_variants.sort(key=lambda item: (-item[0], -item[2], item[3]['loc']))
+    summary_variant_over.sort(key=lambda item: (-item[0], -item[2], item[3]['loc']))
     name_rows.sort(key=lambda item: (-item[0], item[2]['loc']))
     name_over.sort(key=lambda item: (-item[0] + item[1], item[2]['loc']))
     item_variants.sort(key=lambda item: (-item[0], item[4]['loc']))
@@ -578,6 +619,14 @@ def main():
     print('  measured runtime menu/list labels: %d; widest occupancy %.0f%%'
           % (len(runtime_menu),
              max((100 * row[0] / row[1] for row in runtime_menu), default=0)))
+    if summary_variants:
+        widest_summary = summary_variants[0]
+        print('  save-summary place variants: %d reachable; widest %d/%dpx, '
+              '%d/%d tiles, %d/%d source glyphs (%s)'
+              % (len(summary_variants), widest_summary[0],
+                 menuvwf.SUMMARY_POOL_CAPS[1] * 8, widest_summary[1],
+                 menuvwf.SUMMARY_POOL_CAPS[1], widest_summary[2],
+                 menuvwf.SUMMARY_SOURCE_CAP, widest_summary[4]))
     print('  clear-condition rows: %d proportional; worst any-five %d/%d primary tiles'
           % (len(condition_rows), condition_primary_need, CONDITION_POOL_RUNS[0]))
     print('  shared help fragments: %d measured inline through <cF0:xx>' % len(cf0_ids))
@@ -643,6 +692,15 @@ def main():
                  runtime_menu_source_over, args.details,
                  lambda item: '%-11s %2d/%d glyphs  %s  (%s)' % (
                      item[2]['loc'], item[0], item[1], display_text(item[3]), item[4]))
+    print_ranked('Save-summary reachable place/floor overflow',
+                 summary_variant_over, args.details,
+                 lambda item: '%-11s %3d/%dpx %2d/%d tiles %2d/%d glyphs  %s%s' % (
+                     item[3]['loc'], item[0], menuvwf.SUMMARY_POOL_CAPS[1] * 8,
+                     item[1], menuvwf.SUMMARY_POOL_CAPS[1], item[2],
+                     menuvwf.SUMMARY_SOURCE_CAP, display_text(item[4]),
+                     (' raw=' + ','.join('$%02X' % code
+                                         for code in sorted(item[5])))
+                     if item[5] else ''))
     print_ranked('Clear-condition five-row ALLOCATOR overflow',
                  condition_allocator_over, args.details,
                  lambda item: '%d/%d primary tiles: %s' % (
@@ -707,6 +765,7 @@ def main():
 
     definite = (len(composer_over) + len(help_over) + len(box_over)
                 + len(runtime_menu_over) + len(runtime_menu_source_over) + len(counter_over)
+                + len(summary_variant_over)
                 + len(condition_allocator_over)
                 + len(item_variant_over) + len(item_source_over)
                 + len(equip_result_over)

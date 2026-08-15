@@ -5,7 +5,7 @@
 item coverage, this makes it the authoritative route for the widest numbered arrival
 label.  The test boots the log normally, requires selector 5 / floor 19 at the native
 card entry, compares all three uploaded tile rows and verifies the visible ink occupies
-x=7..152. Those equal 7/7px margins permanently guard the shared optical-centering rule.
+x=5..154. Those exact 5/5px source margins guard the approved raster placement.
 
 usage: dragonmawmarkerspill.py ROM [--ram FILE] [--png FILE]
 """
@@ -28,7 +28,7 @@ SELECTOR = 5
 FLOOR = 19
 CAPTURE_AT = 590
 FRAMES = 680
-EXPECTED_X_BOUNDS = (7, 152)
+EXPECTED_X_BOUNDS = (5, 154)
 BOOT = {
     60: 'start', 120: 'start', 180: 'start', 240: 'start',
     300: 'a', 420: 'a', 480: 'a',
@@ -106,7 +106,7 @@ def run(rom, ram, png=None):
     print('dragonmawmarkerspill: Log 1 selected floor %d / %s; x=%s; '
           '%d problem(s)' %
           (FLOOR, markers.LABELS[SELECTOR],
-           '%d..%d (7/7px margins)' % EXPECTED_X_BOUNDS, len(problems)))
+           '%d..%d (5/5px margins)' % EXPECTED_X_BOUNDS, len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

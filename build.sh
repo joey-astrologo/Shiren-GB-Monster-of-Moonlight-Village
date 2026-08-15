@@ -44,9 +44,10 @@ python3 tools/coverage.py
 
 # Fresh-cart graphics and transition gates. The village marker is visible for only a
 # short interval after name confirmation; its three-row test also proves the complete
-# Poppins silhouette stays intact through all fade shades. The title-card test verifies
-# Joey's approved
-# full 160x144 copyright mock-up plus the native palette/fade/scene-0 path; the following
+# source-raster silhouette stays intact through all fade shades. The title-card test
+# verifies
+# Joey's approved full 160x144 copyright mock-up plus the native palette/fade/scene-0
+# path; the following
 # test compares the later illustrated title pixel-for-pixel.
 # The final test continues beyond the marker and proves the same New Log route still
 # reaches a live, walkable village.
@@ -68,7 +69,7 @@ python3 tools/newgamesmoke.py build/shiren_en.gb
 # therefore runs every SRAM-backed route; generate
 # town.state/dungeon.state with tools/fixtures.py to enable the remaining state routes.
 if [ -f saves/town.state ]; then
-  # Exact Forest 1 reference plus all 50 live floor fields over every dungeon selector.
+  # Exact source cards plus all 50 live floor fields over every dungeon selector.
   python3 tools/floormarkerspill.py build/shiren_en.gb
 fi
 if [ -f saves/dungeon.state ]; then
@@ -148,7 +149,8 @@ if [ -f saves/shiren_en_log3_shop.srm ] &&
 fi
 if [ -f saves/shiren_en_log_1_talk_to_koppa.srm ] &&
    [ -f saves/shiren_en_log_1_dragons_maw.srm ] &&
-   [ -f saves/shiren_en_log_1_fixed_width_save_info.srm ]; then
+   [ -f saves/shiren_en_log_1_fixed_width_save_info.srm ] &&
+   [ -f saves/shiren_en_log1_moonlight_exit.srm ]; then
   python3 tools/savesummaryspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_rescue.srm ]; then

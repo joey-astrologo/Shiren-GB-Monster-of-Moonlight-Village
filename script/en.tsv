@@ -39,7 +39,7 @@
 11:$53D4	Kuyo Pass
 11:$53DC	Dragon's Maw
 11:$53E5	Orochi
-11:$53ED	Moon Exit
+11:$53ED	Moonlight Exit
 
 # ---- in-game action menu ----
 11:$53FA	Item
@@ -910,7 +910,7 @@
 14:$65B9	Keyaki: <name>! Wait!
 14:$65C4	Keyaki: Here, take this!
 14:$65D0	<name> received <cE3:06>.
-14:$65DD	Keyaki: I hope you find a way<br> out.<end><brk> ...But I was happy. Happy<br> that <name> came back to<br> the village...
+14:$65DD	Keyaki: I hope you find a way<br> out.<end><brk> ...But I was happy. Happy<br> that you came back to the<br> village, <name>.
 14:$661D	Children: Ooh la la! Things<br> are heating up!
 14:$6638	Koppa: Tch, they're just<br> teasing us. Come on,<br> <name>!
 14:$6656	Keyaki: ...Are you okay?<end><brk> Don't push yourself too hard.
@@ -920,11 +920,11 @@
 14:$671F	Old Seer: ...So, when are you<br> and I getting married? ...Tee<br> hee.
 14:$6754	Fumi: ...Forgot something<br> again?
 14:$6765	Nagi: Again?<end><brk> It's bad for you to hold it<br> in that long.
-14:$678D	Kinji: ...Didn't <name> come<br> back for Keyaki?<end><brk> Then why is she acting so<br> cheerful...?
+14:$678D	Kinji: ...Didn't you come back<br> for Keyaki, <name>?<end><brk> Then why is she acting so<br> cheerful...?
 14:$67E0	Keyaki: <name>! Wait!
 14:$67EB	Keyaki: Here, take this!<br> Apparently it's called an ID<br> Bracer.<end><brk> They say it's really<br> useful... Huh?<end><brk> You can't take it with you?!<end><brk> Oh... that's too bad.<end><brk> I know cheering you on isn't<br> much, but... good luck!
 14:$6875	Kinji: Keyaki...
-14:$688A	Innkeeper: Kinji stopped by<br> earlier looking for <name>.<end><brk> He wants you to meet him at<br> the shrine.
+14:$688A	Innkeeper: Kinji stopped by<br> earlier looking for you,<br> <name>.<end><brk> He wants you to meet him at<br> the shrine.
 14:$68C6	Koppa: Hey, <name>! Over<br> there!<end><brk> Huh? Keyaki's there too.<br> Looks like they're talking.
 14:$6920	Keyaki: .....
 14:$692B	Kinji: So...

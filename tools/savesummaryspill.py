@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """Plane-exact save-summary regression for long and fixed-width locations.
 
-These three SRAM fixtures exercise distinct producers for Log 1's location row:
+These SRAM-backed scenarios exercise distinct producers for Log 1's location row:
 
 * a numberless ``Dragon's Maw`` that used to retain four native indent cells;
 * ``19F Dragon's Maw``, whose tail used to spill into and consume the difficulty row;
-* `` 5F Koma Cave``, which used to fall back to the fixed-width menu font.
+* `` 5F Koma Cave``, which used to fall back to the fixed-width menu font;
+* the table's final place key, forced at the real producer, which must render the full
+  nine-tile ``Moonlight Exit`` row rather than the former ``Moon Exit`` spelling;
+* the real `` 1F Moonlight Exit`` save and a producer-level ``50F`` override, which
+  prove both ends of the reachable floor range fit the widened eleven-tile slice.
 
 The shared start-flow audit proves the shadow map and both VRAM bitplanes at the drawer
-epilogue. This wrapper additionally checks the exact logical payload and that ``Hard``
-still reaches row 2 after a long location is composed.
+epilogue. This wrapper additionally checks the exact logical payload and that the save's
+difficulty still reaches row 2 after a long location is composed.
 """
 import argparse
 import os
@@ -21,17 +25,24 @@ sys.path.insert(0, HERE)
 
 from gbrun import _import_pyboy                              # noqa: E402
 import menuspill                                             # noqa: E402
+import menuvwf                                               # noqa: E402
 import propvwf                                               # noqa: E402
 import startspill                                            # noqa: E402
 
 
 FIXTURES = (
     ('numberless Dragon\'s Maw', 'shiren_en_log_1_talk_to_koppa.srm',
-     "Dragon's Maw"),
+     "Dragon's Maw", 'Hard', None, None, None),
     ('numbered Dragon\'s Maw', 'shiren_en_log_1_dragons_maw.srm',
-     "19F Dragon's Maw"),
+     "19F Dragon's Maw", 'Hard', None, None, None),
     ('numbered Koma Cave', 'shiren_en_log_1_fixed_width_save_info.srm',
-     ' 5F Koma Cave'),
+     ' 5F Koma Cave', 'Hard', None, None, None),
+    ('forced Moonlight Exit', 'shiren_en_log_1_talk_to_koppa.srm',
+     'Moonlight Exit', 'Hard', 0x15, None, 9),
+    ('numbered Moonlight Exit', 'shiren_en_log1_moonlight_exit.srm',
+     ' 1F Moonlight Exit', 'Expert', None, None, 11),
+    ('floor-50 Moonlight Exit', 'shiren_en_log1_moonlight_exit.srm',
+     '50F Moonlight Exit', 'Expert', 0x15, '50F ', 11),
 )
 
 
@@ -62,11 +73,13 @@ def main():
         os.makedirs(args.png_dir, exist_ok=True)
 
     paths = []
-    for label, filename, expected in FIXTURES:
+    for label, filename, expected, difficulty, force_key, force_prefix, expected_tiles \
+            in FIXTURES:
         path = os.path.join(ROOT, 'saves', filename)
         if not os.path.exists(path):
             raise SystemExit('savesummaryspill: missing %s' % path)
-        paths.append((label, path, expected))
+        paths.append((label, path, expected, difficulty, force_key, force_prefix,
+                      expected_tiles))
 
     profile = menuspill.renderer_profile(args.rom)
     if profile['mode'] != 'dot-proportional':
@@ -74,15 +87,28 @@ def main():
     PyBoy = _import_pyboy()
     audits = []
     problems = []
-    for label, ram, expected in paths:
+    for label, ram, expected, expected_difficulty, force_key, force_prefix, \
+            expected_tiles in paths:
         png = None
         if args.png_dir:
-            png = os.path.join(args.png_dir,
-                               os.path.basename(ram).replace('.srm', '.png'))
+            safe = ''.join(ch.lower() if ch.isalnum() else '_' for ch in label).strip('_')
+            png = os.path.join(args.png_dir, safe + '.png')
+        hook_setup = None
+        if force_key is not None or force_prefix is not None:
+            def hook_setup(pb, _audit, key=force_key, prefix=force_prefix):
+                def force_place(_ctx=None):
+                    if key is not None:
+                        pb.register_file.A = key
+                    if prefix is not None:
+                        at = (pb.register_file.D << 8) | pb.register_file.E
+                        for offset, value in enumerate(encode(prefix)):
+                            pb.memory[at + offset] = value
+                pb.hook_register(4, menuvwf.SUMMARY_PRODUCER_AT, force_place, None)
+
         audit = startspill.run_scenario(
             PyBoy, args.rom, profile, label, 340,
             startspill.boot_script({300: ('a',)}), ram=ram, png=png,
-            audit_class=SummaryAudit)
+            audit_class=SummaryAudit, hook_setup=hook_setup)
         audits.append(audit)
         rows = {row: (cells, source) for row, cells, source in audit.summary_rows}
         if set(rows) != {0, 1, 2}:
@@ -94,13 +120,22 @@ def main():
         if cells != wanted:
             problems.append('%s row 1 source $%04X differs: want %s got %s' %
                             (label, source, wanted.hex(), cells.hex()))
+        if expected_tiles is not None:
+            tiles = menuspill.compose(cells, profile)
+            if len(tiles) != expected_tiles:
+                problems.append('%s paints %d tiles, expected %d for the complete '
+                                'Moonlight Exit row' %
+                                (label, len(tiles), expected_tiles))
         difficulty, source = rows[2]
         while difficulty and difficulty[0] == propvwf.EN_CODES[' ']:
             difficulty = difficulty[1:]
-        wanted = encode('Hard')
+        while difficulty and difficulty[-1] == propvwf.EN_CODES[' ']:
+            difficulty = difficulty[:-1]
+        wanted = encode(expected_difficulty)
         if difficulty != wanted:
-            problems.append('%s row 2 source $%04X differs: want Hard (%s), got %s' %
-                            (label, source, wanted.hex(), difficulty.hex()))
+            problems.append('%s row 2 source $%04X differs: want %s (%s), got %s' %
+                            (label, source, expected_difficulty, wanted.hex(),
+                             difficulty.hex()))
 
     problems.extend('%s: %s' % (audit.scenario, problem)
                     for audit in audits for problem in audit.problems)

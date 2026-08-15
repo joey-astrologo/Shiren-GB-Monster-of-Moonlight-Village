@@ -359,14 +359,16 @@ DIFFICULTY_ALT_ROW0_BASE = DIFFICULTY_POOL_BASE
 DIFFICULTY_ALT_ROW1_BASE = DIFFICULTY_POOL_BASE + DIFFICULTY_ROW0_CAP
 
 # The saved-summary row blanker removes the outgoing tilemap references before each
-# repaint, so all three Log selections can safely reuse one 9+10+8 screen-local block.
-# $DE-$F8 is absent from the settled title/log map; startspill checks the *whole* range
+# repaint, so all three Log selections can safely reuse one 9+11+8 screen-local block.
+# $DE-$F9 is absent from the settled title/log map; startspill checks the *whole* range
 # for outside owners whenever a summary is visible.
 # This avoids the native $A4/$AF empty-box / separator tiles and $C4 completed checkbox
-# without relying on a later font restore.  Row 1 genuinely needs nine tiles for both
-# ``5 F Koma Cave`` (nine tiles) and numbered ``Dragon's Maw`` (ten tiles) forms.
-SUMMARY_POOL_ROWS = (0xDE, 0xE7, 0xF1)
-SUMMARY_POOL_CAPS = (9, 10, 8)
+# without relying on a later font restore.  The location is row 1's eleven-tile slice;
+# numbered ``Moonlight Exit`` is the reachable maximum at eleven tiles for every floor
+# from 1F through 50F.  Numbered ``Dragon's Maw`` is next at ten tiles.
+SUMMARY_POOL_ROWS = (0xDE, 0xE7, 0xF2)
+SUMMARY_POOL_CAPS = (9, 11, 8)
+SUMMARY_SOURCE_CAP = 19
 SUMMARY_ALT_POOL_ROWS = SUMMARY_POOL_ROWS
 # Direct saved-title censuses prove $82-$8A and $9A-$A0 have no settled references
 # outside box 27 while an erase confirmation is visible. Box 45 is mutually exclusive
@@ -730,7 +732,7 @@ sasummary2:
   jr saselect
 sasummary1:
   ld a,[$C0D3]
-  cp $0B
+  cp $0C
   jr nc,sabad
   ld c,$01
 saselect:
@@ -3217,7 +3219,17 @@ fixedsummarycap:
   jr nz,fixednativecap
   ld a,d
   cp $01
+  jr z,fixedsummaryplace
+  cp $02
   jr nz,fixednativecap
+  ; Summary row 2's final fixed cell is the raw attempt-count digit. It is redrawn by
+  ; the native field writer and must not be interpreted as an English source code (an
+  ; Expert save's digit $38 otherwise appears as a duplicate lowercase `t`).
+  ld a,e
+  cp $0D
+  jr z,scanend
+  jr fixednativecap
+fixedsummaryplace:
   ld a,[$C647]
   and a
   jr nz,terminatedromcap
@@ -4548,7 +4560,7 @@ def install(buf, notes=None, font=None):
                              '%d-byte nested bank-31 reader at 31:$%04X'
                              % (' '.join(map(str, marked)), len(reader), ROM_READ_ORG))
                 notes.append('menuvwf: save-summary place producer uses %d-byte helper '
-                             'at %d:$%04X; row pools are 9+10+8 tiles'
+                             'at %d:$%04X; row pools are 9+11+8 tiles'
                              % (len(summary_helper_code), SUMMARY_HELPER_BANK,
                                 SUMMARY_HELPER_AT))
             else:

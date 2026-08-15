@@ -29,7 +29,7 @@ Screenshots from the current English build:
 | Extracted script and cinematics | **Complete** | 1,406 of 1,424 ordinary records have supplied English; the remaining 18 records are unreachable/unrendered. All 12 separately encoded cinematic lines are translated. |
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor, file, title, Rankings, status and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
-| Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; Poppins is used for arrival cards and credits. |
+| Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Poppins is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **0.96 battery passed — 2026-08-13** | Continue manual playtesting before tagging or distributing a final build. |
@@ -250,7 +250,8 @@ python3 tools/fontaudit.py --font-spec assets/fonts/candidate.json
 Promoting a font requires changing the approved source/spec deliberately, then running the
 complete release battery.
 
-Arrival cards and ending credits use separately licensed Poppins-derived graphical masks;
+Arrival cards use their approved source-raster artwork. Ending credits use separately
+licensed Poppins-derived graphical masks;
 ordinary builds consume stable baked assets and do not depend on a system TTF.
 
 ## Repository map

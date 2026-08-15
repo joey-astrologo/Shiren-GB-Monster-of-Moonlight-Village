@@ -111,9 +111,10 @@ class Audit:
         # Title rows use the proportional renderer's 18-source-cell staging contract,
         # not their 11-cell physical width.  Fay's Puzzles is the deliberate regression:
         # 13 source glyphs compose into eight tiles and fit the same box.
-        source_cells = (19 if summary_redirect else
+        source_cells = (menuvwf.SUMMARY_SOURCE_CAP if summary_redirect else
                         8 if label == 'rankpass' and pb.register_file.D == 1 else
                         18 if label == 'title' else
+                        13 if label == 'summary' and pb.register_file.D == 2 else
                         16 if label in ('summary', 'confirm') and
                         pb.register_file.D == 0 else shape[3])
         for at in range(source, source + source_cells):
@@ -277,7 +278,7 @@ class Audit:
                     static_owners[(first + index, tile)] = _label
                     static_tiles.add(tile)
 
-        # Summary allocation deliberately reserves the complete $DE-$F8 range. Check
+        # Summary allocation deliberately reserves the complete $DE-$F9 range. Check
         # even currently unused tiles for owners *outside* the three summary interiors.
         # Inside cells may briefly retain the outgoing row while its replacement is being
         # composed, so the ordinary exact-owner check remains the authority there.
@@ -319,7 +320,7 @@ class Audit:
 
 
 def run_scenario(PyBoy, rom_path, profile, scenario, frames, script, ram=None,
-                 png=None, audit_class=Audit):
+                 png=None, audit_class=Audit, hook_setup=None):
     with tempfile.TemporaryDirectory(prefix='startspill-') as tmp:
         work = os.path.join(tmp, 'start.gb')
         shutil.copyfile(rom_path, work)
@@ -332,6 +333,8 @@ def run_scenario(PyBoy, rom_path, profile, scenario, frames, script, ram=None,
                          lambda _ctx: audit.at_entry(pb), None)
         pb.hook_register(ROW_EPILOG[0], ROW_EPILOG[1],
                          lambda _ctx: audit.at_epilog(pb), None)
+        if hook_setup is not None:
+            hook_setup(pb, audit)
         if os.environ.get('STARTSPILL_TRACE'):
             def trace_selector(_ctx=None):
                 source = (pb.register_file.B << 8) | pb.register_file.C

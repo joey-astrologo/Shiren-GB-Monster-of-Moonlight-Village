@@ -40,7 +40,7 @@ import structvwf                        # fixed-position font fragments in compo
 import rankvwf                          # rankings board's six-cell proportional names
 import dotfont                          # approved proportional-font source/spec loader
 import intro                            # separately encoded opening cinematic + font packs
-import markers                          # approved Poppins town/dungeon arrival-card graphics
+import markers                          # approved source-raster town/dungeon arrival cards
 import titlecard                        # pre-intro English title/copyright graphics card
 import titlelogo                        # illustrated English title-screen logo
 import waitcard                         # active-dungeon Continue loading bubble
@@ -2116,7 +2116,7 @@ def main():
     else:
         notes.append('--no-intro/non-Dot: opening cinematic keeps the Japanese VM data')
 
-    # ---- town/dungeon arrival cards: approved three-row Poppins masks, not script text
+    # ---- town/dungeon arrival cards: approved three-row source masks, not script text
     #
     # Static label bases combine with the structure's live floor number. The larger pack
     # lives in guarded bank 60; installation remains after intro to keep graphics ordering.

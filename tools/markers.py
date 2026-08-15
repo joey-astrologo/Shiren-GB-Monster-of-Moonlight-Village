@@ -5,14 +5,12 @@ The cards are not script text. Bank 31 maps tiles $80-$A7 across two BG rows, re
 optional floor number, and constructs a Japanese place name from 16x16 glyphs. The name
 selector at ``DE+2`` addresses eight records; ``DE+1`` is the displayed floor number.
 
-This replacement uses Joey's approved clean Poppins Medium mock-ups. Moonlight Village
-and Forest 1 are exact reference rasters; the other six labels and all 1-50 number masks
-were generated with the same 12px-cap, 8x-supersampled one-bit process. Descenders make
-the village 18 pixels high, so the far routine expands the card to three mapped tile rows.
-Static label bases combine with a live four-tile number field; Forest 1 has one exact
-special base so the supplied example stays pixel-identical. Number and label masks share
-one top row, matching that reference, and each native floor-range group is centered from
-its visible ink rather than the four-tile number reservation.
+This replacement uses Joey's approved native-resolution ``Titles.webp`` artwork. Every
+location name, the Forest ``F``, and the supplied 0/1/2/5/9 numerals are exact source
+pixels; the missing 3/4/6/7/8 are fixed hand-built masks in the same style. Static label
+bases combine with a live four-tile F1-F50 field, while F1 Forest and F50 Moonlight Exit
+retain exact full source cards. The existing three-row map and eight-batch VBlank
+uploader are preserved.
 """
 import hashlib
 import json
@@ -34,24 +32,27 @@ FAR_UPLOAD = 0x0B
 DATA_ORG = 0x5000
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSET_PATH = os.path.join(ROOT, 'assets', 'graphics', 'arrival_cards_poppins.json')
-ASSET_SHA256 = '78e041fae9278004468728df2eb0e65030da0eb0fa4ee1bc9dd9280e75c7c4a2'
+ASSET_PATH = os.path.join(ROOT, 'assets', 'graphics', 'arrival_cards_source.json')
+ASSET_SHA256 = '8ba8a9ede463f5b5176c4a33dc4603913fa5c871205ad24b2138e0d2d729a80b'
+SOURCE_ARTWORK_PATH = os.path.join(ROOT, 'assets', 'graphics',
+                                   'arrival_cards_source.webp')
+MOONLIGHT_EXIT_SOURCE_PATH = os.path.join(
+    ROOT, 'assets', 'graphics', 'arrival_card_f50_moonlight_exit.png')
 
 TOWN_LABEL = 'Moonlight Village'
 # Exact order of the eight-pointer native name table at 31:$6348 and the bank-11 place
 # list.  These compact terms are already the project's measured UI spellings.
 LABELS = (TOWN_LABEL, 'Forest', 'Koma Cave', 'Crags', 'Kuyo Pass',
-          "Dragon's Maw", 'Orochi', 'Moon Exit')
+          "Dragon's Maw", 'Orochi', 'Moonlight Exit')
 FLOOR_LABELS = LABELS[1:]
 MAX_FLOOR = 50
 
 STRIP_WIDTH = 160
 STRIP_HEIGHT = 24
 STRIP_SCREEN_TOP = 64
-CARD_BAND = (65, 80)
-NUMBER_COLUMNS = 4                 # up to 20px of ink plus the approved 10px gap
-NUMBER_GAP = 10
-NUMBER_REGION = NUMBER_COLUMNS * 8 - NUMBER_GAP
+NUMBER_COLUMNS = 4                 # complete padded 32px F# field
+NUMBER_GAP = 8
+NUMBER_REGION = NUMBER_COLUMNS * 8
 TILE_BYTES = 16
 VISIBLE_TILE_COUNT = 60
 TILE_COUNT = 64                     # eight complete 128-byte VBlank batches
@@ -63,7 +64,8 @@ THIRD_ROW_TILE = 0xA8
 BLANK_ROW_TILE = 0xBC
 
 # Normal floor progression uses numberless cards only for the village, Dragon's Maw
-# threshold and Moon Exit.  The alternate $60CB path can number Moon Exit, so retain that
+# threshold and Moonlight Exit. The alternate $60CB path can show F50 Moonlight Exit, so
+# retain that exact supplied card
 # fourth form as well.  Every numbered card shares a fixed two-digit field.
 VARIANTS = (
     (0, False),
@@ -72,7 +74,10 @@ VARIANTS = (
     (6, True),
     (7, False), (7, True),
 )
-SPECIAL_FOREST = (1, 1)
+SPECIAL_CARDS = {
+    (1, 1): 'F1 Forest',
+    (7, 50): 'F50 Moonlight Exit',
+}
 
 # intro.install() retires 31:$51C9-$51F7. Its live wrappers end at $51DF, leaving this
 # asserted slot for the far-call trampoline.
@@ -95,8 +100,7 @@ S_DRAW_COL = 0xC0D2
 S_NUMBER_TOP = 0xC0D3
 
 # Primary-path card records read from the guarded native tables at 31:$6358/$6370.
-# The alternate path can show a numbered Moon Exit; floor 50 is the widest live field and
-# the centering representative for that form.
+# The alternate path can show a numbered Moonlight Exit; retain its F50 source form.
 ACTIVE_NUMBERED_FLOORS = {
     1: (1, 2),
     2: (3, 4, 5, 6),
@@ -123,20 +127,16 @@ NATIVE_SELECTOR_TABLE = bytes((
     10, 10, 10, 10, 10, 10, 12, 14,
 ))
 
-# group-left must be tile-aligned because the live number field replaces four tile
-# columns. name-left may be pixel precise. These positions minimize the worst outer-
-# margin imbalance over each selector's real floor range while retaining at least ten
-# blank pixels between number and name. Dragon's Maw moves its name one pixel right from
-# the earlier 7/8px floor-19 placement, giving that real card exact 7/7px margins and
-# keeping every floor 15-20 within four pixels of optical center.
+# group-left must be tile-aligned because the live F# field replaces four tile columns.
+# name-left is the exact x coordinate in the approved source contact sheet.
 NUMBERED_POSITIONS = {
-    'Forest': (24, 69),
-    'Koma Cave': (8, 41),
-    'Crags': (32, 66),
-    'Kuyo Pass': (16, 50),
-    "Dragon's Maw": (0, 33),
-    'Orochi': (32, 65),
-    'Moon Exit': (24, 56),
+    'Forest': (24, 68),
+    'Koma Cave': (16, 57),
+    'Crags': (40, 81),
+    'Kuyo Pass': (16, 59),
+    "Dragon's Maw": (0, 43),
+    'Orochi': (32, 74),
+    'Moonlight Exit': (0, 41),
 }
 
 _ASSET = None
@@ -156,12 +156,20 @@ def _asset():
             raise SystemExit('markers: arrival-card asset SHA-256 is %s, expected %s'
                              % (digest, ASSET_SHA256))
         _ASSET = json.loads(raw.decode('utf-8'))
-        if _ASSET.get('format') != 'shiren-gb-poppins-arrival-cards-v1':
+        if _ASSET.get('format') != 'shiren-gb-source-arrival-cards-v2':
             raise SystemExit('markers: unsupported arrival-card asset format')
         if tuple(_ASSET['labels']) != LABELS:
             raise SystemExit('markers: arrival-card label order changed')
         if set(_ASSET['numbers']) != {str(value) for value in range(1, MAX_FLOOR + 1)}:
             raise SystemExit('markers: arrival-card number set is not 1-%d' % MAX_FLOOR)
+        if set(_ASSET['number_groups']) != set(_ASSET['numbers']):
+            raise SystemExit('markers: arrival-card number/group sets differ')
+        if set(_ASSET['special_cards']) != set(SPECIAL_CARDS.values()) \
+                or set(_ASSET['special_lefts']) != set(SPECIAL_CARDS.values()):
+            raise SystemExit('markers: arrival-card special set changed')
+        for label, (_group_left, name_left) in NUMBERED_POSITIONS.items():
+            if _ASSET['label_lefts'][label] != name_left:
+                raise SystemExit('markers: source x for %r changed' % label)
     return _ASSET
 
 
@@ -183,29 +191,17 @@ def _mask(record):
     return rows
 
 
-def _top(height):
-    return (CARD_BAND[0] + CARD_BAND[1] + 1 - height) // 2 - STRIP_SCREEN_TOP
-
-
-def _number_height():
-    heights = {record['height'] for record in _asset()['numbers'].values()}
-    if max(heights) - min(heights) > 1:
-        raise SystemExit('markers: floor-number mask heights diverged: %s' %
-                         sorted(heights))
-    # Four has one blank antialias row less than the other Poppins numerals. Treat all
-    # number fields as the same 13px line box so its visible top still aligns with the
-    # accompanying label instead of changing the static label placement on floors 4/44.
-    return max(heights)
-
-
 def _numbered_top(label):
-    """Top-align number/name, then center their complete shared-height block."""
-    return _top(max(_asset()['labels'][label]['height'], _number_height()))
+    """Return the source-relative top of a numbered marker."""
+    top = _asset()['number_tops'][label]
+    if not 0 <= top <= STRIP_HEIGHT - 12:
+        raise SystemExit('markers: invalid number top %d for %r' % (top, label))
+    return top
 
 
 def _paint_mask(pixels, record, left, top=None):
     rows = _mask(record)
-    top = _top(record['height']) if top is None else top
+    top = 0 if top is None else top
     if left < 0 or top < 0 or left + record['width'] > STRIP_WIDTH \
             or top + record['height'] > STRIP_HEIGHT:
         raise SystemExit('markers: %dx%d mask at (%d,%d) exceeds 160x24 strip'
@@ -216,22 +212,42 @@ def _paint_mask(pixels, record, left, top=None):
                 pixels[top + y][left + x] = 1
 
 
+def _number_bounds(number):
+    points = [(x, y) for y, row in enumerate(_mask(_asset()['numbers'][str(number)]))
+              for x, value in enumerate(row) if value]
+    if not points:
+        raise SystemExit('markers: floor %d has an empty marker field' % number)
+    return min(x for x, _y in points), max(x for x, _y in points)
+
+
 def _numbered_geometry(_font, label):
-    """Return the reviewed number-field/name positions and reserved width."""
+    """Return exact source positions and the widest live ink span for one label."""
     name_extent = _asset()['labels'][label]['width']
     group_left, name_left = NUMBERED_POSITIONS[label]
-    total = name_left + name_extent - group_left
-    if total > STRIP_WIDTH:
-        raise SystemExit('markers: numbered %r needs %dpx, wider than the %dpx card'
-                         % (label, total, STRIP_WIDTH))
     if group_left & 7:
         raise SystemExit('markers: numbered %r group x=%d is not tile-aligned' %
                          (label, group_left))
-    number_right = group_left + NUMBER_REGION - 1
-    gap = name_left - number_right - 1
-    if gap < NUMBER_GAP:
-        raise SystemExit('markers: numbered %r has only %dpx number/name gap' %
-                         (label, gap))
+    selector = LABELS.index(label)
+    floors = ACTIVE_NUMBERED_FLOORS[selector]
+    lefts = []
+    rights = []
+    for number in floors:
+        if _asset()['number_groups'][str(number)] != group_left:
+            raise SystemExit('markers: F%d field group disagrees with %r' %
+                             (number, label))
+        field_left, field_right = _number_bounds(number)
+        number_left = group_left + field_left
+        number_right = group_left + field_right
+        gap = name_left - number_right - 1
+        if gap < NUMBER_GAP:
+            raise SystemExit('markers: %r F%d has only %dpx number/name gap' %
+                             (label, number, gap))
+        lefts.append(number_left)
+        rights.append(name_left + name_extent - 1)
+    total = max(rights) - min(lefts) + 1
+    if max(rights) >= STRIP_WIDTH:
+        raise SystemExit('markers: numbered %r exceeds the %dpx card' %
+                         (label, STRIP_WIDTH))
     return group_left, name_left, total
 
 
@@ -241,7 +257,7 @@ def _base_pixels(_font, label, numbered):
     extent = record['width']
     if numbered:
         group_left, name_left, _total = _numbered_geometry(None, label)
-        top = _numbered_top(label)
+        top = 0
     else:
         group_left = 0
         name_left = (STRIP_WIDTH - extent) // 2
@@ -252,16 +268,17 @@ def _base_pixels(_font, label, numbered):
 
 def _paint_number(pixels, number, left, top=0):
     record = _asset()['numbers'][str(number)]
-    if record['width'] > NUMBER_REGION:
-        raise SystemExit('markers: floor %d paints %dpx, wider than its %dpx field'
-                         % (number, record['width'], NUMBER_REGION))
-    _paint_mask(pixels, record, left + NUMBER_REGION - record['width'], top=top)
+    if (record['width'], record['height']) != (NUMBER_REGION, 12):
+        raise SystemExit('markers: floor %d field is %dx%d, expected %dx12' %
+                         (number, record['width'], record['height'], NUMBER_REGION))
+    _paint_mask(pixels, record, left, top=top)
 
 
-def _special_pixels():
+def _special_pixels(selector, number):
     pixels = [[0] * STRIP_WIDTH for _ in range(STRIP_HEIGHT)]
-    record = _asset()['special_cards']['1 Forest']
-    _paint_mask(pixels, record, (STRIP_WIDTH - record['width']) // 2)
+    key = SPECIAL_CARDS[(selector, number)]
+    record = _asset()['special_cards'][key]
+    _paint_mask(pixels, record, _asset()['special_lefts'][key])
     return pixels
 
 
@@ -303,8 +320,8 @@ def render_card(font=None, selector=0, number=0):
     if number:
         if not 0 < number <= MAX_FLOOR:
             raise ValueError('floor number %d is outside 1-%d' % (number, MAX_FLOOR))
-    if (selector, number) == SPECIAL_FOREST:
-        pixels = _special_pixels()
+    if (selector, number) in SPECIAL_CARDS:
+        pixels = _special_pixels(selector, number)
     else:
         label = LABELS[selector]
         pixels, group_col = _base_pixels(font, label, bool(number))
@@ -315,16 +332,17 @@ def render_card(font=None, selector=0, number=0):
 
 def card_metrics(selector, number):
     """Return visible bounds and component tops for a generated card."""
-    if (selector, number) == SPECIAL_FOREST:
-        pixels = _special_pixels()
-        component_top = _top(_asset()['special_cards']['1 Forest']['height'])
-        number_top = name_top = component_top
+    if (selector, number) in SPECIAL_CARDS:
+        pixels = _special_pixels(selector, number)
+        number_top = 1 if (selector, number) == (7, 50) else 0
+        name_top = 0
     else:
         label = LABELS[selector]
         pixels, group_col = _base_pixels(None, label, bool(number))
-        number_top = name_top = None
+        number_top = None
+        name_top = 0
         if number:
-            number_top = name_top = _numbered_top(label)
+            number_top = _numbered_top(label)
             _paint_number(pixels, number, group_col * 8, number_top)
     points = [(x, y) for y, row in enumerate(pixels)
               for x, value in enumerate(row) if value]
@@ -344,7 +362,7 @@ def render_strip(font=None, text=TOWN_LABEL):
 
 
 def floor_style_budget(font):
-    """Return ``(label, pixels)`` for the shared fixed two-digit marker geometry."""
+    """Return ``(label, pixels)`` for each source-positioned numbered form."""
     return tuple((label, _numbered_geometry(font, label)[2]) for label in FLOOR_LABELS)
 
 
@@ -369,7 +387,8 @@ def _stub():
     """, STUB_AT)[0]
 
 
-def _uploader(code_org, pointer_org, group_org, top_org, numbers_org, special_org):
+def _uploader(code_org, pointer_org, group_org, top_org, numbers_org,
+              special_forest_org, special_moon_org):
     """Compile selector dispatch, three-row upload and live number-field overlay."""
     source = f"""
 upload:
@@ -404,18 +423,34 @@ upload:
 
         ld a,[${S_SELECTOR:04X}]
         cp $01
-        jr nz,choose
+        jr nz,check_moon
         ld a,[${S_NUMBER:04X}]
         cp $01
-        jr nz,choose
+        jr nz,check_moon
         ld a,$01
+        ld [${S_SPECIAL:04X}],a
+        jr choose
+
+check_moon:
+        ld a,[${S_SELECTOR:04X}]
+        cp $07
+        jr nz,choose
+        ld a,[${S_NUMBER:04X}]
+        cp $32
+        jr nz,choose
+        ld a,$02
         ld [${S_SPECIAL:04X}],a
 
 choose:
         ld a,[${S_SPECIAL:04X}]
         and a
         jr z,ordinary
-        ld hl,${special_org:04X}
+        cp $01
+        jr nz,special_moon
+        ld hl,${special_forest_org:04X}
+        jr selected
+special_moon:
+        ld hl,${special_moon_org:04X}
         jr selected
 ordinary:
         ld a,[${S_SELECTOR:04X}]
@@ -695,8 +730,10 @@ def _compile_data(font, data_org):
         address = data_org + sum(len(base) for base in bases)
         addresses[(selector, numbered)] = address
         bases.append(_onebit(pixels))
-    special_org = data_org + sum(len(base) for base in bases)
-    bases.append(_onebit(_special_pixels()))
+    special_orgs = {}
+    for case in SPECIAL_CARDS:
+        special_orgs[case] = data_org + sum(len(base) for base in bases)
+        bases.append(_onebit(_special_pixels(*case)))
 
     variants = bytearray()
     for selector in range(len(LABELS)):
@@ -709,7 +746,7 @@ def _compile_data(font, data_org):
             address = addresses[key]
             variants += bytes((address & 0xFF, address >> 8))
     return (b''.join(bases), bytes(variants), bytes(group_cols), bytes(number_tops),
-            special_org)
+            special_orgs)
 
 
 def install(buf, font, intro_built, notes=None):
@@ -734,7 +771,7 @@ def install(buf, font, intro_built, notes=None):
         raise SystemExit('markers: shared town/floor style exceeds 160px: %s' % too_wide)
 
     data_org = DATA_ORG
-    bases, pointers, groups, number_tops, special_org = _compile_data(font, data_org)
+    bases, pointers, groups, number_tops, special_orgs = _compile_data(font, data_org)
     numbers_org = data_org + len(bases)
     numbers = _number_data(font)
     pointer_org = numbers_org + len(numbers)
@@ -742,7 +779,7 @@ def install(buf, font, intro_built, notes=None):
     top_org = group_org + len(groups)
     code_org = (top_org + len(number_tops) + 0x0F) & ~0x0F
     code, labels = _uploader(code_org, pointer_org, group_org, top_org, numbers_org,
-                             special_org)
+                             special_orgs[(1, 1)], special_orgs[(7, 50)])
     end_addr = code_org + len(code)
     if end_addr > 0x8000:
         raise SystemExit('markers: town/floor cards overrun reserved bank %d by %d bytes'
@@ -795,14 +832,14 @@ def install(buf, font, intro_built, notes=None):
 
     widest = max(floor_budget, key=lambda pair: pair[1])
     out = [
-        'markers: eight town/floor labels use Joey\'s 12px-cap Poppins card style; '
-        'Moonlight Village and Forest 1 match the supplied rasters exactly',
+        'markers: eight town/floor labels use Joey\'s source-raster card style; '
+        'F1 Forest and all supplied label/marker shapes remain pixel-exact',
         'markers: three visible tile rows; widest numbered label is %r at %d/%dpx' %
         (widest[0], widest[1], STRIP_WIDTH),
-        'markers: eleven one-bit card bases + live 1-%d fields/uploader at bank %d '
+        'markers: twelve one-bit card bases + live 1-%d fields/uploader at bank %d '
         '$%04X-$%04X'
         % (MAX_FLOOR, FAR_BANK, data_org, end_addr - 1),
-        'markers: Poppins source asset %s; native three-row map and later transitions '
+        'markers: source-raster asset %s; native three-row map and later transitions '
         'preserved'
         % ASSET_SHA256[:12],
     ]
@@ -812,4 +849,4 @@ def install(buf, font, intro_built, notes=None):
             'code_org': code_org, 'end_addr': end_addr, 'labels': labels, 'stub': stub,
             'bases': bases, 'pointers': pointers, 'groups': groups,
             'number_tops': number_tops, 'numbers': numbers,
-            'special_org': special_org}
+            'special_orgs': special_orgs}

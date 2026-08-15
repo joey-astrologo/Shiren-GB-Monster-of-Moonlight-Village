@@ -3,6 +3,7 @@ shiren_en096_broken_title_screen.srm	7ec29ebff9c3213e5115b4dd170a698c57dd2dca3d6
 shiren_en_ground.srm	b8e5a1a2b9db29e6f5070a349074d98b71d75d357a536940a6f1837d65264309	Shiren	Log 1 starts on an Iron Shield; validates the Ground/Floor header VWF path.
 shiren_en_item_menu.srm	26ba6e75a328943c46baf7617b6c52fde09a22ae4d87549be40ea4086b754412	Shiren	Populated inventory spanning multiple pages; validates atomic item-page transitions.
 shiren_en_item_menu_wood_arrow.srm	e6bf4514e9d56103d921a2083df11088c7f5a6bd40ac41d85a0914eb11cca663	Shiren	Log 1 starts on a Wood Arrow; validates Floor action and Info transitions.
+shiren_en_log1_moonlight_exit.srm	44081488ee600b2d319e69488047cd0d857cf97813f3361d50083fc67d86a637	Shiren	Moonlight Exit floor 1; validates the complete numbered Moonlight Exit VWF save-summary row and difficulty-row isolation.
 shiren_en_log_1_decoy_staff_enemy.srm	069397c0ee2da4b67718213a90b1a29f369fc91dc8a1e87728a3f848299e3107	Shiren	Shiren stands beside a Decoy Staff target; validates the live decoy-name producer.
 shiren_en_log_1_dragons_maw.srm	39ca2b4b09406cdaf142c08bc2eac364e03c78a38f7086847ff059b9fc88322a	Shiren	Dragon's Maw floor 19 with identity-hidden items and the Fumi companion route.
 shiren_en_log_1_fixed_width_save_info.srm	b42c4b79bd6bfe077ca83e004bddd4a4c25663bd887deb7c70c82c4a04ef4207	Shiren	Koma Cave floor 5 save summary; validates proportional location rendering.
