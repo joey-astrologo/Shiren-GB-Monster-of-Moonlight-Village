@@ -1,0 +1,10 @@
+# Advisory runtime roles for dialogue <var> ($E2) substitutions.
+#
+# loc<TAB>box<TAB>line<TAB>occurrence<TAB>role<TAB>evidence
+#
+# Unlike var_roles.tsv, these rows narrow an otherwise impossible glossary-wide review
+# without becoming a fatal build contract.  They are used only where the producer class
+# is proven but the exact reachable value pairs are not.  Every overflow must remain
+# visible in build/var_review.tsv.
+13:$4B66	1	1	1	combat-actor	Native 0:$25B8 appends attacker C: a monster, companion, or representative six-character player name.
+13:$4B66	1	1	2	combat-target	Native 0:$25BC appends non-player target E: a monster or companion; target $12 selects the separate `hit you` template at 13:$4B7E.

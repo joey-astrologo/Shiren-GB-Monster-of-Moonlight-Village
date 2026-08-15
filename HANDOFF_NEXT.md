@@ -67,10 +67,11 @@ The frozen pre-Rankings-repair diagnostic ROM remains intentionally known-bad at
 3. **V6 release freeze.** When the playthrough is accepted, stop changing font, text,
    graphics and geometry; run `python3 tools/release_battery.py`, verify a clean
    clone with locally supplied ROM/fixtures, and record final hashes.
-4. **Optional research only:** replace legacy runtime-substitution warning estimates with
-   an exact producer-to-template census. `13:$4B66` remains the one broad-candidate audit
-   risk. The current combat pair is unchanged and works in live routes; do not change its
-   `<var>` / `<cE4>` token ABI without tracing and patching the native producer.
+4. **Optional research only:** replace the remaining advisory runtime-substitution scope
+   with an exact producer-pair census. `13:$4B66` is narrowed to native combat actors and
+   targets; its 420 overlong candidates are all monster-versus-monster pairs. The current
+   combat text is unchanged and works in live routes; do not change its `<var>` / `<cE4>`
+   token ABI without tracing and patching the native producer.
 
 ## Non-negotiable engineering rules
 

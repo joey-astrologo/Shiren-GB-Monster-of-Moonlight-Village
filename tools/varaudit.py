@@ -10,9 +10,10 @@ appearance name is reachable from every message.
 Confirmed producer values live in ``script/var_domains.tsv``. Exhaustive producer roles
 live in ``script/var_roles.tsv``; they keep monsters, combat actors and player names
 separate without enumerating a glossary in the contract file. Both are build contracts,
-and overflow is fatal. Every other dynamic line is written to a complete TSV review list
-with a deliberately broad glossary census. An unclassified broad candidate overflow is
-evidence to review, not permission to rewrite the line.
+and overflow is fatal. ``script/var_advisories.tsv`` narrows proven producer classes whose
+exact reachable pairs remain unknown, while deliberately keeping their overflows
+non-fatal and visible. Every other dynamic line is written to the same complete TSV review
+list with a deliberately broad glossary census.
 """
 import argparse
 import itertools
@@ -95,6 +96,8 @@ def main(argv=None):
     parser.add_argument('--glossary', default=os.path.join(ROOT, 'script', 'glossary.tsv'))
     parser.add_argument('--domains', default=os.path.join(ROOT, 'script', 'var_domains.tsv'))
     parser.add_argument('--roles', default=os.path.join(ROOT, 'script', 'var_roles.tsv'))
+    parser.add_argument('--advisories',
+                        default=os.path.join(ROOT, 'script', 'var_advisories.tsv'))
     parser.add_argument('--output', default=os.path.join(ROOT, 'build', 'var_review.tsv'))
     args = parser.parse_args(argv)
 
@@ -110,8 +113,15 @@ def main(argv=None):
     font = dotfont.load_approved()
     domains = load_domains(args.domains)
     roles = load_roles(args.roles)
+    advisories = load_roles(args.advisories)
+    duplicate_roles = sorted(set(roles) & set(advisories))
+    if duplicate_roles:
+        raise SystemExit('varaudit: substitution(s) are both contracted and advisory: %s' %
+                         ', '.join('%s box %d line %d occurrence %d' % key
+                                   for key in duplicate_roles))
     used_domains = set()
     used_roles = set()
+    used_advisories = set()
 
     glossary_classes = {}
     for entry in lint_en.load_glossary(args.glossary):
@@ -132,12 +142,20 @@ def main(argv=None):
         'player': player_names,
         'combat-actor': tuple(sorted(set(glossary_classes['monster']) |
                                      set(companions) | set(player_names))),
+        # The two-name damage template is bypassed when target E is player actor $12;
+        # its second value is therefore a monster or companion, never a player name.
+        'combat-target': tuple(sorted(set(glossary_classes['monster']) |
+                                      set(companions))),
         'actor': tuple(sorted(set(glossary_classes['monster']) |
                               set(glossary_classes['npc']) | set(player_names))),
     }
     for key, (role, _evidence, number) in roles.items():
         if role not in role_values:
             raise SystemExit('%s:%d: unknown role %r' % (args.roles, number, role))
+    for key, (role, _evidence, number) in advisories.items():
+        if role not in role_values:
+            raise SystemExit('%s:%d: unknown advisory role %r' %
+                             (args.advisories, number, role))
 
     # This is intentionally much broader than any known actor producer. It remains the
     # fallback for lines whose producer has not yet been classified at all.
@@ -155,6 +173,7 @@ def main(argv=None):
 
     records = []
     contract_failures = []
+    advisory_scope_failures = []
     for ident, data in encoded.items():
         row = by_id[ident]
         if not dialogue.is_dialogue(row):
@@ -172,8 +191,13 @@ def main(argv=None):
                 if key in roles:
                     used_roles.add(key)
             scoped = [key in roles for key in keys]
+            advised = [key in advisories for key in keys]
+            for key, is_advised in zip(keys, advised):
+                if is_advised:
+                    used_advisories.add(key)
             status = ('confirmed' if all(present) else
                       'scoped' if any(scoped) else
+                      'advisory' if any(advised) else
                       'partial' if any(present) else 'unresolved')
 
             # An exhaustive producer contract is narrower and stronger than its broad
@@ -181,6 +205,7 @@ def main(argv=None):
             # the report as useful documentation.
             broad_domains = [domains[key][0] if key in domains else
                              role_values[roles[key][0]] if key in roles else
+                             role_values[advisories[key][0]] if key in advisories else
                              tuple(candidates)
                              for key in keys]
             # Today there are at most two substitutions on one line. Keep the review
@@ -216,6 +241,18 @@ def main(argv=None):
             first = unsafe[0] if unsafe else None
             worst = max(outcomes, key=lambda item: (item[1], item[2]))
 
+            # The current combat advisory is intentionally allowed to overflow, but the
+            # audited claim is precise: only monster-versus-monster pairs are risky.
+            # Fail the build if a companion or representative player name ever joins the
+            # unsafe subset after a font, glossary, wording or role-domain change.
+            monsters = set(glossary_classes['monster'])
+            for item in unsafe:
+                values = item[3]
+                for key, value in zip(keys, values):
+                    if key in advisories and advisories[key][0] in (
+                            'combat-actor', 'combat-target') and value not in monsters:
+                        advisory_scope_failures.append((row, line, values, value))
+
             confirmed_values = ''
             evidence = ''
             role_domains = ''
@@ -229,6 +266,13 @@ def main(argv=None):
                 role_domains = ' ; '.join(roles[key][0] if key in roles else '?'
                                           for key in keys)
                 role_evidence = ' ; '.join(roles[key][1] for key in keys if key in roles)
+            if any(advised):
+                role_domains = ' ; '.join(
+                    (advisories[key][0] + ' (advisory)') if key in advisories else
+                    roles[key][0] if key in roles else '?'
+                    for key in keys)
+                role_evidence = ' ; '.join(
+                    advisories[key][1] for key in keys if key in advisories)
 
             # An exact domain or an approved exhaustive role is a build contract. Mixed
             # lines are valid too: use the exact subset where known and the full role
@@ -274,6 +318,10 @@ def main(argv=None):
     if unused:
         lines = ', '.join('%s box %d line %d occurrence %d' % key for key in unused)
         raise SystemExit('varaudit: role rows no longer match a <var>: ' + lines)
+    unused = sorted(set(advisories) - used_advisories)
+    if unused:
+        lines = ', '.join('%s box %d line %d occurrence %d' % key for key in unused)
+        raise SystemExit('varaudit: advisory rows no longer match a <var>: ' + lines)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
     columns = ('loc', 'box', 'line', 'vars', 'status', 'template', 'combinations',
@@ -285,13 +333,12 @@ def main(argv=None):
             out.write('\t'.join(clean(str(record[column])) for column in columns) + '\n')
 
     counts = {status: sum(record['status'] == status for record in records)
-              for status in ('confirmed', 'scoped', 'partial', 'unresolved')}
+              for status in ('confirmed', 'scoped', 'advisory', 'partial', 'unresolved')}
     risky = sum(record['unsafe'] > 0 for record in records)
-    print('varaudit: %d dynamic line(s): %d confirmed, %d scoped, %d partial, '
-          '%d unresolved; '
-          '%d broad-candidate risk(s)' %
-          (len(records), counts['confirmed'], counts['scoped'], counts['partial'],
-           counts['unresolved'], risky))
+    print('varaudit: %d dynamic line(s): %d confirmed, %d scoped, %d advisory, '
+          '%d partial, %d unresolved; %d review risk(s)' %
+          (len(records), counts['confirmed'], counts['scoped'], counts['advisory'],
+           counts['partial'], counts['unresolved'], risky))
     print('varaudit: complete review list: %s' % os.path.relpath(args.output, ROOT))
     for record in records:
         if record['status'] == 'confirmed' or not record['unsafe']:
@@ -306,7 +353,11 @@ def main(argv=None):
         print('CONTRACT OVERFLOW %s box %d line %d: %s => %d/%dpx, %d/%d glyphs'
               % (row['loc'], line.box + 1, line.row + 1, ' + '.join(first[3]),
                  first[1], fontaudit.COMPOSER_PX, first[2], dialogue.WIDTH))
-    return 1 if contract_failures else 0
+    for row, line, values, value in advisory_scope_failures:
+        print('ADVISORY SCOPE DRIFT %s box %d line %d: %s includes unsafe non-monster '
+              'value %s' % (row['loc'], line.box + 1, line.row + 1,
+                            ' + '.join(values), value))
+    return 1 if contract_failures or advisory_scope_failures else 0
 
 
 if __name__ == '__main__':

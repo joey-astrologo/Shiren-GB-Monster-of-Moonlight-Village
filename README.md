@@ -264,6 +264,7 @@ script/intro.tsv              prologue/ending VM text
 script/box_geometry.tsv       measured menu box geometry
 script/var_domains.tsv        dynamic-value domain audit data
 script/var_roles.tsv          confirmed runtime substitution roles
+script/var_advisories.tsv     non-fatal runtime substitution review roles
 
 tests/fixtures/               tracked SRAMs, hashes, routes and setup notes
 tools/release_battery.py      complete release-candidate validation
