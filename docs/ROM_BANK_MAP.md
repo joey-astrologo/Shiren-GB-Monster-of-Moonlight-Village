@@ -60,8 +60,9 @@ installer should modify them:
 | Bank/range | Owner | Purpose |
 |:---|:---|:---|
 | `4:$4FE6-$4FE7`, `4:$704E-$704F` | `tools/build.py` | Path label and quiz row layout |
-| `11:$5537-$5548`, `11:$5773-$577D` | `tools/itemfix.py` | Unidentified-item help/title sources |
-| `11:$7450-$7452`, `11:$7464-$7478` | `tools/itemfix.py` | Empty/action-pot text and pointer |
+| `13:$5537-$5548`, `4:$5773-$577D` | `tools/itemfix.py` | Unidentified-item help/title sources |
+| `4:$4AE0-$4AE2`, `4:$4AFA-$4B01` | `tools/itemfix.py` | Shop `Price` / `G` value-box headings and pointer |
+| `4:$7450-$7452`, `4:$7464-$7478` | `tools/itemfix.py` | Empty/action-pot text and pointer |
 | `11:$796F-$79B1` | `tools/awardfix.py` | Pass/Awards screen renderer and title slot |
 | `31:$41A0-$41A1` | `tools/build.py` | Name-entry grid stride |
 
@@ -89,6 +90,7 @@ can consume more of a pool bank later.
 | 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
 | 48-49 | `$405A-$40FF` | `tools/menuvwf.py`: native fusion-count residue shifter plus `$8C-$94` glyph table/reader | Exclusive |
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
+| 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 60 | `$5000-$747D` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |

@@ -134,6 +134,15 @@ PLAYER_PREFIXES = {
     0x08: 'Pot: ',
     0x0C: 'Blank: ',
 }
+SHOP_VALUE_AT = 0x4AFA
+SHOP_VALUE_JP_GLD = bytes.fromhex('0D 32 22 FF') + bytes(
+    EN_CODES[ch] for ch in 'Gld') + bytes([0xFF])
+SHOP_VALUE_EN = bytes(EN_CODES[ch] for ch in 'Price') + bytes(
+    [0xFF, EN_CODES['G'], 0xFF])
+SHOP_GITAN_POINTER_AT = 0x4AE0
+SHOP_GITAN_POINTER_OLD = bytes.fromhex('21 FE 4A')   # ld hl,$4AFE (`Gld`)
+SHOP_GITAN_POINTER_NEW = bytes.fromhex('21 00 4B')   # ld hl,$4B00 (`G`)
+assert len(SHOP_VALUE_JP_GLD) == len(SHOP_VALUE_EN) == 8
 
 
 def _off(bank, addr):
@@ -210,6 +219,23 @@ def install(buf, notes):
         raise SystemExit('itemfix: expected `ld a,$7D` at 4:$5D20 (negative equipment '
                          'modifier), found %s' % bytes(buf[at:at + len(want)]).hex(' '))
     buf[at + 1] = MINUS
+
+    # Two adjacent four-byte headings label a shop item's selling price and the player's
+    # current Gitan. `Price` needs six bytes including its terminator, so repack the exact
+    # eight-byte pair as `Price\0G\0` and retarget only the second load. The value rows
+    # themselves already include a trailing G.
+    at = _off(4, SHOP_VALUE_AT)
+    got = bytes(buf[at:at + len(SHOP_VALUE_JP_GLD)])
+    if got != SHOP_VALUE_JP_GLD:
+        raise SystemExit('itemfix: expected shop value/Gld literals at 4:$%04X, found %s'
+                         % (SHOP_VALUE_AT, got.hex(' ')))
+    buf[at:at + len(SHOP_VALUE_EN)] = SHOP_VALUE_EN
+    at = _off(4, SHOP_GITAN_POINTER_AT)
+    got = bytes(buf[at:at + len(SHOP_GITAN_POINTER_OLD)])
+    if got != SHOP_GITAN_POINTER_OLD:
+        raise SystemExit('itemfix: expected shop Gld pointer at 4:$%04X, found %s'
+                         % (SHOP_GITAN_POINTER_AT, got.hex(' ')))
+    buf[at:at + len(SHOP_GITAN_POINTER_NEW)] = SHOP_GITAN_POINTER_NEW
 
     # `4:$5D37`, entered with the count already in `a`:
     #     ea 90 ff   ld [$FF90],a
@@ -332,8 +358,9 @@ def install(buf, notes):
     notes.append('itemfix: runtime equipment minus (4:$5D20) $7D -> English hyphen $%02X; '
                  'arrow counter `本の` (4:$5D3D) -> one space; the row charges $C6DC '
                  'one cell instead of two; shared unidentified-item help (13:$5537) -> '
-                 '`%s`; title (4:$5773) -> `%s`; shared empty-Pot See row (4:$7464) -> '
-                 '`%s`; Back/Todo charge rows (4:$7473 -> $7471) -> `%s`; player-named '
+                 '`%s`; title (4:$5773) -> `%s`; shop value heading (4:$4AFA) -> '
+                 '`Price` and adjacent cash heading -> `G`; shared empty-Pot See row '
+                 '(4:$7464) -> `%s`; Back/Todo charge rows (4:$7473 -> $7471) -> `%s`; player-named '
                  'item prefixes -> Bracer/Herb/Scroll/Staff/Pot/Blank via %d:$%04X' %
                  (MINUS, UNIDENTIFIED_HELP_TEXT, UNIDENTIFIED_TITLE_TEXT,
                   EMPTY_POT_TEXT, ACTION_POT_TEXT, PLAYER_PREFIX_BANK,

@@ -40,6 +40,10 @@ WRAM-staged row must also have:
     is < $43 or one of the explicitly admitted punctuation/status glyphs. Equipment
     unidentified-equipment suffix `$88`, plating suffix `$8A`, and fusion-count suffixes
     `$8C-$94` (one through nine seals) are composed as native marks at an 8px advance;
+    shop inventory rows instead end with one of five native three-tile price slots:
+    `$D0-$D2`, `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, or `$DC-$DE`, selected by item-row
+    position. Those cells stay right-aligned and outside the proportional pen while the
+    item name is composed normally.
     the cursed prefix `$87` remains a separate raw status cell. The fusion digits use a
     compact auxiliary shifter because bank 32 has no room for nine more 128-byte
     eight-shift slots. `$7D` is normalized to the approved font's `-` glyph.
@@ -260,6 +264,18 @@ FUSED_NATIVE = bytes.fromhex(
     '00 00 00 38 08 08 08 08 '
     '00 00 00 38 28 38 28 38 '
     '00 00 00 38 28 38 08 38')
+
+# Shop-held inventory names fill all 18 source cells: the ordinary two raw item cells,
+# the name, then one of five dynamically painted three-tile price slots `$D0-$DE`. The
+# slot base is `$D0 + 3*row`; these are tile IDs, not font codes. A dedicated pool-bank
+# helper validates the exact slot, advances BC past its real terminator, and restores the
+# raw cells after the VWF shadow row has been padded. Keeping this outside bank 32 also
+# leaves the packed core room for the normal glyph renderer.
+SHOP_SUFFIX_BANK = 0x33
+SHOP_SCAN_INDEX = 0x05
+SHOP_COPY_INDEX = 0x07
+SHOP_SUFFIX_AT = 0x405A
+SHOP_SUFFIX_LIMIT = 0x4100
 
 GLYPHS = 0x4400             # vwf DATA_ORG: 4 shifts x $B3 codes x 16 bytes (8 + 8 spill)
 SHIFT_STRIDE = 0xB30        # $B3 * 16
@@ -2383,6 +2399,120 @@ fuseddigits:
 """ % table
 
 
+def _shop_suffix_src():
+    """Validate and preserve the raw right-aligned price tiles on shop item rows."""
+    return """
+scanhigh:
+  cp $7C
+  jr c,scanbad
+  cp $81
+  jr c,scangood
+  cp $88
+  jr z,scangood
+  cp $8A
+  jr z,scangood
+  cp $%02X
+  jr c,scanbad
+  cp $%02X
+  jr c,scangood
+  cp $9E
+  jr c,scanbad
+  cp $A1
+  jr c,scangood
+  cp $B0
+  jr c,scanbad
+  cp $B6
+  jr c,scangood
+  cp $D0
+  jr c,scanbad
+  cp $DF
+  jr nc,scanbad
+  push de
+  push hl
+  ld h,a
+  ld a,d
+  cp $05
+  jr nc,shopsbad
+  add a,a
+  add a,d
+  add a,$D0
+  cp h
+  jr nz,shopsbad
+  ld a,[$C1B1]
+  cp $01
+  jr nz,shopsbad
+  ld a,[$C0D0]
+  cp $02
+  jr nz,shopsbad
+  ld l,$01
+shopsloop:
+  ld a,[bc]
+  cp $FF
+  jr z,shopsterm
+  inc h
+  cp h
+  jr nz,shopsbad
+  inc l
+  ld a,l
+  cp $04
+  jr nc,shopsbad
+  inc bc
+  jr shopsloop
+shopsbad:
+  pop hl
+  pop de
+scanbad:
+  and a
+  ret
+shopsterm:
+  ld a,l
+  cp $03
+  jr nz,shopsbad
+  inc bc
+  ld [$C0E7],a
+  pop hl
+  pop de
+  xor a
+scangood:
+  scf
+  ret
+
+copyprice:
+  ld a,[$C0E7]
+  and a
+  ret z
+  push bc
+  push de
+  push hl
+  ld e,a
+  ld d,a
+  ld a,[$C0CC]
+  ld c,a
+  ld a,[$C0CD]
+  ld b,a
+  dec bc
+copybacksrc:
+  dec bc
+  dec d
+  jr nz,copybacksrc
+  ld d,e
+copybackdest:
+  dec hl
+  dec d
+  jr nz,copybackdest
+copyloop:
+  ld a,[bc]
+  ld [hl+],a
+  inc bc
+  dec e
+  jr nz,copyloop
+  pop hl
+  pop de
+  pop bc
+  ret
+""" % (FUSED_FIRST, FUSED_LAST + 1)
+
+
 def _proportional_src(font, fei_prompt_y, rank_header_x):
     """Return the item-row renderer retargeted to propvwf's font tables.
 
@@ -2456,33 +2586,25 @@ fallback:
     assert old in src
     src = src.replace(old, new, 1)
 
-    old = """  cp $7F
+    old = """  cp $43
+  jr c,scanok
+  cp $7C
+  jr z,scanok
+  cp $7E
+  jr z,scanok
+  cp $7F
   jr z,scanok
   jp fallback
 """
-    new = """  cp $7F
-  jr z,scanok
-  cp $80
-  jr z,scanok
-  cp $88
-  jr z,scanok
-  cp $8A
-  jr z,scanok
-  cp $%02X
-  jr c,scanhighbad
-  cp $%02X
+    new = """  cp $43
   jr c,scanok
-  cp $9E
-  jr c,scanhighbad
-  cp $A1
-  jr c,scanok
-  cp $B0
-  jr c,scanhighbad
-  cp $B6
-  jr c,scanok
-scanhighbad:
-  jp fallback
-""" % (FUSED_FIRST, FUSED_LAST + 1)
+  rst $10
+  db $%02X,$%02X
+  jp nc,fallback
+  and a
+  jp z,scanend
+  jr scanok
+""" % (SHOP_SCAN_INDEX, SHOP_SUFFIX_BANK)
     assert old in src
     src = src.replace(old, new, 1)
 
@@ -2501,19 +2623,6 @@ scanhighbad:
   cp $02
   jp c,romalloc
   ld a,[$C0D8]
-"""
-    assert old in src
-    src = src.replace(old, new, 1)
-
-    old = """  cp $7C
-  jr z,scanok
-  cp $7E
-"""
-    new = """  cp $7C
-  jr z,scanok
-  cp $7D
-  jr z,scanok
-  cp $7E
 """
     assert old in src
     src = src.replace(old, new, 1)
@@ -3212,6 +3321,8 @@ composenext:
   ld a,[$C0CC]
 """
     new = """rborder:
+  rst $10
+  db $%02X,$%02X
   ld a,$BF
   ld [hl],a
   ld a,$01
@@ -3224,7 +3335,8 @@ composenext:
   rst $10
   db $%02X,$%02X
   ld a,[$C0CC]
-""" % (START_FINISH_INDEX, START_FINISH_BANK,
+""" % (SHOP_COPY_INDEX, SHOP_SUFFIX_BANK,
+         START_FINISH_INDEX, START_FINISH_BANK,
          ITEM_PAGE_INDEX, ITEM_PAGE_BANK, FLOOR_INFO_INDEX, FLOOR_INFO_BANK)
     assert old in src
     src = src.replace(old, new, 1)
@@ -3257,6 +3369,7 @@ scan:
     new = """  xor a
   ld [$C0CF],a
   ld [$C0D4],a
+  ld [$C0E7],a
   ld e,$00
 scan:
 """
@@ -3885,6 +3998,30 @@ def install(buf, notes=None, font=None):
             buf[at + 1] = target >> 8
         buf[fused_data_at:fused_data_at + len(fused_data)] = fused_data
 
+        shop_suffix, shop_labels = gbasm.assemble(_shop_suffix_src(), SHOP_SUFFIX_AT)
+        if SHOP_SUFFIX_AT + len(shop_suffix) > SHOP_SUFFIX_LIMIT:
+            raise SystemExit('menuvwf: shop-price suffix helper needs %d bytes, only %d '
+                             'available' %
+                             (len(shop_suffix), SHOP_SUFFIX_LIMIT - SHOP_SUFFIX_AT))
+        if buf[_off(SHOP_SUFFIX_BANK, 0x4000)] != SHOP_SUFFIX_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed'
+                             % SHOP_SUFFIX_BANK)
+        shop_at = _off(SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT)
+        if any(value != 0xFF
+               for value in buf[shop_at:shop_at + len(shop_suffix)]):
+            raise SystemExit('menuvwf: bank %d shop-price suffix region at $%04X is '
+                             'not free' % (SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT))
+        for index, label in ((SHOP_SCAN_INDEX, 'scanhigh'),
+                             (SHOP_COPY_INDEX, 'copyprice')):
+            at = _off(SHOP_SUFFIX_BANK, 0x4000) + index - 1
+            if bytes(buf[at:at + 2]) != b'\xff\xff':
+                raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                                 % (index, SHOP_SUFFIX_BANK))
+            target = shop_labels[label]
+            buf[at] = target & 0xFF
+            buf[at + 1] = target >> 8
+        buf[shop_at:shop_at + len(shop_suffix)] = shop_suffix
+
         normal_rows = _box_row_starts(buf, 48)
         if len(normal_rows) != 2:
             raise SystemExit('menuvwf: difficulty box 48 no longer has two rows')
@@ -4441,6 +4578,9 @@ def install(buf, notes=None, font=None):
                          'helper at %d:$%04X'
                          % (FUSED_FIRST, FUSED_LAST, len(fused_code), FUSED_BANK, FUSED_AT,
                             len(fused_data), FUSED_DATA_BANK, FUSED_DATA_AT))
+            notes.append('menuvwf: %d-byte shop-price suffix helper at %d:$%04X keeps '
+                         'five raw $D0-$DE row slots outside the proportional pen'
+                         % (len(shop_suffix), SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT))
             if CONTEXT_STATIC_ROWS:
                 notes.append('menuvwf: title/file shapes use %d-byte helper at '
                              '33:$%04X; context-static start rows enabled'

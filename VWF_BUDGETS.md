@@ -113,6 +113,20 @@ six-character nickname and requires no more than the Item row's 11-tile slice, t
 the supplied Log-1 fixture and checks real `Bracer: Food` and `Staff: Poop` rows
 plane-exact on the last Items page.
 
+Shop-held inventory rows have another shape-specific suffix contract. After the ordinary
+two raw Item cells and name, the native formatter right-aligns one three-tile price slot
+per physical row: `$D0-$D2`, `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, or `$DC-$DE`. These are
+tile IDs, not character codes; their pixels can hold a five-digit amount. The
+proportional scan ends before the exact slot and restores it after padding the name row.
+`shopspill.py` exercises all five slots independently of preceding name length, checks
+the `Price`/`G` headings and real 500G Strength Herb row, and replays the supplied Log-3
+3000G Invincible Herb failure at row 4 plane-exact. A controlled copy of that same route
+changes the ROM price-table entry to the calculation cap, 65000G, and requires the native
+formatter to report 65000 while the VWF row and `$DC-$DE` cells remain exact. The
+145-entry base table tops out at 62000 for reserved `New ...` entries; the highest
+ordinary named base item is 50000G Rasen Fuuma. The shop calculation clamps purchase
+prices at 65000 and sale values at 32000.
+
 ## Runtime substitutions
 
 `<var>` and `<cE3>` do not name one universal kind of value. A producer-to-template census

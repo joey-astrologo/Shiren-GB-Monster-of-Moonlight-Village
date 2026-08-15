@@ -142,6 +142,10 @@ fi
 if [ -f saves/shiren_en_log1_player_named_items.srm ]; then
   python3 tools/playernamedspill.py build/shiren_en.gb
 fi
+if [ -f saves/shiren_en_log3_shop.srm ] &&
+   [ -f saves/shiren_en_log3_invincible_herb_price.srm ]; then
+  python3 tools/shopspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log_1_talk_to_koppa.srm ] &&
    [ -f saves/shiren_en_log_1_dragons_maw.srm ] &&
    [ -f saves/shiren_en_log_1_fixed_width_save_info.srm ]; then
