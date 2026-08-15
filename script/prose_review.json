@@ -12147,7 +12147,7 @@
       "verified": false,
       "state": "excluded",
       "source_sha256": "8e7c3a63d8cf28e7a365fd01f61b656074c767ce5ab2428089a92a20cbfe7bb4",
-      "current_en_sha256": "1fb80f7481399935f1cdbcca5058ea600901938b8e84d89ac6ba3901c817d841",
+      "current_en_sha256": "c1a5d898a6ae75ad983605d72da10d4c5e4b4470710458a11ab7ec8e68b1d367",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -12162,7 +12162,7 @@
       "verified": false,
       "state": "excluded",
       "source_sha256": "1f5a97244a2ad5b3b93450e6d98d8e41f6df429a6e2c323bd1e564e1f715204d",
-      "current_en_sha256": "6ff0f144960144011e5d3b11c74c2a7e632b51a2597474c1eae5a727716f5262",
+      "current_en_sha256": "f28c4a4cd08e40ebb5ea37f6fcf67c7502c795b506c6b7d6bf51ee27f08396ea",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -12177,7 +12177,7 @@
       "verified": false,
       "state": "excluded",
       "source_sha256": "25a0a6d6b606a0bd93a44e20404db0a59c499d0a3ff936f10b6e3968454db6a0",
-      "current_en_sha256": "71d3a25b324b6c8a150f8444655989f106d4e08beb7b3c6f5065bd75b1a87be0",
+      "current_en_sha256": "f28c4a4cd08e40ebb5ea37f6fcf67c7502c795b506c6b7d6bf51ee27f08396ea",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -12192,7 +12192,7 @@
       "verified": false,
       "state": "excluded",
       "source_sha256": "38b2bcbb2c514cf6af03efb1ca560ed3a52c4d625ce0a1c3f04bfaff29bd60a8",
-      "current_en_sha256": "221c1b8f6aac1a4c73fafb1b92ad995394e8bcf104ef6de9b5bcc7b469ca6101",
+      "current_en_sha256": "f28c4a4cd08e40ebb5ea37f6fcf67c7502c795b506c6b7d6bf51ee27f08396ea",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
@@ -12468,8 +12468,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "44ab9a5d53432ad2dd6d5ff59b8fa78b3b22d0fd90dfbd16d202ca26dd3731f8",
-      "current_en_sha256": "d97b7812cd4d180ff8a6cf52234b4370b297db18e5eb2367c492b22ccbca2cc5",
-      "candidate_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it. When a monster defeats <name> at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.",
+      "current_en_sha256": "6c651a218faa124fee37bcef688898a5adba960e394c1a3b9d95fc85c2fab514",
+      "candidate_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it, <name>.<br>When a monster defeats you at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -12482,13 +12482,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it. When a monster defeats <name> at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.",
-        "wrapped_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<end><brk> Koppa: When the dragon cries,<br> huh.<end><brk> ...Wait.<end><brk> Come to think of it, the<br> shrine in Moonlight<br> Village...!<end><brk> Koppa: <name>! Let's go back!<end><brk> Something's definitely wrong<br> with that village!<end><brk> Think about it. When a<br> monster defeats <name> at Kuyo<br> Pass,<end><brk> you get sent back to the<br> village, right?<end><brk> Then if that kid Nagi gets<br> defeated,<end><brk> shouldn't he be sent back<br> too?<end><brk> So why do the villagers say<br> he'll never return?<end><brk> Koppa: The sacrifice<br> tradition.<end><brk> The Baby Tank you saw in the<br> village.<end><brk> And that shrine...<end><brk> Moonlight Village is<br> definitely hiding something.",
+        "candidate_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it, <name>.<br>When a monster defeats you at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.",
+        "wrapped_en": "Dragon's Maw<br> When the dragon cries,<br> its maw shall open<end><brk> Koppa: When the dragon cries,<br> huh.<end><brk> ...Wait.<end><brk> Come to think of it, the<br> shrine in Moonlight<br> Village...!<end><brk> Koppa: <name>! Let's go back!<end><brk> Something's definitely wrong<br> with that village!<end><brk> Think about it, <name>.<br> When a monster defeats you<br> at Kuyo Pass,<end><brk> you get sent back to the<br> village, right?<end><brk> Then if that kid Nagi gets<br> defeated,<end><brk> shouldn't he be sent back<br> too?<end><brk> So why do the villagers say<br> he'll never return?<end><brk> Koppa: The sacrifice<br> tradition.<end><brk> The Baby Tank you saw in the<br> village.<end><brk> And that shrine...<end><brk> Moonlight Village is<br> definitely hiding something.",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct terminology audit: Kid Tank updated to official Baby Tank; control structure and Dragon terminology preserved.",
-      "verified_at": "2026-08-10T19:40:33+00:00"
+      "review_notes": "Player-approved natural address and second-person wording; 2026-08-15",
+      "verified_at": "2026-08-15T12:43:33+00:00"
     },
     "14:$4AA0": {
       "section": "bank 14: the voice in the well",
@@ -12952,8 +12952,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "e4b7c946793826ace0fc7052533b5f0f0b21ecd5e954d7e2622b6d97a4f9e92d",
-      "current_en_sha256": "b1e3d1445da1ee4f5dcbebeb937c672117dde1d201c006bc5089da06dfe369a4",
-      "candidate_en": "Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants <name> to see her...",
+      "current_en_sha256": "f02bf8ba41231d7b17cf54df10a20343fbd4738d1be66bc0a63031ba201d1951",
+      "candidate_en": "Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants you to see her, <name>...",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -12966,13 +12966,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants <name> to see her...",
-        "wrapped_en": "Innkeeper: Don't go looking<br> for Keyaki.<end><brk> I don't think she wants <name> to<br> see her...",
+        "candidate_en": "Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants you to see her, <name>...",
+        "wrapped_en": "Innkeeper: Don't go looking<br> for Keyaki.<end><brk> I don't think she wants you<br> to see her, <name>...",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:53:54+00:00"
+      "review_notes": "Player-approved second-person wording with vocative name; 2026-08-15",
+      "verified_at": "2026-08-15T12:43:34+00:00"
     },
     "14:$604A": {
       "section": "bank 14: the village, the warehouse and the shrine",
@@ -14763,5 +14763,5 @@
   },
   "source_file": "script/prose_draft.tsv",
   "source_count": 521,
-  "updated_at": "2026-08-13T22:01:05+00:00"
+  "updated_at": "2026-08-15T12:43:34+00:00"
 }

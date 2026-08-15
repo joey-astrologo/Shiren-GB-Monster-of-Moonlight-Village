@@ -335,6 +335,9 @@ class Cpu:
         elif op == 0x2A:                                      # ld a,[hl+]
             self.a = self.read(self.hl)
             self.hl = (self.hl + 1) & 0xFFFF
+        elif op == 0x3A:                                      # ld a,[hl-]
+            self.a = self.read(self.hl)
+            self.hl = (self.hl - 1) & 0xFFFF
         elif op == 0x22:                                      # ld [hl+],a
             self.write(self.hl, self.a)
             self.hl = (self.hl + 1) & 0xFFFF

@@ -505,10 +505,10 @@
 14:$4638	=<cEC:09><$81>Easy (current road)<br> Normal<br> Hard
 14:$465B	=<cEC:09><$81>Easy<br> Normal (current road)<br> Hard
 14:$467F	=<cEC:09><$81>Easy<br> Normal<br> Hard (current road)
-14:$46A4	=<cEC:0E><$81>Go on<br> Stay here<br>
-14:$46B5	=<$81>Go on<br> Stay here<br>
-14:$46C1	=<$81>Go down<br> Stay here<br>
-14:$46CD	=<$81>Go up<br> Stay here<br>
+14:$46A4	=<cEC:0E><$81>Proceed<br> Back<br>
+14:$46B5	=<$81>Proceed<br> Back<br>
+14:$46C1	=<$81>Proceed<br> Back<br>
+14:$46CD	=<$81>Proceed<br> Back<br>
 14:$46EC	<cF4><cF2><cF0><name> was blown away by the wind.<cF3><mode1><$78><mode0>
 
 # ---- bank 14: the voice in the well ----
@@ -520,7 +520,7 @@
 14:$47D5	<cE0:00><mode1><$02><cE0:28><name> reunited with Koppa!<mode1><$78><brk>...Maybe it's just been a while,<brk>but he definitely smells a little.
 14:$4818	Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a strange shifting land here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.
 14:$48DA	Koppa: Let's check out Dragon's Maw before we leave.
-14:$4905	    Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it. When a monster defeats <name> at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.
+14:$4905	    Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it, <name>.<br>When a monster defeats you at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.
 14:$4AA0	Koppa: We came all this way, but of course it's still closed...
 14:$4AC6	Yoshizota: Hey!
 14:$4AD3	Yoshizota: It's me, Yoshizota. The medicine seller...<brk>This place opens if I read this scroll, right?
@@ -539,7 +539,7 @@
 14:$5F2A	Kinji: Once you become an adult, the fits stop,<brk>and you stay in control even when transformed.<brk>Some people take a while to change back, like my brother...
 14:$5F8B	Rokuro: Be careful Nagi and Tagura don't attack you.<brk>Children lose control when they transform.
 14:$5FD1	Priest: We don't follow the Reeva faith...<brk>but I'll still pray for Kron's wind to guide you.
-14:$6016	Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants <name> to see her...
+14:$6016	Innkeeper: Don't go looking for Keyaki.<brk>I don't think she wants you to see her, <name>...
 14:$604A	=<cEC:08>Search the offering box?<br><$81>Yes<br> No
 14:$606A	<name> searched the offering box.
 14:$607C	Koppa: ...Was the scroll there?<brk>What? It's gone?! No way!

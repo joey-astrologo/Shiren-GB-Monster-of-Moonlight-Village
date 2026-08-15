@@ -5,8 +5,9 @@ The native formatter always assigns three dynamically painted price tiles to an 
 row: `$D0-$D2` for row 0, then `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, and `$DC-$DE` for rows
 1-4. They are tile IDs, not text codes; the tile pixels hold prices up to the shop
 calculation's five-digit cap. Joey's first Log-3 fixture exercises row-0 Strength Herb
-at 500G. The second keeps Invincible Herb at 3000G on row 4, which is the regression that
-proved a `$D0`-only classifier was insufficient.
+at 500G. The second keeps Invincible Herb at 3000G on row 4, which proves both the row-4
+slot and the widened shop-name staging contract: the native 13-letter name field used to
+discard its final `rb` before VWF ran.
 """
 import argparse
 import os
@@ -20,8 +21,10 @@ import gbemu                                                # noqa: E402
 from gbrun import _import_pyboy, PRESS_FRAMES               # noqa: E402
 from latinfont import EN_CODES                              # noqa: E402
 import itemfix                                              # noqa: E402
+import lint_en                                              # noqa: E402
 import menuspill                                            # noqa: E402
 import menuvwf                                              # noqa: E402
+import dotfont                                              # noqa: E402
 
 
 RAM = 'saves/shiren_en_log3_shop.srm'
@@ -29,8 +32,11 @@ INVINCIBLE_RAM = 'saves/shiren_en_log3_invincible_herb_price.srm'
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
 ITEM_KEY = 0xC380
 NAME = tuple(EN_CODES[ch] for ch in 'Strength Herb')
+NAME_PADDING = bytes([0] * (menuvwf.SHOP_CONTENT_CELLS - 2 - len(NAME)))
 RAW_PRICE = bytes((0xD0, 0xD1, 0xD2))
-LONG_NAME = tuple(EN_CODES[ch] for ch in 'Invincible He')
+LONG_TEXT = 'Invincible Herb'
+LONG_NAME = tuple(EN_CODES[ch] for ch in LONG_TEXT)
+LONG_PADDING = bytes([0] * (menuvwf.SHOP_CONTENT_CELLS - 2 - len(LONG_NAME)))
 LONG_PRICE = bytes((0xDC, 0xDD, 0xDE))
 LONG_KEY = 0xC480
 PRICE_SLOTS = tuple(bytes(range(base, base + 3)) for base in range(0xD0, 0xDF, 3))
@@ -42,6 +48,7 @@ MAX_BASE_PRICE = 62000
 MAX_ORDINARY_BASE_PRICE = 50000
 SHOP_BUY_CAP = 65000
 SHOP_SELL_CAP = 32000
+SHOP_NAME_PIXELS = 13 * 8
 BOOT = {
     60: 'start', 120: 'start', 180: 'start', 240: 'start',
     300: 'a', 350: 'down', 400: 'down', 460: 'a', 530: 'a',
@@ -49,6 +56,17 @@ BOOT = {
     2440: 'a',
     2700: 'b', 2780: 'a',
 }
+
+
+def staged_row(pb, source, limit=32):
+    """Read one variable-length staging row through its real terminator."""
+    row = bytearray()
+    for offset in range(limit):
+        value = pb.memory[source + offset]
+        row.append(value)
+        if value == 0xFF:
+            break
+    return bytes(row)
 
 
 def helper_problems(rom_path):
@@ -70,6 +88,43 @@ def helper_problems(rom_path):
         if target != labels[label]:
             problems.append('bank %d far index $%02X points to $%04X, expected $%04X' %
                             (menuvwf.SHOP_SUFFIX_BANK, index, target, labels[label]))
+
+    # The producer must retain the complete 18-glyph VWF source allowance before the
+    # price suffix.  Verify every opcode as well as the shared immediate so an accidental
+    # partial patch cannot silently change the clamp's control flow.
+    for address, opcode in menuvwf.SHOP_CONTENT_PATCHES:
+        at = 4 * 0x4000 + address - 0x4000
+        got = rom[at:at + 2]
+        want = bytes((opcode, menuvwf.SHOP_CONTENT_CELLS))
+        if got != want:
+            problems.append('shop content clamp at 4:$%04X is %s, expected %s' %
+                            (address, got.hex(' '), want.hex(' ')))
+
+    # Exercise the real producer clamp, not only its patched immediates. It must preserve
+    # all 18 allowed name codes and pad shorter rows to the same bounded pre-price end.
+    producer_bank = rom[4 * 0x4000:5 * 0x4000]
+    source = 0xC220
+    for name_length in (1, 13, 15, 16, 18):
+        cpu = gbemu.Cpu({0: bank0, 4: producer_bank}, bank=4)
+        name = bytes([EN_CODES['W']] * name_length)
+        content = bytes((0, 0)) + name
+        cpu.write(source - 1, 0xFF)
+        for offset, value in enumerate(content):
+            cpu.write(source + offset, value)
+        cpu.de = source + len(content)
+        cpu.bc, cpu.hl = 0xBEEF, 0xCAFE
+        cpu.call(0x45B7)
+        expected_end = source + menuvwf.SHOP_CONTENT_CELLS
+        got = bytes(cpu.read(source + offset)
+                    for offset in range(menuvwf.SHOP_CONTENT_CELLS))
+        want = content + bytes(menuvwf.SHOP_CONTENT_CELLS - len(content))
+        if cpu.de != expected_end or got != want:
+            problems.append('%d-char shop producer ended at $%04X with %s, expected '
+                            '$%04X / %s' %
+                            (name_length, cpu.de, got.hex(' '), expected_end,
+                             want.hex(' ')))
+        if (cpu.bc, cpu.hl) != (0xBEEF, 0xCAFE):
+            problems.append('%d-char shop producer clobbered BC/HL' % name_length)
 
     # Each physical item row owns one exact three-tile slot. Vary the preceding name
     # length independently; the scanner must not infer price location or size from it.
@@ -133,6 +188,40 @@ def helper_problems(rom_path):
         if cpu.f & gbemu.C_FLAG:
             problems.append('malformed shop suffix %s was accepted' %
                             bytes(malformed).hex(' '))
+    return problems
+
+
+def name_contract_problems():
+    """Prove every ordinary runtime item variant fits beside a three-tile price."""
+    font = dotfont.load_approved()
+    items = [entry for entry in lint_en.load_glossary('script/glossary.tsv')
+             if entry['cls'] == 'item']
+    problems = []
+    if len(items) != PRICE_TABLE_ITEMS:
+        return ['item glossary has %d entries, expected %d' %
+                (len(items), PRICE_TABLE_ITEMS)]
+    variants = []
+    for index, entry in enumerate(items):
+        suffixes = ['']
+        if index < 34:
+            suffixes.extend(sign + str(value)
+                            for sign in ('+', '-') for value in range(1, 100))
+        elif lint_en.carries_counter(entry['en']):
+            suffixes.extend('[%d]' % value for value in range(1, 100))
+        for suffix in suffixes:
+            text = entry['en'] + suffix
+            variants.append(text)
+            if len(text) > menuvwf.SHOP_CONTENT_CELLS - 2:
+                problems.append('%r needs %d shop source cells, maximum is %d' %
+                                (text, len(text), menuvwf.SHOP_CONTENT_CELLS - 2))
+                continue
+            padded = text + ' ' * (menuvwf.SHOP_CONTENT_CELLS - 2 - len(text))
+            extent = font.text_extent(padded)
+            if extent > SHOP_NAME_PIXELS:
+                problems.append('%r paints %dpx after shop padding, maximum before '
+                                'price is %dpx' % (text, extent, SHOP_NAME_PIXELS))
+    if LONG_TEXT not in variants:
+        problems.append('Invincible Herb is absent from the enumerated item variants')
     return problems
 
 
@@ -258,7 +347,7 @@ def route_problems(rom_path, ram_path, png=None):
             if shape != ITEM_SHAPE or pb.register_file.D != 0:
                 return
             source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
-            row = bytes(pb.memory[source:source + 19])
+            row = staged_row(pb, source)
             if row[2:2 + len(NAME)] == bytes(NAME) and row[-1] == 0xFF:
                 staged = row
 
@@ -284,7 +373,8 @@ def route_problems(rom_path, ram_path, png=None):
         if staged is None:
             problems.append('priced Strength Herb never reached the Item VWF hook')
         else:
-            expected = bytes((0, 0)) + bytes(NAME) + RAW_PRICE + bytes([0xFF])
+            expected = (bytes((0, 0)) + bytes(NAME) + NAME_PADDING + RAW_PRICE +
+                        bytes([0xFF]))
             if staged != expected:
                 problems.append('priced row staged %s, expected %s' %
                                 (staged.hex(' '), expected.hex(' ')))
@@ -292,7 +382,8 @@ def route_problems(rom_path, ram_path, png=None):
                    if record[0] == ITEM_KEY and record[3] == 2]
         if not records:
             problems.append('priced Strength Herb has no raw=2 VWF allocation record')
-        if not menuspill.visible_row_matches(pb, profile, ITEM_KEY, list(NAME), raw=2):
+        if not menuspill.visible_row_matches(pb, profile, ITEM_KEY,
+                                             list(NAME) + list(NAME_PADDING), raw=2):
             problems.append('priced Strength Herb visible planes differ from composition')
         shadow_suffix = bytes(pb.memory[ITEM_KEY + 16:ITEM_KEY + 19])
         bg_suffix = bytes(pb.memory[0x9880 + 16:0x9880 + 19])
@@ -337,7 +428,7 @@ def invincible_route_problems(rom_path, ram_path, expected_price=3000, png=None)
             if shape != ITEM_SHAPE or pb.register_file.D != 4:
                 return
             source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
-            row = bytes(pb.memory[source:source + 19])
+            row = staged_row(pb, source)
             if row[2:2 + len(LONG_NAME)] == bytes(LONG_NAME) and row[-1] == 0xFF:
                 staged = row
 
@@ -355,7 +446,8 @@ def invincible_route_problems(rom_path, ram_path, expected_price=3000, png=None)
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
 
-        expected = bytes((0, 0)) + bytes(LONG_NAME) + LONG_PRICE + bytes([0xFF])
+        expected = (bytes((0, 0)) + bytes(LONG_NAME) + LONG_PADDING + LONG_PRICE +
+                    bytes([0xFF]))
         if expected_price not in observed_prices:
             problems.append('native Invincible Herb formatter produced %r, expected %d' %
                             (observed_prices, expected_price))
@@ -370,8 +462,9 @@ def invincible_route_problems(rom_path, ram_path, expected_price=3000, png=None)
         if not records:
             problems.append('%dG Invincible Herb has no raw=2 VWF allocation record' %
                             expected_price)
+        visible_codes = list(LONG_NAME) + list(LONG_PADDING)
         if not menuspill.visible_row_matches(pb, profile, LONG_KEY,
-                                             list(LONG_NAME), raw=2):
+                                             visible_codes, raw=2):
             problems.append('%dG Invincible Herb visible planes differ from composition' %
                             expected_price)
         shadow_suffix = bytes(pb.memory[LONG_KEY + 16:LONG_KEY + 19])
@@ -405,6 +498,7 @@ def main():
     if not os.path.exists(args.invincible_ram):
         raise SystemExit('shopspill: missing fixture %s' % args.invincible_ram)
     problems = literal_problems(args.rom)
+    problems.extend(name_contract_problems())
     problems.extend(price_contract_problems(args.rom))
     problems.extend(helper_problems(args.rom))
     problems.extend(synthetic_slot_problems(args.rom))
@@ -413,9 +507,10 @@ def main():
                                               3000, args.invincible_png))
     problems.extend(invincible_route_problems(args.rom, args.invincible_ram,
                                               SHOP_BUY_CAP, args.max_png))
-    print('shopspill: Price/G; five D0-DE row slots; 500G row 0 + 3000G row 4 exact; '
+    print('shopspill: Price/G; five D0-DE row slots; complete `%s`; '
+          '500G row 0 + 3000G row 4 exact; '
           'controlled %dG maximum route exact; base max %d; %d problem(s)' %
-          (SHOP_BUY_CAP, MAX_BASE_PRICE, len(problems)))
+          (LONG_TEXT, SHOP_BUY_CAP, MAX_BASE_PRICE, len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:

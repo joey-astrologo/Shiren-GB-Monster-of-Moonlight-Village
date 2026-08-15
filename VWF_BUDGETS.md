@@ -117,10 +117,15 @@ Shop-held inventory rows have another shape-specific suffix contract. After the 
 two raw Item cells and name, the native formatter right-aligns one three-tile price slot
 per physical row: `$D0-$D2`, `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, or `$DC-$DE`. These are
 tile IDs, not character codes; their pixels can hold a five-digit amount. The
-proportional scan ends before the exact slot and restores it after padding the name row.
+original formatter allowed only 13 name cells here, so it discarded `rb` from
+`Invincible Herb` before VWF could compose it. The proportional build widens the staged
+pre-price area from 15 to 20 cells: two raw cells plus the complete 18-source-character
+VWF contract. The scan ends before the exact price slot and restores it after padding
+the name row.
 `shopspill.py` exercises all five slots independently of preceding name length, checks
 the `Price`/`G` headings and real 500G Strength Herb row, and replays the supplied Log-3
-3000G Invincible Herb failure at row 4 plane-exact. A controlled copy of that same route
+3000G Invincible Herb failure at row 4 with the complete name plane-exact. A controlled
+copy of that same route
 changes the ROM price-table entry to the calculation cap, 65000G, and requires the native
 formatter to report 65000 while the VWF row and `$DC-$DE` cells remain exact. The
 145-entry base table tops out at 62000 for reserved `New ...` entries; the highest

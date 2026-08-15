@@ -42,8 +42,11 @@ WRAM-staged row must also have:
     `$8C-$94` (one through nine seals) are composed as native marks at an 8px advance;
     shop inventory rows instead end with one of five native three-tile price slots:
     `$D0-$D2`, `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, or `$DC-$DE`, selected by item-row
-    position. Those cells stay right-aligned and outside the proportional pen while the
-    item name is composed normally.
+    position. The native shop formatter's 15-cell pre-price clamp is widened to 20
+    virtual cells (two raw cells plus all 18 VWF source glyphs); otherwise it truncates
+    names such as `Invincible Herb` to `Invincible He` before VWF sees them. Those price
+    cells stay right-aligned and outside the proportional pen while the complete item
+    name is composed normally.
     the cursed prefix `$87` remains a separate raw status cell. The fusion digits use a
     compact auxiliary shifter because bank 32 has no room for nine more 128-byte
     eight-shift slots. `$7D` is normalized to the approved font's `-` glyph.
@@ -265,17 +268,28 @@ FUSED_NATIVE = bytes.fromhex(
     '00 00 00 38 28 38 28 38 '
     '00 00 00 38 28 38 08 38')
 
-# Shop-held inventory names fill all 18 source cells: the ordinary two raw item cells,
-# the name, then one of five dynamically painted three-tile price slots `$D0-$DE`. The
-# slot base is `$D0 + 3*row`; these are tile IDs, not font codes. A dedicated pool-bank
-# helper validates the exact slot, advances BC past its real terminator, and restores the
-# raw cells after the VWF shadow row has been padded. Keeping this outside bank 32 also
-# leaves the packed core room for the normal glyph renderer.
+# Shop-held inventory rows hold two raw item cells, up to 18 VWF name/suffix cells, then
+# one of five dynamically painted three-tile price slots `$D0-$DE`. The slot base is
+# `$D0 + 3*row`; these are tile IDs, not font codes. A dedicated pool-bank helper validates
+# the exact slot, advances BC past its real terminator, and restores the raw cells after
+# the VWF shadow row has been padded. Keeping this outside bank 32 also leaves the packed
+# core room for the normal glyph renderer.
 SHOP_SUFFIX_BANK = 0x33
 SHOP_SCAN_INDEX = 0x05
 SHOP_COPY_INDEX = 0x07
 SHOP_SUFFIX_AT = 0x405A
 SHOP_SUFFIX_LIMIT = 0x4100
+SHOP_OLD_CONTENT_CELLS = 15     # native fixed row: two raw + thirteen name cells
+SHOP_CONTENT_CELLS = 20         # VWF row: two raw + the full eighteen-glyph contract
+# 4:$45B7 pads/truncates the staged content before appending the three price tile IDs.
+# These are its five comparisons/arithmetic immediates, in execution order.
+SHOP_CONTENT_PATCHES = (
+    (0x45D2, 0xFE),             # cp n: already exact
+    (0x45D8, 0xFE),             # cp n: choose pad vs truncate
+    (0x45DC, 0x3E),             # ld a,n: padding target
+    (0x45E9, 0xFE),             # cp n: truncation guard
+    (0x45ED, 0xD6),             # sub n: truncation amount
+)
 
 GLYPHS = 0x4400             # vwf DATA_ORG: 4 shifts x $B3 codes x 16 bytes (8 + 8 spill)
 SHIFT_STRIDE = 0xB30        # $B3 * 16
@@ -3942,6 +3956,22 @@ def install(buf, notes=None, font=None):
             raise SystemExit('menuvwf: proportional core-width page does not match '
                              'the approved font')
 
+        # The original fixed-cell shop layout reserves 2 raw cells + 13 name cells +
+        # 3 price cells.  VWF has enough horizontal pixels for every current 18-source
+        # item variant, but it cannot recover letters already discarded here.  Widen the
+        # staging clamp while retaining an explicit upper bound and the native three-cell
+        # price suffix.  This is proportional-only: a no-menuvwf control still requires
+        # the original fixed 18-cell layout.
+        for address, opcode in SHOP_CONTENT_PATCHES:
+            at = _off(4, address)
+            found = bytes(buf[at:at + 2])
+            expected = bytes((opcode, SHOP_OLD_CONTENT_CELLS))
+            if found != expected:
+                raise SystemExit('menuvwf: shop content clamp at 4:$%04X changed: '
+                                 'expected %s, found %s' %
+                                 (address, expected.hex(' '), found.hex(' ')))
+            buf[at + 1] = SHOP_CONTENT_CELLS
+
         # 6:$4C2C masks weapons to $01FF and shields to $06FD before 6:$4C61
         # counts the live ability bits.  Both domains therefore top out at nine; the
         # producer at 4:$5765/$5D8B adds $8B and can emit exactly $8C-$94.
@@ -4579,8 +4609,10 @@ def install(buf, notes=None, font=None):
                          % (FUSED_FIRST, FUSED_LAST, len(fused_code), FUSED_BANK, FUSED_AT,
                             len(fused_data), FUSED_DATA_BANK, FUSED_DATA_AT))
             notes.append('menuvwf: %d-byte shop-price suffix helper at %d:$%04X keeps '
-                         'five raw $D0-$DE row slots outside the proportional pen'
-                         % (len(shop_suffix), SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT))
+                         'five raw $D0-$DE row slots outside the proportional pen; '
+                         'shop staging widened from %d to %d pre-price cells'
+                         % (len(shop_suffix), SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT,
+                            SHOP_OLD_CONTENT_CELLS, SHOP_CONTENT_CELLS))
             if CONTEXT_STATIC_ROWS:
                 notes.append('menuvwf: title/file shapes use %d-byte helper at '
                              '33:$%04X; context-static start rows enabled'
