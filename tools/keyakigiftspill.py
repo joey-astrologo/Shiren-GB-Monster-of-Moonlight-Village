@@ -96,7 +96,15 @@ def run(rom_path, ram_path, png=None, frames=2860):
         if receipt is None:
             problems.append('receipt screenshot was not captured')
         else:
-            grey = receipt.convert('L').crop((0, 104, 160, 144))
+            # BOTH receipt rows, not just the item name. The window used to start at
+            # y104, which caught only the second row -- the bare `<cE3:FE>` expansion --
+            # so the floor was really measuring one word and tracked its length. Renaming
+            # `Otogiri Herb` to `Otogiriso` dropped that row from just over 100 dark
+            # pixels to 96 and failed a receipt that was rendering correctly.
+            # y96 adds the `<name> received` row (153px) and still clears the status bar,
+            # which ends at y87 with an eight-pixel gap. A genuinely blank box -- the bug
+            # this guards, when the record was reused as free space -- still reads ~0.
+            grey = receipt.convert('L').crop((0, 96, 160, 144))
             ink = sum(pixel < 96 for pixel in grey.getdata())
             if ink < 100:
                 problems.append('receipt dialogue area is blank (%d dark pixels)' % ink)

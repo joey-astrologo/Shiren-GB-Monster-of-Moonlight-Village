@@ -187,38 +187,27 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "d4f57b3353a9692bd60eeb9beee4470f4df1c7fe6ec27201c5fd62d2d470e6f7",
-      "current_en_sha256": "fe8832a6262d43ae6e379f8f5660913ae7a72461156f6ff599c0cdf32918af3e",
-      "candidate_en": "Yoshizota: A shifting land where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will happen if I make Moonlight Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!",
+      "current_en_sha256": "82ecc81625accbb39200e1cb27ebde40db7195525572b2079f1a28ac9245fe70",
+      "candidate_en": "Yoshizota: A Mystery Dungeon where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will<br>happen if I make Moonlight<br>Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!",
       "ambiguities": [],
-      "translator_notes": "Preserved Yoshizota speaker prefix without quotes per context and rules. Distributed page breaks to match the requested 11 authored breaks while keeping natural dialogue rhythm.",
+      "translator_notes": "",
       "provenance": {
-        "provider": "google-gemini",
-        "model": "gemini-3.6-flash",
-        "prompt_version": "prose-v2",
-        "generated_at": "2026-08-10T17:22:35+00:00",
-        "response_id": "uAh6avTSEN2d_uMPkcDCwA4",
-        "usage": {
-          "candidates_token_count": 267,
-          "prompt_token_count": 1017,
-          "prompt_tokens_details": [
-            {
-              "modality": "TEXT",
-              "token_count": 1017
-            }
-          ],
-          "thoughts_token_count": 7884,
-          "total_token_count": 9168
-        }
+        "provider": "human-existing",
+        "model": null,
+        "prompt_version": null,
+        "generated_at": null,
+        "response_id": null,
+        "usage": null
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Yoshizota: A shifting land where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will happen if I make Moonlight Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!",
-        "wrapped_en": "Yoshizota: A shifting land<br> where anything can happen...<end><brk> I came here to make the<br> power of this land my own.<end><brk> What do you think will happen<br> if I make Moonlight Village<br> drink this drug?<end><brk> They'll become monsters<br> forever.<end><brk> And they'll obey no one but<br> me.<end><brk> But it doesn't work on<br> adults. That's why I need<br> child sacrifices.<end><brk> I was so close... So close to<br> completing this cave...<end><brk> Why save them? Why save a<br> village of monsters?!<end><brk> Would you kill me, a human,<br> just to save monsters?!<end><brk> ...I have another drug here.<end><brk> I made it from the children's<br> blood, drawn a little at a<br> time.<end><brk> What happens when a human<br> drinks it? Let me show you!",
+        "candidate_en": "Yoshizota: A Mystery Dungeon where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will<br>happen if I make Moonlight<br>Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!",
+        "wrapped_en": "Yoshizota: A Mystery Dungeon<br> where anything can happen...<end><brk> I came here to make the<br> power of this land my own.<end><brk> What do you think will<br> happen if I make Moonlight<br> Village drink this drug?<end><brk> They'll become monsters<br> forever.<end><brk> And they'll obey no one but<br> me.<end><brk> But it doesn't work on<br> adults. That's why I need<br> child sacrifices.<end><brk> I was so close... So close to<br> completing this cave...<end><brk> Why save them? Why save a<br> village of monsters?!<end><brk> Would you kill me, a human,<br> just to save monsters?!<end><brk> ...I have another drug here.<end><brk> I made it from the children's<br> blood, drawn a little at a<br> time.<end><brk> What happens when a human<br> drinks it? Let me show you!",
         "problems": [],
         "notes": []
       },
-      "review_notes": "human-edited candidate",
-      "verified_at": "2026-08-10T17:23:41+00:00"
+      "review_notes": "Copy-edit pass 2026-08-16: Joey requested へんそくちけい be rendered \"Mystery Dungeon\" (series terminology). Direct edit to en.tsv/prose_draft.tsv; no Gemini request.",
+      "verified_at": "2026-08-16T13:41:45+00:00"
     },
     "14:$4F36": {
       "section": "bank 14 — the Dragon's Maw finale",
@@ -645,7 +634,7 @@
       "verified": false,
       "state": "stale",
       "source_sha256": "e9124b4cc85be51b0aecbaba1dd319e8aa0836bc9526f83d620ef23c6314a2b0",
-      "current_en_sha256": "2622659c17d723a71bdcd439ee4e5695cc9af42fd68c549ddd954e08bb303cc9",
+      "current_en_sha256": "01a3a8926d5c0324e084f972c4ad7a5a1e7f8d318f4417f4b34a8d3cf6a60832",
       "candidate_en": "<name> received <cE3>4.",
       "ambiguities": [],
       "translator_notes": "This is a standard system notification for receiving an item, where <cE3>4 is a placeholder for the item received.",
@@ -837,12 +826,14 @@
       "verified": false,
       "state": "pending",
       "source_sha256": "8eb82b76b3f3fbf986a1012b5654cf6b420a600e45fa6343aa84c6f81fbd8a1e",
-      "current_en_sha256": "4af90a791f1681c420ff8b3e003c29c889aa3b33eb4bce88bd1d893553dcfe57",
+      "current_en_sha256": "f7792a5478198f78d12de15aef47a3f1906863b7d7957a118a6340ecabe8339a",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
       "provenance": null,
-      "checks": null,
+      "checks": {
+        "stale": "Japanese source or current prose changed after this state was recorded"
+      },
       "review_notes": ""
     },
     "14:$52B8": {
@@ -12410,8 +12401,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "0520ea8183fa79733d352f1e9d9cb4b7262492312f612d09746dd47e40cdd979",
-      "current_en_sha256": "b1421a7f6e0d00ff9293ffbde1a9cadf1c11d63964caf948ae1bb18bbdf768ef",
-      "candidate_en": "Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a strange shifting land here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.",
+      "current_en_sha256": "6f658886c8c95a1dfc69fae38b624756e9622581a2eb3750d2371fd7f68fb617",
+      "candidate_en": "Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a<br>Mystery Dungeon here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -12424,13 +12415,13 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a strange shifting land here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.",
-        "wrapped_en": "Koppa: ...So that's what<br> happened.<end><brk> You're going to save a girl<br> offered as a sacrifice...<end><brk> I heard there was a strange<br> shifting land here,<end><brk> and figured I'd find you if I<br> came, <name>.<end><brk> Koppa: But Dragon's Maw up<br> ahead won't open, so we're<br> stuck.<end><brk> Well, it's already night.<br> Let's get some sleep. Good<br> night.",
+        "candidate_en": "Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a<br>Mystery Dungeon here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.",
+        "wrapped_en": "Koppa: ...So that's what<br> happened.<end><brk> You're going to save a girl<br> offered as a sacrifice...<end><brk> I heard there was a<br> Mystery Dungeon here,<end><brk> and figured I'd find you if I<br> came, <name>.<end><brk> Koppa: But Dragon's Maw up<br> ahead won't open, so we're<br> stuck.<end><brk> Well, it's already night.<br> Let's get some sleep. Good<br> night.",
         "problems": [],
         "notes": []
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:53:53+00:00"
+      "review_notes": "Copy-edit pass 2026-08-16: Joey requested へんそくちけい be rendered \"Mystery Dungeon\" (series terminology). Direct edit to en.tsv/prose_draft.tsv; no Gemini request.",
+      "verified_at": "2026-08-16T13:41:45+00:00"
     },
     "14:$48DA": {
       "section": "bank 14: the voice in the well",
@@ -12831,8 +12822,8 @@
       "verified": true,
       "state": "accepted",
       "source_sha256": "263edcc7c5c6302e0b16e54ca8d8f8e611267ce5a41e7deab057d2311862497d",
-      "current_en_sha256": "ca17738b80f8d2eedec9851d4258c21bb12674922cdd823aa9ca88164277ab4d",
-      "candidate_en": "<cF2><cF1>   And the next morning...<mode1><$78><mode0>",
+      "current_en_sha256": "551a6f3c8e83e1ec6cf7708e7ee8bb13071ab1da5acc28363a62191c6b7d5f69",
+      "candidate_en": "<cF2><cF1>   The next morning...<mode1><$78><mode0>",
       "ambiguities": [],
       "translator_notes": "",
       "provenance": {
@@ -12845,8 +12836,8 @@
       },
       "checks": {
         "valid": true,
-        "candidate_en": "<cF2><cF1> And the next morning...<mode1><$78><mode0>",
-        "wrapped_en": "<cF2><cF1> And the next morning...<mode1><$78><mode0>",
+        "candidate_en": "<cF2><cF1> The next morning...<mode1><$78><mode0>",
+        "wrapped_en": "<cF2><cF1> The next morning...<mode1><$78><mode0>",
         "problems": [],
         "notes": [
           {
@@ -12855,8 +12846,8 @@
           }
         ]
       },
-      "review_notes": "Direct Japanese-to-English review by Codex; 2026-08-10",
-      "verified_at": "2026-08-10T18:53:54+00:00"
+      "review_notes": "Copy-edit pass 2026-08-16: Joey approved dropping the leading \"And\" (JP そして). Direct edit to en.tsv/prose_draft.tsv; wrap_en idempotency and standing checks confirmed.",
+      "verified_at": "2026-08-16T13:12:43+00:00"
     },
     "14:$5F2A": {
       "section": "bank 14: the village, the warehouse and the shrine",
@@ -14607,12 +14598,14 @@
       "verified": false,
       "state": "pending",
       "source_sha256": "40f873e687b2d9a0b771f335c963b34e3f865297feb1fd7d333805c21147fd68",
-      "current_en_sha256": "d96eac6fd4853d80f8ed6b96b515d831dfcae454b8a5a21e7275655f3557e6bd",
+      "current_en_sha256": "4db08c8c9113852d4b9cd49540ea6a513d9c9b707fd681c3efe75d955b57d021",
       "candidate_en": null,
       "ambiguities": [],
       "translator_notes": "",
       "provenance": null,
-      "checks": null,
+      "checks": {
+        "stale": "Japanese source or current prose changed after this state was recorded"
+      },
       "review_notes": ""
     },
     "14:$780A": {
@@ -14763,5 +14756,5 @@
   },
   "source_file": "script/prose_draft.tsv",
   "source_count": 521,
-  "updated_at": "2026-08-15T20:45:57+00:00"
+  "updated_at": "2026-08-16T13:41:45+00:00"
 }

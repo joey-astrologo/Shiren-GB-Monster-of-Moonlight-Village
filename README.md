@@ -32,17 +32,17 @@ Screenshots from the current English build:
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Poppins is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **0.96 battery passed — 2026-08-13** | Continue manual playtesting before tagging or distributing a final build. |
+| Release validation | **0.96 battery passed — 2026-08-16** | Continue manual playtesting before tagging or distributing a final build. |
 
-The complete normal, shuffled and redirect-all battery passed on 2026-08-13: all 72
+The complete normal, shuffled and redirect-all battery passed on 2026-08-16: all 72
 CPU-health seeds remained healthy, all renderer queues reached VBlank byte-exact, and
-1,226,636 text-visible containment frames had zero spill. Current artifact hashes:
+1,226,610 text-visible containment frames had zero spill. Current artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `bfbe87b57adba0d06fa800f89cdd487bf595c76f447437cc8ab69b4e023f975a` |
-| `build/shiren_en_shuffle.gb` | `55219fc2e9e2ec4da34cfe09f327bbfbc0a101b69b0d8d78775684661192e753` |
-| `build/shiren_en_redirect_all.gb` | `11b59056986003a23e5cdb4154f10cd709b902ed9d08d2ccb584d24e61d55390` |
+| `build/shiren_en.gb` | `882d404d8206fc85291de0824288bd8e5f8c8b87a20d5984c78da85f62f62c8e` |
+| `build/shiren_en_shuffle.gb` | `6146e1c611fccabbb23567b13c14518e420dc71502dc9aaf11860adb752fceb2` |
+| `build/shiren_en_redirect_all.gb` | `dcc3da7a74ecd4853e35a73e6af00392ca2ea63dc22c967139a113844ebf5a1a` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

@@ -30,7 +30,7 @@
 14:$4C67	Koppa: Orochi...<brk>Where is he?
 14:$4C7B	Yoshizota: Right here.
 14:$4D07	Koppa: ...
-14:$4D19	Yoshizota: A shifting land where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will happen if I make Moonlight Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!
+14:$4D19	Yoshizota: A Mystery Dungeon where anything can happen...<brk>I came here to make the power of this land my own.<brk>What do you think will<br>happen if I make Moonlight<br>Village drink this drug?<brk>They'll become monsters forever.<brk>And they'll obey no one but me.<brk>But it doesn't work on adults. That's why I need child sacrifices.<brk>I was so close... So close to completing this cave...<brk>Why save them? Why save a village of monsters?!<brk>Would you kill me, a human, just to save monsters?!<brk>...I have another drug here.<brk>I made it from the children's blood, drawn a little at a time.<brk>What happens when a human drinks it? Let me show you!
 14:$4F36	Yoshizota drank the drug!<mode1><$3C><cE7><mode0>
 14:$4F4C	Orochi: Even if I fall here,<brk>Orochi shall rise again and again... Heh heh heh.
 14:$4F8F	Koppa: Heh! If you made it this far, you're practically a monster yourself!
@@ -44,12 +44,12 @@
 14:$5146	Innkeeper: You mean Keyaki?<brk>Oh, please! She's not my daughter. I'm still single!<brk>She just wanders in now and then and helps around the inn.<brk>She's a little odd, but she's a good kid...
 14:$51D3	Keyaki: <name>! Wait up!
 14:$51DE	Keyaki: Haa... haa... I'm so glad I made it in time...<brk>You're going to rescue her, right? Here, take this!
-14:$5213	<name> received <cE3:05>.
+14:$5213	<name> received<br> <cE3:05>.
 14:$5220	Keyaki: I went up into the hills to get it. It took quite a while...<brk>Good luck!
 14:$525F	Keyaki: ...Are you okay?<brk>Please don't overdo it.
 14:$5281	Innkeeper: I believe in you.
 14:$5294	Keyaki: Hey, <name>!
-14:$52AB	<name> received <cE3:FE>.
+14:$52AB	<name> received<br> <cE3:FE>.
 
 # ============ bank 14 — Keyaki at the shrine, and Tanmomo ============
 14:$52B8	Keyaki: Good luck!
@@ -518,7 +518,7 @@
 14:$4746	<name> used the rope beside the well to pull him out.
 14:$4767	Koppa: Phew! How many days has it been since I saw daylight?<brk>You saved me. Oh!...<brk><nop>, <name>!<brk>Where have you been?! I was so lonely! Waaaaah!
 14:$47D5	<cE0:00><mode1><$02><cE0:28><name> reunited with Koppa!<mode1><$78><brk>...Maybe it's just been a while,<brk>but he definitely smells a little.
-14:$4818	Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a strange shifting land here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.
+14:$4818	Koppa: ...So that's what happened.<brk>You're going to save a girl offered as a sacrifice...<brk>I heard there was a<br>Mystery Dungeon here,<brk>and figured I'd find you if I came, <name>.<brk>Koppa: But Dragon's Maw up ahead won't open, so we're stuck.<brk>Well, it's already night. Let's get some sleep. Good night.
 14:$48DA	Koppa: Let's check out Dragon's Maw before we leave.
 14:$4905	    Dragon's Maw<br> When the dragon cries,<br> its maw shall open<brk>Koppa: When the dragon cries, huh.<brk>...Wait.<brk>Come to think of it, the shrine in Moonlight Village...!<brk>Koppa: <name>! Let's go back!<brk>Something's definitely wrong with that village!<brk>Think about it, <name>.<br>When a monster defeats you at Kuyo Pass,<brk>you get sent back to the village, right?<brk>Then if that kid Nagi gets defeated,<brk>shouldn't he be sent back too?<brk>So why do the villagers say he'll never return?<brk>Koppa: The sacrifice tradition.<brk>The Baby Tank you saw in the village.<brk>And that shrine...<brk>Moonlight Village is definitely hiding something.
 14:$4AA0	Koppa: We came all this way, but of course it's still closed...
@@ -535,7 +535,7 @@
 14:$529F	Keyaki: Here, take this!
 14:$56EF	<cE0:00><mode1><$02><cE0:27><name> can now use the Warehouse!<mode1><$78><brk>You can store all kinds of things there!<cE0:0C>
 14:$5BF2	<cF2><cF0>Nagi: We made it...<mode1><$78><mode0>
-14:$5C05	<cF2><cF1>   And the next morning...<mode1><$78><mode0>
+14:$5C05	<cF2><cF1>   The next morning...<mode1><$78><mode0>
 14:$5F2A	Kinji: Once you become an adult, the fits stop,<brk>and you stay in control even when transformed.<brk>Some people take a while to change back, like my brother...
 14:$5F8B	Rokuro: Be careful Nagi and Tagura don't attack you.<brk>Children lose control when they transform.
 14:$5FD1	Priest: We don't follow the Reeva faith...<brk>but I'll still pray for Kron's wind to guide you.
@@ -604,7 +604,7 @@
 14:$774A	Tanmomo: Mew, mew.<brk>(I've gotten so strong that no one at Kuyo Pass can beat me.<brk>Will you make me your companion?)
 14:$778D	Baby Mamel: Please take me with you too...
 14:$77D3	Baby Mamel: Thank you for saving me.<brk>Here, take this as thanks!
-14:$77FD	<name> received <cE3:FD>!
+14:$77FD	<name> received<br> <cE3:FD>!
 14:$780A	Baby Mamel: Bye! See you!
 14:$781F	Baby Mamel: Thank you for saving me.<brk>I'll send this to your Warehouse as thanks.
 14:$7850	Baby Mamel: Thank you for saving me.<brk>I'd like to give you something as thanks...<brk>but your pack and Warehouse are both full,<brk>so I can't give it to you. Bye! See you!

@@ -368,7 +368,7 @@
 13:$47A1	You feel a little fuller.
 13:$47B0	You feel fuller, but
 13:$47BB	<cE0:85>HP fell by <cE4>.
-13:$47CD	You slowed down.
+13:$47CD	Slowed down.
 13:$47DB	Dropped <cE3>
 # + `つえのこうかで <var>に` -- the staff's effect, on <var>; the effect follows.
 13:$47E2	Magic hit <var>
@@ -437,7 +437,7 @@
 13:$4B3D	<cE0:74><var> got faster!
 13:$4B4B	What! A <cE3>!
 # The shop price line. Two leading spaces are the ROM's own indent; `：` is `:`.
-13:$4B59	  Sell: <cE5> Gitan<end>
+13:$4B59	  Buy: <cE5> Gitan<end>
 
 # ---- combat ----
 # `<var>はレベル<cE4>にあがった` and its five siblings. `Lv` is established terminology;
@@ -454,7 +454,7 @@
 # + pair: `<var>は <var>から` / `<cE3>をぬすんだ` -- thief, victim, then the goods.
 13:$4C3B	<var> robbed <var>
 13:$4C42	of <cE3>!
-13:$4C4A	chanted a strange spell.
+13:$4C4A	with a strange spell.
 13:$4C58	<var> spat rotten fluid.
 13:$4C67	Your sword rusted!
 13:$4C76	Your shield rusted!
@@ -476,11 +476,11 @@
 # its old 13+14 fixed-cell derivation is superseded by the runtime pixel audit.
 13:$4D7D	Fluffy Bunny<br>healed <var>
 13:$4D88	with a spell.
-13:$4D98	It possessed you!
+13:$4D98	It possessed them!
 13:$4DA0	<var> warped away.
 13:$4DAA	<var> got help!
 13:$4DB6	You became a Big Onigiri!
-13:$4DCA	chanted a curse.
+13:$4DCA	with a curse.
 13:$4DD9	Your shield was cursed!
 # + pair: either subject line completes with `すべて のろわれた！`
 13:$4DED	Your equipped items
@@ -585,7 +585,7 @@
 # title row; its 11-byte `みしきべつのアイテム` becomes the compact heading `Unknown`.
 
 # ---- swords ----
-13:$5684	<cF0:00><br> <end>
+13:$5684	A crude wooden club.<br>Simple, but it gets<br>the job done.<br><cF0:00><end>
 13:$568A	A long-hafted blade<br>like a naginata.<br><end><cF0:00>
 13:$56A4	A reliable sword<br>used by wanderers.<br><cF0:00><br> <end>
 13:$56C1	Deals heavy damage<br>to Dragons.<br><cF0:00><br> <end>
@@ -604,9 +604,9 @@
 
 # ---- shields ----
 13:$58A3	Never rusts. Slows<br>Fullness loss.<br><end><cF0:02>
-13:$58B8	A shield made from<br>bronze.<br><end><cF0:02>
+13:$58B8	A shield forged from<br>bronze.<br><end><cF0:02>
 13:$58CD	<cF0:02><br>Never rusts.<end>
-13:$58D9	A shield made from<br>iron.<br><end><cF0:02>
+13:$58D9	A shield forged from<br>iron.<br><end><cF0:02>
 13:$58EB	<cF0:02><br>Reduces damage from<br>Dragon fire.<br> <end>
 13:$5915	Forged from Fuuma<br>iron. Its defense is<br>exceptionally high.<br><end><cF0:02>
 13:$5940	Counters monster<br>attacks.<br><cF0:02><br> <end>
@@ -706,7 +706,7 @@
 13:$644D	<cF0:0C><br>it becomes a decoy.<br><cF0:05><br> <end>
 13:$646D	<cF0:0C><br>you and it swap<br>places.<br><end><cF0:05>
 13:$648F	<cF0:0C><br>it causes a random<br>effect.<br><cF0:05><end>
-13:$64A8	<cF0:0C><br>it is held in place<br>until you attack it.<br> <brk><cF0:05><br> <end>
+13:$64A8	<cF0:0C><br>it is stunned until<br>you attack it.<br> <brk><cF0:05><br> <end>
 13:$64E4	<cF0:0C><br>it warps to the exit<br>and is held there.<br> <brk><end><cF0:05>
 13:$6511	<cF0:0C><br>it also takes any<br>damage you receive.<br><end><cF0:05>
 
@@ -716,7 +716,7 @@
 13:$6590	Copies items inside.<br><cF0:09><br><cF0:0A><br> <end>
 13:$65AD	Leave weapons or<br>shields inside to<br>strengthen them.<br>Staves gain uses.<brk><cF0:09><br><cF0:0A><br> <end>
 13:$65EB	Identifies items put<br>inside.<br><cF0:09><br><end><cF0:0A>
-13:$660B	Push it to restore<br>HP, Strength, and<br>status ailments.<br> <end>
+13:$660B	Push it to restore<br>HP, Strength, and<br>status.<br> <end>
 13:$6623	Sends inserted items<br>to storage.<end>
 13:$6640	Leave an item inside<br>to weaken it.<br><cF0:09><br><end><cF0:0A>
 13:$666B	Items put inside<br>vanish forever.<br> <end>
@@ -811,7 +811,7 @@
 14:$4C67	Koppa: Orochi...<end><brk> Where is he?
 14:$4C7B	Yoshizota: Right here.
 14:$4D07	Koppa: ...
-14:$4D19	Yoshizota: A shifting land<br> where anything can happen...<end><brk> I came here to make the<br> power of this land my own.<end><brk> What do you think will<br> happen if I make Moonlight<br> Village drink this drug?<end><brk> They'll become monsters<br> forever.<end><brk> And they'll obey no one but<br> me.<end><brk> But it doesn't work on<br> adults. That's why I need<br> child sacrifices.<end><brk> I was so close... So close to<br> completing this cave...<end><brk> Why save them? Why save a<br> village of monsters?!<end><brk> Would you kill me, a human,<br> just to save monsters?!<end><brk> ...I have another drug here.<end><brk> I made it from the children's<br> blood, drawn a little at a<br> time.<end><brk> What happens when a human<br> drinks it? Let me show you!
+14:$4D19	Yoshizota: A Mystery Dungeon<br> where anything can happen...<end><brk> I came here to make the<br> power of this land my own.<end><brk> What do you think will<br> happen if I make Moonlight<br> Village drink this drug?<end><brk> They'll become monsters<br> forever.<end><brk> And they'll obey no one but<br> me.<end><brk> But it doesn't work on<br> adults. That's why I need<br> child sacrifices.<end><brk> I was so close... So close to<br> completing this cave...<end><brk> Why save them? Why save a<br> village of monsters?!<end><brk> Would you kill me, a human,<br> just to save monsters?!<end><brk> ...I have another drug here.<end><brk> I made it from the children's<br> blood, drawn a little at a<br> time.<end><brk> What happens when a human<br> drinks it? Let me show you!
 14:$4F36	Yoshizota drank the drug!<mode1><$3C><cE7><mode0>
 14:$4F4C	Orochi: Even if I fall here,<end><brk> Orochi shall rise again and<br> again... Heh heh heh.
 14:$4F8F	Koppa: Heh! If you made it<br> this far, you're practically<br> a monster yourself!
@@ -820,7 +820,7 @@
 14:$5146	Innkeeper: You mean Keyaki?<end><brk> Oh, please! She's not my<br> daughter. I'm still single!<end><brk> She just wanders in now and<br> then and helps around the<br> inn.<end><brk> She's a little odd, but she's<br> a good kid...
 14:$51D3	Keyaki: <name>! Wait up!
 14:$51DE	Keyaki: Haa... haa... I'm so<br> glad I made it in time...<end><brk> You're going to rescue her,<br> right? Here, take this!
-14:$5213	<name> received <cE3:05>.
+14:$5213	<name> received<br> <cE3:05>.
 14:$5220	Keyaki: I went up into the<br> hills to get it. It took<br> quite a while...<end><brk> Good luck!
 14:$525F	Keyaki: ...Are you okay?<end><brk> Please don't overdo it.
 14:$5281	Innkeeper: I believe in you.
@@ -1246,7 +1246,7 @@
 14:$4746	<name> used the rope<br> beside the well to pull him<br> out.
 14:$4767	Koppa: Phew! How many days<br> has it been since I saw<br> daylight?<end><brk> You saved me. Oh!...<end><brk> <nop>, <name>!<end><brk> Where have you been?! I was<br> so lonely! Waaaaah!
 14:$47D5	<cE0:00><mode1><$02><cE0:28><name> reunited with<br> Koppa!<mode1><$78><end><brk> ...Maybe it's just been a<br> while,<end><brk> but he definitely smells a<br> little.
-14:$4818	Koppa: ...So that's what<br> happened.<end><brk> You're going to save a girl<br> offered as a sacrifice...<end><brk> I heard there was a strange<br> shifting land here,<end><brk> and figured I'd find you if I<br> came, <name>.<end><brk> Koppa: But Dragon's Maw up<br> ahead won't open, so we're<br> stuck.<end><brk> Well, it's already night.<br> Let's get some sleep. Good<br> night.
+14:$4818	Koppa: ...So that's what<br> happened.<end><brk> You're going to save a girl<br> offered as a sacrifice...<end><brk> I heard there was a<br> Mystery Dungeon here,<end><brk> and figured I'd find you if I<br> came, <name>.<end><brk> Koppa: But Dragon's Maw up<br> ahead won't open, so we're<br> stuck.<end><brk> Well, it's already night.<br> Let's get some sleep. Good<br> night.
 14:$48DA	Koppa: Let's check out<br> Dragon's Maw before we<br> leave.
 14:$4905	Dragon's Maw<br> When the dragon cries,<br> its maw shall open<end><brk> Koppa: When the dragon<br> cries, huh.<end><brk> ...Wait.<end><brk> Come to think of it, the<br> shrine in Moonlight<br> Village...!<end><brk> Koppa: <name>! Let's go<br> back!<end><brk> Something's definitely wrong<br> with that village!<end><brk> Think about it, <name>.<br> When a monster defeats you<br> at Kuyo Pass,<end><brk> you get sent back to the<br> village, right?<end><brk> Then if that kid Nagi gets<br> defeated,<end><brk> shouldn't he be sent back<br> too?<end><brk> So why do the villagers say<br> he'll never return?<end><brk> Koppa: The sacrifice<br> tradition.<end><brk> The Baby Tank you saw in<br> the village.<end><brk> And that shrine...<end><brk> Moonlight Village is<br> definitely hiding something.
 14:$4AA0	Koppa: We came all this way,<br> but of course it's still<br> closed...
@@ -1261,7 +1261,7 @@
 14:$529F	Keyaki: Here, take this!
 14:$56EF	<cE0:00><mode1><$02><cE0:27><name> can now use the<br> Warehouse!<mode1><$78><end><brk> You can store all kinds of<br> things there!<cE0:0C>
 14:$5BF2	<cF2><cF0>Nagi: We made it...<mode1><$78><mode0>
-14:$5C05	<cF2><cF1> And the next morning...<mode1><$78><mode0>
+14:$5C05	<cF2><cF1> The next morning...<mode1><$78><mode0>
 14:$5F2A	Kinji: Once you become an<br> adult, the fits stop,<end><brk> and you stay in control<br> even when transformed.<end><brk> Some people take a while to<br> change back, like my<br> brother...
 14:$5F8B	Rokuro: Be careful Nagi and<br> Tagura don't attack you.<end><brk> Children lose control when<br> they transform.
 14:$5FD1	Priest: We don't follow the<br> Reeva faith...<end><brk> but I'll still pray for<br> Kron's wind to guide you.

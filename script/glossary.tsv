@@ -98,7 +98,7 @@
 11:$4102	item	ヒャッキのたて	Hyakki Shield
 11:$410A	item	つかいすてのたて	One-Use Shield
 11:$4113	item	じらいナバリのたて	Blast Shield
-11:$411F	item	トドのたて	Todo Shield
+11:$411F	item	トドのたて	Walrus Shield
 11:$4126	item	らせんフウマのたて	Rasen Fuuma
 11:$4130	item	マムルのたて	Mamel Shield
 11:$4137	item	しんきたて2	New Shield 2
@@ -135,7 +135,7 @@
 
 # ---------------------------------------------------------------- herbs and seeds
 11:$4232	item	やくそう	Medical Herb
-11:$4237	item	おとぎりそう	Otogiri Herb
+11:$4237	item	おとぎりそう	Otogiriso
 11:$423F	item	しあわせそう	Happy Herb
 11:$4246	item	めぐすりそう	Vision Herb
 11:$424E	item	ドラゴンそう	Dragon Herb
@@ -197,7 +197,7 @@
 11:$4443	item	ばしょがえのつえ	Swap Staff
 11:$444E	item	しんきつえ2	New Staff 2
 11:$4455	item	まどうのつえ	Sorcery Staff
-11:$445D	item	かなしばりのつえ	Bind Staff
+11:$445D	item	かなしばりのつえ	Stun Staff
 11:$4467	item	いちじしのぎのつえ	Stopgap Staff
 11:$4473	item	いたみわけのつえ	Sharing Staff
 11:$447C	item	しんきつえ1	New Staff 1
@@ -208,14 +208,14 @@
 11:$4497	item	ぶんれつのツボ	Dividing Pot
 11:$44A1	item	きょうかのツボ	Upgrade Pot
 11:$44AA	item	しきべつのツボ	ID Pot
-11:$44B4	item	せなかのツボ	Back Pot
+11:$44B4	item	せなかのツボ	Heal Pot
 11:$44BC	item	そうこのツボ	Warehouse Pot
 11:$44C4	item	じゃくかのツボ	Weakening Pot
 11:$44CE	item	そこぬけのツボ	Endless Pot
 11:$44D7	item	まもののルツボ	Monster Pot
 11:$44E0	item	へんげのツボ	Change Pot
 11:$44E9	item	ごうせいのツボ	Fusion Pot
-11:$44F3	item	トドのツボ	Todo Pot
+11:$44F3	item	トドのツボ	Walrus Pot
 11:$44FB	item	しんきツボ1	New Pot 1
 
 # ---------------------------------------------------------------- treasures and other
@@ -363,7 +363,7 @@
 11:$4BD2	monster	とおせんりゅう	Floor Dragon
 11:$4BDA	monster	パコレプキン	Pumphantasm
 11:$4BE3	monster	オヤジせんしゃ	Popster Tank
-11:$4BEC	monster	にぎりへんげ	Nigiri Imp
+11:$4BEC	monster	にぎりへんげ	Nigiri Morph
 11:$4BF5	monster	ノロージョ	Curse Girl
 11:$4BFC	monster	ガイコツまどう	Skull Mage
 11:$4C06	monster	ゲイズ	Gazer
@@ -452,7 +452,7 @@
 11:$4E90	monster	スルードラゴン	Dragon Pit
 11:$4E9A	monster	パコレプキング	Pumplich
 11:$4EA5	monster	イッテツせんしゃ	Oldster Tank
-11:$4EAE	monster	にぎりもとじめ	Nigiri Lord
+11:$4EAE	monster	にぎりもとじめ	Nigiri Honcho
 11:$4EB8	monster	ノロージョのはは	Curse Mom
 11:$4EC2	monster	ガイコツまおう	Skullmancer
 11:$4ECB	monster	ハイパーゲイズ	Hyper Gazer
