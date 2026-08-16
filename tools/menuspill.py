@@ -145,6 +145,30 @@ def structured_static_cells():
 
 
 STRUCTURED_STATIC = structured_static_cells()
+_POPUP_STATIC = {}
+
+
+def popup_static_cells(profile):
+    """Exact record-free cells owned only by saved-Log Continue/New Game.
+
+    The popup deliberately borrows the confirmation slices so its ROM-backed text
+    cannot repaint the still-visible Orochi badge at $CB-$CE.  Keep this exemption
+    position-, tile- and plane-exact: adding $82/$9A globally would conceal genuine
+    ownership collisions in the ordinary menu allocator.
+    """
+    if profile['mode'] != 'dot-proportional':
+        return {}
+    key = profile['mode']
+    if key not in _POPUP_STATIC:
+        cells = {}
+        rows = ((5, 5, 'Continue', menuvwf.CONFIRM_POOL_ROWS[0]),
+                (7, 5, 'New Game', menuvwf.CONFIRM_POOL_ROWS[1]))
+        for row, col, label, base in rows:
+            pixels = compose([EN_CODES[c] for c in label], profile)
+            for index, raster in enumerate(pixels):
+                cells[(row, col + index, base + index)] = bytes(raster)
+        _POPUP_STATIC[key] = cells
+    return _POPUP_STATIC[key]
 
 
 def status_fragment_problems(pb):
@@ -317,6 +341,8 @@ def frame_invariant(pb, profile, fallback_rows=None):
     bad = []
     bg = bytes(pb.memory[BGMAP:BGMAP + 0x400])
     sh = bytes(pb.memory[SHADOW:SHADOW + 32 * VISIBLE_ROWS])
+    popup_static = popup_static_cells(profile)
+    uniform_frame = None
     for row in range(VISIBLE_ROWS):
         for col in range(VISIBLE_COLS):
             v = bg[32 * row + col]
@@ -328,9 +354,24 @@ def frame_invariant(pb, profile, fallback_rows=None):
                 continue
             addr = SHADOW + 32 * row + col
             static = STRUCTURED_STATIC.get((row, col, v))
+            got_plane = bytes(pb.memory[tile_data_addr(v):tile_data_addr(v) + 16])
             if (profile['mode'] == 'dot-proportional' and static is not None and
-                    bytes(pb.memory[tile_data_addr(v):tile_data_addr(v) + 16]) == static):
+                    got_plane == static):
                 continue
+            popup = popup_static.get((row, col, v))
+            if profile['mode'] == 'dot-proportional' and popup is not None:
+                if got_plane == popup:
+                    continue
+                # Continue clears its borrowed font planes three frames before the
+                # obsolete popup map is replaced, but only after the native transition
+                # has faded the entire rendered frame to one colour.  Admit that exact
+                # invisible zero-plane retirement without masking a visible blank row.
+                if got_plane == bytes(16):
+                    if uniform_frame is None:
+                        extrema = pb.screen.image.getextrema()
+                        uniform_frame = all(low == high for low, high in extrema)
+                    if uniform_frame:
+                        continue
             # a cell may sit under SEVERAL records' cap ranges (an overlay box's
             # rows cross the rows it covers); it is legal if ANY record explains
             # its exact value at its exact position

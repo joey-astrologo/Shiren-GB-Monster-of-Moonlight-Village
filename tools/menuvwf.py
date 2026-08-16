@@ -353,7 +353,9 @@ ROM_RANK_HEADER_CAP = ROM_FEI_PROMPT_CAP
 # excluded from pool.py's redirected-text allocator.
 RANK_SCREEN_BANK = 0x2E
 RANK_CATEGORY_INDEX = 0x05
-RANK_CATEGORY_AT = 0x4100
+# The shared reader/index gate ends below $4060.  Start here so the allocator also has
+# room for the saved-Log popup exception; rankvwf's manager still begins at $4180.
+RANK_CATEGORY_AT = 0x4060
 RANK_CATEGORY_LIMIT = 0x4180
 RANK_CATEGORY_ROW0_BASE = 0xC0
 RANK_CATEGORY_ROW1_BASE = 0xC4
@@ -382,9 +384,13 @@ SUMMARY_POOL_CAPS = (9, 11, 8)
 SUMMARY_SOURCE_CAP = 19
 SUMMARY_ALT_POOL_ROWS = SUMMARY_POOL_ROWS
 # Direct saved-title censuses prove $82-$8A and $9A-$A0 have no settled references
-# outside box 27 while an erase confirmation is visible. Box 45 is mutually exclusive
-# with that flow and has the same result, while its still-visible eighth title row owns
-# $8B-$90. Keep these slices context-static rather than adding them to the global pool.
+# outside box 27 while an erase confirmation is visible, or outside the exact box-21
+# Continue/New Game popup while it is visible over a saved summary.  That second context
+# matters for completed Log records: the generic two-row ROM pool begins at $CB and used
+# to repaint the still-visible Orochi badge at $CB-$CE with letters from ``Continue``.
+# Box 45 is mutually exclusive with those flows and has the same result, while its
+# still-visible eighth title row owns $8B-$90. Keep these slices context-static rather
+# than adding them to the global pool.
 CONFIRM_POOL_ROWS = (0x82, 0x9A)
 CONFIRM_POOL_CAPS = (9, 7)
 RANKPASS_POOL_CAPS = (4, 5)
@@ -660,6 +666,41 @@ selectorrow:
 
 RANK_CATEGORY_SRC = """
 rankcategoryalloc:
+  ; The exact saved-Log Continue/New Game popup is drawn over a still-visible summary.
+  ; Its native Orochi badge owns $CB-$CE, so it must not enter the generic two-row pool
+  ; at $CB.  Reuse the independently censused confirmation slices instead.
+  ld a,[$C69A]
+  cp $03
+  jr nz,categorynormal
+  ld a,[$C69B]
+  cp $04
+  jr nz,categorynormal
+  ld a,[$C69C]
+  cp $02
+  jr nz,categorynormal
+  ld a,[$C69D]
+  cp $0A
+  jr nz,categorynormal
+  ld a,[$C69E]
+  and $1F
+  jr nz,categorynormal
+  ld a,d
+  and a
+  jr z,continue0
+  cp $01
+  jr nz,categorybad
+  ld a,[$C0D3]
+  cp $08
+  jr nc,categorybad
+  ld a,$%02X
+  jr categoryok
+continue0:
+  ld a,[$C0D3]
+  cp $0A
+  jr nc,categorybad
+  ld a,$%02X
+  jr categoryok
+categorynormal:
   ; All two-row ROM boxes retain the established allocator except the unique title
   ; Rankings category selector (y=7).  Its 4+8 queue footprints are consecutive,
   ; screen-local, and wholly restorable by the native $00-$D2 font loader.
@@ -705,7 +746,8 @@ categoryok:
 categorybad:
   and a
   ret
-""" % (RANK_CATEGORY_ROW0_BASE, RANK_CATEGORY_ROW1_BASE,
+""" % (CONFIRM_POOL_ROWS[1], CONFIRM_POOL_ROWS[0],
+         RANK_CATEGORY_ROW0_BASE, RANK_CATEGORY_ROW1_BASE,
          ROM_POOL_BASE, ROM_POOL_BASE + 8)
 
 

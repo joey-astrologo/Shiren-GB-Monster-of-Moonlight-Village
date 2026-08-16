@@ -117,8 +117,8 @@ INDEX_ORG = 0x4400          # 3-byte entries from here to $8000: 5120 of them
 TEXT_ORG = 0x4100           # text banks: past their own index table and reader
 
 # Bank 46's first $300 bytes after the shared text reader are a real code reservation,
-# not a convenient-looking $FF run.  menuvwf installs the title Rankings category
-# allocator at $4100 and rankvwf installs the screen manager/static raster behind it.
+# not a convenient-looking $FF run.  menuvwf installs the title/pop-up category
+# allocator at $4060 and rankvwf installs the screen manager/static raster behind it.
 # Starting this bank's redirected text at $4400 keeps normal, shuffled and redirect-all
 # layouts disjoint by construction.
 RANK_SCREEN_BANK = 0x2E

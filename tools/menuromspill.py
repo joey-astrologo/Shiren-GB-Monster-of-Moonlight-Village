@@ -66,6 +66,12 @@ def rom_slice(rows, row, boxes):
     if rows == 1 and row == 0:
         return menuvwf.ROM_ONE_BASE, 9
     if rows == 2 and 0 <= row < 2:
+        if 24 in boxes:
+            # Continue/New Game is still a ROM-backed row, but it is drawn over the
+            # completed-Log Orochi badge at $CB-$CE.  Its exact screen-local allocator
+            # therefore uses the confirmation slices rather than the generic $CB pool.
+            return ((menuvwf.CONFIRM_POOL_ROWS[0], menuvwf.CONFIRM_POOL_CAPS[0]),
+                    (menuvwf.CONFIRM_POOL_ROWS[1], menuvwf.CONFIRM_POOL_CAPS[1]))[row]
         if 47 in boxes:
             return ((menuvwf.RANK_CATEGORY_ROW0_BASE, 4),
                     (menuvwf.RANK_CATEGORY_ROW1_BASE, 8))[row]
@@ -254,6 +260,18 @@ class Audit:
                 owners[(first + i, tile)] = expected
             pixel_problems = self._check_pixels(pb, expected,
                                                 'f%d visible' % self.frame)
+            if pixel_problems and 24 in expected.boxes:
+                # The native Continue transition clears this borrowed screen-local
+                # slice shortly before replacing the obsolete popup map.  Those cells
+                # are invisible by then: the complete rendered frame is uniformly
+                # blank.  Accept only that exact all-zero retirement, never a partially
+                # repainted row or a visible blank popup.
+                zero = all(bytes(pb.memory[menuspill.tile_data_addr(tile):
+                                           menuspill.tile_data_addr(tile) + 16]) ==
+                           bytes(16) for tile in ids)
+                extrema = pb.screen.image.getextrema() if zero else ()
+                if zero and all(low == high for low, high in extrema):
+                    pixel_problems = []
             if pixel_problems:
                 self.problems += pixel_problems
             self.visible_checks += 1

@@ -114,6 +114,7 @@ if [ -f saves/shiren_en_path_select.srm ]; then
 fi
 if [ -f saves/shiren_en_fays_puzzles.srm ]; then
   python3 tools/faypathspill.py build/shiren_en.gb
+  python3 tools/orochipopupspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log_3_erase_copy_log_vwf.srm ] &&
    [ -f saves/shiren_en_log_1_quit_erase_copy_log_vwf.srm ]; then

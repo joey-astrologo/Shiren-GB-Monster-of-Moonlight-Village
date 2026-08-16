@@ -149,6 +149,7 @@ def main() -> int:
             "--native-control",
             "build/orochisymbolspill_native_control.gb",
         )
+        py("orochipopupspill.py", rom)
         py(
             "deathrankspill.py",
             rom,
