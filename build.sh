@@ -112,6 +112,9 @@ if [ -f saves/shiren_en_path_select.srm ]; then
   python3 tools/nameflowspill.py build/shiren_en.gb \
           --ram saves/shiren_en_path_select.srm
 fi
+if [ -f saves/shiren_en_fays_puzzles.srm ]; then
+  python3 tools/faypathspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log_3_erase_copy_log_vwf.srm ] &&
    [ -f saves/shiren_en_log_1_quit_erase_copy_log_vwf.srm ]; then
   python3 tools/copylogspill.py build/shiren_en.gb

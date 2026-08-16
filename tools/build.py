@@ -31,6 +31,7 @@ import lint_en                          # control-token parity: what encode_en c
 import name6                            # the player name, 4 characters -> 6
 import rank6                            # the rankings board, 4 name characters -> 6
 import itemfix                          # runtime item punctuation/counter normalization
+import faypath                          # status-only compact Fay/Expert Path values
 import awardfix                         # Awards screen's native four-kana code -> heading
 import decoyname                        # Decoy Staff target uses the live player name
 import vwf                              # retained uniform-6px diagnostic renderer
@@ -1985,6 +1986,18 @@ def main():
     else:
         notes.append('--no-itemfix: native runtime minus, arrow counter, unidentified '
                      'Info help and empty-Pot See text remain')
+
+    # ---- Fay's dungeon / Expert Path values
+    #
+    # The title menu and the in-dungeon status screen select the same `Fay's Puzzles`
+    # source. The latter owns only columns 9..18, so route just that one far call through
+    # exact `Puzzle`/`Expert` producers. The Expert source also carries trailing fixed-cell
+    # padding which would overwrite the same border. `--no-faypath` retains both controls.
+    if '--no-faypath' not in a:
+        faypath.install(buf, notes)
+    else:
+        notes.append("--no-faypath: status keeps the clipped/padded Fay and Expert "
+                     "sources")
 
     # ---- Awards screen heading
     #
