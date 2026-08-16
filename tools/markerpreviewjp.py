@@ -133,8 +133,9 @@ def render(output, rom, cases, scale, columns):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('output', nargs='?',
-                        default='build/arrival_cards_japanese.png')
+    # Defaults differ per mode: sharing one filename made `--forms` silently overwrite
+    # the full sheet, which is exactly the pair a reader runs back to back.
+    parser.add_argument('output', nargs='?', default=None)
     parser.add_argument('--rom', default=DEFAULT_ROM,
                         help='a --no-markers build; built on demand if absent')
     parser.add_argument('--forms', action='store_true',
@@ -151,7 +152,9 @@ def main():
                          '`python3 tools/fixtures.py states build/shiren_en.gb`' % STATE)
     if not os.path.exists(args.rom):
         build_native_rom(args.rom)
-    render(args.output, args.rom, FORM_CASES if args.forms else ALL_CASES,
+    output = args.output or ('build/arrival_cards_japanese_forms.png' if args.forms
+                             else 'build/arrival_cards_japanese.png')
+    render(output, args.rom, FORM_CASES if args.forms else ALL_CASES,
            args.scale, args.columns)
 
 

@@ -254,6 +254,35 @@ Arrival cards use their approved source-raster artwork. Ending credits use separ
 licensed Poppins-derived graphical masks;
 ordinary builds consume stable baked assets and do not depend on a system TTF.
 
+## Arrival card audition
+
+Town and dungeon arrival cards are graphics, not script text. Audition the installed
+English artwork, or the Japanese originals it replaces, without changing the ROM:
+
+```sh
+python3 tools/markerpreview.py             # English, 8 forms -> build/arrival_cards_source.png
+python3 tools/markerpreviewjp.py           # Japanese, all 25 cards -> build/arrival_cards_japanese.png
+python3 tools/markerpreviewjp.py --forms   # Japanese, 8 forms -> build/arrival_cards_japanese_forms.png
+```
+
+`markerpreview.py` reads the same source-raster masks as the ROM installer, so its sheet
+auditions the replacement artwork directly.
+
+The Japanese card cannot simply be read out of the ROM. Bank 31 composes it at runtime
+from a background fill, an optional floor number, and a place name built from 16x16
+glyphs, so the game has to draw it. `markerpreviewjp.py` therefore builds a
+`--no-markers` ROM — which keeps the native cards — drives it to a real arrival using
+`saves/town.state`, and forces each selector/floor pair at the card entry the way
+`floormarkerspill.py` does. The first run leaves `build/arrival_cards_native.gb` behind
+and reuses it; delete it to rebuild.
+
+Both tools paint through the same helper, so an English cell and a Japanese cell are
+produced by identical code and compare directly. `--forms` renders the same eight cases as
+`markerpreview.py` for a side-by-side sheet; the default renders every floor/name pairing
+the native tables can select. Accepts `--scale` and `--columns`.
+
+Neither is a test. `markerspill.py` and `floormarkerspill.py` prove the shipped cards.
+
 ## Repository map
 
 ```text
