@@ -134,6 +134,12 @@ fi
 if [ -f saves/shiren_en_log_2_action_pots.srm ]; then
   python3 tools/actionpotspill.py build/shiren_en.gb
 fi
+# The only seven-row Floor action box. A row past the per-box proportional cap does not
+# merely lose VWF: it skips the floor-info hook, so the Info return never publishes and
+# the LCD stays disabled. Asserts full proportional coverage AND that the screen returns.
+if [ -f saves/shiren_en_log3_unidentified_pot_crash.srm ]; then
+  python3 tools/unidentifiedpotspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log_1_password.srm ]; then
   python3 tools/awardspill.py build/shiren_en.gb \
     --ram saves/shiren_en_log_1_password.srm \

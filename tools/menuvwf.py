@@ -3068,8 +3068,15 @@ romshape:
   xor a
   ld [$C0D0],a
 shapeok:
+  ; VWF rows per box. This was $06, which is every action box EXCEPT one: an
+  ; identity-hidden Pot on the floor. Hiding an identity inserts `Name`, and a Pot
+  ; alone adds `See` and `Push`, so `Take/See/Push/Toss/Swap/Name/Info` is seven rows
+  ; and `Info` fell out to fixed width. That was not merely cosmetic -- the fallback
+  ; row never reaches the floor-info hook, so `fiborder` never saw D == [$C69C]-1,
+  ; `fifinish`/publishmap never ran, and the LCD stayed disabled after the description
+  ; closed. The player got a white screen. See tools/unidentifiedpotspill.py.
   ld a,d
-  cp $06
+  cp $08
   jp nc,fallback
 titleok:
   ld a,l
