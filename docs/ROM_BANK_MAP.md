@@ -65,6 +65,14 @@ installer should modify them:
 | `4:$7450-$7452`, `4:$7464-$7478` | `tools/itemfix.py` | Empty/action-pot text and pointer |
 | `11:$796F-$79B1` | `tools/awardfix.py` | Pass/Awards screen renderer and title slot |
 | `31:$41A0-$41A1` | `tools/build.py` | Name-entry grid stride |
+| `4:$69F2-$69F5` | `tools/summarydifficulty.py` | Save-summary difficulty column offsets |
+
+The save-summary offsets are the clearest example of a table whose values encode SOURCE
+lengths. `4:$69F2` right-aligns each difficulty by its Japanese kana count, so translating
+a label longer than its source silently clips it against the thirteen-cell field — the
+copier at `4:$69EB` runs to the terminator and never reports a problem. Only `Normal`
+(`ふつう`, three cells) grows in English, which is why it was the only visible failure.
+The paired index table at `4:$69F6` is asserted but not modified.
 
 ## Expanded banks: current ownership
 

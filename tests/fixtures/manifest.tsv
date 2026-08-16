@@ -34,3 +34,4 @@ shiren_en_path_select.srm	c96a72324655701e68ae7538d0260aa02d03b0c4c02e214733ac08
 shiren_en_fays_puzzles.srm	983ceca853ea5e75a009c8c75894f8a573ac1742e9f18c091a50b939fe51e180	Shiren	Fay selector, puzzle 1 and completed Expert Log 1; validates both compact Path values, the full Fay title/borders, and Orochi-badge ownership under Continue/New Game.
 shiren_en_ranking_repaired.srm	51a03e080d621375730eb7b0f5d3e36b73c80bf7b3ea9b7f64d25ca59f0f9988	Shiren	Repaired wide-name ranking table used by Rankings and structured-screen controls.
 shiren_en_rescue.srm	35b5cc5d031a3210636c3225508ac6bb3793de1248444655f293e3f865c66620	Shiren	Nagi follows Shiren beside the exit stairs; validates rescued-child messages.
+shiren_en_log3_normal.srm	0ea9e8947a51cfac5582ca705e3779f16c338d625a274338d34f90d56431263b	Shiren	Log 3 on Normal difficulty; validates the save-summary difficulty column, whose offset table was sized for the shorter Japanese kana and clipped Normal to `Nor`.

@@ -30,19 +30,29 @@ import propvwf                                               # noqa: E402
 import startspill                                            # noqa: E402
 
 
+# Selecting Adventure summarizes the first log. A fixture whose interesting save is not
+# log 1 supplies its own route, so difficulty coverage does not depend on save ordering.
+DEFAULT_ROUTE = ({300: ('a',)}, 340)
+LOG3_ROUTE = ({300: ('a',), 380: ('down',), 460: ('down',)}, 560)
+
 FIXTURES = (
     ('numberless Dragon\'s Maw', 'shiren_en_log_1_talk_to_koppa.srm',
-     "Dragon's Maw", 'Hard', None, None, None),
+     "Dragon's Maw", 'Hard', None, None, None, DEFAULT_ROUTE),
     ('numbered Dragon\'s Maw', 'shiren_en_log_1_dragons_maw.srm',
-     "19F Dragon's Maw", 'Hard', None, None, None),
+     "19F Dragon's Maw", 'Hard', None, None, None, DEFAULT_ROUTE),
     ('numbered Koma Cave', 'shiren_en_log_1_fixed_width_save_info.srm',
-     ' 5F Koma Cave', 'Hard', None, None, None),
+     ' 5F Koma Cave', 'Hard', None, None, None, DEFAULT_ROUTE),
     ('forced Moonlight Exit', 'shiren_en_log_1_talk_to_koppa.srm',
-     'Moonlight Exit', 'Hard', 0x15, None, 9),
+     'Moonlight Exit', 'Hard', 0x15, None, 9, DEFAULT_ROUTE),
     ('numbered Moonlight Exit', 'shiren_en_log1_moonlight_exit.srm',
-     ' 1F Moonlight Exit', 'Expert', None, None, 11),
+     ' 1F Moonlight Exit', 'Expert', None, None, 11, DEFAULT_ROUTE),
     ('floor-50 Moonlight Exit', 'shiren_en_log1_moonlight_exit.srm',
-     '50F Moonlight Exit', 'Expert', 0x15, '50F ', 11),
+     '50F Moonlight Exit', 'Expert', 0x15, '50F ', 11, DEFAULT_ROUTE),
+    # `Normal` is the one difficulty whose English is longer than its Japanese, so it is
+    # the only one the native kana-sized offset table clips. Every other fixture here is
+    # Hard or Expert, which is exactly why the clipped `Nor` survived to a real player.
+    ('log 3 Normal difficulty', 'shiren_en_log3_normal.srm',
+     ' 1F Forest', 'Normal', None, None, None, LOG3_ROUTE),
 )
 
 
@@ -73,13 +83,13 @@ def main():
         os.makedirs(args.png_dir, exist_ok=True)
 
     paths = []
-    for label, filename, expected, difficulty, force_key, force_prefix, expected_tiles \
-            in FIXTURES:
+    for label, filename, expected, difficulty, force_key, force_prefix, expected_tiles, \
+            route in FIXTURES:
         path = os.path.join(ROOT, 'saves', filename)
         if not os.path.exists(path):
             raise SystemExit('savesummaryspill: missing %s' % path)
         paths.append((label, path, expected, difficulty, force_key, force_prefix,
-                      expected_tiles))
+                      expected_tiles, route))
 
     profile = menuspill.renderer_profile(args.rom)
     if profile['mode'] != 'dot-proportional':
@@ -88,7 +98,8 @@ def main():
     audits = []
     problems = []
     for label, ram, expected, expected_difficulty, force_key, force_prefix, \
-            expected_tiles in paths:
+            expected_tiles, route in paths:
+        script, frames = route
         png = None
         if args.png_dir:
             safe = ''.join(ch.lower() if ch.isalnum() else '_' for ch in label).strip('_')
@@ -106,8 +117,8 @@ def main():
                 pb.hook_register(4, menuvwf.SUMMARY_PRODUCER_AT, force_place, None)
 
         audit = startspill.run_scenario(
-            PyBoy, args.rom, profile, label, 340,
-            startspill.boot_script({300: ('a',)}), ram=ram, png=png,
+            PyBoy, args.rom, profile, label, frames,
+            startspill.boot_script(script), ram=ram, png=png,
             audit_class=SummaryAudit, hook_setup=hook_setup)
         audits.append(audit)
         rows = {row: (cells, source) for row, cells, source in audit.summary_rows}
