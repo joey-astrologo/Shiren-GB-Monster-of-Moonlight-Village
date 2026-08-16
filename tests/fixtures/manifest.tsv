@@ -13,6 +13,7 @@ shiren_en_log_1_koppa_exit_pee.srm	49086d31a05695d156656b90ea60d394d23abb690f01c
 shiren_en_log_1_koppa_exit_pee_v2.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Second Koppa floor with the stairs immediately right of Shiren.
 shiren_en_log_1_orochi_symbol.srm	ea41082a249c5d42f3f82b6e049ebe6f09c39696fa767f1282f6727b3640f1b3	Shiren	Cleared-Orochi badge and Rankings/Adventure ownership cycle.
 shiren_en_log_1_password.srm	e316fe86ef52494d7ce88d45c19b1718534b413e124f45c10fa2a19787c30a57	Shiren	Pass/Awards screen fixture used for title, VWF and all-entry matrix checks.
+shiren_en_logs_passwords.srm	7080f77602453d86f4657a925550b625cb52fbd9fe63ac54c0cc2f329ebb0624	Shiren	Logs 1 and 3 both have Pass/Awards records; validates the generated multi-log selector and guards its former LCD-off freeze.
 shiren_en_log_1_pot_see_action.srm	c2276bdcc144f7f25e1c66c543e185473f6cb8af119188e91ef892016dc5baa9	Shiren	Log 1 starts on an empty Storage Pot; validates the See result.
 shiren_en_log_1_quit_erase_copy_log_vwf.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Load, Quit, Erase Log 3 route; validates Copy Log VWF restoration.
 shiren_en_log_1_shield_VWF.srm	7ba00c75f4a4037e8b78f83e28cd116950dab245145cf7db8d73ef0175d986e4	Shiren	Two-star unidentified shield; validates list and item-information VWF.

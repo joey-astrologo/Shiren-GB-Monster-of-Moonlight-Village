@@ -136,6 +136,10 @@ if [ -f saves/shiren_en_log_1_password.srm ]; then
     --matrix --control build/_base_expanded.gb \
     --csv build/award_passwords.csv
 fi
+if [ -f saves/shiren_en_logs_passwords.srm ]; then
+  python3 tools/awardspill.py build/shiren_en.gb \
+    --ram saves/shiren_en_logs_passwords.srm --multi-log
+fi
 if [ -f saves/shiren_en_log_1_dragons_maw.srm ]; then
   python3 tools/dragonmawmarkerspill.py build/shiren_en.gb
   python3 tools/identityhiddenspill.py build/shiren_en.gb

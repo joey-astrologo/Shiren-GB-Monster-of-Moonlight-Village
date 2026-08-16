@@ -195,8 +195,19 @@ RANK_UPLOAD_AT = 0x4240
 START_BLANK_AT = 0x42B6
 SELECTOR_BANK = 0x22
 SELECTOR_INDEX = 0x05
+SELECTOR_ROW_INDEX = 0x07
 SELECTOR_AT = 0x4060
 SELECTOR_LIMIT = 0x4100
+# Screen 32 builds one Pass-selector row per eligible log by copying the shared
+# ``Log`` label, replacing its terminator with the log digit, and immediately appending
+# the next row.  That happened to produce the native nine-byte stride only because the
+# Japanese label has seven glyphs.  English ``Log`` is shorter, so the proportional
+# scanner consumed every generated log as row 0 and left the final native row outside
+# the VWF/finalizer path, freezing the LCD off.  Replace the six-byte digit tail with a
+# far call that appends a fresh terminator after each generated row.
+SELECTOR_ROW_PATCH_BANK = 0x04
+SELECTOR_ROW_PATCH_AT = 0x7924
+SELECTOR_ROW_PATCH_OLD = bytes.fromhex('1b0e02811213')
 SUMMARY_BANK = 0x23
 SUMMARY_INDEX = 0x05
 SUMMARY_AT = 0x4060
@@ -631,6 +642,17 @@ selrankok:
 selnone:
   xor a
   pop hl
+  ret
+
+selectorrow:
+  dec de
+  ld c,$02
+  add a,c
+  ld [de],a
+  inc de
+  ld a,$FF
+  ld [de],a
+  inc de
   ret
 
 """
@@ -4180,9 +4202,24 @@ def install(buf, notes=None, font=None):
         if bytes(buf[selector_ix:selector_ix + 2]) != b'\xff\xff':
             raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
                              % (SELECTOR_INDEX, SELECTOR_BANK))
+        selector_row_ix = (_off(SELECTOR_BANK, 0x4000) +
+                           SELECTOR_ROW_INDEX - 1)
+        if bytes(buf[selector_row_ix:selector_row_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                             % (SELECTOR_ROW_INDEX, SELECTOR_BANK))
         buf[selector_at:selector_at + len(selector_code)] = selector_code
         buf[selector_ix] = selector_labels['selectorshape'] & 0xFF
         buf[selector_ix + 1] = selector_labels['selectorshape'] >> 8
+        buf[selector_row_ix] = selector_labels['selectorrow'] & 0xFF
+        buf[selector_row_ix + 1] = selector_labels['selectorrow'] >> 8
+
+        selector_patch_at = _off(SELECTOR_ROW_PATCH_BANK, SELECTOR_ROW_PATCH_AT)
+        selector_patch = bytes((0xD7, SELECTOR_ROW_INDEX, SELECTOR_BANK, 0, 0, 0))
+        if bytes(buf[selector_patch_at:selector_patch_at + len(selector_patch)]) != \
+                SELECTOR_ROW_PATCH_OLD:
+            raise SystemExit('menuvwf: Pass log-selector producer moved at %d:$%04X'
+                             % (SELECTOR_ROW_PATCH_BANK, SELECTOR_ROW_PATCH_AT))
+        buf[selector_patch_at:selector_patch_at + len(selector_patch)] = selector_patch
 
         category_code, category_labels = gbasm.assemble(
             RANK_CATEGORY_SRC, RANK_CATEGORY_AT)
@@ -4633,6 +4670,9 @@ def install(buf, notes=None, font=None):
                 notes.append('menuvwf: title and Log-selector rows use the keyed VWF '
                              'allocator; summary/confirm/Rank+Pass/difficulty rows use '
                              'fixed-cell fallback')
+            notes.append('menuvwf: generated Pass selector terminates each English Log '
+                         'row independently; two- and three-log forms stay inside the '
+                         'title transaction')
             notes.append('menuvwf: %d-byte item-page transaction helper at '
                          '%d:$%04X; item text transitions are old -> white -> '
                          'complete shadow map'

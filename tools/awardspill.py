@@ -32,6 +32,7 @@ STAGING = 0xC616
 SHADOW = 0xC300
 SHAPE_AWARDS = (0, 6, 5, 18, 0)
 SHAPE_TITLE = (7, 3, 1, 4, 0)
+SHAPE_PASS_LOG = (5, 9, 9, 2)  # x, y, width, flags; row count is live-log count
 FLAG_BASES = (0xC57D, 0xC58D, 0xC59D)
 PASSWORD_BASES = (0xC579, 0xC589, 0xC599)
 PASSWORD_TABLE = (4, 0x79C4)
@@ -59,6 +60,10 @@ BUTTONS = {
     1230: 'down', 1270: 'down', 1310: 'down', 1350: 'down', 1390: 'down',
     1460: 'a', 1700: 'down', 1800: 'a', 2000: 'a',
 }
+# A title with three populated logs has only six rows, so Rank/Pass is reached after
+# three Down presses.  The ordinary one-log fixture has eight rows and retains the
+# five-Down schedule above.
+MULTI_LOG_BUTTONS = {1350: None, 1390: None}
 
 
 def _codes(pb, source, limit=32):
@@ -75,7 +80,7 @@ def _codes(pb, source, limit=32):
 
 def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
         award_index=None, password_seed=None, unlock_all=False,
-        extra_buttons=None):
+        extra_buttons=None, pass_logs_override=None):
     with tempfile.TemporaryDirectory(prefix='awardspill-') as tmp:
         work = os.path.join(tmp, 'awards.gb')
         shutil.copyfile(rom, work)
@@ -90,12 +95,27 @@ def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
         drawers = []
         screen_rows = []
         paged_awards = []
+        pass_log_lists = []
+        pass_selector = []
         proportional = []
         pending = []
         page_callbacks = []
 
         def at_dispatch(_ctx=None):
             dispatches.append((frame[0], pb.register_file.A))
+            if pb.register_file.A == 32:
+                if pass_logs_override is not None:
+                    values = tuple(pass_logs_override) + (0xFF,)
+                    for offset in range(4):
+                        pb.memory[0xC6E3 + offset] = (values[offset]
+                                                     if offset < len(values) else 0xFF)
+                logs = []
+                for address in range(0xC6E3, 0xC6E7):
+                    value = pb.memory[address]
+                    if value == 0xFF:
+                        break
+                    logs.append(value)
+                pass_log_lists.append((frame[0], tuple(logs)))
             # The log picker computes the page count before screen 34 is drawn.  For the
             # all-unlocked pagination fixture, publish the five bytes as screen 32 opens
             # so its native count and arrow setup see the same state as the later stager.
@@ -138,6 +158,8 @@ def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
                       shape, source, _codes(pb, source))
             if kind == 'drawer' and frame[0] >= 1990:
                 screen_rows.append(record)
+            if (shape[0], shape[1], shape[3], shape[4]) == SHAPE_PASS_LOG:
+                pass_selector.append(record)
             if shape == SHAPE_AWARDS:
                 if kind == 'drawer':
                     paged_awards.append((frame[0], pb.memory[0xC6DE], record[2],
@@ -194,6 +216,8 @@ def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
             'stages': stages, 'drawers': drawers,
             'proportional': proportional, 'epilogues': epilogues,
             'screen_rows': screen_rows,
+            'pass_log_lists': pass_log_lists,
+            'pass_selector': pass_selector,
             'paged_awards': paged_awards,
             'page_callbacks': page_callbacks,
             'final_records': (tuple(menuspill.records(pb, profile))
@@ -204,6 +228,8 @@ def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
             'final_page_count': pb.memory[0xC6BE],
             'final_colors': (len(set(last.convert('RGB').getdata()))
                              if last is not None else 0),
+            'final_transition_state': pb.memory[0xC0D7],
+            'final_lcdc': pb.memory[0xFF40],
         }
         pb.stop(save=False)
         return result
@@ -242,6 +268,37 @@ def _award_record(result):
 def _code_text(codes):
     inverse = {code: char for char, code in menuvwf.propvwf.EN_CODES.items()}
     return ''.join(inverse.get(code, '?') for code in codes)
+
+
+def _pass_selector_problems(result, label, expected_logs):
+    """Require one complete proportional row for every generated Pass log."""
+    problems = []
+    lists = result['pass_log_lists']
+    if len(lists) != 1:
+        return ['%s staged %d Pass log list(s), expected 1' % (label, len(lists))]
+    logs = lists[0][1]
+    if logs != tuple(expected_logs):
+        problems.append('%s exposed logs %s, expected %s'
+                        % (label, logs, tuple(expected_logs)))
+    expected = tuple((0,) + tuple(menuvwf.propvwf.EN_CODES[ch] for ch in 'Log') +
+                     (log + 2,) for log in logs)
+    drawer_rows = tuple(tuple(record[6]) for record in result['pass_selector']
+                        if record[1] == 'drawer')
+    proportional_rows = tuple(tuple(record[6]) for record in result['pass_selector']
+                              if record[1] == 'proportional')
+    if drawer_rows != expected:
+        problems.append('%s rows were %s, expected %s'
+                        % (label, drawer_rows, expected))
+    if proportional_rows != expected:
+        problems.append('%s sent %s through VWF, expected %s'
+                        % (label, proportional_rows, expected))
+    if result['final_transition_state'] != 0:
+        problems.append('%s left title transaction state $%02X active'
+                        % (label, result['final_transition_state']))
+    if not result['final_lcdc'] & 0x80:
+        problems.append('%s left the LCD disabled ($FF40=$%02X)'
+                        % (label, result['final_lcdc']))
+    return problems
 
 
 def matrix(PyBoy, rom, control, ram, profile, frames, password_seed,
@@ -350,6 +407,9 @@ def main():
     parser.add_argument('--png')
     parser.add_argument('--frames', type=int, default=2300)
     parser.add_argument('--trace', action='store_true')
+    parser.add_argument('--multi-log', action='store_true',
+                        help='use the three-populated-log title route and verify the '
+                             'generated Pass log selector')
     parser.add_argument('--matrix', action='store_true',
                         help='isolate all 40 award flags and verify their passwords')
     parser.add_argument('--control', default='build/_base_expanded.gb',
@@ -364,6 +424,8 @@ def main():
             raise SystemExit('awardspill: missing %s' % path)
     if args.matrix and not os.path.exists(args.control):
         raise SystemExit('awardspill: missing control ROM %s' % args.control)
+    if args.multi_log and args.matrix:
+        raise SystemExit('awardspill: --multi-log and --matrix are separate routes')
     if (args.csv or args.all_png) and not args.matrix:
         raise SystemExit('awardspill: --csv/--all-png require --matrix')
 
@@ -371,7 +433,8 @@ def main():
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('awardspill: requires the approved proportional renderer')
     result = run(_import_pyboy(), args.rom, args.ram, profile, args.frames,
-                 args.png, args.trace)
+                 args.png, args.trace,
+                 extra_buttons=(MULTI_LOG_BUTTONS if args.multi_log else None))
     problems = []
     if not any(index == 34 for _frame, index in result['dispatches']):
         problems.append('real title route never dispatched Awards screen 34; got %s'
@@ -393,8 +456,34 @@ def main():
                         % (title, TITLE_TEXT, TITLE_CODES))
     if result['final_colors'] <= 1:
         problems.append('ordinary Awards route ended on a blank/white screen')
+    max_selector = None
+    if args.multi_log:
+        problems += _pass_selector_problems(
+            result, 'two-log Pass selector', (0, 2))
+        # The supplied SRAM naturally exercises Logs 1 and 3. Override only the live
+        # selector list in a second run to cover its maximum three-row form as well;
+        # stop before choosing a synthetic log so no unrelated award state is assumed.
+        max_selector = run(
+            _import_pyboy(), args.rom, args.ram, profile, 1900,
+            extra_buttons=MULTI_LOG_BUTTONS, pass_logs_override=(0, 1, 2))
+        problems += _pass_selector_problems(
+            max_selector, 'three-log Pass selector', (0, 1, 2))
 
     print('awardspill: dispatches %s' % result['dispatches'])
+    if args.multi_log and result['pass_log_lists']:
+        logs = result['pass_log_lists'][0][1]
+        print('  Pass selector: %d eligible log(s) %s; %d drawer, %d proportional row(s)'
+              % (len(logs), tuple(log + 1 for log in logs),
+                 sum(record[1] == 'drawer' for record in result['pass_selector']),
+                 sum(record[1] == 'proportional'
+                     for record in result['pass_selector'])))
+    if max_selector is not None and max_selector['pass_log_lists']:
+        logs = max_selector['pass_log_lists'][0][1]
+        print('  max selector: %d eligible log(s) %s; %d drawer, %d proportional row(s)'
+              % (len(logs), tuple(log + 1 for log in logs),
+                 sum(record[1] == 'drawer' for record in max_selector['pass_selector']),
+                 sum(record[1] == 'proportional'
+                     for record in max_selector['pass_selector'])))
     if result['stages']:
         at, log, page, flags = result['stages'][0]
         print('  real stager: f%d log=%d page=%d; flag bytes %s'
