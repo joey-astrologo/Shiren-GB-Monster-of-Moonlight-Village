@@ -109,14 +109,25 @@ local phase = "armed"
 local target_slot, target_x, target_y = nil, nil, nil
 local original_sp = nil
 local wrapper_original = nil
+local scratch_original = nil     -- $FF90/$FF91, saved across the spawn
 local constructed = false
 
 local function restore_wrapper()
-  if wrapper_original == nil then return end
-  for i, value in ipairs(wrapper_original) do
-    wr(WRAPPER + i - 1, value)
+  if wrapper_original ~= nil then
+    for i, value in ipairs(wrapper_original) do
+      wr(WRAPPER + i - 1, value)
+    end
+    wrapper_original = nil
   end
-  wrapper_original = nil
+  -- $FF90 is the constructor's tier argument, but it is ALSO shared scratch: the heal
+  -- routine at 15:$6703 reads $FF90/$FF91 as a 16-bit pointer. Leaving our tier byte
+  -- there would let this helper corrupt the very message it exists to test, so both
+  -- bytes go back exactly as they were.
+  if scratch_original ~= nil then
+    wr(0xFF90, scratch_original[1])
+    wr(0xFF91, scratch_original[2])
+    scratch_original = nil
+  end
 end
 
 local function fail(message)
@@ -205,6 +216,12 @@ local function install_wrapper(state)
     0xC3, RENDERER % 0x100,
           math.floor(RENDERER / 0x100),     -- jp $76C8
   }
+  scratch_original = { rd(0xFF90), rd(0xFF91) }
+  if scratch_original[1] == nil or scratch_original[2] == nil then
+    scratch_original = nil
+    fail("cannot read the $FF90 scratch pair")
+    return false
+  end
   wrapper_original = {}
   for i = 1, #wrapper do
     local old = rd(WRAPPER + i - 1)
