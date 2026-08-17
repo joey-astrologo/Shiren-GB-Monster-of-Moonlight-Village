@@ -42,6 +42,20 @@ The game stores each tier's 101 24-bit rewards as separate low, middle, and high
 Every one of these bytes must remain identical to the Japanese ROM. `tools/enemyexp.py` checks
 all 303 reconstructed rewards (909 bytes) on every build.
 
+**EXP is only three of each tier's SEVEN planes.** Each tier is seven 101-byte planes; the
+four before the reward triple carry the rest of the constructed actor's stats, and those are
+what a collision would have to hit to change DAMAGE rather than experience:
+
+| Tier | Stat planes | EXP planes |
+|---:|:---|:---|
+| 1 | `$6C34` `$6C99` `$6CFE` `$6D63` | `$6DC8` `$6E2D` `$6E92` |
+| 2 | `$6F12` `$6F77` `$6FDC` `$7041` | `$70A6` `$710B` `$7170` |
+| 3 | `$71F0` `$7255` `$72BA` `$731F` | `$7384` `$73E9` `$744E` |
+
+Until 2026-08-16 the gate covered only the 909 reward bytes, so the twelve stat planes were
+declared never-allocate but nothing enforced it. `enemyexp.py` now also compares the complete
+`31:$6980-$74B2` span — 2,867 bytes, readers included — byte for byte against the control ROM.
+
 | Tier | Low-byte plane | Middle-byte plane | High-byte plane |
 |---:|:---|:---|:---|
 | 1 | `31:$6DC8-$6E2C` | `31:$6E2D-$6E91` | `31:$6E92-$6EF6` |
