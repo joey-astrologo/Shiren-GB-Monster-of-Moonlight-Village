@@ -145,6 +145,11 @@ fi
 if [ -f saves/shiren_en_log_2_action_pots.srm ]; then
   python3 tools/actionpotspill.py build/shiren_en.gb
 fi
+# Queued message fragments are composed by native code with substitutions pushed between
+# them, so an authored <br> is not part of that ABI. One in the Fluffy Bunny heal line --
+# the only one among all 179 fragments in the ROM -- garbled the line, blanked the box and
+# fired unrelated actor behaviour. Static: floor actors are not serializable to a fixture.
+python3 tools/healfragmentspill.py build/_base_expanded.gb
 # The only seven-row Floor action box. A row past the per-box proportional cap does not
 # merely lose VWF: it skips the floor-info hook, so the Info return never publishes and
 # the LCD stays disabled. Asserts full proportional coverage AND that the screen returns.

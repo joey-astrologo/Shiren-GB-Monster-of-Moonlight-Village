@@ -99,6 +99,10 @@ def main() -> int:
         "saves/shiren_en_menu.srm",
     )
 
+    # Layout-independent: it reads the Japanese control and script/en.tsv, never a
+    # placed English ROM, so one run covers all three layouts at once.
+    py("healfragmentspill.py", "build/_base_expanded.gb")
+
     matrix = (
         ("normal", "build/shiren_en.gb"),
         ("shuffle", "build/shiren_en_shuffle.gb"),

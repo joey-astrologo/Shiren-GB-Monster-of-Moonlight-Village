@@ -138,6 +138,18 @@ ordinary punctuation. Changing the visible template without changing and proving
 producer can make queued pointers or control bytes render as glyphs. Even a token-safe length
 change repacks later bank-13 records and must be treated as a ROM-layout change.
 
+**A queued fragment must not contain an authored `<br>` or `<brk>`.** These records are not
+dialogue. Native code pushes them through the queue appender at `0:$028B` and interleaves
+runtime substitutions between them — the Fluffy Bunny heal line is `13:$4D7D`, then the
+target's name via `15:$6713`, then `13:$4D88`. Across the whole ROM, 179 distinct records
+are reachable that way and the Japanese base has an authored break in none of them. One
+was added to the English heal line for readability; in play it garbled the line, blanked
+the dialogue box, fired an unrelated actor animation, and displaced the healer past its
+target. The consumer wraps by itself and needs no help: `<var> robbed <var>` reaches 179px
+with the widest monster name substituted twice, which is the real budget. `tools/healfragmentspill.py`
+enforces both facts and locates the records by content, because `script/en.tsv` is keyed
+by Japanese addresses that the build relocates.
+
 Rules for dynamic records:
 
 1. Keep control-token count and order identical unless the native producer is disassembled,

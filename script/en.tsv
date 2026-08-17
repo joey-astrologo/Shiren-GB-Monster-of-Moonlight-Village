@@ -472,9 +472,15 @@
 13:$4D4D	<var> drained Str.
 13:$4D59	Max Strength fell by <cE4>.
 13:$4D6C	<cE0:E6>A painful blow!<cE7:14><mode0>
-# This authored break keeps subject and target readable. The box still holds three lines;
-# its old 13+14 fixed-cell derivation is superseded by the runtime pixel audit.
-13:$4D7D	Fluffy Bunny<br>healed <var>
+# NO <br> HERE. This is a queued FRAGMENT, not dialogue: 15:$670B pushes it through
+# 0:$028B, then 15:$6713 pushes the target's name, then 15:$6716 pushes 13:$4D88. Of the
+# 179 distinct strings reachable through that path in the whole ROM, an authored break in
+# this one was the only one anywhere, and the Japanese has none either. It garbled the
+# line, blanked the box, and fired unrelated actor behaviour in play. The fragment
+# consumer wraps on its own and needs no help: `<var> robbed <var>` reaches 179px with
+# the widest name substituted twice, so this line's 167px worst case is well inside what
+# the path already carries. tools/healfragmentspill.py enforces both facts.
+13:$4D7D	Fluffy Bunny healed <var>
 13:$4D88	with a spell.
 13:$4D98	It possessed them!
 13:$4DA0	<var> warped away.
