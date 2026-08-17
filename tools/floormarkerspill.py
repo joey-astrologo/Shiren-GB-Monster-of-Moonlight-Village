@@ -36,15 +36,12 @@ WEST = 190
 # including numberless Dragon's Maw and Moonlight Exit; 1-50 then rotate over the selectors
 # so all shared live fields still reach the actual uploader.
 #
-# Selectors whose every floor is a bespoke card are excluded from the rotation: they have
-# no generic field-plus-name form, so pairing them with an arbitrary floor would ask the
-# renderer for a card the game can never select. Their real cases are still covered above
-# by ACTIVE_CARD_CASES, and the remaining selectors still exercise all fifty live fields.
-ROTATION = tuple(sel for sel in range(1, 8)
-                 if not markers._all_floors_special(markers.LABELS[sel]))
+# Every selector is rotated, including those whose native table lists only one floor: the
+# table is not exhaustive of what the game displays, so a selector paired with an
+# arbitrary floor must still render. Moonlight Exit at F1 was exactly that case.
 CASES = tuple(dict.fromkeys(
     ((None, None),) + markers.ACTIVE_CARD_CASES + tuple(
-        (ROTATION[(number - 1) % len(ROTATION)], number)
+        (1 + (number - 1) % 7, number)
         for number in range(1, markers.MAX_FLOOR + 1))))
 # Cards still pixel-and-position identical to Joey's contact sheet. Forest, Crags and
 # Orochi gained the modifier their Japanese always carried and are composed from the
@@ -193,11 +190,6 @@ def run(rom, state, png=None):
                                  (metrics['number_top'], metrics['name_top'], expected_top)))
             else:
                 positioned += 1
-    # A selector whose every floor is a bespoke card still needs a variants-table entry --
-    # the table is indexed by selector -- but nothing can ever select it, so an untested
-    # stored form is expected there rather than a gap in coverage.
-    missing = {(sel, numbered) for sel, numbered in missing
-               if not markers._all_floors_special(markers.LABELS[sel])}
     if missing:
         problems.append((-1, -1, 'stored form(s) untested: %s' % sorted(missing)))
     if numbers != set(range(1, markers.MAX_FLOOR + 1)):

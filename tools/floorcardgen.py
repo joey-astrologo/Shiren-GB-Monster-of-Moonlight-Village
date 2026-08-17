@@ -159,7 +159,7 @@ DIGIT_BASELINE = 11        # every F## field inks rows 0-11
 # -- Avatar's Crag needs group <= 9 where Crags sat at 40 -- and Koma Cave moves one tile
 # purely to centre, which was the drift Joey noticed in play.
 FIELD_LAYOUTS = (
-    (range(1, 3), 24, 31),      # Forest: both floors are bespoke cards now
+    (range(1, 3), 0, 31),       # Forest: group 0 so its generic form also fits
     (range(3, 7), 8, 28),       # Koma Cave: was 16, recentred
     (range(7, 11), 0, 29),      # Avatar's Crag: was 40, the longer name needs the room
     (range(11, 15), 16, 31),    # Kuyo Pass: unchanged
@@ -171,7 +171,7 @@ FIELD_LAYOUTS = (
 # centres on the 160px strip, rather than inherited from the contact sheet's own x.
 LABEL_LEFTS = {
     'Moonlight Village': 10,
-    'Shifting Forest': 42,      # unused: both Forest floors are bespoke cards
+    'Shifting Forest': 40,      # generic fallback form; F1/F2 use bespoke cards
     'Koma Cave': 52,
     "Avatar's Crag": 42,
     'Kuyo Pass': 59,

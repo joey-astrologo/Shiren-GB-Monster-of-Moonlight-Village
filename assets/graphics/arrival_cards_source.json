@@ -192,7 +192,7 @@
   },
   "label_lefts": {
     "Moonlight Village": 10,
-    "Shifting Forest": 42,
+    "Shifting Forest": 40,
     "Koma Cave": 52,
     "Avatar's Crag": 42,
     "Kuyo Pass": 59,
@@ -211,8 +211,8 @@
     "Moonlight Exit": 1
   },
   "number_groups": {
-    "1": 24,
-    "2": 24,
+    "1": 0,
+    "2": 0,
     "3": 8,
     "4": 8,
     "5": 8,

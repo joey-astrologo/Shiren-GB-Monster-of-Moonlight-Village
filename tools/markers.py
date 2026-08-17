@@ -33,7 +33,7 @@ DATA_ORG = 0x5000
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSET_PATH = os.path.join(ROOT, 'assets', 'graphics', 'arrival_cards_source.json')
-ASSET_SHA256 = 'a68d3145a316ee2bb5344abba4888bfa87ce1329afff1746058ebf75b9354aaa'
+ASSET_SHA256 = '65799690672b327a8d3f1e454fe80cfc60a07b09146de7048fa174b56eb9d518'
 SOURCE_ARTWORK_PATH = os.path.join(ROOT, 'assets', 'graphics',
                                    'arrival_cards_source.webp')
 MOONLIGHT_EXIT_SOURCE_PATH = os.path.join(
@@ -67,15 +67,17 @@ BLANK_ROW_TILE = 0xBC
 # threshold and Moonlight Exit. The alternate $60CB path can show F50 Moonlight Exit, so
 # retain that exact supplied card
 # fourth form as well.  Every numbered card shares a fixed two-digit field.
-# Bases the uploader can select. Selectors 1 and 7 draw every floor from a bespoke card,
-# so they compile the CENTRED form: the generic field-plus-name variant would never be
-# shown and its longer name does not fit beside a full 32px field anyway.
+# Bases the uploader can select. EVERY selector needs its numbered form compiled: the
+# native floor/selector table is not exhaustive of what the game can display -- Moonlight
+# Exit shows at F1 through F50, not only at the F50 its table lists. Dropping a numbered
+# variant makes the table fall back to the CENTRED base and the uploader then paints the
+# F## field straight through the name.
 VARIANTS = (
     (0, False),
-    (1, False), (2, True), (3, True), (4, True),
+    (1, True), (2, True), (3, True), (4, True),
     (5, False), (5, True),
     (6, True),
-    (7, False),
+    (7, False), (7, True),
 )
 # Forest's name no longer fits the generic layout, which always reserves a full 32px
 # field whatever the digit's real width, so both of its floors get a bespoke card.
@@ -136,7 +138,7 @@ NATIVE_SELECTOR_TABLE = bytes((
 # group-left must be tile-aligned because the live F# field replaces four tile columns.
 # name-left is the exact x coordinate in the approved source contact sheet.
 NUMBERED_POSITIONS = {
-    'Shifting Forest': (24, 42),
+    'Shifting Forest': (0, 40),
     'Koma Cave': (8, 52),
     "Avatar's Crag": (0, 42),
     'Kuyo Pass': (16, 59),
@@ -226,13 +228,6 @@ def _number_bounds(number):
     return min(x for x, _y in points), max(x for x, _y in points)
 
 
-def _all_floors_special(label):
-    """True when every numbered floor of this label is drawn by a bespoke card."""
-    selector = LABELS.index(label)
-    floors = ACTIVE_NUMBERED_FLOORS.get(selector, ())
-    return bool(floors) and all((selector, f) in SPECIAL_CARDS for f in floors)
-
-
 def _numbered_geometry(_font, label):
     """Return exact source positions and the widest live ink span for one label."""
     name_extent = _asset()['labels'][label]['width']
@@ -240,12 +235,6 @@ def _numbered_geometry(_font, label):
     if group_left & 7:
         raise SystemExit('markers: numbered %r group x=%d is not tile-aligned' %
                          (label, group_left))
-    if _all_floors_special(label):
-        # Every floor of this label is a bespoke card, so nothing ever composes the
-        # generic field-plus-name form. Its name_left is inert and the gap/extent checks
-        # below would measure a layout the game never draws -- the group column is still
-        # published because the uploader reads one per label.
-        return group_left, name_left, 0
     selector = LABELS.index(label)
     floors = ACTIVE_NUMBERED_FLOORS[selector]
     lefts = []
@@ -381,13 +370,8 @@ def render_strip(font=None, text=TOWN_LABEL):
 
 
 def floor_style_budget(font):
-    """Return ``(label, pixels)`` for each numbered form the generic layout still draws.
-
-    A label whose every floor is a bespoke card has no generic geometry to budget: its
-    name is free of the fixed 32px field, which is the whole reason it needs one.
-    """
-    return tuple((label, _numbered_geometry(font, label)[2])
-                 for label in FLOOR_LABELS if not _all_floors_special(label))
+    """Return ``(label, pixels)`` for each source-positioned numbered form."""
+    return tuple((label, _numbered_geometry(font, label)[2]) for label in FLOOR_LABELS)
 
 
 def _number_data(_font):
