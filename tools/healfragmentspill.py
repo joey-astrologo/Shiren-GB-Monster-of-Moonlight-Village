@@ -14,11 +14,21 @@ that produced garbled Latin text, then a blank dialogue box, then an unrelated a
 animation, then the healer displacing across its target -- the queue consumer losing its
 place, not merely a line that looked wrong.
 
-The evidence that identified it is the invariant this file enforces.  Every ``ld bc,nn``
-immediately followed by ``call $028B`` is located across the whole ROM, and every bank-13
-record those sites name is decoded.  There are 179 distinct such records, and the
-Japanese base has an authored break in NONE of them.  A break was never part of this ABI;
-one string had acquired the only one in the game.
+The evidence that identified it is the invariant this file enforces.  Every ``call
+$028B`` in the ROM is located -- 239 of them -- and every bank-13 record they name is
+decoded, giving 198 distinct fragments.  The Japanese base has an authored break in NONE
+of them.  A break was never part of this ABI; one string had acquired the only one in the
+game.
+
+Enumerating the 235 sites that carry an adjacent ``ld bc,nn`` is not sufficient, and an
+earlier version of this file made exactly that mistake: it reached 179 records and left
+18 uncovered.  Four sites name their record indirectly, and three of those are a SECOND
+paired-fragment producer with precisely the heal line's shape -- two parallel pointer
+tables indexed by one doubled selector, the first naming a trap and the second its
+outcome ("A Pitfall Trap!" + "But you didn't fall in.").  Those are exactly as unable to
+carry a break as the heal line was.  So the census below refuses to pass while ANY call
+site is unaccounted for: a new producer shape fails loudly here instead of quietly
+falling outside the sweep, which is the failure mode that let this bug ship.
 
 The consumer also wraps by itself, so a break is not needed for width, and the second
 assertion here pins that reasoning to a proven line rather than to a guessed cap: with
@@ -71,6 +81,26 @@ TOKEN_RE = re.compile(r'<[^>]*>')
 HEAL_SUBJECT_TEXT = 'healed <var>'
 HEAL_PREDICATE_TEXT = 'with a spell.'
 
+# Not every site names its record with an `ld bc,nn` immediately before the call.  Four
+# do not, and enumerating only the immediate form silently left 18 records uncovered --
+# so the shape of each exception is declared here and the census below refuses to pass
+# while any call site is unaccounted for.
+#
+# The trap messages are a SECOND paired-fragment producer with exactly the heal line's
+# shape: two parallel pointer tables indexed by the same doubled selector, the first
+# naming the event and the second its outcome ("A Pitfall Trap!" + "But you didn't fall
+# in.").  They are equally unable to carry an authored break.
+TABLE_PRODUCERS = (
+    (6, 0x7C59, 19, 'trap event fragment'),
+    (6, 0x7C7F, 19, 'trap outcome fragment'),
+)
+TABLE_SITES = ((6, 0x7BD5), (6, 0x7BDF), (6, 0x7BF6))
+# 0:$30EF is reached from `ld bc,$45BC` and `ld bc,$0000` through a branch, so the
+# immediate is there but not adjacent; the null arm is skipped by an `or c` test.
+BRANCH_SITE = (0, 0x30EF)
+BRANCH_TARGET = 0x45BC
+NULL_POINTER = 0xFFFF
+
 DECODE = {code: ch for ch, code in propvwf.EN_CODES.items()}
 TOKENS = {code: '<%s>' % name for name, code in codec.REV_CONTROL.items()}
 
@@ -89,6 +119,35 @@ def call_sites(rom):
                 continue
             target = window[offset + 1] | window[offset + 2] << 8
             out.append((bank, origin + offset, target))
+    return out
+
+
+def every_call(rom):
+    """Every `call $028B` site, however its pointer is supplied."""
+    out = []
+    for bank in range(len(rom) // BANK_SIZE):
+        base = bank * BANK_SIZE
+        origin = 0x0000 if bank == 0 else 0x4000
+        window = rom[base:base + BANK_SIZE]
+        for offset in range(len(window) - 2):
+            if window[offset:offset + 3] == PATTERN:
+                immediate = offset >= 3 and window[offset - 3] == 0x01
+                out.append((bank, origin + offset, immediate))
+    return out
+
+
+def table_targets(rom):
+    """Records named by the table-driven producers, with the table that names them."""
+    out = {}
+    for bank, address, count, label in TABLE_PRODUCERS:
+        base = bank * BANK_SIZE - 0x4000
+        for index in range(count):
+            pointer = (rom[base + address + 2 * index]
+                       | rom[base + address + 2 * index + 1] << 8)
+            if pointer == NULL_POINTER or not 0x4000 <= pointer < 0x8000:
+                continue
+            out.setdefault(pointer, '%s (%d:$%04X[%d])'
+                           % (label, bank, address, index))
     return out
 
 
@@ -133,10 +192,28 @@ def run(control_path, en_path):
 
     # Enumerated from the JAPANESE control, whose addresses are the keys en.tsv uses.
     sites = call_sites(control)
-    targets = sorted({target for _, _, target in sites if 0x4000 <= target < 0x8000})
+    tables = table_targets(control)
+    targets = sorted({target for _, _, target in sites if 0x4000 <= target < 0x8000}
+                     | set(tables) | {BRANCH_TARGET})
     if not targets:
         raise SystemExit('healfragmentspill: found no queued-fragment call sites in '
                          + control_path)
+
+    # ---- 0. every call site must be accounted for by a recognised producer shape
+    calls = every_call(control)
+    known = set(TABLE_SITES) | {BRANCH_SITE}
+    unaccounted = [(bank, address) for bank, address, immediate in calls
+                   if not immediate and (bank, address) not in known]
+    for bank, address in unaccounted:
+        problems.append(
+            '%d:$%04X calls the queue appender without an adjacent `ld bc,nn` and is not '
+            'a declared indirect producer. Its record cannot be enumerated, so nothing '
+            'here proves it is break-free. Identify how it names its pointer and declare '
+            'it, the way TABLE_PRODUCERS declares the trap tables.' % (bank, address))
+    stale = sorted(known - {(bank, address) for bank, address, imm in calls if not imm})
+    for bank, address in stale:
+        problems.append('declared indirect producer %d:$%04X is no longer a non-immediate '
+                        'call site; the declaration is stale' % (bank, address))
 
     translated = {target: english[(TEXT_BANK, target)]
                   for target in targets if (TEXT_BANK, target) in english}
@@ -150,6 +227,10 @@ def run(control_path, en_path):
     for target, text in broken:
         sources = ['%d:$%04X' % (bank, address)
                    for bank, address, value in sites if value == target]
+        if target in tables:
+            sources.append(tables[target])
+        if target == BRANCH_TARGET:
+            sources.append('%d:$%04X' % BRANCH_SITE)
         problems.append(
             '13:$%04X %r carries an authored break, pushed from %s. Queued fragments are '
             'composed by native code with substitutions between them; a break is not part '
@@ -204,9 +285,12 @@ def run(control_path, en_path):
 
     for problem in problems:
         print('  ' + problem)
-    print('healfragmentspill: %d appender call site(s), %d distinct fragment record(s), '
-          '%d translated, %d with authored breaks; %d problem(s)'
-          % (len(sites), len(targets), len(translated), len(broken), len(problems)))
+    print('healfragmentspill: %d appender call site(s) (%d immediate + %d declared '
+          'indirect), %d distinct fragment record(s), %d translated, %d with authored '
+          'breaks; %d problem(s)'
+          % (len(calls), sum(1 for _, _, i in calls if i),
+             sum(1 for _, _, i in calls if not i), len(targets), len(translated),
+             len(broken), len(problems)))
     if problems:
         raise SystemExit('healfragmentspill: %d problem(s)' % len(problems))
     print('healfragmentspill: no queued fragment carries an authored break, and the '

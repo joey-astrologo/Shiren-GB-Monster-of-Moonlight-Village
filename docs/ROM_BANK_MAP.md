@@ -141,8 +141,12 @@ change repacks later bank-13 records and must be treated as a ROM-layout change.
 **A queued fragment must not contain an authored `<br>` or `<brk>`.** These records are not
 dialogue. Native code pushes them through the queue appender at `0:$028B` and interleaves
 runtime substitutions between them — the Fluffy Bunny heal line is `13:$4D7D`, then the
-target's name via `15:$6713`, then `13:$4D88`. Across the whole ROM, 179 distinct records
-are reachable that way and the Japanese base has an authored break in none of them. One
+target's name via `15:$6713`, then `13:$4D88`. Across the whole ROM, 239 call sites name 198 distinct
+records, and the Japanese base has an authored break in none of them. Enumerating only
+the 235 sites with an adjacent `ld bc,nn` misses 18: four sites name their record
+indirectly, and three of those are a second paired-fragment producer of the same shape --
+parallel pointer tables at `6:$7C59`/`6:$7C7F` giving each trap its event and outcome
+lines. One
 was added to the English heal line for readability; in play it garbled the line, blanked
 the dialogue box, fired an unrelated actor animation, and displaced the healer past its
 target. The consumer wraps by itself and needs no help: `<var> robbed <var>` reaches 179px
