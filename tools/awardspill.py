@@ -228,7 +228,7 @@ def run(PyBoy, rom, ram, profile, frames, png=None, trace=False,
             'final_page_count': pb.memory[0xC6BE],
             'final_colors': (len(set(last.convert('RGB').getdata()))
                              if last is not None else 0),
-            'final_transition_state': pb.memory[0xC0D7],
+            'final_transition_state': pb.memory[0xC1B3],
             'final_lcdc': pb.memory[0xFF40],
         }
         pb.stop(save=False)

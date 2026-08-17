@@ -72,7 +72,7 @@ def run(rom, ram, png=None):
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if frame[0] >= DISMISS and shape == ACTION_SHAPE:
                 action_rows.append((frame[0], pb.register_file.D, pb.register_file.HL,
-                                    pb.memory[0xC0D7]))
+                                    pb.memory[0xC1B3]))
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
@@ -83,7 +83,7 @@ def run(rom, ram, png=None):
             if frame[0] >= DISMISS:
                 if not pb.memory[0xFF40] & 0x80:
                     white.append(frame[0])
-                elif pb.memory[0xC0D7] == 0 and frame[0] > DISMISS:
+                elif pb.memory[0xC1B3] == 0 and frame[0] > DISMISS:
                     bad = menuspill.frame_invariant(pb, profile)
                     if bad and len(bad_frames) < 8:
                         bad_frames.append((frame[0], bad[:2]))
@@ -91,7 +91,7 @@ def run(rom, ram, png=None):
                     halts.append(frame[0])
 
         final = pb.screen.image.copy()
-        final_state = pb.memory[0xC0D7]
+        final_state = pb.memory[0xC1B3]
         final_lcdc = pb.memory[0xFF40]
         final_pc = pb.register_file.PC
         if png:

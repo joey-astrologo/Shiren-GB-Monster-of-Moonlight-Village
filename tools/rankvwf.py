@@ -249,7 +249,7 @@ vbad:
   ; rankprepare performs the authoritative complete-page scan before any shared VWF
   ; plane is uploaded. Record the native fallback for every row and final publication.
   ld a,$14
-  ld [$C0D7],a
+  ld [$C1B3],a
   pop hl
   scf
   ret
@@ -355,7 +355,7 @@ staticmap:
   ; which a legacy name itself references. rankprepare already restored every native
   ; plane and skipped the static VWF upload; restore the fixed-width header map before
   ; publishing. Supported English pages take the unified proportional path below.
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $14
   jr nz,staticvwf
   ld hl,nativeheader
@@ -491,7 +491,7 @@ rankprepare:
   ; current 60-byte page at D61B; FF90 is the native C6AC*12 result, and validator mode
   ; 2 scans all five records from row zero.
   ld a,$12
-  ld [$C0D7],a
+  ld [$C1B3],a
   xor a
   ld [$C0CC],a
   ldh a,[$FF90]
@@ -623,14 +623,14 @@ rankstart:
   push bc
   push de
   push hl
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   and a
   jr nz,rsdone
   ld a,[$C0CC]
   and a
   jr nz,rsdone
   ld a,$12
-  ld [$C0D7],a
+  ld [$C1B3],a
   ldh a,[$FF40]
   set 3,a
   ld [$C110],a
@@ -641,7 +641,7 @@ rsdone:
   pop bc
   ret
 rankfinish:
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $12
   jr z,rffinalize
   cp $14
@@ -759,7 +759,7 @@ rankname:
   jr c,raw
   ; rankprepare made the sole whole-page decision before uploading any shared plane.
   ; Every row follows that immutable state; supported and native renderers cannot mix.
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $12
   jr nz,raw
   call compose

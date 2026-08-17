@@ -149,7 +149,7 @@ def run(rom_path, ram_path, script, label, png=None, frames=900):
         if png:
             pb.screen.image.save(png)
             print('copylogspill: wrote %s' % png)
-        final_state = pb.memory[0xC0D7]
+        final_state = pb.memory[0xC1B3]
         final_lcdc = pb.memory[0xFF40]
         for row, (key, tile_ids, pixels) in final_rows.items():
             first = key + 2 - SHADOW

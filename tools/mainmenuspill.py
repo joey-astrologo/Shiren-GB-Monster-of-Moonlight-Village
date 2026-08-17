@@ -58,7 +58,7 @@ def run_new(PyBoy, rom, ram):
             if frame in script:
                 pb.button(script[frame], PRESS_FRAMES)
             pb.tick()
-            state = pb.memory[0xC0D7]
+            state = pb.memory[0xC1B3]
             if state in (0x10, 0x11):
                 dark = dark_pixels(pb.screen.image)
                 pending_dark.append((frame, state, dark))
@@ -123,14 +123,14 @@ def run_rank(PyBoy, rom, ram):
             if frame in script:
                 pb.button(script[frame], PRESS_FRAMES)
             pb.tick()
-            state = pb.memory[0xC0D7]
+            state = pb.memory[0xC1B3]
             if state == 0x12:
                 if first is None:
                     first = frame
                 last = frame
                 pending.append((frame, dark_pixels(pb.screen.image)))
         final_dark = dark_pixels(pb.screen.image)
-        final_state = pb.memory[0xC0D7]
+        final_state = pb.memory[0xC1B3]
         final_lcdc = pb.memory[0xFF40]
         pb.stop(save=False)
 

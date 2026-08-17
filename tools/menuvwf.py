@@ -145,11 +145,32 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    15 records (`$C163-$C1AD`) and puts three watermarks, shape kind and
                    count at `$C1AE-$C1B2`; 15 exceeds the measured 13-row stacked peak
                    and prevents propvwf's ephemeral `$C0D7/$C0D8` from corrupting them.
-                   V4F uses `$C0D7` as a synchronous transaction state: 1 is item-page
-                   pending; 2/3 are pending/settled Info; 4 is Info-return pending;
-                   `$10/$11/$12/$13/$14` are title/file, difficulty, proportional
-                   Rankings, Fay-screen and native Rankings transactions. It is cleared
-                   after the corresponding map publication.
+  * `$C1B3`        the synchronous transaction state: 1 is item-page pending; 2/3 are
+                   pending/settled Info; 4 is Info-return pending; `$10/$11/$12/$13/$14`
+                   are title/file, difficulty, proportional Rankings, Fay-screen and
+                   native Rankings transactions. It is cleared after the corresponding
+                   map publication. Proven free 2026-08-17 the same way as the runs
+                   above (`wramfree.py --lo C1B3 --hi C1B7`: no voted static reference
+                   at `$C1B3`, zero dynamic writes in every scenario).
+                   THIS BYTE MUST NOT BE SHARED WITH THE DIALOGUE RENDERER. It lived at
+                   `$C0D7` until 2026-08-17, which is propvwf's `S_LOCAL`: `place`
+                   stores the pen there for every glyph and `buildmap`'s `bmkeep` stores
+                   a cell index 0-17. Both aliased every live state, so after any
+                   dungeon message the leftover value read as an open transaction, and
+                   a box redrawn while the game tore the menu down completed it: the
+                   stale `$C300` menu shadow was copied over the map the native code was
+                   rebuilding and LCDC bit 7 was set inside the native LCD-off interval,
+                   exposing one frame of dungeon map drawn through menu-font tiles.
+                   MEASURED ON THE SAME ROUTE, TWO DIFFERENT PATHS COMPLETED, so do not
+                   read this as one narrow hole: leftover `$10` took `startfinish`'s
+                   title/file path (`sfgeneric`'s only other gate is "last row of the
+                   box") on the in-dungeon main menu, and leftover `$11` took
+                   `pagepublish` on the one-row `Items` header — that path tests the
+                   state byte only with `and a`, so ANY nonzero leftover arms it and its
+                   remaining `$C1B1`/shadow-bank/width gates are what an ordinary
+                   teardown redraw looks like anyway. The state is nonzero after almost
+                   every message; only the several-frame overlap with the native blank
+                   made it intermittent. `tools/potputspill.py` is the regression.
   * `$C12C-$C13B`  tile 12's composition buffer
   (`$C0E2-$C0E6` is ephemeral fusion-digit shifter scratch; the rest of the former
    `$C0E0-$C0FB` record table remains unused.)
@@ -1127,7 +1148,7 @@ pbwait:
   res 7,a
   ldh [$FF40],a
   ld a,$01
-  ld [$C0D7],a
+  ld [$C1B3],a
   ret
 pageempty:
   ld a,[$C1B1]
@@ -1152,7 +1173,7 @@ perow:
   jr nz,perow
   ld [hl],$BF
 pagepublish:
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   and a
   ret z
   ld a,[$C1B1]
@@ -1188,7 +1209,7 @@ pebottom:
 pagefinish:
   xor a
 publishmap:
-  ld [$C0D7],a
+  ld [$C1B3],a
   ld hl,$C300
   ld de,$9800
   ld b,$12
@@ -1245,7 +1266,7 @@ fiblank:
   jr z,fihelpblank
   and a
   ret nz
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $03
   ret nz
   ld a,[$C0D9]
@@ -1271,7 +1292,7 @@ fihelpblank:
   ret nz
   ld a,$02
 fioff:
-  ld [$C0D7],a
+  ld [$C1B3],a
   ldh a,[$FF40]
   bit 7,a
   ret z
@@ -1289,7 +1310,7 @@ fiborder:
   jr z,fihelpborder
   cp $02
   ret nz
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $04
   ret nz
   ; Action boxes are not all four rows high. Equipment has four choices, while
@@ -1318,7 +1339,7 @@ fiempty:
   ld a,$01
   jr fifinish
 fihelpcheck:
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $02
   ret nz
   ld a,d
@@ -1461,7 +1482,7 @@ starttransition:
   xor a
   rst $10
   db $%02X,$%02X
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   and a
   jp nz,stdone
   xor a
@@ -1503,7 +1524,7 @@ strank:
   cp $08
   jr nz,stdone
   ld a,$12
-  ld [$C0D7],a
+  ld [$C1B3],a
   ldh a,[$FF40]
   set 3,a
   ld [$C110],a
@@ -1512,7 +1533,7 @@ strank:
 stgeneric:
   ld a,$10
 stoff:
-  ld [$C0D7],a
+  ld [$C1B3],a
   ldh a,[$FF40]
   bit 7,a
   jr z,stdone
@@ -1551,7 +1572,7 @@ startfinish:
   push bc
   push de
   push hl
-  ld a,[$C0D7]
+  ld a,[$C1B3]
   cp $10
   jr z,sfgeneric
   cp $11
@@ -1638,7 +1659,7 @@ titlealloc:
   cp $01
   ret nz
   xor a
-  ld [$C0D7],a
+  ld [$C1B3],a
 rankrestorehook:
   ; rankvwf replaces these five NOPs with mode 2 of the screen manager.  Keeping the
   ; placeholder inert means --no-rankvwf controls retain the ordinary menu renderer.
@@ -4346,6 +4367,19 @@ def install(buf, notes=None, font=None):
         buf[confirm_at:confirm_at + len(confirm_code)] = confirm_code
         buf[confirm_ix] = confirm_labels['confirmalloc'] & 0xFF
         buf[confirm_ix + 1] = confirm_labels['confirmalloc'] >> 8
+
+        # The transaction state must never move back onto propvwf's `S_LOCAL`.  Any
+        # dialogue leaves a pen or cell index in `$C0D7`, and every live state value is
+        # inside that range: a stale read published the menu shadow map over the field
+        # and cancelled the native LCD-off interval.  See the SCRATCH map above.
+        for name, blob in (('ITEM_PAGE_SRC', ITEM_PAGE_SRC),
+                           ('FLOOR_INFO_SRC', FLOOR_INFO_SRC),
+                           ('FLOOR_INFO_FINISH_SRC', FLOOR_INFO_FINISH_SRC),
+                           ('START_TRANSITION_SRC', START_TRANSITION_SRC),
+                           ('START_FINISH_SRC', START_FINISH_SRC)):
+            if '$C0D7' in blob or '$C0D8' in blob:
+                raise SystemExit('menuvwf: %s references propvwf scratch $C0D7/$C0D8; '
+                                 'the transaction state lives at $C1B3' % name)
 
         item_page_code, item_page_labels = gbasm.assemble(ITEM_PAGE_SRC, ITEM_PAGE_AT)
         if ITEM_PAGE_AT + len(item_page_code) > ITEM_PAGE_LIMIT:

@@ -67,7 +67,7 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
         def far_entry(_context=None):
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if frame[0] >= return_frame and shape == action_shape:
-                action_rows.append((frame[0], pb.register_file.D, pb.memory[0xC0D7]))
+                action_rows.append((frame[0], pb.register_file.D, pb.memory[0xC1B3]))
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
@@ -82,7 +82,7 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
                     halts.append(frame[0])
 
         final = pb.screen.image.copy()
-        final_state = pb.memory[0xC0D7]
+        final_state = pb.memory[0xC1B3]
         final_lcdc = pb.memory[0xFF40]
         tilemap = bytes(pb.memory[0x9800:0x9A40])
         if png:

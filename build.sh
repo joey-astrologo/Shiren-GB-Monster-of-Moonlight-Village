@@ -92,6 +92,11 @@ if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
 fi
 if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
   python3 tools/storagepotinfospill.py build/shiren_en.gb
+  # Closing the menu is a NATIVE LCD-off reload of $9000-$97FF from menu font back to
+  # terrain. A V4F publication that re-enables the LCD inside it exposes one frame of
+  # dungeon map drawn through menu glyphs. That is what a transaction state sharing
+  # propvwf's $C0D7 scratch did after every dungeon message.
+  python3 tools/potputspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log2_scroll_menu.srm ]; then
   python3 tools/scrollinfospill.py build/shiren_en.gb

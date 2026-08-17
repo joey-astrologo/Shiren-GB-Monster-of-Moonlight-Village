@@ -10,13 +10,13 @@ The renderer used to cap a box at SIX proportional rows (``shapeok``'s ``cp $06`
 ``Info`` fell out to the fixed-width fallback.  That was not a cosmetic loss.  A fallback
 row never reaches the floor-info hook, so ``fiborder`` never observed ``D == [$C69C]-1``,
 ``fifinish``/``publishmap`` never ran, and ``publishmap`` is the ONLY site that re-enables
-the LCD.  Dismissing the description therefore left ``$C0D7`` pinned at ``$04`` with LCDC
+the LCD.  Dismissing the description therefore left ``$C1B3`` pinned at ``$04`` with LCDC
 bit 7 clear: a permanent white screen with the CPU still running.  Joey found it in play.
 
 Two independent assertions, because either alone would have missed the bug:
 
 * every one of the seven rows is offered to the proportional allocator, ``Info`` included;
-* the LCD is back on after the description closes, and ``$C0D7`` has returned to ``$00``.
+* the LCD is back on after the description closes, and ``$C1B3`` has returned to ``$00``.
 
 The route is the player's: Adventure -> down -> down -> Log 3 -> Continue -> Menu ->
 Floor -> action -> Info -> dismiss.
@@ -124,7 +124,7 @@ def run(rom_path, ram_path, png=None, frames=FRAMES):
                 lcd_off_from[0] = None
 
         lcdc = pb.memory[0xFF40]
-        transaction = pb.memory[0xC0D7]
+        transaction = pb.memory[0xC1B3]
         if png:
             pb.screen.image.save(png)
             print('unidentifiedpotspill: wrote %s' % png)
@@ -151,13 +151,13 @@ def run(rom_path, ram_path, png=None, frames=FRAMES):
         problems.append('LCDC=$%02X after the Info description closed: bit 7 is clear, so '
                         'publishmap never ran and the screen is dead' % lcdc)
     if transaction != 0x00:
-        problems.append('$C0D7=$%02X after the return redraw, expected $00: the '
+        problems.append('$C1B3=$%02X after the return redraw, expected $00: the '
                         'Info->action transaction never completed' % transaction)
 
     for problem in problems:
         print('  ' + problem)
     print('unidentifiedpotspill: %d-row action box, rows offered %s/%s, LCDC=$%02X, '
-          '$C0D7=$%02X; %d problem(s)'
+          '$C1B3=$%02X; %d problem(s)'
           % (ACTION_ROWS, len(offers.get(True, {})), ACTION_ROWS, lcdc, transaction,
              len(problems)))
     if problems:

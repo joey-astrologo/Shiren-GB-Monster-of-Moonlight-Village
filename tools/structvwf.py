@@ -57,7 +57,7 @@ feirestore:
   ; Screen 17 is a composite: keep it dark while native graphics, task cells and
   ; proportional prompts are restored. menuvwf's box-32 finalizer publishes it.
   ld a,$13
-  ld [$C0D7],a
+  ld [$C1B3],a
   call frready
   ldh a,[$FF40]
   res 7,a
