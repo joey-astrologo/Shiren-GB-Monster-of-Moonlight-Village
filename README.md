@@ -40,9 +40,9 @@ CPU-health seeds remained healthy, all renderer queues reached VBlank byte-exact
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `4afe67f7529656d5e79abd949209c97a0cce4b547461d65993555b1d05b88bc0` |
-| `build/shiren_en_shuffle.gb` | `fc9669ad4fc6760b5dcf404bcc6c759fd500be93a691636131d836e7bc13237c` |
-| `build/shiren_en_redirect_all.gb` | `cce0d7333b7473de0f3f48534217fabe988b74a6df864d8569c2ccac2089c684` |
+| `build/shiren_en.gb` | `5744ac9152ad4f0fa29319605f1a32e883669d53658659fad63f82ea13e5fa72` |
+| `build/shiren_en_shuffle.gb` | `7f0407e49defc065476ac07c4d44b11e949d17b385dc3097e7a4faa44252a964` |
+| `build/shiren_en_redirect_all.gb` | `2f8584dcbe168d2349fd61fcd2f97425788b981b320f54fbbacc8f89eb9e90c2` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

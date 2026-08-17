@@ -52,7 +52,7 @@ FIXTURES = (
     # the only one the native kana-sized offset table clips. Every other fixture here is
     # Hard or Expert, which is exactly why the clipped `Nor` survived to a real player.
     ('log 3 Normal difficulty', 'shiren_en_log3_normal.srm',
-     ' 1F Forest', 'Normal', None, None, None, LOG3_ROUTE),
+     ' 1F Shift Forest', 'Normal', None, None, None, LOG3_ROUTE),
 )
 
 

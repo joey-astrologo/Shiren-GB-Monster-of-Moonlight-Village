@@ -115,7 +115,7 @@ can consume more of a pool bank later.
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
-| 60 | `$5000-$747D` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |
+| 60 | `$5000-$76AF` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
 | 62 | `$7000-$7F43` | `tools/titlelogo.py`: illustrated title screen | Exclusive tail |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |

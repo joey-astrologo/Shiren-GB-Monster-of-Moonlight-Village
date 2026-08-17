@@ -26,8 +26,12 @@ MOONLIGHT_EXIT_SIZE = (322, 290)
 CARD_SIZE = (160, 144)
 FIELD_WIDTH = 32
 FIELD_HEIGHT = 12
-LABELS = ('Moonlight Village', 'Forest', 'Koma Cave', 'Crags', 'Kuyo Pass',
-          "Dragon's Maw", 'Orochi', 'Moonlight Exit')
+# The eight cards the game selects, in native table order. Three now carry a modifier the
+# Japanese always had; SOURCE_LABELS keeps the contact-sheet names the crops are keyed on.
+SOURCE_LABELS = ('Moonlight Village', 'Forest', 'Koma Cave', 'Crags', 'Kuyo Pass',
+                 "Dragon's Maw", 'Orochi', 'Moonlight Exit')
+LABELS = ('Moonlight Village', 'Shifting Forest', 'Koma Cave', "Avatar's Crag",
+          'Kuyo Pass', "Dragon's Maw", "Orochi's Den", 'Moonlight Exit')
 
 # Crop rectangles are local to their 160x144 contact-sheet cells.  Right/bottom are
 # exclusive.  These are the exact occupied bounds in Joey's source raster.
@@ -83,27 +87,97 @@ MISSING_DIGITS = {
     ),
 }
 
+# ---- composed labels -------------------------------------------------------------
+#
+# Three place names gained a modifier that the Japanese always carried: `へんげのもり`
+# is a forest of TRANSFORMATION, `けしんのいわば` the crags of an INCARNATION, and
+# `オロチのまくつ` Orochi's DEN. The supplied contact sheet has no artwork for the longer
+# names, so they are composed from its own letterforms, exactly as the missing digits are
+# hand-built from the supplied digits' stroke grammar.
+#
+# Only three glyphs are absent from the sheet entirely. They are stored as literal rows,
+# derived from the shapes they must sit beside: A is the supplied V reflected with a
+# crossbar, f takes t's stem and crossbar with h's ascender, and S follows C's aperture
+# and stroke weight.
+HAND_BUILT_LETTERS = {
+    'A': (-11, (
+        '.....#....', '....##....', '...###....', '...##.#...', '...##.##..',
+        '..##..##..', '..######..', '.########.', '.##....##.', '###....##.',
+        '##.....###', '##......#.',
+    )),
+    'S': (-11, (
+        '...######.', '.#########', '###.....##', '##........', '###.......',
+        '.#####....', '..######..', '.....#####', '.......###', '##......##',
+        '####...###', '.#######..',
+    )),
+    'f': (-12, (
+        '...#####', '..######', '..##....', '..##....', '..##....', '########',
+        '########', '..##....', '..##....', '..##....', '..##....', '..##....',
+        '..##....',
+    )),
+}
+
+# The sheet is hand-lettered PER CARD -- Moonlight Village's h is 8px with a flared stem,
+# Orochi's is 7px and square. So a composed name takes every shared letter from the label
+# it extends; anything else disagrees with the original card letter for letter.
+COMPOSED_LABELS = {
+    'Shifting Forest': 'Forest',
+    "Avatar's Crag": 'Crags',
+    "Orochi's Den": 'Orochi',
+}
+# Labels whose blank-column runs align 1:1 with their characters. Forest is excluded: its
+# F is drawn with a detached stem, so the first run is the stem alone.
+CLEAN_SEGMENTATION = ('Moonlight Village', 'Crags', 'Orochi')
+# Explicit ink ranges where segmentation cannot be trusted. `rows` clips a glyph that
+# shares its run with a neighbour.
+GLYPH_RANGES = {
+    'Forest': {'F': (0, 9), 'o': (11, 17), 'r': (20, 25),
+               'e': (27, 34), 's': (37, 42), 't': (45, 52)},
+    'Koma Cave': {'v': (70, 77)},
+    # The apostrophe shares a blank-column run with the following s. Its ink is rows 1-5
+    # of the label, measured: an earlier guess of rows 0-3 clipped the tail and left it
+    # reading as a grave accent.
+    "Dragon's Maw": {'D': (0, 12), "'": (60, 63, 1, 5)},
+}
+# A glyph that sits ON the baseline, for labels that do not segment 1:1.
+BASELINE_ANCHORS = {'Forest': (11, 17), 'Koma Cave': (12, 19), "Dragon's Maw": (21, 28)}
+# Cards keeping their source artwork keep their reviewed digit offset unchanged; only a
+# composed label needs its baseline measured.
+SOURCE_NUMBER_TOPS = {
+    'Moonlight Village': 0, 'Forest': 0, 'Koma Cave': 0, 'Crags': 0,
+    'Kuyo Pass': 0, "Dragon's Maw": 0, 'Orochi': 1, 'Moonlight Exit': 1,
+}
+LETTER_TRACKING = 1        # measured mode of the sheet's inter-letter gaps
+WORD_SPACE = 7             # measured word gap
+DIGIT_BASELINE = 11        # every F## field inks rows 0-11
+
 # Each dynamic field is four tiles wide.  The ink is right-aligned to the same position
 # as the reviewed marker from that native floor group; the source label remains at its
 # original pixel x.  This reproduces all seven numbered source cards exactly.
+# `group` places the 32px field on the strip; `right` is the ink's right edge INSIDE it,
+# so the two are independent. The three renamed cards no longer fit at their source group
+# -- Avatar's Crag needs group <= 9 where Crags sat at 40 -- and Koma Cave moves one tile
+# purely to centre, which was the drift Joey noticed in play.
 FIELD_LAYOUTS = (
-    (range(1, 3), 24, 31),
-    (range(3, 7), 16, 28),
-    (range(7, 11), 40, 29),
-    (range(11, 15), 16, 31),
-    (range(15, 21), 0, 30),
-    (range(21, 22), 32, 29),
+    (range(1, 3), 24, 31),      # Forest: both floors are bespoke cards now
+    (range(3, 7), 8, 28),       # Koma Cave: was 16, recentred
+    (range(7, 11), 0, 29),      # Avatar's Crag: was 40, the longer name needs the room
+    (range(11, 15), 16, 31),    # Kuyo Pass: unchanged
+    (range(15, 21), 0, 30),     # Dragon's Maw: unchanged
+    (range(21, 22), 8, 29),     # Orochi's Den: was 32
     (range(22, 51), 0, 31),
 )
+# Name x on a numbered card. Recomputed from the measured label widths so each card's ink
+# centres on the 160px strip, rather than inherited from the contact sheet's own x.
 LABEL_LEFTS = {
     'Moonlight Village': 10,
-    'Forest': 68,
-    'Koma Cave': 57,
-    'Crags': 81,
+    'Shifting Forest': 42,      # unused: both Forest floors are bespoke cards
+    'Koma Cave': 52,
+    "Avatar's Crag": 42,
     'Kuyo Pass': 59,
     "Dragon's Maw": 43,
-    'Orochi': 74,
-    'Moonlight Exit': 41,
+    "Orochi's Den": 51,
+    'Moonlight Exit': 41,       # unused: F50 is a bespoke card
 }
 
 
@@ -225,10 +299,118 @@ def _number_field(markers, f_mask, digits, number):
     return field, group_left
 
 
+def _ink_cols(mask):
+    w, h = mask.size
+    px = mask.load()
+    return [any(px[x, y] for y in range(h)) for x in range(w)]
+
+
+def _runs(mask):
+    runs, start = [], None
+    for x, on in enumerate(_ink_cols(mask)):
+        if on and start is None:
+            start = x
+        elif not on and start is not None:
+            runs.append((start, x - 1)); start = None
+    if start is not None:
+        runs.append((start, mask.size[0] - 1))
+    return runs
+
+
+def _baseline(label, mask):
+    """Row the label's letters sit on, measured from a glyph known to touch it."""
+    px = mask.load(); w, h = mask.size
+    if label in CLEAN_SEGMENTATION:
+        chars = label.replace(' ', '')
+        runs = _runs(mask)
+        if len(runs) != len(chars):
+            raise SystemExit('floorcardgen: %r no longer segments 1:1' % label)
+        best = 0
+        for ch, (a, b) in zip(chars, runs):
+            if ch in 'aceimnorsuvwxz':
+                best = max(best, max(y for y in range(h)
+                                     if any(px[x, y] for x in range(a, b + 1))))
+        return best
+    a, b = BASELINE_ANCHORS[label]
+    return max(y for y in range(h) if any(px[x, y] for x in range(a, b + 1)))
+
+
+def _glyphs(label, mask):
+    """-> {char: (top relative to baseline, rows of '#'/'.')} for one source label."""
+    px = mask.load(); w, h = mask.size
+    base = _baseline(label, mask)
+    if label in CLEAN_SEGMENTATION:
+        ranges = dict(zip(label.replace(' ', ''), _runs(mask)))
+    else:
+        ranges = GLYPH_RANGES[label]
+    out = {}
+    for ch, spec in ranges.items():
+        x0, x1 = spec[0], spec[1]
+        ys = [y for y in range(h) if any(px[x, y] for x in range(x0, x1 + 1))]
+        y0 = spec[2] if len(spec) > 2 else min(ys)
+        y1 = spec[3] if len(spec) > 3 else max(ys)
+        out[ch] = (y0 - base,
+                   tuple(''.join('#' if px[x, y] else '.' for x in range(x0, x1 + 1))
+                         for y in range(y0, y1 + 1)))
+    return out
+
+
+def _special_card(f_mask, digits, name_mask, name_baseline, number):
+    """Compose a whole bespoke `F# Name` card, baselines aligned.
+
+    Forest needs one for each of its two floors: its name no longer fits the generic
+    layout, which always reserves a full 32px field whatever the digit's real width.
+    """
+    marker = _compose_marker(f_mask, digits, number)
+    base = max(FIELD_HEIGHT - 1, name_baseline)
+    below = max(0, name_mask.height - name_baseline)
+    height = base + max(1, below)
+    width = marker.width + WORD_SPACE + name_mask.width
+    card = Image.new('1', (width, height), 0)
+    card.paste(marker, (0, base - (FIELD_HEIGHT - 1)))
+    card.paste(name_mask, (marker.width + WORD_SPACE, base - name_baseline))
+    return card
+
+
+def _alphabet(labels, donor):
+    """Glyphs for one composed name: donor label first, then the rest, then hand-built."""
+    lib = dict(_glyphs(donor, labels[donor]))
+    for label in ('Moonlight Village', 'Crags', 'Orochi', 'Forest',
+                  'Koma Cave', "Dragon's Maw"):
+        for ch, glyph in _glyphs(label, labels[label]).items():
+            lib.setdefault(ch, glyph)
+    for ch, glyph in HAND_BUILT_LETTERS.items():
+        lib.setdefault(ch, glyph)
+    return lib
+
+
+def _compose(text, lib):
+    """-> (PIL mask, baseline row) for one composed label."""
+    cells = [None if ch == ' ' else lib[ch] for ch in text]
+    top = min(t for c in cells if c for t, _ in [c])
+    bottom = max(t + len(r) for c in cells if c for t, r in [c])
+    width = sum(WORD_SPACE if c is None else len(c[1][0]) + LETTER_TRACKING
+                for c in cells) - LETTER_TRACKING
+    mask = Image.new('1', (width, bottom - top), 0)
+    px = mask.load()
+    x = 0
+    for cell in cells:
+        if cell is None:
+            x += WORD_SPACE; continue
+        t, rows = cell
+        for i, row in enumerate(rows):
+            for j, ch in enumerate(row):
+                if ch == '#':
+                    px[x + j, t - top + i] = 1
+        x += len(rows[0]) + LETTER_TRACKING
+    return mask, -top
+
+
 def build(source_path, moon_exit_path):
     source = _load_source(source_path)
     moon_exit = _load_moonlight_exit(moon_exit_path)
-    labels = {label: _cell_crop(source, LABEL_CROPS[label]) for label in LABELS[:-1]}
+    labels = {label: _cell_crop(source, LABEL_CROPS[label])
+              for label in SOURCE_LABELS[:-1]}
     labels['Moonlight Exit'] = moon_exit.crop((41, 63, 157, 80))
     if labels['Moonlight Exit'].getbbox() != (0, 0, 116, 17):
         raise SystemExit('floorcardgen: Moonlight Exit name crop changed')
@@ -260,10 +442,32 @@ def build(source_path, moon_exit_path):
         if actual.tobytes() != markers[number].tobytes():
             raise SystemExit('floorcardgen: F%d no longer matches its source shape' %
                              number)
-        if number != 50 and actual_box[0] + group_left != x0:
+        # F50 was always exempt. F1/F5/F10/F21 belong to cards that were renamed or
+        # recentred, so their group moved by intent; their SHAPE is still proved above.
+        if number not in (1, 5, 10, 21, 50) and actual_box[0] + group_left != x0:
             raise SystemExit('floorcardgen: F%d source x changed' % number)
 
-    forest_card = source.crop((160 + 38, 64, 160 + 121, 76))
+    # Compose the three longer names, then keep every card keyed on its final label.
+    composed, baselines = {}, {}
+    for name, donor in COMPOSED_LABELS.items():
+        mask, base = _compose(name, _alphabet(labels, donor))
+        composed[name] = mask
+        baselines[name] = base
+    final = {}
+    for source_label, label in zip(SOURCE_LABELS, LABELS):
+        if label in composed:
+            final[label] = composed[label]
+        else:
+            final[label] = labels[source_label]
+            baselines[label] = DIGIT_BASELINE + SOURCE_NUMBER_TOPS[source_label]
+
+    # Forest's two floors both become bespoke cards; the old F1 crop had `Forest` baked
+    # into it as a single raster, so it cannot survive the rename either.
+    forest_specials = {}
+    for number in (1, 2):
+        card = _special_card(f_mask, digits, composed['Shifting Forest'],
+                             baselines['Shifting Forest'], number)
+        forest_specials['F%d Shifting Forest' % number] = card
     moonlight_exit_card = moon_exit.crop((4, 63, 157, 80))
     return {
         'format': 'shiren-gb-source-arrival-cards-v2',
@@ -279,20 +483,29 @@ def build(source_path, moon_exit_path):
             'note': ('Moonlight Village begins at source y63 and is shifted down one '
                      'pixel by the game\'s fixed y64 tile strip.'),
         },
-        'labels': {label: _record(labels[label]) for label in LABELS},
+        'labels': {label: _record(final[label]) for label in LABELS},
         'label_lefts': LABEL_LEFTS,
-        'number_tops': {label: (1 if label in ('Orochi', 'Moonlight Exit') else 0)
-                        for label in LABELS},
+        # Derived, not chosen: the F## field always inks rows 0-11, so a label whose own
+        # baseline is lower must push the digit down to meet it.
+        'number_tops': {label: baselines[label] - DIGIT_BASELINE for label in LABELS},
         'number_groups': groups,
         'numbers': numbers,
-        'special_cards': {
-            'F1 Forest': _record(forest_card),
-            'F50 Moonlight Exit': _record(moonlight_exit_card),
-        },
-        'special_lefts': {'F1 Forest': 38, 'F50 Moonlight Exit': 4},
+        'special_cards': dict(
+            [(key, _record(card)) for key, card in forest_specials.items()]
+            + [('F50 Moonlight Exit', _record(moonlight_exit_card))]),
+        # Bespoke cards are centred on the 160px strip; F50 keeps its reviewed x.
+        'special_lefts': dict(
+            [(key, (CARD_SIZE[0] - card.width) // 2)
+             for key, card in forest_specials.items()]
+            + [('F50 Moonlight Exit', 4)]),
         'digit_sources': {
             'source': sorted(DIGIT_CROPS),
             'hand_built': sorted(MISSING_DIGITS),
+        },
+        'label_sources': {
+            'source': [l for l in LABELS if l not in COMPOSED_LABELS],
+            'composed': {name: donor for name, donor in COMPOSED_LABELS.items()},
+            'hand_built_glyphs': sorted(HAND_BUILT_LETTERS),
         },
     }
 

@@ -33,14 +33,25 @@ OUT_OF_HOUSE = 40
 WEST = 190
 
 # F1 Forest is the unmodified real route. First cover the native floor/selector table,
-# including numberless Dragon's Maw and Moonlight Exit; 1-50 then rotate over every selector
+# including numberless Dragon's Maw and Moonlight Exit; 1-50 then rotate over the selectors
 # so all shared live fields still reach the actual uploader.
+#
+# Selectors whose every floor is a bespoke card are excluded from the rotation: they have
+# no generic field-plus-name form, so pairing them with an arbitrary floor would ask the
+# renderer for a card the game can never select. Their real cases are still covered above
+# by ACTIVE_CARD_CASES, and the remaining selectors still exercise all fifty live fields.
+ROTATION = tuple(sel for sel in range(1, 8)
+                 if not markers._all_floors_special(markers.LABELS[sel]))
 CASES = tuple(dict.fromkeys(
     ((None, None),) + markers.ACTIVE_CARD_CASES + tuple(
-        (1 + (number - 1) % 7, number)
+        (ROTATION[(number - 1) % len(ROTATION)], number)
         for number in range(1, markers.MAX_FLOOR + 1))))
-SOURCE_CASES = ((0, 0), (1, 1), (2, 5), (3, 10),
-                (4, 12), (5, 19), (6, 21), (7, 50))
+# Cards still pixel-and-position identical to Joey's contact sheet. Forest, Crags and
+# Orochi gained the modifier their Japanese always carried and are composed from the
+# sheet's own letterforms; Koma Cave keeps its artwork but moved one tile to centre. Those
+# four are proved by their composed masks and the centring check instead.
+SOURCE_CASES = ((0, 0), (4, 12), (5, 19), (7, 50))
+SOURCE_INDEX = {(0, 0): 0, (4, 12): 4, (5, 19): 5, (7, 50): 7}
 
 
 def _source_raster(index):
@@ -160,7 +171,8 @@ def run(rom, state, png=None):
                 for problem in case_problems]
 
     source_exact = 0
-    for index, (selector, number) in enumerate(SOURCE_CASES):
+    for selector, number in SOURCE_CASES:
+        index = SOURCE_INDEX[(selector, number)]
         if markers.render_card(font, selector, number) != _source_raster(index):
             problems.append((selector, number, 'installed raster differs from source card'))
         else:
@@ -173,7 +185,7 @@ def run(rom, state, png=None):
         if not 0 <= left <= right < markers.STRIP_WIDTH:
             problems.append((selector, number, 'ink bounds leave the 160px strip'))
             continue
-        if number:
+        if number and (selector, number) not in markers.SPECIAL_CARDS:
             expected_top = markers._asset()['number_tops'][markers.LABELS[selector]]
             if metrics['number_top'] != expected_top or metrics['name_top'] != 0:
                 problems.append((selector, number,
@@ -181,6 +193,11 @@ def run(rom, state, png=None):
                                  (metrics['number_top'], metrics['name_top'], expected_top)))
             else:
                 positioned += 1
+    # A selector whose every floor is a bespoke card still needs a variants-table entry --
+    # the table is indexed by selector -- but nothing can ever select it, so an untested
+    # stored form is expected there rather than a gap in coverage.
+    missing = {(sel, numbered) for sel, numbered in missing
+               if not markers._all_floors_special(markers.LABELS[sel])}
     if missing:
         problems.append((-1, -1, 'stored form(s) untested: %s' % sorted(missing)))
     if numbers != set(range(1, markers.MAX_FLOOR + 1)):
