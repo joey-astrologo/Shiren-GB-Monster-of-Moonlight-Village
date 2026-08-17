@@ -78,6 +78,12 @@ if [ -f saves/dungeon.state ]; then
   python3 tools/equipmentmarkerspill.py build/shiren_en.gb
   python3 tools/fusioncountspill.py build/shiren_en.gb
 fi
+# fusioncountspill covers seal counts 1-9 ($8C-$94). Zero seals is a tenth reachable count
+# that emits $8B, and an unadmitted code rejects the WHOLE row to fixed width, so the
+# visible damage is the item name rather than the mark. Needs its own real fused save.
+if [ -f saves/shiren_en_log2_weapon_VWF_break.srm ]; then
+  python3 tools/fusedzerospill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/itempagespill.py build/shiren_en.gb
 fi

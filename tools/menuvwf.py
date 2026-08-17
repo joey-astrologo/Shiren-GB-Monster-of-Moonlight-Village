@@ -39,7 +39,7 @@ WRAM-staged row must also have:
     clear-condition rows; every code
     is < $43 or one of the explicitly admitted punctuation/status glyphs. Equipment
     unidentified-equipment suffix `$88`, plating suffix `$8A`, and fusion-count suffixes
-    `$8C-$94` (one through nine seals) are composed as native marks at an 8px advance;
+    `$8B-$94` (zero through nine seals) are composed as native marks at an 8px advance;
     shop inventory rows instead end with one of five native three-tile price slots:
     `$D0-$D2`, `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, or `$DC-$DE`, selected by item-row
     position. The native shop formatter's 15-cell pre-price clamp is widened to 20
@@ -48,7 +48,7 @@ WRAM-staged row must also have:
     cells stay right-aligned and outside the proportional pen while the complete item
     name is composed normally.
     the cursed prefix `$87` remains a separate raw status cell. The fusion digits use a
-    compact auxiliary shifter because bank 32 has no room for nine more 128-byte
+    compact auxiliary shifter because bank 32 has no room for ten more 128-byte
     eight-shift slots. `$7D` is normalized to the approved font's `-` glyph.
     Kana, dakuten and DTE bytes all fall back. These scanner ceilings are not visual
     budgets: the row is accepted only after a separate font-pixel scan and allocator fit.
@@ -250,15 +250,28 @@ SUMMARY_HELPER_AT = 0x405A
 SUMMARY_HELPER_LIMIT = 0x4100
 SUMMARY_PRODUCER_AT = 0x6985
 
-# A fused item appends `$8B + seal_count` after its name.  Canonical weapon/shield masks
-# admit nine ability bits, so the complete live range is `$8C-$94`.  Bank 32 is packed to
-# within two bytes once the menu renderer is installed, so ordinary 128-byte pre-shift
-# slots would overlap code.  The bank-48 helper shifts the selected native digit directly
-# into the queue; bank 49 supplies the nine unshifted eight-byte glyphs and payload mapper.
-FUSED_FIRST = 0x8C
+# A fused item appends `$8B + seal_count` after its name. That is ARITHMETIC, not a marker
+# byte followed by a count: `$8B+0` is zero seals and `$8B+9` is nine, so the live range is
+# `$8B-$94` -- TEN codes.
+#
+# It read `$8C-$94` until 2026-08-16. The canonical weapon/shield masks admit nine ability
+# bits, and the nine was taken as the number of reachable values when it is really the
+# MAXIMUM; a count of zero was never considered. Fusing two items that carry no seals
+# yields exactly that, emits `$8B`, and because nothing admitted it the entire row dropped
+# out of the proportional scanner to fixed width -- Joey found `Nagamaki` rendered fixed
+# width with `$8B` drawn through the English font. `$8B` is the native zero digit, in the
+# same style as 1-9; see tools/fusedzerospill.py.
+#
+# Bank 32 is packed to within two bytes once the menu renderer is installed, so ordinary
+# 128-byte pre-shift slots would overlap code. The bank-48 helper shifts the selected
+# native digit directly into the queue; bank 49 supplies the ten unshifted eight-byte
+# glyphs and payload mapper.
+FUSED_FIRST = 0x8B
 FUSED_LAST = 0x94
 FUSED_CODES = tuple(range(FUSED_FIRST, FUSED_LAST + 1))
-FUSED_CODE = FUSED_FIRST              # compatibility name for the one-seal fixture
+# Pinned, NOT FUSED_FIRST: this names the ONE-seal code for equipmentmarkerspill's fixture,
+# and following FUSED_FIRST would have silently retargeted it at the zero-seal glyph.
+FUSED_CODE = 0x8C
 FUSED_BANK = 0x30
 FUSED_INDEX = 0x05
 FUSED_AT = 0x405A
@@ -269,6 +282,7 @@ FUSED_PAYLOAD_INDEX = 0x07
 FUSED_DATA_AT = 0x405A
 FUSED_DATA_LIMIT = 0x4100
 FUSED_NATIVE = bytes.fromhex(
+    '00 00 00 18 24 24 24 18 '
     '00 00 00 30 10 10 10 10 '
     '00 00 00 38 08 38 20 38 '
     '00 00 00 38 08 38 08 38 '
@@ -2333,7 +2347,7 @@ menureset:
 
 
 def _fused_src():
-    """Render native fusion-count digits $8C-$94 at any pixel residue."""
+    """Render native fusion-count digits $8B-$94 at any pixel residue."""
     return """
 fusedglyph:
   add a,a
@@ -4055,14 +4069,17 @@ def install(buf, notes=None, font=None):
                                  (address, expected.hex(' '), found.hex(' ')))
             buf[at + 1] = SHOP_CONTENT_CELLS
 
-        # 6:$4C2C masks weapons to $01FF and shields to $06FD before 6:$4C61
-        # counts the live ability bits.  Both domains therefore top out at nine; the
-        # producer at 4:$5765/$5D8B adds $8B and can emit exactly $8C-$94.
+        # 6:$4C2C masks weapons to $01FF and shields to $06FD before 6:$4C61 counts the
+        # live ability bits, so both domains top out at nine. That popcount is the MAXIMUM
+        # seal count, not the number of reachable values: the producer at 4:$5765/$5D8B
+        # adds the count to $8B, so it emits $8B..$94 and a fusion carrying no seals at all
+        # is the ordinary $8B case. Reading the nine as a value count is what left $8B
+        # unadmitted and dropped every unsealed fusion to fixed width.
         fused_masks = (0x01FF, 0x06FD)
         fused_max = max(bin(mask).count('1') for mask in fused_masks)
-        if fused_max != len(FUSED_CODES) or FUSED_FIRST + fused_max - 1 != FUSED_LAST:
-            raise SystemExit('menuvwf: fusion-count range no longer matches the '
-                             'canonical nine-bit equipment masks')
+        if len(FUSED_CODES) != fused_max + 1 or FUSED_FIRST + fused_max != FUSED_LAST:
+            raise SystemExit('menuvwf: fusion-count range no longer covers 0..%d seals '
+                             'from the canonical nine-bit equipment masks' % fused_max)
         fused_native_at = propvwf.FONT_BASE + FUSED_FIRST * propvwf.GLYPH_BYTES
         got_fused = bytes(buf[fused_native_at:fused_native_at + len(FUSED_NATIVE)])
         if got_fused != FUSED_NATIVE:

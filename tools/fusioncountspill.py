@@ -116,7 +116,9 @@ def run(rom, ram=None, state=STATE, png_dir=None):
         fused = [code for code in codes if code in menuvwf.FUSED_CODES]
         if len(fused) != 1:
             return
-        count = fused[0] - menuvwf.FUSED_FIRST + 1
+        # FUSED_FIRST is the ZERO-seal code, so the count is the plain offset. It used to
+        # be the one-seal code, and this read `+ 1`; admitting $8B shifted the base.
+        count = fused[0] - menuvwf.FUSED_FIRST
         events[(shape, count)] = (pb.register_file.HL, codes)
 
     def snapshot(label, counts, shape, raw):
@@ -128,7 +130,7 @@ def run(rom, ram=None, state=STATE, png_dir=None):
                 failures.append('count %d never reached %s renderer' % (count, label))
                 continue
             key, staged = event
-            expected = NAME + (menuvwf.FUSED_FIRST + count - 1,)
+            expected = NAME + (menuvwf.FUSED_FIRST + count,)
             if raw == 2:
                 if staged != (0, 0) + expected:
                     failures.append('count %d staged %s, expected %s' %
