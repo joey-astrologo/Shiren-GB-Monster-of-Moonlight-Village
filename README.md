@@ -29,7 +29,7 @@ Screenshots from the current English build:
 | Extracted script and cinematics | **Complete** | 1,406 of 1,424 ordinary records have supplied English; the remaining 18 records are unreachable/unrendered. All 12 separately encoded cinematic lines are translated. |
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor, file, title, Rankings, status and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
-| Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Poppins is used for credits. |
+| Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **0.96 battery passed — 2026-08-16** | Continue manual playtesting before tagging or distributing a final build. |
@@ -251,7 +251,7 @@ Promoting a font requires changing the approved source/spec deliberately, then r
 complete release battery.
 
 Arrival cards use their approved source-raster artwork. Ending credits use separately
-licensed Poppins-derived graphical masks;
+licensed Inter-derived graphical masks;
 ordinary builds consume stable baked assets and do not depend on a system TTF.
 
 ## Arrival card audition
@@ -289,14 +289,44 @@ The 22 credit cards are graphics, not script text. Audition the English artwork 
 touching a ROM:
 
 ```sh
-python3 tools/endingcreditsaudition.py --font Poppins-Medium.ttf \
-        --frame build/endingframes/frame_15060.png
+python3 tools/endingcreditsaudition.py --font Inter-SemiBold.ttf \
+        --frame build/endingframes/frame_15060.png --style aa:88:200
 ```
 
 That writes a contact sheet to `build/ending_credits_audition.png`. Adding
-`--asset-output assets/graphics/ending_credits_poppins.json` re-freezes the baked strips
+`--asset-output assets/graphics/ending_credits_inter.json` re-freezes the baked strips
 the build installs, so a card only changes when it is promoted deliberately. Capture the
-`--frame` raster with `endingcreditscan.py --captures-dir`.
+`--frame` raster with `endingcreditscan.py --captures-dir`, or reuse any card PNG from
+`endingcreditscanjp.py --cards-dir`.
+
+Two styles are available. `aa` is the approved one — Inter SemiBold at `aa:88:200`: it
+spends the two ink colors the way the native Japanese roll does, dim at partial coverage,
+bright at full, no shadow, which is what the credit band's palette fade treats kindly.
+`shadow` is the superseded style, a crisp 1-bit face over a one-pixel offset green shadow
+taken from the copyright title card. `aa:LOW:HIGH` varies the coverage cuts to tune stroke
+weight.
+
+```sh
+python3 tools/endingcreditsaudition.py \
+        --font Inter-SemiBold.ttf,Poppins-Medium.ttf \
+        --frame build/jpcards/card_00_Development_Staff.png \
+        --style aa:88:200,shadow --japanese build/jpcards
+```
+
+`--font` and `--style` are both comma-separated and every combination becomes a column,
+so fonts and styles compare in one sheet.
+
+More than one `--style`, or any `--japanese`, also writes
+`build/ending_credits_styles.png`: one row per card, the native Japanese strips beside
+each candidate. Every run reports each style's dim/bright ink ratio, which is the
+objective anchor for "closer to the JP" — the native roll sits at **0.87**, the approved
+Inter `aa:88:200` at 0.90, the superseded Poppins shadow style at 0.60. It also reports any
+card inking a band row no strip uploads, since the ROM cannot show those: Poppins clipped
+descenders on 10 of 22 cards, Inter on none.
+
+Auditioning an unapproved font is allowed and expected; the approved-font SHA-256 gate only
+applies when `--asset-output` would freeze it. `--allow-new-font` lifts it deliberately and
+then requires `--font-license`, so a frozen asset cannot record the wrong licence.
 
 To see the Japanese cards being replaced:
 

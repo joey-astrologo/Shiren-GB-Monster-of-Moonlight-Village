@@ -4,11 +4,11 @@
 The ending's forest, palette fades, music, all native credit positions, and post-credit
 transition stay intact.  Bank 31's credit driver is replaced with a compact sequencer
 which asks two unused expanded banks to upload two 160x16 strips per card.  The strips
-are frozen from the approved Poppins audition, so ordinary builds do not require the
+are frozen from the approved Inter audition, so ordinary builds do not require the
 source font or depend on a particular Pillow/FreeType version.
 
 The native roll contains 22 actual cards.  Every one has a one-for-one English card in
-``assets/graphics/ending_credits_poppins.json``.  The Japanese end mark shown after the
+``assets/graphics/ending_credits_inter.json``.  The Japanese end mark shown after the
 roll is deliberately not intercepted and remains native.
 """
 import base64
@@ -53,7 +53,7 @@ CREDIT_BAND_TOP = 84
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 ASSET_PATH = os.path.join(ROOT, 'assets', 'graphics',
-                          'ending_credits_poppins.json')
+                          'ending_credits_inter.json')
 ASSET_FORMAT = 'shiren-gb-poppins-ending-credits-v1'
 def _asset():
     try:
@@ -400,7 +400,7 @@ def install(buf, font=None, notes=None):
     buf[map_at:map_at + len(map_patch)] = map_patch
 
     out = [
-        'endingcredits: all 22 native cards translated in approved Poppins style; '
+        'endingcredits: all 22 native cards translated in approved Inter style; '
         'native forest, music, fades and Japanese End mark preserved',
         'endingcredits: cards split 11/11 across banks %d/%d $%04X-$%04X; '
         'pack SHA-256 %s' %

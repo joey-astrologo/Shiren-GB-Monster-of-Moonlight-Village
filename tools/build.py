@@ -447,7 +447,7 @@ def main():
     # The active-dungeon Continue screen owns an independent uncompressed tile/map block.
     # It needs the approved font but no other graphics module, and remains bisectable.
     no_waitcard = '--no-waitcard' in a or not dot_font
-    # Ending credits use frozen approved Poppins strips in their own expanded bank while
+    # Ending credits use frozen approved Inter strips in their own expanded bank while
     # retaining the native forest, music and transition. Keep a direct native control.
     no_endingcredits = '--no-endingcredits' in a or not dot_font
 
