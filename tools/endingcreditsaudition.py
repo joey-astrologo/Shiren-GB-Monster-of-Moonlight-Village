@@ -26,7 +26,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from floorcardgen import FONT_SHA256, render
+from poppins import FONT_SHA256, render
 
 
 NATIVE_SIZE = (160, 144)

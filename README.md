@@ -283,6 +283,39 @@ the native tables can select. Accepts `--scale` and `--columns`.
 
 Neither is a test. `markerspill.py` and `floormarkerspill.py` prove the shipped cards.
 
+## Ending credit audition
+
+The 22 credit cards are graphics, not script text. Audition the English artwork without
+touching a ROM:
+
+```sh
+python3 tools/endingcreditsaudition.py --font Poppins-Medium.ttf \
+        --frame build/endingframes/frame_15060.png
+```
+
+That writes a contact sheet to `build/ending_credits_audition.png`. Adding
+`--asset-output assets/graphics/ending_credits_poppins.json` re-freezes the baked strips
+the build installs, so a card only changes when it is promoted deliberately. Capture the
+`--frame` raster with `endingcreditscan.py --captures-dir`.
+
+To see the Japanese cards being replaced:
+
+```sh
+python3 tools/endingcreditscanjp.py            # -> build/ending_credits_japanese.png
+python3 tools/endingcreditscanjp.py --cards-dir build/jpcards   # one PNG per card
+```
+
+The Japanese card is not a stored raster: bank 31's native driver uploads and shows each
+one at runtime, so the game has to draw it. `endingcreditscanjp.py` therefore builds a
+`--no-endingcredits` ROM — which keeps the native roll — drives it to the ending with
+`saves/shiren_en_log_1_trigger_ending.srm`, and captures each card by hooking the native
+show-card routine. It labels every native card with the English role and name that
+replaces it, so the sheet doubles as a check on the romanizations. The base ROM cannot be
+substituted here: the fixture and its frame-timed boot were captured against the English
+build, and the same input lands in Fay's Puzzles on `build/base.gb`.
+
+Neither is a test. `endingcreditspill.py` proves the shipped cards.
+
 ## Repository map
 
 ```text
