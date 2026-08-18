@@ -32,17 +32,17 @@ Screenshots from the current English build:
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **0.96 battery passed — 2026-08-16** | Continue manual playtesting before tagging or distributing a final build. |
+| Release validation | **0.96 battery passed — 2026-08-18** | Continue manual playtesting before tagging or distributing a final build. |
 
-The complete normal, shuffled and redirect-all battery passed on 2026-08-16: all 72
+The complete normal, shuffled and redirect-all battery passed on 2026-08-18: all 72
 CPU-health seeds remained healthy, all renderer queues reached VBlank byte-exact, and
-1,226,610 text-visible containment frames had zero spill. Current artifact hashes:
+1,226,703 text-visible containment frames had zero spill. Current artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `2672b485ec77e810ac1cc815fe92baf79fdb0a946a9347d57c4f5b73b80ed849` |
-| `build/shiren_en_shuffle.gb` | `241313b44799c1e05131bf80d46573ec83a34267797623e40f693c3970229b43` |
-| `build/shiren_en_redirect_all.gb` | `5fcbe274f13e4721ad088440e43b332c106fd267d5cfd48cbff7de2fe4996900` |
+| `build/shiren_en.gb` | `73af11f18ed73eb4f3f55cd3ed3b7df05976a3ef21054e8b1d7f3aca60a16548` |
+| `build/shiren_en_shuffle.gb` | `d0077e7fffd67561c16c9c918ba5ba50719974cdeec9aad9308b79de08d909df` |
+| `build/shiren_en_redirect_all.gb` | `13f3201c3a72a5678a668431ae0b060f03221a4922d70c3861feac5ef2c60c1e` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,
