@@ -49,6 +49,21 @@ Static coverage cannot discover an unknown interior event entry, and automated n
 cannot judge a sentence or an animation transition. The full-game playthrough is what finds
 what the battery cannot, and every route it discovers should become a fixture.
 
+**Which screens exercise which subsystem**, when you are deciding where to look after a
+low-level change:
+
+| Symptom | What it points at |
+|---|---|
+| Freeze or garbled tiles at boot/title/menus | the mapper, or a bad bank switch |
+| Corrupted graphics after walking a few floors | the wrong ROM bank is being loaded |
+| Wrong text or graphics when using items | renderer or tile ownership |
+| A save that is lost or corrupt after quit/reload | RAM banking |
+| Garbled entries on the Ranking/password screen | SRAM bank select |
+
+The save and Ranking screens matter most for anything touching banking: they are the parts
+that exercise all four SRAM banks. `$A000-$BFFF` is a banked window, and the mapped bank
+changes with game state — a menu being open is enough to change what an address reads.
+
 ## Releasing
 
 When a playthrough is accepted: stop changing font, text, graphics and geometry; run
