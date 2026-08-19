@@ -302,7 +302,7 @@ strings containing them (10 and 33) show one argument byte as an ordinary charac
 `script.tsv`. `dialogue_preview.py` keeps `codec.ARITY` for them so the checker measures
 exactly the bytes the inserter writes, and the eight lines that measure 19-21 cells are
 explained rather than excused. The hazard is a translator "tidying away" a stray digit,
-which `TRANSLATING.md` §7 warns about.
+which `docs/TEXT_REFERENCE.md` §7 warns about.
 
 Two independent confirmations of earlier work fell out of this:
 
@@ -915,7 +915,7 @@ Re-traced on the pointer itself, the source is **both**: ROM at `31:$43DC` `$43E
 
 `$C616` is the item-verb staging buffer that `30:$7E8A` fills — and that site IS hooked, so
 verbs arrive already expanded. **There is no separate staging copy to find, and the drawer is
-the right place to hook after all**, for the ROM-sourced text. See HANDOFF TASK 1.
+the right place to hook after all**, for the ROM-sourced text. See "The menu box drawer needs a GATE" below.
 
 Lesson worth keeping: when hooking a copy loop, record the register the loop *reads*, not the
 one it writes. `hl` is the source in the five raw loops and the destination in this one.
@@ -937,7 +937,7 @@ writes `build/relocmap.tsv` (built address -> `loc`) and `gbrun.py` translates t
 
 ### So the gate is now evidence, not bank
 
-`script/dte_ok.tsv` lists strings a trace has **observed** an expanding loop read, generated
+`script/build-inputs/dte_ok.tsv` lists strings a trace has **observed** an expanding loop read, generated
 by `gbrun.py --dte-scan` (hooks `13:$40D8` and bank 0's `loop2`, where `hl` still holds the
 string start, and reads the current bank from `[$4000]`). An unlisted string is left
 uncompressed.
@@ -1042,7 +1042,7 @@ drawer needed **no** hook for these, because the staging copy expanded them firs
 Its registers differ from every other site: source `bc`, destination `hl`, cell counter `e`,
 and `d` is a live flag. `$4124` peeks the next SOURCE byte to charge a cell (`$4137`), the
 same shape as `13:$40F3`, so only DTE codes may take the new path and plain bytes must fall
-through to the original handler. Full plan in HANDOFF TASK 1.
+through to the original handler. Implemented; see "The menu box drawer needs a GATE" below.
 
 Then `13:$6AE5`, `11:$52BC`, and the three untraced raw loops above.
 
@@ -1131,7 +1131,7 @@ is 1 to 3 cells, `<cE5>` 1 to 7.
 fails a build only at the substitution FLOOR of one cell each. `<var>は モンスターにかこまれた！`
 is 14 literal cells and leaves **4** for a monster name; `13:$48FF` leaves exactly 3 for a
 `<cE4>` that can be 3 digits. Fifteen shipped lines go over 18 once `<var>` is charged the
-8-cell cap in `TRANSLATING.md` §4. A check that refused those would be refusing text the
+8-cell cap in `docs/TEXT_REFERENCE.md` §4. A check that refused those would be refusing text the
 original game ships, so the cap is reported as headroom instead.
 
 ### Consequence
@@ -1270,7 +1270,7 @@ That includes the item list and **the item action menu (boxes 6 and 39)**, whose
 
 ### What this makes cheap, and what it does not
 
-Widening: cheap, declarative, `script/box_geometry.tsv`. Item action menu is now columns
+Widening: cheap, declarative, `script/build-inputs/box_geometry.tsv`. Item action menu is now columns
 9-19, cursor + 8 cells. Moving a box is also cheap now, but only because the cursor table
 above is patched with it — that link is not discoverable from the box code alone.
 
@@ -1573,7 +1573,7 @@ A reference gets repointed; a hardcoded stride does not.**
 
 ## Box aliasing — reclaiming a whole box's bytes
 
-`script/box_alias.tsv` declares that one box renders another's text. Only the descriptor's
+`script/build-inputs/box_alias.tsv` declares that one box renders another's text. Only the descriptor's
 text pointer changes, so the box still appears exactly when it did; its own block becomes
 unreferenced and its bytes join the bank's free pool as a DECLARED region.
 
@@ -1683,7 +1683,7 @@ checks. The shipping build reports 33 exact rows, 1,422 visible checks and zero 
 This section preserves the failure analysis that led to the screen-scoped Rankings repair.
 The replacement regression now checks the real badge tiles and repeated Rankings/Adventure
 navigation; the implementation and acceptance record is in
-`docs/archive/HANDOFF_RANKVWF.md`.
+recorded in `VWF_BUDGETS.md`.
 
 The first diagnosis was wrong. `tools/orochisymbolspill.py` watches tile IDs
 `$5B/$5C/$63/$64`, BG cells `(8,2)/(8,3)/(10,2)/(10,3)`, and framebuffer crop
@@ -1708,7 +1708,7 @@ cannot solve this. Rankings must retain VWF and be rebuilt as one screen-scoped 
 audit all simultaneously visible native graphics, keep them disjoint or explicitly
 relocate them, and restore any safely borrowed offscreen planes before their maps are
 revealed. Transition blanking remains useful but cannot recreate overwritten planes.
-The canonical implementation record is `docs/archive/HANDOFF_RANKVWF.md`.
+The canonical implementation record is recorded in `VWF_BUDGETS.md`.
 
 ## Ending-credit tiles are column-interleaved — fixed 2026-08-11
 
@@ -1724,3 +1724,205 @@ installation. `endingcreditspill.py` independently resolves the live map IDs bac
 VRAM, compares the resulting row-major tiles to the approved asset, waits through the
 native palette fade, and compares the actual 160x32 on-screen credit raster for all 22
 cards. This is the regression that the visibly broken version fails 22/22.
+
+---
+
+## The copy-loop inventory — use this instead of guessing
+
+| idiom | bytes | sites |
+|---|---|---|
+| store-then-test | `2A 12 13 FE FF 20` | 6: `4:$7458` `11:$51F0` `11:$52D5` `11:$7E63` `14:$7C1E` `30:$7E8A` |
+| box row drawer | `31:$40D8`, source in **bc** | 1 caller, `31:$4095`; hooked at `31:$4106` |
+| test-then-store | `2A FE FF 28` | 44 candidates (generic pattern; includes `13:$40DB`) |
+| control-aware | `2A FE E0` | 2: `13:$6893`, `13:$6AE5` |
+
+`tools/gbrun.py --trace` hooks all of them at once and reports which fired with what source,
+which is how to attribute a screen rather than reason about it.
+
+## Two decisions worth not re-litigating
+
+**The buffer bound is an address, not a character cap.** `emit_lit` refuses to write at or
+past `$CF38` — stronger than a character cap, because it holds however many bytes a pair
+expands to. `$CF38` not `$CF43` because the composer reads the buffer's zeroes as the end of
+the line, so writing past the shorter clear (`$CF07+$32`) would leave text unterminated.
+
+The box path does NOT get that guard, and should not: its destination is the `$C300`
+tilemap staging buffer, and what bounds it is the box width in `e`.
+
+**Cell counting charges the dakuten, not the base character.** `13:$40F3` peeked the next
+*source* byte, which cannot survive expansion once that byte may live inside a table entry.
+Charging the mark is equivalent — a mark always follows a base character, two never adjoin —
+and needs no lookahead.
+
+## Untranslated Japanese collides with the DTE code space — retracted as "cosmetic" 2026-07-30
+
+**Untranslated Japanese collides with the DTE code space** (it uses 181 of 224 literal
+codes) and renders differently garbled. The Latin font is already over the kana tiles, so
+it is garbage either way, and the `$CF38` guard makes overrun impossible. Only translated,
+allowlisted strings are compressed, and box text is expanded only for a box marked
+compressed.
+
+**It is not purely cosmetic, though, and this session measured that.** Expanding Japanese
+changes CELL counts, so it changes message wrapping and therefore timing: with `a:120` from
+`saves/dungeon.state` the status bar's second row stays hidden until the next button press.
+Any change to the code set moves this around — an arbitrary `$81-$9C` does it too. It
+resolves on input, the game stays healthy, and it shrinks as text gets translated.
+
+## Code space is 46, and it is MEASURED against the script
+
+The old plan said 140; that counted only English. A DTE code must also miss the combining
+marks, be separable cheaply, and — learned the hard way — miss any byte a translation names
+with a `<$XX>` escape. Free: `$43-$78`, `$81-$9D`, `$B7-$DF` = **124 codes**, five compares.
+`$B3-$B6` is the reservation for layout glyphs; `$B6` is the status screen's column divider.
+
+The 19 left over are English's punctuation, reusing the ROM's **native** glyphs at
+`$7C-$B2`. (Also why `codec.encode` resolves `'F'` to `$B4` and not latinfont's `$10` —
+`build.encode_en`/`EN_CODES` is the one the inserter uses.) Compacting them into `$43-$4C`
+would make `$4D-$B2` one range and a one-compare test: the only DTE upgrade left.
+
+
+## `$C006` is a VRAM transfer queue — settled, and both readings were right
+
+`13:$43B8` and `13:$4484` write **the same buffer with different payload types**, because
+`$C006` is not a tilemap row and not a tile buffer — it is a queue of VRAM transfers, each
+
+```
+dw   destination            ; a VRAM address
+db   payload[n]             ; the bytes to put there
+```
+
+consumed by a stack-pointer blitter in bank 0 (`ld sp,$C006` / `pop hl` = destination /
+`pop de` × n / `ld [hl+],a` ×2). There are two consumers and they disagree about `n`, which
+is the whole reason the two readings looked irreconcilable:
+
+| consumer | slot stride | payload | slots seen |
+|---|---|---|---|
+| `0:$10A0` | **22** (`dw` + 20) | a **tilemap row**, 20 entries | `$C006 $C01C $C032 $C048 $C05E` … |
+| `0:$11C5` | **66** (`dw` + 64) | **tile data**, 4 tiles | `$C006 $C048 $C08A` |
+
+`3 × 22 = 66`, so the two views agree on the boundaries at `$C006`, `$C048` and `$C08A`.
+`$C0CC` has no reference anywhere in the ROM, so three 66-byte slots is the whole of it —
+**192 bytes, 12 tiles**, and that is the constraint that shapes everything below.
+
+### The geometry that falls out — measured
+
+* A message line owns **18 consecutive VRAM tiles**. `13:$4523` writes the tilemap row as
+  18 *incrementing* tile indices (`ld [hl+],a / inc a`, `ld b,$12`), so the tilemap does
+  nothing but count.
+* The three lines' tile bases are the table at `13:$4412`: **`$8A80`, `$8BA0`, `$8CC0`**,
+  picked by `[$CF06] & 3`. They are `$120` apart = exactly 18 tiles. No slack between them.
+* **A line is drawn in TWO HALVES of 9 tiles**, because 18 tiles is 288 bytes and the queue
+  holds 192. `13:$43B8` renders 9 glyphs into the three slots (4 + 4 + 1) and
+  `13:$43E2` adds **`$90` = 9 tiles** to the destination when `([$CF06] >> 4) & 3 == 1`.
+* The caller state machine is `13:$4310`, on `([$CF06] & $30) >> 4`:
+  `2` → `ld hl,$CF07` + `call $43B8` (first half) → `1` → `call $439F` + `call $43B8`
+  (second half) → `0` → `call $4484` (the tilemap row). `13:$439F` is *"advance `hl` past 9
+  characters"*, and `13:$6BE2` is its twin on the other caller path.
+* `13:$43B8` is the **single choke point**: its five callers are `13:$4328 $433A $524B
+  $6A97 $6AA3`, and `13:$4464` (the blitter) has no other caller. Patch `$43B8` and every
+  path that draws composed text gets VWF.
+
+Trace evidence, from `saves/town.state` walking into the first villager:
+
+```
+f163  13:$43B8 CF06=A0  blits c=4A,65,48,9A,1D,2C,2D,36,29 to de=C008,C018,C028,C038,
+                                                                C04A,C05A,C06A,C07A,C08C
+      13:$43F5 dest1=$8A80        0:$11C5 copy dests=8A80 8AC0 8B00
+f164  13:$43B8 CF06=90  blits c=32,15,7B,38,B2,9B,00,00,00
+      13:$43F5 dest1=$8B10        0:$11C5 copy dests=8B10 8B50 8B90
+```
+
+`$8A80 + $90 = $8B10`; `de` steps `$10` inside a slot and `$12` across a slot boundary,
+which is the 2-byte destination field being skipped. `1D 2C 2D 36 29 32` is `Shiren`.
+
+## The menu box drawer needs a GATE, and that is the whole story
+
+The plan assumed the composer's "accepted cost" transfers: expanding a byte that is not
+really a DTE code garbles some glyphs, and Japanese renders as garbage anyway. **It does
+not transfer.** The composer's floor is one bad line -- its buffer is bounded, its string
+ends at an `$FF` the expander refuses, and the next line starts from a fresh pointer.
+
+The drawer has no floor. It draws a FIXED number of cells and then leaves `bc` wherever it
+stopped; the next row simply continues from there. So a byte that expands to two cells
+where the row budgeted one makes the row run out of cells *before* it reaches its
+terminator, and **every following row of that box starts at the wrong byte**.
+
+And the drawer's source is not always ours to vet. The file-select box draws the **player's
+saved name out of SRAM** -- katakana codes, squarely inside `$43-$78`. No content test can
+ever make that safe.
+
+So expansion is gated on the BOX: **bit 7 of the descriptor's flags byte**, which reaches
+the drawer at `$C69E`. Only 2 of its 8 bits are used across all 52 descriptors (`$00`,
+`$02`, `$04` are the only values) and only `31:$4043` and `31:$40A1` read it. `build.py`
+sets it only for a box whose **every** row is translated English and whose text is not
+WRAM-staged -- exactly the condition under which every DTE-range byte in it is one the
+compressor put there.
+
+## Three white screens, because each is a rule
+
+**1. A `<$XX>` layout escape cannot be a DTE code.** `31:$41E9` is `Weapon  <$B6>Str` --
+`$B6` is the vertical bar holding the status screen's two columns, and it was inside
+`$B3-$DF`. The drawer expanded it, drew two cells where the row budgeted one, and the
+cascade above did the rest. **`$B3-$B6` is now reserved** and the top DTE range starts at
+`$B7` (124 codes, not 128; 40.2% not 40.6%), and `build.py` rejects any translation whose
+raw escape lands in the code space -- a build error naming the string, not a white screen.
+A `<$XX>` byte is layout the renderer must reproduce EXACTLY, the same category as a
+control code or a combining mark, and it belongs in the same exclusion.
+
+**2. The gate above.** Reserving `$B3-$B6` fixed the status screen and the file-select
+screen still died, on the player's saved name.
+
+**3. Resident code must not run to the last byte of bank 0.** `dte_box_hi` was first
+written as exactly 20 bytes, `$3FEC-$3FFF`, so its `ret` sat on `$3FFF` -- and that `ret`
+did not return. White screen, CPU spinning on `rst $38`, while the identical bytes ran
+clean under `tools/gbemu.py`. Moving the routine twelve bytes earlier, changing nothing
+else, fixed it outright. The byte after `$3FFF` is `$4000`, which belongs to whichever bank
+is mapped, and during an expansion that is the TABLE bank. `BOX_END` is `$3FFF`, not
+`$4000`, and `build_box()` refuses to cross it.
+
+## What this cost, and the one difference that remains
+
+Reserving four codes shrank the table, and **that changes how untranslated Japanese
+expands** -- which is not only cosmetic. In the dungeon, `a:120` leaves the status bar's
+second row hidden until the next button press, where the pre-hook build restores it after
+~46 frames. It is not the box hook: a build with the box hook and `--no-dte` behaves like
+the baseline, and an ARBITRARY different code set (`$81-$9C` instead of `$81-$9D`) breaks
+it the same way. It is the accepted cost, sharpened: **expanding Japanese changes cell
+counts, so it can change message wrapping and therefore timing, not just glyphs.** It
+resolves on input, the game stays healthy, and it goes away as text gets translated.
+
+## A renderer's geometry can be duplicated in ARITHMETIC — the name-entry grid
+
+Found while doing the above, in the same code. **The picker duplicates the grid box's row
+spacing as an immediate**: `31:$419D` computes `base + (row - 1) * stride + column`, where
+`base` is box 12 row 1 (a normal reference, repointed with the box) and `stride` is the
+operand of `31:$41A0 ld a,$13`.
+
+`$13` = 19 is correct for the Japanese — 18 bytes plus a terminator. Translated rows fill
+all 18 cells, so `needs_term` drops their terminators and the real stride becomes **18**.
+Nothing updated the constant, so every row below the first read one byte further along than
+the row before it. Measured on the shipped build: **row 2 gave `G` for `F`, row 3 `M` for
+`K`, row 4 `S` for `P`.** Typing your own name mostly did not work.
+
+`build.py` now derives the stride from where the rows actually landed, asserts they are
+evenly spaced, checks the opcode before patching, and reports the change. Verified with
+`tools/gridprobe.py`: every row of both pages now reads the byte it displays.
+
+**The general lesson: a renderer's geometry can be duplicated in ARITHMETIC somewhere else.**
+`box_geometry.tsv` moves a box; it cannot know that another routine hardcoded the old
+layout. When a box's byte layout changes, grep for code that indexes it.
+
+## Menu-path facts settled once, so nobody re-derives them
+
+* `saves/dungeon.state` loads IN the dungeon; **B opens the main menu** (start does not),
+  `A` then enters the item list. Earlier confusion ("start opens the menu") cost several
+  probe runs.
+* The shadow→VRAM tilemap copy is command-stream driven (`0:$3C3F` appends; emitters
+  around `0:$3D90-$3EAF`), consumed in vblank. No `$C300`/`$9800` immediates exist in
+  bank 0 — do not search for them.
+* `31:$4106` already reads `call $00F0` in the shipped ROM — the menu DTE hook LANDED;
+  any VWF hook must expand DTE itself or sit above it. (Older notes calling this "still to hook" are stale.)
+* The `$8800` region's 68+15 extra font tiles (`13:$7657+`) include the cursor `$81`,
+  digits-for-status, borders `$B8-$BF` — indices `$80-$D2` are re-uploaded at menu open
+  too, so nothing composed may live below `$D3` in that half without the same
+  compose-after-upload ordering.

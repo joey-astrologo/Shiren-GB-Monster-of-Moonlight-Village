@@ -983,7 +983,8 @@ def record_text(record, rom):
     end of bank 34, line 4 in bank 35, line 5 back in a 17-byte gap in bank 34. Nothing was
     wrong with the ROM: `--redirect-all`, crashscan and reloc_verify were all clean, and
     the game reads it correctly. Only the check was wrong, and it reported `BADPLACE`,
-    which TRANSLATING.md tells a translator to stop and report as a tool bug. It was one.
+    which docs/TEXT_REFERENCE.md tells a translator to stop and report as a tool bug.
+    It was one.
 
     Walks entries until a line ends in `$FF`, which is the terminator `add()` appends to
     the blob and therefore the one the runtime stops on too.
@@ -1032,7 +1033,7 @@ def eligible(r):
 
     CORRECTED 2026-07-31: this used to say "MARK is `$E9`, whose control handler at
     `13:$6929` is a bare `ret`", and that conflated the composer's two dispatch tables (see
-    FINDINGS.md). `13:$4148` is the bare `ret` and belongs to the BANK 13 table at `$4126`.
+    docs/FINDINGS.md). `13:$4148` is the bare `ret` and belongs to the BANK 13 table at `$4126`.
     The dialogue table at `$68CF` sends `$E9` to `13:$6929`, which writes `$CF81` -- the
     player's first name character -- and its dakuten if it has one. So an unrecognised record
     draws one or two stray characters rather than nothing. Benign either way, and it does not

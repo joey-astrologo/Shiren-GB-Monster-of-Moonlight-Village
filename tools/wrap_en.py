@@ -57,7 +57,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Layout tokens the draft may contain. Everything else is content and is carried through
 # untouched -- including the argument byte after `<mode1>`, which is a pause length and
-# not a character. See TRANSLATING.md section 7.
+# not a character. See docs/TEXT_REFERENCE.md section 7.
 FORCED = {'br', 'brk'}
 
 
@@ -171,7 +171,7 @@ def wrap(text, width=dialogue.WIDTH, per_box=dialogue.LINES_PER_BOX, widths=None
         if not lines:
             continue
         # A box holds three rows and there is no fourth; overflow becomes another box.
-        # Boxes are free (TRANSLATING.md section 3a), so this is a pacing note, not a fault.
+        # Boxes are free (docs/TEXT_REFERENCE.md section 3a), so this is a pacing note, not a fault.
         #
         # BALANCED, not greedy. Cutting every third line leaves the remainder alone in a
         # box of its own -- four lines became 3+1, and a page that says only `one but me.`

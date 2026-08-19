@@ -133,7 +133,7 @@ NAME_RESTORE_TRAMPOLINE = 0x5EFF
 DEFAULT_LIT = 0x6EC1        # the shared literal, inside `4:$6EA2`'s own routine
 
 # The two menu boxes the name field is drawn in. Box 10 is 4 cells wide, box 11 is 6 --
-# both real descriptors in `script/box_geometry.tsv`, both already in the ROM, both drawing
+# both real descriptors in `script/build-inputs/box_geometry.tsv`, both already in the ROM, both drawing
 # the same text at `$C6E3`. Widening the field means selecting the other one.
 NARROW_BOX, WIDE_BOX = 0x0A, 0x0B
 

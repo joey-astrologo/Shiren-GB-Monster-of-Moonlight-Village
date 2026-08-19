@@ -221,7 +221,8 @@ def main():
     parser.add_argument('--en', default=os.path.join(ROOT, 'script', 'en.tsv'))
     parser.add_argument('--glossary', default=os.path.join(ROOT, 'script', 'glossary.tsv'))
     parser.add_argument('--geometry',
-                        default=os.path.join(ROOT, 'script', 'box_geometry.tsv'))
+                        default=os.path.join(ROOT, 'script', 'build-inputs',
+                                             'box_geometry.tsv'))
     parser.add_argument('--font-spec',
                         help='review an alternate font spec without changing production')
     parser.add_argument('--details', type=int, default=12,

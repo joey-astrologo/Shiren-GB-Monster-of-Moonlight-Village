@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Census live menu-screen references to a proposed VRAM tile pool.
 
-Step 4B of HANDOFF_MENUVWF proposes reclaiming tile indices $82-$9D.  The Latin
+The menu VWF implementation record in docs/VWF_BUDGETS.md proposes
+reclaiming tile indices $82-$9D.  The Latin
 encoder does not use that range for ordinary English glyphs, but that does NOT make
 the VRAM tiles free: the game also uses raw tile indices for cursors, equipped-row
 markers, field blanks, stars, alternate digits and arrows.

@@ -624,7 +624,7 @@ def hooks(labels):
 # left uncompressed. That fails safe: no compression costs space, wrong compression costs
 # correctness.
 ALLOWLIST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         '..', 'script', 'dte_ok.tsv')
+                         '..', 'script', 'build-inputs', 'dte_ok.tsv')
 
 # The loops that reach dte_emit, and where the source register still points at the START
 # of a string. `13:$40D8` is the `ld de,$CF07` immediately before the 18-cell loop;
@@ -688,7 +688,7 @@ STAGER_SITES = [(11, 0x56A2, 'bank 11 dialogue stager -> $CF8F', 'hl'),
 # 64 -> 59 B / 39.3%, 256 -> 39 B / 36.5%. 64 buys the fit for 1.5 points of prose.
 #
 # This is what closed bank 30, NOT the dead-entry reclamation the plan expected -- see
-# FINDINGS.md on why that evidence did not hold up.
+# docs/FINDINGS.md on why that evidence did not hold up.
 TRAIN_WEIGHT = {30: 256}
 DEFAULT_WEIGHT = 1
 
@@ -1109,7 +1109,7 @@ def training_corpus():
     how much text it was trained on -- and yield tracks the corpus, not the input. Training
     on the SNES English fan translation therefore gives our own strings the measured 40.7%
     from the first translated line, instead of only once enough English exists to have
-    repeated digrams. Same franchise, same register; see FINDINGS.md.
+    repeated digrams. Same franchise, same register; see docs/FINDINGS.md.
 
     Falls back to our own TSV if that corpus is not checked out next door.
     """
@@ -1129,17 +1129,14 @@ def _default_corpus():
     """
     from latinfont import EN_CODES
     texts = []
-    try:
-        import dte_measure
-        cats = dte_measure.load_corpus()
-        for units in cats.values():
-            for _, segs in units:
-                texts.extend(segs)
-    except Exception:
-        for line in open(os.path.join(os.path.dirname(__file__), '..',
-                                      'script', 'menu_en.tsv'), encoding='utf-8'):
-            if '\t' in line:
-                texts.append(line.split('\t', 1)[1].strip())
+    # dte_measure owns the corpus. This used to fall back to a historical split of the
+    # menu strings if that import failed; the split file is gone and the fallback with it,
+    # so a broken corpus now fails loudly instead of silently training on stale text.
+    import dte_measure
+    cats = dte_measure.load_corpus()
+    for units in cats.values():
+        for _, segs in units:
+            texts.extend(segs)
     # drop characters with no glyph rather than transliterate them: the point is to train
     # on the bytes the ROM can actually hold
     out = []

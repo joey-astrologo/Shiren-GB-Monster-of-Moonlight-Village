@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Do composed menu rows show EXACTLY the pixels the glyph table says, and nothing else?
 
-boxspill.py's idea for the menu renderer, with the two lessons §4 of HANDOFF_MENUVWF.md
+boxspill.py's idea for the menu renderer, with the two lessons §4 of `docs/VWF_BUDGETS.md`
 paid for baked in:
 
   * PLANE-EXACT, never OR'd. The one-cell park stomp put garbage in ONE plane of one

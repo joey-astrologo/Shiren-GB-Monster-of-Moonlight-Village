@@ -280,7 +280,7 @@ def main():
                          'and --compare too, so a screenshot of dialogue is reproducible '
                          'and shares frame numbers with msglog.py at the same seed')
     ap.add_argument('--dte-scan', action='store_true',
-                    help='report strings an expanding loop read; append to script/dte_ok.tsv')
+                    help='report strings an expanding loop read; append to script/build-inputs/dte_ok.tsv')
     ap.add_argument('--append', metavar='TSV',
                     help='merge --dte-scan results into this allowlist')
     ap.add_argument('--press', default='')

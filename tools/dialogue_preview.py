@@ -157,7 +157,7 @@ BUF_LOOP2 = 0x36            # 13:$6884 `ld d,$36` -- bank 11/14 dialogue
 # $F0 is the exception, and only on the item-description path. There its handler DOES write
 # to `de`: 13:$7E6A far-calls 11:$7E26, which copies the string at `11:$55AC + 2*arg` into
 # the buffer inline. On the composer path the same code is a screen effect that draws
-# nothing (FINDINGS.md, "the composer has TWO dispatch tables"), so the cost is charged by
+# nothing (docs/FINDINGS.md, "the composer has TWO dispatch tables"), so the cost is charged by
 # geometry, not globally -- `help_widths()` adds it and `subst_widths()` does not.
 DIGITS = {0xE4: 3, 0xE5: 7, 0xE6: 3}
 
@@ -196,7 +196,7 @@ def cf0_from_trans(trans, encode=None):
 # Legacy substitution reservations, retained as conservative warnings while the Dot
 # Gothic runtime-substitution census is open. They are source-policy numbers translated
 # from the old fixed-width renderer (8/10 + the six characters the uniform VWF gained),
-# NOT measured Dot pixel ceilings. `VWF_BUDGETS.md` records the distinction and the exact
+# NOT measured Dot pixel ceilings. `docs/VWF_BUDGETS.md` records the distinction and the exact
 # True Rapier+99 falsifier. Keep the public names for compatibility with existing tools;
 # do not use them to justify shortening a translation without measuring its actual path.
 NAME_CAP = 14               # legacy `<var>` reservation; audit/re-engineer if crossed
@@ -531,7 +531,7 @@ def check(data, width=WIDTH, per_box=LINES_PER_BOX, buf=None, jp=False, widths=N
 def headroom(data, widths=None, width=WIDTH, bank=None):
     """-> [(box, row, cells left for substitution, tokens)] for lines that substitute.
 
-    This is TRANSLATING.md section 4's table, computed instead of hand-written. It is a
+    This is docs/TEXT_REFERENCE.md section 4's table, computed instead of hand-written. It is a
     WARNING and never a build failure: the substituted text is a runtime value, and the
     Japanese itself leaves as little as 4 cells for a monster name. The report identifies
     templates for the producer/value census; it does not set one universal name cap.
@@ -747,7 +747,7 @@ def buffer_for(r):
 KNOWN_OVER = {
     '14:$7EE6': 'not script -- 294 cells of decoded garbage, an extraction false positive '
                 'that survives because it round-trips (see the length heuristic in '
-                'FINDINGS.md). Nothing draws it.',
+                'docs/FINDINGS.md). Nothing draws it.',
 }
 
 # Banks whose text dispatches through 13:$68CF rather than 13:$4126.
@@ -783,7 +783,7 @@ def _eb_pause_explains(bank, cells, line):
     return ('%d cells, and all %d of the extra one(s) are `<mode1>` argument bytes. The '
             'dialogue path dispatches $EB to 13:$690F, which reads ONE argument -- the '
             'typewriter PAUSE, a frame count that draws nothing -- so the line is %d. See '
-            '"two dispatch tables" in FINDINGS.md.' % (cells, eb, cells - eb))
+            '"two dispatch tables" in docs/FINDINGS.md.' % (cells, eb, cells - eb))
 
 
 def selftest(script='script/script.json'):

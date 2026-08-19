@@ -1,7 +1,0 @@
-# Direct prose translation questions that need project-owner review.
-#
-# Keep this list deliberately small: ordinary editorial choices are resolved during the
-# translation pass. Add a row only when Japanese meaning, story context, terminology, or
-# a consequential localization choice remains genuinely uncertain.
-#
-# loc	category	question	current_choice

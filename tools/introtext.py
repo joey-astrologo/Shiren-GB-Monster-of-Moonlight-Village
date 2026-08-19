@@ -5,7 +5,7 @@
 
 WHY THIS FILE EXISTS. Joey booted the ROM on 2026-08-06, pressed nothing, and watched the
 opening story play in Japanese -- with `coverage.py` reporting zero unextracted dialogue
-and HANDOFF_NEXT.md saying the script was finished. Both were honest. The cinematic has
+and `docs/ENGINEERING_RULES.md` saying the script was finished. Both were honest. The cinematic has
 never been in `script.json` because it does not use `codec.py`'s character table.
 
 THE TABLE IS AT `13:$7FAA`, 77 entries, intro byte -> font code. It is the game's whole
@@ -17,7 +17,7 @@ was never rejected. It was never asked about.
 
 COMBINING MARKS PRECEDE THE KANA HERE, the opposite of the main script: `むら ゙ ひと` is
 むらびと and `コッ ゚ハ` is コッパ. The renderer draws the mark into the tilemap row ABOVE, so
-a line occupies two rows. FINDINGS.md records the main script's rule; this is the other one.
+a line occupies two rows. docs/FINDINGS.md records the main script's rule; this is the other one.
 
 Bytes over $4C are the VM's opcodes and are printed as `<XX>`.
 

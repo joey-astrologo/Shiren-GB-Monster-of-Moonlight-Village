@@ -13,13 +13,13 @@ pen keeps:
     second half starts clean and `13:$439F` stays a plain "skip 9 characters" (now 12).
     With variable widths the second half starts mid-glyph and has to be handed a pen.
   * The cell budget at `13:$40D6` stays a CHARACTER count, so `dte_emit` needs no change
-    at all. The DTE collision `HANDOFF_VWF.md` describes -- if `b` becomes pixels the
+    at all. The DTE collision `docs/VWF_BUDGETS.md` describes -- if `b` becomes pixels the
     expander has to charge pixels too, from a table it cannot reach -- is closed, not
     solved.
   * The `$CF38` line-buffer bound still holds: 24 characters against 49 bytes.
 
 HOW THE COMPOSER DRAWS A LINE, measured 2026-08-03 by tracing a village dialogue. This is
-the part it is worth not re-deriving; the full trace is in `HANDOFF_VWF.md`.
+the part it is worth not re-deriving; the full trace is in `docs/VWF_BUDGETS.md`.
 
   `$C006` is a VRAM transfer queue -- `dw destination` then a payload -- consumed by two
   stack-pointer blitters in bank 0 that disagree about the payload size (`0:$10A0` reads

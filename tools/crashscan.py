@@ -18,7 +18,7 @@ is what identified the cross-bank message-queue references: bank 13 was mapped, 
 held `$00E7` (inside the relocated loop2) and `$68xx` (bank 13's message reader), and the
 death message had been repointed out from under `5:$44B8`.
 
-DO NOT hook $0038 instead. pyboy hangs once the ROM is spinning there -- see HANDOFF.md
+DO NOT hook $0038 instead. pyboy hangs once the ROM is spinning there -- see `docs/TRAPS.md`
 TRAPS, "pyboy hooks are not free instrumentation". Sampling is cheap and just as reliable.
 
 Reaching a crash needs real gameplay, so the input is the same seeded random walk

@@ -1,8 +1,9 @@
 # Shiren GB — translation file. Keyed on `loc`, one string per line.
 #
-# READ `TRANSLATING.md` FIRST. It covers the three storage classes, the measured
-# per-renderer Dot Gothic limits, the character set, control tokens, and every error
-# build/worklist.tsv can print. `VWF_BUDGETS.md` is the canonical fit register.
+# READ `script/README.md` FIRST -- which file to edit for each kind of text, and the rules
+# that apply to each. `docs/TEXT_REFERENCE.md` is the measurement behind them: the three
+# storage classes, per-renderer Dot Gothic limits, the character set, control tokens, and
+# every error build/worklist.tsv can print. `docs/VWF_BUDGETS.md` is the canonical fit register.
 #
 # KEY IS `loc` (bank:$addr), never the sequential id: ids are reassigned by sorted
 # offset, so any change to extraction silently shifts an id-keyed file by one entry.
@@ -143,7 +144,7 @@
 # between the text blocks, so its free pool is a set of runs of at most 26 bytes, and these
 # two boxes need 32 and 38 contiguous. build.py reports it as fragmentation, not shortfall.
 #
-# The 116 contiguous bytes of the katakana grid page are what unlocks them; see HANDOFF.md.
+# The 116 contiguous bytes of the katakana grid page are what unlocks them; see `docs/TRAPS.md`.
 # Uncomment together with a width of 7 for both boxes in box_geometry.tsv.
 31:$446E	Herb
 31:$4472	Scroll
@@ -230,7 +231,7 @@
 # game demonstrably draws, and covering the three shapes the sample had to cover:
 # combat fragments with runtime substitutions, a speaker-prefixed village line, and one
 # long multi-box conversation. This was the original POC sample; production dialogue now
-# uses the measured 30-source-glyph/144px Dot contract in `VWF_BUDGETS.md`.
+# uses the measured 30-source-glyph/144px Dot contract in `docs/VWF_BUDGETS.md`.
 #
 # Control codes are written by NAME (`<var>`, `<br>`, `<cE0:88>`), the same tokens
 # codec.decode prints in script.tsv's `jp` column. Do NOT spell them `<$E2>`: an escape

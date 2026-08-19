@@ -28,7 +28,7 @@ it, wrapping or wording must change.
 | Clear-condition list | 144px × 5 visible rows | **21 staged glyphs per row** | 72 allocator tiles in runs 57+11+4; widest possible current five need 56 primary-run tiles | `conditionspill.py`: widest five plus exact 21-glyph edge, plane-exact |
 | Main/action/start/Ground menus | Descriptor width minus measured raw cells | Shape-specific; the shared staged scanner admits at most 18 glyphs | Shared menu allocator and context-specific pools; Ground box 5 has one raw cell | `menuspill`, real-save `groundspill`, `menuromspill`, `startspill` |
 | ROM menu rows | Descriptor width minus approved raw prefix | Ends at the row's actual ROM terminator | Deterministic per-box tile pools | Approved box census only; unknown shapes fall back native |
-| Rankings | Measured five-name slices | Six stored player-name characters | **COMPLETE:** one screen-scoped allocation with native restoration; VWF remains mandatory | `rankspill` plus the replacement `orochisymbolspill`; see `docs/archive/HANDOFF_RANKVWF.md` |
+| Rankings | Measured five-name slices | Six stored player-name characters | **COMPLETE:** one screen-scoped allocation with native restoration; VWF remains mandatory | `rankspill` plus the replacement `orochisymbolspill`; see the menu VWF implementation record below |
 | Status / Fay structured rows | Fixed field coordinates plus proportional fragments | Per-fragment, not a prose-line cap | Numeric values and selectors deliberately remain fixed-cell | `structspill` against native control |
 
 The old uniform-6px renderer's 24-character line and the native renderer's 18-cell line
@@ -189,7 +189,7 @@ pixels and temporary storage first.
    every pixel, variant and allocator audit is rerun.
 3. **V4C — geometry (COMPLETE; visually approved 2026-08-10):** widened menu boxes were
    re-measured and safely compacted together with their cursor/field coordinates. The
-   retained one-cell exceptions are documented at the top of `HANDOFF_NEXT.md`. The
+   retained one-cell exceptions are documented at the top of `ENGINEERING_RULES.md`. The
    independent fixed-cell name-grid cleanup is also complete: its 75 selectable cells are
    intentional, both aliased page branches are verified, and box 12 is barred from DTE.
 4. **V4D — translated-text completeness audit (COMPLETE, 2026-08-10):** all ten
@@ -220,15 +220,82 @@ pixels and temporary storage first.
 9. **R3 — Rankings VWF ownership — COMPLETE:** the replacement regression fails the
    frozen known-bad ROM and preserves both ranking boards, repeated Adventure navigation,
    the Orochi badge and LCD-off rescued-child results. See
-   `docs/archive/HANDOFF_RANKVWF.md`.
+   recorded in `VWF_BUDGETS.md`.
 10. **V6 — release candidate validation:** freeze font/text/graphics/geometry; run all
    normal/shuffled, crash-sweep, intro, screenshot, interaction and clean-playthrough
    gates; then dry-run the documented external-translator TSV-to-ROM workflow and publish
    final hashes/docs.
 
 The session-level acceptance criteria and interruption policy are canonical in
-`HANDOFF_NEXT.md`. Cinematic text and its VM are complete and remain outside this work.
+`ENGINEERING_RULES.md`. Cinematic text and its VM are complete and remain outside this work.
 The ROM's `$66` Blank Scroll name/object slot is classified unused: there is no reachable
 Write action or scribing screen, so it adds no localization or VWF task.
 K1/K2 and V5D are complete and save-regressed. V4B remains open intake, V4A remains
 optional, and V6 follows the broad playtest.
+
+## Menu VWF implementation record
+
+`tools/menuvwf.py`'s docstring is the authority for the implementation; this is the
+measured delta that shaped it.
+
+The implementation of record: `tools/menuvwf.py`'s docstring is the authority; this is
+the delta. Rows are allocated by a WATERMARK ALLOCATOR over pool `$43-$7B` (57 tiles),
+records keyed by SHADOW DEST at `$C163-$C1B2` (16 × 5: key, base, cap, raw cells),
+reset by a far-call hook on the font upload `13:$7643` (far index 9). Tile 12 of a
+13-tile row composes into `$C12C-$C13B` — the `$C006` queue's flat space holds exactly
+12 tiles, which is what really capped the POC at 16 chars. Upload footprints are
+TIERED: 4 tiles for n<=4 (idempotent slot stacking), 8 for 5-8, the native 4+4+1 shape
+plus a backward last-4 window for 9-13. `tools/wramfree.py` (static opcode+boundary
+voting + per-frame dynamic watch over menus/walks/35 forced screens) is how every WRAM
+run above was proven; `tools/menuspill.py` is the verifier (plane-exact vs a python
+composition from the ROM's own glyph table; `--long` drives real worst-case rows).
+
+0. **(Round 2, from Joey playing his own save — both fixed the same night.)**
+   **The equipped marker `$84`/`$86` does DOUBLE duty**: it selects the left border
+   ($83/$85) AND is drawn as the row's column-1 cell — tile $84 IS the E glyph.
+   FINDINGS' "select $83/$85 instead" reads as border-only and is easy to
+   half-implement: consuming the marker shifted composed E-rows one cell left and put
+   the cursor over their first tile. The control build's SHADOW dump (`83 84 81
+   codes...`) is the authority. And **exact-size slices are wrong across PAGE FLIPS**:
+   page 2 restages all five rows with different text, so reusing page-1 caps left most
+   rows raw — row 0 of an allowlisted box now rewinds that box's record tail (keys
+   hl+64i) and every full redraw reallocates fresh. The main menu + action menus were
+   whitelisted for part of the night and REVERTED: their session-long records held
+   20-36 of 57 pool tiles and starved full item pages — they need the extension.
+1. **Six English glyphs live INSIDE `$40-$7F`**: `, ' - + [ ]` at $40/41/42/7C/7E/7F.
+   §2's "referenced by no English menu screen" was measured on screens without
+   counters or punctuation — the `[N]` counter writer `4:$5D58` writes `$7E`/`$7F`,
+   and five item names carry `-`. The POC's fixed slices covered `$41/$42` (latent
+   glyph stomp); the pool now EXCLUDES all six and eligibility ACCEPTS them as codes.
+2. **The raw-cell prefix is SHAPE-DEPENDENT**: w18 item rows stage TWO leading zero
+   cells, the w7 main menu and w9 action menus stage ONE. A fixed two-zero test made
+   every main-menu row fall back silently — and the narrow, left-aligned latin font
+   made the raw result LOOK composed in a screenshot. Only the far-call trace
+   (`$C0D8` never moving) told the truth. Verify composition by allocator state or
+   plane comparison, never by eye.
+3. **Eligibility must be a DESCRIPTOR SHAPE ALLOWLIST, not a flags test**: box 25
+   (x5 y9 w9, dynamic, WRAM-staged, English — the over-dialogue picker) passes every
+   flags-only rule and draws on screens whose `$9000-$97FF` holds TERRAIN, not the
+   font. Composing is only safe after a font upload; the allowlisted shapes are all
+   dispatcher screens. install() asserts the BUILT descriptors match the asm constants
+   so a box_geometry.tsv edit fails the build (the layout-duplicated-in-code trap).
+4. **Records must REUSE ACROSS SCREENS of one session and GROW**: the font upload only
+   fires at session open (main menu -> item list -> action menu share one pool), and
+   shadow row 4 is BOTH main-menu "Quit" and item row 0 — same key. A reused record
+   too small for its new text grows iff it is the top watermark allocation, else that
+   row falls back raw. This is also why footprints are tiered: a flat 9-tile floor let
+   four short main-menu verbs hold 36 of 57 tiles and starve 5-item inventories.
+5. **Bank 32's far-index table has a ONE-BYTE stride** — entries overlap, so live
+   indices are odd: name6 3, vwf 5, menurow 7, menureset 9.
+6. **The font-upload hook shifts walk RNG alignment**: it fires ~once per screen
+   transition (measured 1 in 3000 walked frames), and those few cycles move frame
+   boundaries, so `msgdur`'s seeded walk meets DIFFERENT boxes than a `--no-menuvwf`
+   control (17 vs 9-10; reverting the 3 hook bytes reproduces the control
+   byte-identically). Cross-build msgdur comparisons need both builds hooked
+   identically; within-build numbers are unaffected.
+
+`13:$7643` has NO literal `call` anywhere in the ROM (the one `call $7643` is bank-4-
+local code) — it is reached through a computed path; the hook works regardless, proven
+by menuspill's fresh-session reset scenario. The step-4 census scripts live in
+`tools/wramfree.py` and this session's scratchpad; the box-descriptor dump one-liner is
+in the git log of this file if needed again.

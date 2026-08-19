@@ -108,17 +108,15 @@ python3 tools/wrap_en.py script/prose_draft.tsv --preview
 python3 tools/wrap_en.py script/prose_draft.tsv --apply
 ```
 
-Names and terminology belong in [`script/glossary.tsv`](script/glossary.tsv). The optional
-Gemini proposal workflow is documented in
-[`GEMINI_TRANSLATION.md`](GEMINI_TRANSLATION.md); model output never writes canonical TSV
-without the normal review and fit gates.
+Names and terminology belong in [`script/glossary.tsv`](script/glossary.tsv).
 
 ### Controls and layout limits
 
 Text does not wrap safely at runtime. Physical pixels, source staging, temporary tiles and
 runtime substitutions are separate limits. The canonical budgets are in
-[`VWF_BUDGETS.md`](VWF_BUDGETS.md), with full translation rules in
-[`TRANSLATING.md`](TRANSLATING.md).
+[`docs/VWF_BUDGETS.md`](docs/VWF_BUDGETS.md); the working guide for translators is
+[`script/README.md`](script/README.md), with the measured rules behind it in
+[`docs/TEXT_REFERENCE.md`](docs/TEXT_REFERENCE.md).
 
 Anything in angle brackets is executable data and must survive:
 
@@ -353,10 +351,8 @@ script/en.tsv                 ordinary English translation
 script/prose_draft.tsv        sentence-form dialogue source for wrap_en.py
 script/glossary.tsv           canonical item, monster and NPC terminology
 script/intro.tsv              prologue/ending VM text
-script/box_geometry.tsv       measured menu box geometry
-script/var_domains.tsv        dynamic-value domain audit data
-script/var_roles.tsv          confirmed runtime substitution roles
-script/var_advisories.tsv     non-fatal runtime substitution review roles
+script/build-inputs/          measured geometry and declared patches the inserter needs
+script/evidence/              runtime <var> domains proven for varaudit.py
 
 tests/fixtures/               tracked SRAMs, hashes, routes and setup notes
 tools/release_battery.py      complete release-candidate validation
@@ -367,14 +363,19 @@ tools/menuvwf.py              menu/help/seal VWF renderer and allocator
 tools/rankvwf.py              Rankings VWF renderer
 tools/*spill.py               focused emulator regressions
 
+script/README.md              which file to edit for each kind of text
+docs/README.md                index of the reference documentation
+docs/TEXT_REFERENCE.md        translation rules: tokens, budgets, worklist errors
+docs/FINDINGS.md              how the ROM works
+docs/VWF_BUDGETS.md           renderer contracts
 docs/ROM_BANK_MAP.md          allocation ownership and collision rules
-HANDOFF_NEXT.md               concise current task state
-HANDOFF.md                    durable low-level traps and tooling reference
-docs/archive/                 completed historical handoffs
+docs/ENGINEERING_RULES.md     the gates a change must pass, and how to verify one
+docs/TRAPS.md                 mistakes that cost real time
 ```
 
-Only `HANDOFF_NEXT.md` is required onboarding. The detailed documents are references, not a
-reading checklist.
+Nothing under `docs/` is required onboarding. This README plus
+[`script/README.md`](script/README.md) is enough to build and to translate; the rest are
+references, not a reading checklist.
 
 ## Translating into another language
 

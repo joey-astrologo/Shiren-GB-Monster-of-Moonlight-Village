@@ -59,7 +59,6 @@ def main() -> int:
     py("rank6.py", "--selftest")
     py("decoyname.py", "--selftest")
     py("nameaudition.py")
-    py("test_gemini_prose.py")
 
     section("Hostile placement ROMs and component controls")
     build_args = ("build/_base_expanded.gb", "script/en.tsv")

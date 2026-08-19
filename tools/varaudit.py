@@ -7,10 +7,10 @@ also means a real producer value can hide in the legacy-reservation warning list
 companion audit closes that review gap without pretending every monster, NPC, item and
 appearance name is reachable from every message.
 
-Confirmed producer values live in ``script/var_domains.tsv``. Exhaustive producer roles
-live in ``script/var_roles.tsv``; they keep monsters, combat actors and player names
+Confirmed producer values live in ``script/evidence/var_domains.tsv``. Exhaustive producer roles
+live in ``script/evidence/var_roles.tsv``; they keep monsters, combat actors and player names
 separate without enumerating a glossary in the contract file. Both are build contracts,
-and overflow is fatal. ``script/var_advisories.tsv`` narrows proven producer classes whose
+and overflow is fatal. ``script/evidence/var_advisories.tsv`` narrows proven producer classes whose
 exact reachable pairs remain unknown, while deliberately keeping their overflows
 non-fatal and visible. Every other dynamic line is written to the same complete TSV review
 list with a deliberately broad glossary census.
@@ -94,10 +94,13 @@ def main(argv=None):
     parser.add_argument('--script', default=os.path.join(ROOT, 'script', 'script.json'))
     parser.add_argument('--en', default=os.path.join(ROOT, 'script', 'en.tsv'))
     parser.add_argument('--glossary', default=os.path.join(ROOT, 'script', 'glossary.tsv'))
-    parser.add_argument('--domains', default=os.path.join(ROOT, 'script', 'var_domains.tsv'))
-    parser.add_argument('--roles', default=os.path.join(ROOT, 'script', 'var_roles.tsv'))
+    parser.add_argument('--domains', default=os.path.join(ROOT, 'script', 'evidence',
+                                                          'var_domains.tsv'))
+    parser.add_argument('--roles', default=os.path.join(ROOT, 'script', 'evidence',
+                                                        'var_roles.tsv'))
     parser.add_argument('--advisories',
-                        default=os.path.join(ROOT, 'script', 'var_advisories.tsv'))
+                        default=os.path.join(ROOT, 'script', 'evidence',
+                                             'var_advisories.tsv'))
     parser.add_argument('--output', default=os.path.join(ROOT, 'build', 'var_review.tsv'))
     args = parser.parse_args(argv)
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Photograph the equipment SEAL screen -- box $13, the lines under a melded weapon.
 
-WHY THIS EXISTS. Session 9 translated 20 strings that no check in HANDOFF_NEXT.md section 1
+WHY THIS EXISTS. Session 9 translated 20 strings that no check in `docs/ENGINEERING_RULES.md` section 1
 can see a player read, and session A1 is the reason that is not good enough: 25 strings
 were byte-perfect through the pool, green on every check, and rendered Japanese on screen.
 `--check` measures the translation against a model of the box. This measures the box.
 
 WHY IT IS NOT `helpshot.py --nth 5`. Bank 4's menu dispatcher (4:$48AA, index in `a`) has
 this screen at index 5, `4:$49F5` -- one past the help renderer helpshot forces. Forcing
-the index alone HANGS, which is what HANDOFF_NEXT.md recorded and stopped at. The reason
+the index alone HANGS, which is what `docs/ENGINEERING_RULES.md` recorded and stopped at. The reason
 is `11:$7E40`, not the dispatcher:
 
     ld a,[$C6BC] -> b        the seal slot to start at

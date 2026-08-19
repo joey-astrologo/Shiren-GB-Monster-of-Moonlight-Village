@@ -16,7 +16,7 @@
 #   <brk>          a page break you want for pacing. Put them where the Japanese does.
 #   <name> <var>   substitution tokens. lint_en checks these survive; the wrapper leaves
 #   <cE3:05>       room for what it expands to. The selector inside <cE3:xx> and the <$XX>
-#   <mode1><$3C>   after <mode1> are ARGUMENT BYTES, not text — see TRANSLATING.md §7.
+#   <mode1><$3C>   after <mode1> are ARGUMENT BYTES, not text — see docs/TEXT_REFERENCE.md §7.
 #
 # SPEAKER TAGS are the short form for the five compounds Joey ruled on 2026-08-05:
 # Kinji / Masa / Chief / Gon / Priest. `Fumi's Mom` is her whole name and stays.

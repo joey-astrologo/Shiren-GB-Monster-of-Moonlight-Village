@@ -2,7 +2,7 @@
 """dte-scan the item CATEGORY boxes by driving the screen that draws them.
 
 `gbrun.py --dte-scan` records what an expanding copy loop was SEEN to read, which is the
-only evidence `script/dte_ok.tsv` accepts. Boxes 33/34 could never be scanned because no
+only evidence `script/build-inputs/dte_ok.tsv` accepts. Boxes 33/34 could never be scanned because no
 button script reaches their screen -- so reach it the other way: bank 4's menu-screen
 dispatcher at 4:$48AA takes a screen index in `a` (table of 35 at $48C3), and index 27 is
 $4CD0, the routine that shows box 33 or 34 according to $C6E3.

@@ -6,7 +6,7 @@
 THE HOLE THIS CLOSES. Every other check in the battery verifies that what we extracted
 round-trips, renders, fits and does not corrupt anything. **Nothing checked that what we
 extracted is all there is.** So a bank could be "100% translated", green on every line of
-HANDOFF_NEXT.md, and still speak Japanese on screen -- which is exactly what happened after
+`docs/ENGINEERING_RULES.md`, and still speak Japanese on screen -- which is exactly what happened after
 session 5: 355 bank-11/14 strings translated, whole battery green, and the shop, the Kuyo
 Pass road picker and a third of the village prose were never in `script.json` at all.
 
@@ -37,7 +37,7 @@ new ones. Classified, not totalled -- the raw figure is ~22 KB and most of it is
              would also land here, so this column is a place to LOOK, not a defect count.
   truncated  a run only PARTLY covered by an extracted string. Always a bug: it means a
              string was extracted at the wrong offset or the wrong length, and the tail is
-             on screen in Japanese. See HANDOFF.md, the truncated-fragment note.
+             on screen in Japanese. See `docs/TRAPS.md`, the truncated-fragment note.
 
 THE RULE THIS FILE WILL NOT BREAK. The script-byte set is imported from `codec`, never
 restated here. The 7.9 KB gap this tool was written to measure was caused by exactly that

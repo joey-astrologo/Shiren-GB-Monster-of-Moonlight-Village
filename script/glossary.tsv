@@ -28,7 +28,7 @@
 # differences live in script/term_uncertainties.tsv. The Shiren 2 fan-patch list is the
 # next authority when an exact official term does not exist.
 #
-# VWF BUDGET RESET IN PROGRESS (2026-08-09). See VWF_BUDGETS.md.
+# VWF BUDGET RESET IN PROGRESS (2026-08-09). See docs/VWF_BUDGETS.md.
 #
 #   class item, appearance -> legacy ITEM_CAP source/substitution guard: 16 chars
 #   class monster, npc     -> legacy NAME_CAP source/substitution guard: 14 chars

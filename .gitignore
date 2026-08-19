@@ -13,10 +13,6 @@
 # stay ignored everywhere else, and emulator machine states remain local/generated.
 !tests/fixtures/saves/*.srm
 
-# Gemini translation credentials. The tracked .example file documents the shape;
-# the real key must never enter history.
-/.gemini-credentials.json
-
 # ---- Build output: all regenerable --------------------------------------
 # build/ holds the base.gb symlink, patched ROMs and rendered PNGs. Every file
 # in here is produced by the tools from the original ROM, so none of it belongs
@@ -34,7 +30,6 @@ script/script.tsv
 # ---- Python ------------------------------------------------------------
 __pycache__/
 *.pyc
-/.venv-gemini/
 
 # ---- macOS -------------------------------------------------------------
 .DS_Store

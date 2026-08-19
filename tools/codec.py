@@ -145,7 +145,7 @@ ARITY = {0xE0: 1, 0xE7: 1, 0xEC: 1, 0xF0: 1}
 # Japanese (the bytes round-trip either way) and prints as garbage the moment English is
 # written around it -- `<cF0:56>ギ` is ナギ, "Nagi", and `<cF0:49>スリ` is クスリ, "drug".
 #
-# FINDINGS.md recorded the $E7 and $F0 differences in 2026-07-31 and closed them with
+# docs/FINDINGS.md recorded the $E7 and $F0 differences in 2026-07-31 and closed them with
 # "$F0 never appears in banks 11/14, so its difference is inert". That was true of the
 # script as extracted THEN. Sessions 7 and 8b extracted 158 more strings and seven $F0
 # sites came with them, in six strings, every one of them still untranslated.

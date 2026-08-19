@@ -21,12 +21,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
 # Free filler in each bank, over and above the bytes the Japanese strings
-# currently occupy. Derived from HANDOFF.md's "Available" column minus the
+# currently occupy. Derived from `docs/TRAPS.md`'s "Available" column minus the
 # measured Japanese byte count; --use-filler stays OFF, so treat these as the
 # only reclaimable space.
 MIN_REAL = 100  # banks smaller than this are one-off strings, not a budget
 
-# Banks 4 and 31 are 0: their old figures came from HANDOFF.md's table, which was
+# Banks 4 and 31 are 0: their old figures came from `docs/TRAPS.md`'s table, which was
 # computed before the 2026-07-28 re-extraction. That table counted ~1.4 KiB of binary
 # data in those two banks as script. Bank 4 went 686 -> 3 bytes and bank 31
 # 1090 -> ~250, so any "spare" derived from the old baseline is meaningless.

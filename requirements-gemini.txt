@@ -1,5 +1,0 @@
-# Optional dependency for tools/gemini_prose.py's live API mode.
-# Queue creation, prompt inspection, validation and review do not import it.
-google-genai>=1.0
-# gemini_prose reuses the production Dot-font geometry validator.
-Pillow>=9.0

@@ -9,7 +9,7 @@ Two kinds of line get decoded:
   TEXT   the $CF07 line buffer read at the composer. These are character codes,
          so codec.decode applies directly.
   CELLS  a horizontal run of tilemap entries. The mapping is the open question --
-         FINDINGS.md says tilemap entries hold the raw code, but the font is also
+         docs/FINDINGS.md says tilemap entries hold the raw code, but the font is also
          uploaded to VRAM $9000 in font-tile order, where index = code + 16. Both
          readings are printed; whichever produces Japanese is the right one, and
          that answer is itself the finding.

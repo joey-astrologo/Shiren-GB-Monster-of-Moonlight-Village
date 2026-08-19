@@ -44,7 +44,7 @@ SITES = [
     (13, 0x40DB, 'composer 18-cell loop', 'hl'),
     (13, 0x6893, 'composer uncapped loop', 'hl'),
     (13, 0x6AE5, 'control-aware loop', 'hl'),
-    # Table 13:$554A's three readers. They are here so the claim in script/reloc_ok.tsv --
+    # Table 13:$554A's three readers. They are here so the claim in script/build-inputs/reloc_ok.tsv --
     # that the first two are transparent to a record run and only the third needs a hook --
     # can be re-measured rather than re-argued. Note the renderer stops seeing redirected
     # reads once its hook is installed: the trampoline serves those, so a run against a

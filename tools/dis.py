@@ -4,7 +4,7 @@
 usage: dis.py <rom> <hex-offset> <count-bytes> [--bank N]
 
 <hex-offset> is a raw FILE offset, unless --bank is given -- then it is a CPU address
-($4000-$7FFF) inside that bank, which is what Mesen and every note in FINDINGS.md uses.
+($4000-$7FFF) inside that bank, which is what Mesen and every note in docs/FINDINGS.md uses.
 `--bank` was documented and silently ignored for a while; it works now.
 
 Addresses are shown as bank:addr so they can be compared against Mesen directly.
@@ -103,7 +103,7 @@ def boundary_votes(rom, at, window=BOUNDARY_WINDOW):
     A byte scan for an instruction cannot tell whether it found one: `01 CF 7E` reads as
     `ld bc,$7ECF` wherever it appears, including inside the OPERAND of the `ld [$CF01],a`
     that really starts one byte earlier. That is not hypothetical -- it shipped, and it
-    corrupted the message system (see FINDINGS.md).
+    corrupted the message system (see docs/FINDINGS.md).
 
     The disambiguator is that LR35902 code self-synchronises: start a linear decode at
     almost any nearby byte and within a handful of instructions it converges on the real

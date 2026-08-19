@@ -400,7 +400,7 @@ def immediate_refs(rom, entries):
     `ld [$CE01],a`, because its operand bytes `01 CF` read as `ld bc,$7ECF` and bank 30's
     item verb at 30:$7ECF moved one byte when DTE compressed it. The message system then
     lost the variable that holds a dungeon message on screen, and messages went by too
-    fast to read. See FINDINGS.md and HANDOFF_BUG.md.
+    fast to read. See docs/FINDINGS.md and `docs/TRAPS.md`.
 
     `is_instruction_start` cannot help inside a TEXT block, because there is no
     instruction stream there to be inside of -- a linear decode of kana returns whatever
@@ -498,7 +498,7 @@ def immediate_refs(rom, entries):
         # at the winner's text. Bank 13 wins, from the ROM's own structure rather than
         # from the text: every one of these loads feeds `0:$028B`, which stores the
         # pointer at $FF90/$FF91 and pushes it through `0:$23A4` into the ring at
-        # `0:$3C5C` -- the queue bank 13's `$67D5` consumes (FINDINGS.md, "Where dialogue
+        # `0:$3C5C` -- the queue bank 13's `$67D5` consumes (docs/FINDINGS.md, "Where dialogue
         # comes from"). Bank 11's and bank 14's text is reached by tables in their own
         # bank, or by a runtime pointer whose stored form has its window bits toggled
         # ($232D, $82B7), never as a plain $4xxx immediate in bank 0.

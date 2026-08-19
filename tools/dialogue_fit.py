@@ -3,7 +3,7 @@
 
 This is the tool that answered "is there room for a proper translation, or does the budget
 force machine-translation-grade text". The answer is measured rather than guessed, and the
-measuring matters: an earlier note in HANDOFF.md put English at 1.8-2.0x of the Japanese
+measuring matters: an earlier note in `docs/TRAPS.md` put English at 1.8-2.0x of the Japanese
 from general knowledge, and the real figure for this game's prose is 1.66x.
 
     dialogue_fit.py <natural.json> [--ranges max|current]

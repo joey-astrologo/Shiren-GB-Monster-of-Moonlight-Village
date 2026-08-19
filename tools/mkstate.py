@@ -15,7 +15,7 @@ than hand-edit: the point of a fixture is that the ROM wrote it.
 
 THE DUNGEON HAS TO BE WALKED INTO, and that is not a detail. **Shiren does not let you save
 inside a dungeon** -- it is the genre -- so no `.srm` will ever hold a log parked on a
-floor, and the recipe in HANDOFF.md that says to continue "log 3" describes a save that
+floor, and the recipe in `docs/TRAPS.md` that says to continue "log 3" describes a save that
 cannot exist. Nor can the entrance be found by searching: directional sweeps from four
 village positions and four 20,000-frame seeded random walks stayed in the village for all
 of it, every fade-to-white a house door. Joey gave the route; it is `WEST` below.
