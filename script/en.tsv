@@ -46,16 +46,16 @@
 11:$53FA	Item
 11:$5401	Floor
 11:$5407	Trap
-11:$540B	Stair
+11:$540B	Stairs
 11:$5412	Map
 11:$5418	Close
 11:$541E	Exit
 11:$5425	Quit
 11:$542A	Down
 11:$542F	Up
-11:$5435	Go
+11:$5435	Proceed
 11:$543A	Stay
-11:$5440	Step
+11:$5440	Trigger
 11:$5444	Rank
 11:$544C	Pass
 

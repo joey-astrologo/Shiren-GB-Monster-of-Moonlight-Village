@@ -3,9 +3,9 @@
 
 The real SRAM route enters Fay's Puzzles, starts puzzle 1 and opens the status menu.
 The title must remain the full proportional ``Fay's Puzzles``; only the ten-cell Path
-value becomes right-aligned ``Puzzle``. A second run continues Log 1 and requires the
-same exact field geometry for ``Expert``. This catches accidental shared-string renames,
-trailing translated-record padding and either overrun into the column-19 border.
+value becomes proportional ``Puzzle``. A second run continues Log 1 and requires the
+same private four-tile field for ``Expert``. This catches accidental shared-string
+renames, stale padding, incorrect planes and any overrun into the column-19 border.
 """
 import argparse
 import os
@@ -19,6 +19,9 @@ sys.path.insert(0, HERE)
 
 from gbrun import _import_pyboy, PRESS_FRAMES                 # noqa: E402
 import menuspill                                               # noqa: E402
+import statusspill                                             # noqa: E402
+import statusvwf                                               # noqa: E402
+import dotfont                                                 # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_fays_puzzles.srm')
@@ -44,8 +47,8 @@ EXPERT_ROUTE = {
 
 
 def expected(label):
-    return bytes([menuspill.EN_CODES[' ']] * (10 - len(label)) +
-                 menuspill.encode(label) + [0xBF])
+    base, cap = statusvwf.PRIVATE_RUNS['Path']
+    return bytes((0,)) * (10 - cap) + bytes(range(base, base + cap)) + bytes((0xBF,))
 
 
 def run_route(PyBoy, rom, ram, profile, name, route, label, want_mode,
@@ -84,6 +87,10 @@ def run_route(PyBoy, rom, ram, profile, name, route, label, want_mode,
         bgmap = bytes(pb.memory[BGMAP:BGMAP + len(want)])
         mode = pb.memory[0xC9E6]
         invariant = menuspill.frame_invariant(pb, profile)
+        base, cap = statusvwf.PRIVATE_RUNS['Path']
+        planes = {tile: bytes(pb.memory[menuspill.tile_data_addr(tile):
+                                      menuspill.tile_data_addr(tile) + 16])
+                  for tile in range(base, base + cap)}
         image = pb.screen.image.copy()
         pb.stop(save=False)
 
@@ -103,6 +110,12 @@ def run_route(PyBoy, rom, ram, profile, name, route, label, want_mode,
     if bgmap != want:
         problems.append('%s BG map is %s, expected %s' %
                         (name, bgmap.hex(' '), want.hex(' ')))
+    wants = statusspill.expected_tiles(dotfont.load_approved(), label, cap, right=True)
+    for index, raster in enumerate(wants):
+        if planes[base + index] != raster:
+            problems.append('%s Path tile $%02X is not plane-exact' %
+                            (name, base + index))
+            break
     if invariant:
         problems.append('%s settled menu has %d VWF ownership error(s): %s' %
                         (name, len(invariant), invariant[:4]))

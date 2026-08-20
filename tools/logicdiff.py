@@ -23,8 +23,8 @@ WHAT COUNTS AS EXPLAINED. A rewritten byte outside a text arena must be one of:
   * a message-queue push -- `ld bc,nn` whose `call $028B` follows, directly or through the
     `jr` chain extract.py counts (233 direct, 9 chained)
   * a byte inside a string this ROM still lists, or a reference operand pointing at one
-  * a declared patch: script/build-inputs/tile_patches.tsv (the fullness strip at 2:$7D42), the code
-    patchers name6, rank6, vwf and itemfix, which own known address ranges, the Fay's
+  * a declared patch: script/build-inputs/tile_patches.tsv (status-bar label tiles), the code
+    patchers name6, rank6, vwf, itemfix and pageicon, which own known address ranges, the Fay's
     Puzzles header row build.py mirrors into bank 4 (see build.QUIZ_ROW_AT), the status
     Path padding table build.py patches in bank 4 (see build.PATH_PADDING_AT), and the
     three-byte title-card decompression hook at 9:$4115

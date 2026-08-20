@@ -62,10 +62,14 @@ ACTION_MENU_LOCS = {
     '30:$7EE8', '30:$7EEB', '30:$7EF0', '30:$7EF3', '30:$7EF7',
     '30:$7EFE', '30:$7F02', '30:$7F08',
 }
+GROUND_POPUP_LOCS = {'11:$5435', '11:$543A', '11:$5440'}
 TITLE_MENU_LOCS = {
     '11:$5330', '11:$533B', '11:$5344', '11:$534D', '11:$5355',
     '11:$535E', '11:$536E', '11:$5374', '11:$5387', '11:$5398',
 }
+# Main/title table rows retain their leading native cursor cell in the encoded string.
+# Action verbs are staged after a separately generated cursor and therefore do not.
+RUNTIME_RAW_PREFIX_LOCS = MAIN_MENU_LOCS | TITLE_MENU_LOCS
 SUMMARY_PLACE_LOCS = (
     '11:$53B1', '11:$53B9', '11:$53C1', '11:$53CB',
     '11:$53D4', '11:$53DC', '11:$53E5', '11:$53ED',
@@ -82,6 +86,11 @@ RUNTIME_MENU_PX = {
     # uses the proportional cells after the raw cursor column; startspill verifies
     # its exact static pool and the settled two-plane result.
     '11:$544C': (5 * 8, 'Rank/Pass popup x3 w6, one raw cell'),
+    # menuvwf widens the unique standing stair/trap box 3 from five to six cells.
+    # Proceed/Stay and Trigger/Back therefore own five proportional cells after the
+    # raw cursor. groundpopupspill exercises the real producer and exact planes.
+    **{loc: (5 * 8, 'ground popup x3 w6, one raw cell')
+       for loc in GROUND_POPUP_LOCS},
     # 4:$4FAE copies these at absolute shadow $C3C9 (row 6, column 9). The build patches
     # 4:$4FE6-$4FE8 to 6/4/6 leading cells, right-aligning Easy/Normal/Hard at column 18.
     # The listed spans extend to the screen edge; pathspill separately asserts the exact
@@ -346,7 +355,13 @@ def main():
             geometry = (14 * 8, 'file-log detail x4 y4 w14; digit + label + player name')
         if geometry is None:
             continue
-        used, raw_codes = pixels(data, font, row['bank'])
+        measured = data
+        if row['loc'] in RUNTIME_RAW_PREFIX_LOCS:
+            if not data or data[0] != EN_CODES[' ']:
+                raise SystemExit('fontaudit: %s lost its measured raw cursor cell' %
+                                 row['loc'])
+            measured = data[1:]
+        used, raw_codes = pixels(measured, font, row['bank'])
         budget, evidence = geometry
         if row['loc'] == LOG_PREFIX_LOC:
             used += max(font.advances[str(n)] for n in range(10))

@@ -1,9 +1,11 @@
 # Tile patches: labels drawn as BITMAPS rather than text characters.
 #
 # The status bar has its own 26-tile mini-font at bank 2 $7C92 (digits, Lv, F, Hp, /,
-# %, the meter block, then the fullness label). The label is a compressed bitmap that
-# spans tile boundaries rather than sitting one character per cell, so the budget is
-# PIXELS of strip width, not characters.
+# %, the meter block, then the fullness label). HP/Lv preserve their one-cell positions;
+# FULLNESS is a compressed bitmap spanning tile boundaries. Budgets are therefore PIXELS
+# of strip width, not characters.
 #
 # loc	tiles	text
+2:$7CF2	1	LV
+2:$7D02	1	HP
 2:$7D42	4	FULLNESS

@@ -2,10 +2,9 @@
 """Verify the status-screen Path value through the real Log-2 sign route.
 
 ``saves/shiren_en_path_select.srm`` has one active adventure in Log 2 and a path
-selection sign one tile above Shiren.  Each run enters Log 2, talks to the sign, selects
-Easy/Normal/Hard, closes the dialogue, and opens the status menu.  The value writer is
-fixed-cell (not VWF), so this asserts its exact shadow and BG-map cells: all three values
-must end at column 18 and leave the column-19 border intact.
+selection sign one tile above Shiren. Each run enters Log 2, talks to the sign, selects
+Easy/Normal/Hard, closes the dialogue, and opens the status menu. The completed value is
+rendered into statusvwf's four private Path tiles and must leave the border intact.
 """
 import argparse
 import os
@@ -18,6 +17,9 @@ ROOT = os.path.dirname(TOOLS)
 sys.path.insert(0, TOOLS)
 from gbrun import _import_pyboy, PRESS_FRAMES                    # noqa: E402
 import menuspill                                                  # noqa: E402
+import statusspill                                                # noqa: E402
+import statusvwf                                                  # noqa: E402
+import dotfont                                                    # noqa: E402
 
 
 # Title -> Adventure -> Log 2 -> Continue, then face/use the sign and advance to its
@@ -39,8 +41,9 @@ RIGHT_BORDER = 0xBF                # column 19
 FRAMES = 3500
 
 
-def expected_cells(label, prefix):
-    return bytes([menuspill.EN_CODES[' ']] * prefix + menuspill.encode(label))
+def expected_cells(_label, _prefix):
+    base, cap = statusvwf.PRIVATE_RUNS['Path']
+    return bytes((0,)) * (VALUE_CELLS - cap) + bytes(range(base, base + cap))
 
 
 def run_choice(PyBoy, rom_path, ram_path, name, mode, prefix, png_dir=None):
@@ -76,6 +79,10 @@ def run_choice(PyBoy, rom_path, ram_path, name, mode, prefix, png_dir=None):
         bgmap = bytes(pb.memory[VALUE_MAP:VALUE_MAP + VALUE_CELLS + 1])
         actual_mode = pb.memory[0xC9E6]
         image = pb.screen.image.copy()
+        base, cap = statusvwf.PRIVATE_RUNS['Path']
+        planes = {tile: bytes(pb.memory[menuspill.tile_data_addr(tile):
+                                      menuspill.tile_data_addr(tile) + 16])
+                  for tile in range(base, base + cap)}
         pb.stop(save=False)
 
     expected = expected_cells(name, prefix)
@@ -97,6 +104,12 @@ def run_choice(PyBoy, rom_path, ram_path, name, mode, prefix, png_dir=None):
     if bgmap != shadow:
         problems.append('%s BG map $%04X is %s, unlike settled shadow %s'
                         % (name, VALUE_MAP, bgmap.hex(' '), shadow.hex(' ')))
+    wants = statusspill.expected_tiles(dotfont.load_approved(), name, cap, right=True)
+    for index, want in enumerate(wants):
+        if planes[base + index] != want:
+            problems.append('%s Path tile $%02X is not plane-exact' %
+                            (name, base + index))
+            break
 
     if png_dir:
         os.makedirs(png_dir, exist_ok=True)
@@ -118,7 +131,7 @@ def run(rom_path, ram_path, png_dir=None):
         print('  ' + problem)
     if problems:
         raise SystemExit('pathspill: %d problem(s)' % len(problems))
-    print('pathspill: Easy/Normal/Hard are right-aligned at column 18; border preserved')
+    print('pathspill: Easy/Normal/Hard are proportional and right-aligned; border preserved')
 
 
 def main():

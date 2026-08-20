@@ -337,6 +337,16 @@ SHOP_CONTENT_PATCHES = (
     (0x45ED, 0xD6),             # sub n: truncation amount
 )
 
+# The standing stair/trap command is the unique WRAM box (x3,y4,rows2,width5,flags0).
+# Proceed/Trigger paint five tiles after the cursor, so widen only that descriptor to six
+# output cells. A bank-53 gate validates the exact shape and rewrites trap row 1 from the
+# shared Stay source to Back before the proportional scanner reaches it.
+GROUND_POPUP_BOX = 3
+GROUND_POPUP_WIDTH_OLD = 5
+GROUND_POPUP_WIDTH = 6
+GROUND_POPUP_BANK = 0x35
+GROUND_POPUP_INDEX = 0x07
+
 GLYPHS = 0x4400             # vwf DATA_ORG: 4 shifts x $B3 codes x 16 bytes (8 + 8 spill)
 SHIFT_STRIDE = 0xB30        # $B3 * 16
 
@@ -3048,6 +3058,19 @@ itemresetdone:
 badshape:
   jp fallback
 notitem:
+  cp $06
+  jr nz,notgroundpopup
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  jp z,fallback
+  xor a
+  ld [$C1B1],a
+  inc a
+  ld [$C0D0],a
+  jp shapeok
+notgroundpopup:
   cp $05
   jr nz,startshapecheck
   ld a,[$C69A]
@@ -3189,7 +3212,8 @@ romborder:
   ld a,$BE
   ld [$C0E0],a
 prefixready:
-""" % (START_AUX_INDEX, START_AUX_BANK,
+""" % (GROUND_POPUP_INDEX, GROUND_POPUP_BANK,
+         START_AUX_INDEX, START_AUX_BANK,
          START_AUX_INDEX, START_AUX_BANK)
     src = src[:start] + shape + src[end:]
 
@@ -4023,6 +4047,15 @@ def install(buf, notes=None, font=None):
     proportional = font is not None
     code_at = PROP_CODE_AT if proportional else CODE_AT
     if proportional:
+        ptab = _off(31, 0x45D5)
+        plo, phi = (buf[ptab + 2 * GROUND_POPUP_BOX],
+                    buf[ptab + 2 * GROUND_POPUP_BOX + 1])
+        popup_at = _off(31, (phi << 8) | plo)
+        popup = tuple(buf[popup_at:popup_at + 5])
+        if popup != (3, 4, 2, GROUND_POPUP_WIDTH_OLD, 0):
+            raise SystemExit('menuvwf: ground-command box 3 geometry %s no longer '
+                             'matches the measured stair/trap popup' % (popup,))
+        buf[popup_at + 3] = GROUND_POPUP_WIDTH
         item_header = _box_geometry(buf, 14)
         if item_header != (0, 0, 1, 4, 0):
             raise SystemExit('menuvwf: item header box 14 geometry %s no longer matches '
@@ -4715,6 +4748,10 @@ def install(buf, notes=None, font=None):
                 'menuvwf: box %d descriptor (x=%d y=%d w=%d fl=$%02X) no longer '
                 'matches the far code shape allowlist -- update BOTH' % (box, x, y, w, fl))
     if proportional:
+        x, y, w, fl = desc(GROUND_POPUP_BOX)
+        if (x, y, w, fl) != (3, 4, GROUND_POPUP_WIDTH, 0):
+            raise SystemExit('menuvwf: ground-command box descriptor no longer matches '
+                             'the proportional popup allowlist')
         x, y, w, fl = desc(5)
         if (x, y, w, fl) != (0, 0, 18, ROM_RAW_PREFIX_BIT):
             raise SystemExit(
@@ -4750,8 +4787,8 @@ def install(buf, notes=None, font=None):
     if notes is not None:
         if proportional:
             notes.append('menuvwf: main/item/Floor-header/action/help/seal/condition '
-                         'rows use approved %s advances, painted extents, and shared '
-                         '8-shift tables' % font.name)
+                         'and standing stair/trap rows use approved %s advances, '
+                         'painted extents, and shared 8-shift tables' % font.name)
             notes.append('menuvwf: native fusion-count suffixes $%02X-$%02X use a '
                          '%d-byte residue shifter at %d:$%04X and %d-byte glyph/data '
                          'helper at %d:$%04X'

@@ -30,6 +30,11 @@ BOOT = {
     2620: 'b',
 }
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
+PAGE_INDICATOR_AT = 0x9800 + 3 * 32 + 15
+PAGE_TILES = {
+    0xC5: bytes.fromhex('00 00 FF FF FF FF 00 00 00 00 18 18 18 18 00 00'),
+    0xC6: bytes.fromhex('00 00 FF FF FF FF 18 18 3C 24 7E 42 3C 24 18 18'),
+}
 
 
 def staged_row(pb, source, limit=32):
@@ -200,6 +205,17 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
                                 'expected only old, blank-LCD, or complete new screen'
                                 % (index, ' '.join('f%d' % at for at in bad[:12])))
 
+        indicator = bytes(pb.memory[PAGE_INDICATOR_AT:PAGE_INDICATOR_AT + 4])
+        if indicator.count(0xC6) != 1 or any(tile not in PAGE_TILES for tile in indicator):
+            problems.append('page indicator map is %s, expected one active $C6 and '
+                            'three inactive $C5 cells' % indicator.hex(' '))
+        for tile, want in PAGE_TILES.items():
+            address = 0x8800 + 16 * (tile - 0x80)
+            got = bytes(pb.memory[address:address + 16])
+            if got != want:
+                problems.append('page indicator tile $%02X is %s, expected solid-border %s'
+                                % (tile, got.hex(' '), want.hex(' ')))
+
         pb.stop(save=False)
 
     print('itempagespill: dispatches %s' %
@@ -211,6 +227,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
           ' '.join(str(len(page['lcd_off_frames'])) for page in pages))
     print('itempagespill: direction presses %s; %d unique complete page(s)' %
           (' '.join('f%d:%s' % event for event in page_presses), len(unique)))
+    print('itempagespill: indicator %s; active/inactive tiles retain two-pixel border' %
+          indicator.hex(' '))
     for problem in problems:
         print('  ' + problem)
     if problems:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live verifier for V3's deliberately structured fixed-cell menu rows.
+"""Live verifier for structured menu fragments and Fay restoration.
 
     python3 tools/structspill.py build/structvwf_control.gb build/shiren_en.gb \
         --png-dir build/structvwf
@@ -9,8 +9,8 @@ status screen, reaches Fay's Puzzles through the real blank-cart menu and redraw
 and reaches the fresh-cart name keyboard. Optional save fixtures also exercise the
 saved-summary -> Fay and both Rank/Pass branches -> Fay tile lifetimes. It requires:
 
-* exact custom tile IDs and Dot planes at only the approved label cells;
-* every dynamic status value/unit and Fay number/star cell unchanged from the control;
+* exact custom Weapon/Shield IDs and Dot planes at the approved label cells;
+* statusvwf changes only its declared status labels/values; Fay number/star cells remain;
 * the selectable name grid pixel-identical to the control;
 * Fay's entry restore to recover every borrowed heading/star/checkbox/separator plane,
   regardless of which mutually exclusive VWF rows used those IDs first.
@@ -31,6 +31,7 @@ from gbrun import PRESS_FRAMES, _import_pyboy
 import menuspill
 import menuvwf
 import structvwf
+import statusvwf
 
 
 STATE = os.path.join(ROOT, 'saves', 'dungeon.state')
@@ -338,15 +339,21 @@ def main():
 
     status_ctl = status_snapshot(PyBoy, args.control, out('status_control.png'))
     status_vwf = status_snapshot(PyBoy, args.built, out('status_vwf.png'))
-    status_rows = ((11 * 32 + 1, 12), (13 * 32 + 1, 14))
-    status_allowed = {start + cell for start, cells in status_rows for cell in range(cells)}
+    status_rows = ((11 * 32 + 1, 18), (13 * 32 + 1, 18))
+    status_allowed = set()
+    for row, first, cells in ((2, 14, 5), (4, 17, 2), (6, 15, 4),
+                              (11, 1, 18), (12, 5, 4), (12, 15, 4),
+                              (13, 1, 18), (14, 5, 4), (14, 15, 4)):
+        status_allowed.update(row * 32 + first + cell for cell in range(cells))
     bad = changed_outside(status_ctl['shadow'], status_vwf['shadow'], status_allowed)
     if bad:
         problems.append('status changed %d shadow cells outside box-2 labels: %s'
                         % (len(bad), bad[:12]))
     expected_status = (
-        structvwf._fragment_row('Weapon', 'Str', 12),
-        structvwf._fragment_row('Shield', 'Exp', 14),
+        bytes(statusvwf.WEAPON_TILES) + bytes((0,)) * 4 + bytes((structvwf.DIVIDER,))
+        + bytes(range(0x0B, 0x11)) + bytes((0,)) * 3,
+        bytes(statusvwf.SHIELD_TILES) + bytes((0,)) * 4 + bytes((structvwf.DIVIDER,))
+        + bytes(range(0x04, 0x0B)) + bytes((0,)) * 2,
     )
     for (start, cells), expected in zip(status_rows, expected_status):
         got = status_vwf['shadow'][start:start + cells]
@@ -477,7 +484,7 @@ def main():
                 problems.append('Rankings route composed through native tile $C4: %s'
                                 % (route['c4_rows'],))
 
-    print('structspill: status composite rows 2/2 exact; non-label fields preserved')
+    print('structspill: status labels/maps exact; changes confined to declared VWF fields')
     print('  Fay: real screen-17 dispatch, movement callbacks %s, task redraw %d; '
           'number/star cells preserved'
           % (fei_vwf['moves'], len(fei_vwf['redraw'])))

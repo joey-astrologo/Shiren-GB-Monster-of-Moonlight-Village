@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
-"""Approved-font slices for menu rows whose live fields must stay at fixed cells.
+"""Approved-font fragments whose canonical pixels must survive menu transitions.
 
-V3 deliberately does not make every fixed-cell value proportional.  Status numbers and
-their one-cell G/F units stay right-aligned, and the name-entry grid stays one selectable
-character per cell.  Two static composite labels can safely use VWF without moving those
-fields:
-
-* box 2 keeps its divider at cell 8 and composes Weapon/Shield and Str/Exp independently;
-* box 30 keeps task-number cells 2-4 and star cells 13+ while composing No and Rating.
-
-The fragments are rendered once into census-proven menu-font tile IDs.  Their tilemap
-rows retain their original byte lengths and terminator positions, so the sequential box
-reader and Fay's bank-4 redraw keep exactly the same layout.
+Weapon/Shield remain source-stable four-tile fragments; statusvwf publishes their maps
+alongside full Strength/Experience and the dynamic values. Box 30 keeps task-number cells
+2-4 and star cells 13+ while composing No and Rating. The selectable name grid remains
+one character per cell.
 """
 
 import os
@@ -123,14 +116,12 @@ frdata:
 """
 
 # The status row remains visible behind the item list, so none of its persistent fragments
-# may occupy a live item-allocator tile.  Weapon and Shield use eight source-stable IDs
-# that are neither English punctuation nor allocator capacity.  The short Str/Exp fields
-# remain fixed-cell; this avoids claiming $7B, which the name keyboard genuinely draws.
+# may occupy a live item-allocator tile. Weapon and Shield use eight source-stable IDs
+# that are neither English punctuation nor allocator capacity.
 BOX2_TILES = {
     'Weapon': (0xA5, 0xA6, 0xA7, 0xA8),
     'Shield': (0xAA, 0xAD, 0xAE, 0xA9),
 }
-BOX2_RAW = {'Str', 'Exp'}
 
 # Fay is entered through a menu transition which restores these six allocator tiles from
 # ROM before drawing its header.  Keeping every Fay fragment in that context-local set
@@ -200,22 +191,6 @@ def _rows(buf, box):
     return out
 
 
-def _fragment_row(left, right, original_cells):
-    row = bytearray(BOX2_TILES[left])
-    if len(row) > 8:
-        raise AssertionError('left box-2 fragment crosses its fixed divider')
-    row += bytes((SPACE,)) * (8 - len(row))
-    row.append(DIVIDER)
-    if right in BOX2_RAW:
-        row += _encode(right)
-    else:
-        row += bytes(BOX2_TILES[right])
-    if len(row) > original_cells:
-        raise AssertionError('box-2 fragment row exceeds its original byte span')
-    row += bytes((SPACE,)) * (original_cells - len(row))
-    return bytes(row)
-
-
 def install(buf, notes=None, font=None):
     if font is None:
         font = dotfont.load_approved()
@@ -278,24 +253,13 @@ def install(buf, notes=None, font=None):
     buf[entry_at:entry_at + len(entry)] = entry
 
     box2_at, box2_desc, _box2_source = _descriptor(buf, 2)
-    if box2_desc != (0, 10, 2, 18, 0x04):
+    # build.py may DTE-pack these ROM rows before this installer runs. statusvwf owns
+    # their final shadow map, so structvwf only needs the stable geometry and the base
+    # native flags; it no longer rewrites variable-length packed source bytes in place.
+    if box2_desc[:4] != (0, 10, 2, 18) or box2_desc[4] & 0x7F != 0x04:
         raise SystemExit('structvwf: box 2 descriptor at 31:$%04X is %s, expected '
-                         '(0,10,2,18,$04)' %
+                         '(0,10,2,18,$04|DTE)' %
                          (0x4000 + box2_at - 31 * BANKSZ, box2_desc))
-    box2 = _rows(buf, 2)
-    expected_box2 = (
-        _encode('Weapon  ') + bytes((DIVIDER,)) + _encode('Str'),
-        _encode('Shield  ') + bytes((DIVIDER,)) + _encode('Exp  '),
-    )
-    if tuple(data for _at, data in box2) != expected_box2:
-        raise SystemExit('structvwf: box 2 wording/layout changed: %s'
-                         % ([data.hex(' ') for _at, data in box2],))
-    replacements = (
-        _fragment_row('Weapon', 'Str', len(expected_box2[0])),
-        _fragment_row('Shield', 'Exp', len(expected_box2[1])),
-    )
-    for (at, _old), replacement in zip(box2, replacements):
-        buf[at:at + len(replacement)] = replacement
 
     box30_at, box30_desc, _box30_source = _descriptor(buf, 30)
     if box30_desc != (0, 0, 1, 18, 0x00):
@@ -320,9 +284,8 @@ def install(buf, notes=None, font=None):
     buf[QUIZ_ROW_AT:QUIZ_ROW_AT + QUIZ_ROW_CELLS] = fixed_mirror
 
     if notes is not None:
-        notes.append('structvwf: box 2 Weapon/Shield and Fay header use fixed-position '
-                     'font fragments; Str/Exp, status values and the name grid remain '
-                     'fixed-cell')
+        notes.append('structvwf: box 2 Weapon/Shield and Fay header install fixed-position '
+                     'font fragments; statusvwf owns the completed box-2 shadow map')
         notes.append('structvwf: Fay entry restores %d borrowed VWF/native tiles inside '
                      'one atomic screen transaction via %d:$%04X (%d bytes)'
                      % (len(FEI_RESTORE_TILES), FEI_RESTORE_BANK, FEI_RESTORE_AT,

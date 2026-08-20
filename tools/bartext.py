@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Render text into a strip of 1bpp tiles — for labels drawn as bitmaps, not characters.
+"""Render status-bar artwork into 1bpp tiles — labels drawn as bitmaps, not characters.
 
-The status bar's fullness label is not text: it is four consecutive 8x8 tiles at bank 2
-$7D42 holding a compressed bitmap of まんぷくど. Because the kana span tile boundaries
-rather than sitting one-per-cell, the constraint is 32 PIXELS of width, not 5 characters
-— which is roomier than it first looks.
+The status bar labels are not text. HP and Lv each occupy one 8x8 source tile, while the
+fullness label occupies four consecutive tiles at bank 2 $7D42. Because the original
+kana span tile boundaries rather than sitting one-per-cell, the fullness constraint is
+32 PIXELS of width, not 5 characters — which is roomier than it first looks.
 
 usage: bartext.py <rom> <bank:$addr> <ntiles> <text> [--out rom] [--preview png]
        bartext.py build/base.gb 2:\\$7D42 4 FULLNESS
@@ -17,11 +17,33 @@ from latinfont import G
 BANKSZ = 0x4000
 
 
-# Hand-drawn labels sized specifically for the status bar. FULLNESS reproduces the
-# compact 31x7 artwork supplied for the English bar. The leading blank row keeps the
-# tall F clear of the upper divider; the remaining column in its four-tile strip stays
-# blank, so the surrounding fields do not need to move.
+# Hand-drawn labels sized specifically for the status bar. HP and LV reproduce the
+# supplied two-row status-bar mock-up exactly; their one-tile budgets and positions stay
+# unchanged. FULLNESS reproduces the compact 31x7 artwork supplied for the English bar.
+# The leading blank row keeps the tall F clear of the upper divider; the remaining
+# column in its four-tile strip stays blank, so the surrounding fields do not need to
+# move.
 BITMAPS = {
+    'HP': (
+        '........',
+        '.#.#....',
+        '.#.#....',
+        '.#.#.##.',
+        '.###.#.#',
+        '.#.#.##.',
+        '.#.#.#..',
+        '.#.#.#..',
+    ),
+    'LV': (
+        '........',
+        '#.......',
+        '#.......',
+        '#..#..#.',
+        '#..#..#.',
+        '#..#..#.',
+        '#...#.#.',
+        '###..#..',
+    ),
     'FULLNESS': (
         '...............................',
         '####...........................',

@@ -31,6 +31,7 @@ import lint_en                          # control-token parity: what encode_en c
 import name6                            # the player name, 4 characters -> 6
 import rank6                            # the rankings board, 4 name characters -> 6
 import itemfix                          # runtime item punctuation/counter normalization
+import pageicon                         # solid border through item-page indicators
 import faypath                          # status-only compact Fay/Expert Path values
 import summarydifficulty                # save-summary `Normal` column offset
 import awardfix                         # Awards screen's native four-kana code -> heading
@@ -39,6 +40,7 @@ import vwf                              # retained uniform-6px diagnostic render
 import propvwf                          # opt-in approved proportional composer
 import menuvwf                          # the MENU drawer's VWF (item-list rows)
 import structvwf                        # fixed-position font fragments in composite rows
+import statusvwf                        # full in-dungeon status labels/live values
 import rankvwf                          # rankings board's six-cell proportional names
 import dotfont                          # approved proportional-font source/spec loader
 import intro                            # separately encoded opening cinematic + font packs
@@ -1988,6 +1990,11 @@ def main():
         notes.append('--no-itemfix: native runtime minus, arrow counter, unidentified '
                      'Info help and empty-Pot See text remain')
 
+    # The page dots replace four cells of the item box's horizontal edge. Their native
+    # tiles retain only one of its two black rows; complete that border without touching
+    # the icon, dot pixels or menu logic.
+    pageicon.install(buf, notes)
+
     # ---- Fay's dungeon / Expert Path values
     #
     # The title menu and the in-dungeon status screen select the same `Fay's Puzzles`
@@ -2116,6 +2123,7 @@ def main():
     # ---- structured fixed-cell rows: proportional words, immovable live fields
     if not no_structvwf:
         structvwf.install(buf, notes, font=approved_font)
+        statusvwf.install(buf, notes, font=approved_font)
     else:
         notes.append('--no-structvwf/non-Dot: composite status/quiz words stay fixed-width')
 

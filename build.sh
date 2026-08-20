@@ -60,8 +60,9 @@ python3 tools/newgamesmoke.py build/shiren_en.gb
 # Curated route-specific SRAM regressions are tracked under tests/fixtures and staged at
 # the legacy saves/ paths above. Machine-state routes remain conditional because PyBoy
 # states are generated locally for the current ROM/WRAM layout. The fixtures enforce atomic item-page and
-# Floor action/Info transitions (including Gitan's shorter action box), the Log-2 Path
-# selector/status field, title/file-menu transitions (including Erase Log 3 rebuilding
+# Floor action/Info transitions (including Gitan's shorter action box), the proportional
+# dungeon status fields and standing stair/trap command box, the Log-2 Path selector,
+# title/file-menu transitions (including Erase Log 3 rebuilding
 # Copy Log), cursed/plated/unidentified equipment-marker VWF, an exhaustive Items/Info
 # textual-glyph pass, the Copy/Erase/New-Log name-screen
 # restore, the Ground box-5 VWF path, the Decoy Staff live-name producer, rescued-child
@@ -77,6 +78,8 @@ if [ -f saves/dungeon.state ]; then
   python3 tools/menuglyphspill.py build/shiren_en.gb
   python3 tools/equipmentmarkerspill.py build/shiren_en.gb
   python3 tools/fusioncountspill.py build/shiren_en.gb
+  python3 tools/statusspill.py build/shiren_en.gb
+  python3 tools/groundpopupspill.py build/shiren_en.gb
 fi
 # fusioncountspill covers seal counts 1-9 ($8C-$94). Zero seals is a tenth reachable count
 # that emits $8B, and an unadmitted code rejects the WHOLE row to fixed width, so the

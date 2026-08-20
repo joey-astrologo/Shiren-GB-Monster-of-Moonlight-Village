@@ -66,6 +66,7 @@ from gbrun import _import_pyboy, PRESS_FRAMES               # noqa: E402
 import menuvwf                                               # noqa: E402
 import propvwf                                               # noqa: E402
 import structvwf                                             # noqa: E402
+import statusvwf                                             # noqa: E402
 from latinfont import EN_CODES                               # noqa: E402
 
 POOL_LO, POOL_HI = menuvwf.POOL_BASE, menuvwf.POOL_END - 1   # $43-$7B inclusive
@@ -181,8 +182,12 @@ def status_fragment_problems(pb):
     """
     problems = []
     rows = (
-        (11 * 32 + 1, structvwf._fragment_row('Weapon', 'Str', 12)),
-        (13 * 32 + 1, structvwf._fragment_row('Shield', 'Exp', 14)),
+        (11 * 32 + 1,
+         bytes(statusvwf.WEAPON_TILES) + bytes((0,)) * 4 + bytes((structvwf.DIVIDER,))
+         + bytes(range(0x0B, 0x11)) + bytes((0,)) * 3),
+        (13 * 32 + 1,
+         bytes(statusvwf.SHIELD_TILES) + bytes((0,)) * 4 + bytes((structvwf.DIVIDER,))
+         + bytes(range(0x04, 0x0B)) + bytes((0,)) * 2),
     )
     shadow = bytes(pb.memory[SHADOW:SHADOW + 32 * VISIBLE_ROWS])
     bg = bytes(pb.memory[BGMAP:BGMAP + 32 * VISIBLE_ROWS])
@@ -201,6 +206,22 @@ def status_fragment_problems(pb):
             if got != expected:
                 problems.append('item return: %s tile $%02X planes were overwritten'
                                 % (text, tile_id))
+    for text, ids in (('Strength', tuple(range(0x0B, 0x11))),
+                      ('Experience', tuple(range(0x04, 0x0B)))):
+        for tile_id, raster in zip(ids, structvwf._render(text, font)):
+            expected = b''.join(bytes((bits, bits)) for bits in raster)
+            at = tile_data_addr(tile_id)
+            if bytes(pb.memory[at:at + 16]) != expected:
+                problems.append('item return: %s tile $%02X planes were overwritten'
+                                % (text, tile_id))
+    for name, map_at in (('Gitan', 0xC34E), ('Floor', 0xC391), ('Path', 0xC3CF),
+                         ('Weapon value', 0xC485), ('Strength value', 0xC48F),
+                         ('Shield value', 0xC4C5), ('Experience value', 0xC4CF)):
+        base, cap = statusvwf.PRIVATE_RUNS[name]
+        start = map_at - SHADOW
+        expected = bytes(range(base, base + cap))
+        if shadow[start:start + cap] != expected or bg[start:start + cap] != expected:
+            problems.append('item return: %s VWF map was not restored' % name)
     return problems
 
 
