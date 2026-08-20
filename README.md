@@ -30,19 +30,20 @@ Screenshots from the current English build:
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
-| Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
+| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **Full release-candidate battery passed — 2026-08-20** | Continue manual playtesting before tagging or distributing a final build. |
+| Release validation | **RC1 full release battery passed — 2026-08-20** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The complete normal, shuffled and redirect-all battery passed on 2026-08-20: all 72
-CPU-health seeds remained healthy, all renderer queues reached VBlank byte-exact, and
-1,226,703 text-visible containment frames had zero spill. Current artifact hashes:
+The RC1 normal, shuffled and redirect-all battery passed on 2026-08-20. All available
+save-backed fixtures and all four generated machine states passed; all 72 CPU-health
+seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
+1,226,703 text-visible containment frames had zero spill. Current RC1 artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `6dd27e0bc98e94e41c6aa8ad100fc65e2670cdbd8c2f634b8350f2e528ec28b1` |
-| `build/shiren_en_shuffle.gb` | `cd065116db4814f60e51b66e3e2da421665adb43c6a514b49c480a542565c53b` |
-| `build/shiren_en_redirect_all.gb` | `01e015fd8792f40ccaf84968dd2f06544c157ea5a1425241b89d03429aa3d766` |
+| `build/shiren_en.gb` | `ac7056b245727a2126b6b920d02b6f594620c774e1083c309f66d1f072482719` |
+| `build/shiren_en_shuffle.gb` | `9626c235be89fcf11e5b04756668af4c240fb8d3b0427951d566126d829dd65f` |
+| `build/shiren_en_redirect_all.gb` | `f563ec600a210add2076a8ccd70a018267b8f709910e112be398a54018c3b528` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

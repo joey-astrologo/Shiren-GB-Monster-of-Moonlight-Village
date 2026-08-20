@@ -31,6 +31,61 @@ TILE_COUNT = titlelogo_viewer.TILE_COUNT
 TILE_BYTES = TILE_COUNT * 16
 MAP_BYTES = MAP_WIDTH * MAP_HEIGHT
 
+# The SGB host colours the 160x144 Game Boy picture in 8x8-cell units.  The native
+# title's 90-byte ATTR_TRN file still followed the Japanese logo after the English
+# pixels were installed: its red region crossed `Mystery Dungeon` / `The Wanderer`,
+# while the lower-left of the large English S fell back to the neutral palette.
+#
+# These rows are the English title's complete 20x18 palette map.  Palette 0 is the
+# neutral yellow/black title palette, 1 is the orange/red logo and scroll palette,
+# 2 is the green GB palette, and 3 is the blue scroll staff / PUSH START palette.
+# The last two pixel rows of the large logo share row 8 with `The Wanderer` and the GB
+# crest; that cell row deliberately belongs to the foreground labels.  The substantial
+# lower curve of the S is on row 7 and is now wholly palette 1.
+SGB_ATTR_BANK = 29
+SGB_ATTR_ADDR = 0x44FA
+SGB_ATTR_ROWS = (
+    '11111111111111111111',
+    '00000000000000000000',
+    '00000000000000000000',
+    '00111110110000000000',
+    '00111111110000000000',
+    '00111111111111111100',
+    '01111111111111111100',
+    '01111111111111111100',
+    '00000000000000222220',
+    '00000000000002222222',
+    '01111111111112222222',
+    '03311111111112222222',
+    '03311111111112222222',
+    '03311111111110000000',
+    '01111111111110000000',
+    '00000033333333000000',
+    '00000000000000000000',
+    '11111111111111111111',
+)
+
+
+def _pack_sgb_attributes(rows):
+    if len(rows) != MAP_HEIGHT or any(len(row) != MAP_WIDTH for row in rows):
+        raise AssertionError('titlelogo: SGB attribute map must be exactly 20x18')
+    cells = [int(value) for row in rows for value in row]
+    if any(value not in range(4) for value in cells):
+        raise AssertionError('titlelogo: SGB attribute cells must be palettes 0-3')
+    return bytes((cells[i] << 6) | (cells[i + 1] << 4) |
+                 (cells[i + 2] << 2) | cells[i + 3]
+                 for i in range(0, len(cells), 4))
+
+
+SGB_ATTRIBUTE_PACK = _pack_sgb_attributes(SGB_ATTR_ROWS)
+SGB_NATIVE_ATTRIBUTE_PACK = bytes.fromhex(
+    '555555555500000000000540000000555540000055555551505555555555555555555500'
+    '5555555400555555540005556aaa1555556aaa3d55556aaa3d55556aaa3d555540001555'
+    '554000000ffff00000000000005555555555'
+)
+if len(SGB_ATTRIBUTE_PACK) != 90 or len(SGB_NATIVE_ATTRIBUTE_PACK) != 90:
+    raise AssertionError('titlelogo: SGB attribute file must be exactly 90 bytes')
+
 TITLE_FINAL_HL = 0x9C00
 TITLE_FINAL_DE = 0x7499
 
@@ -168,6 +223,18 @@ def install(buf, font, titlecard_built, notes=None):
     code_at = bank + code_org - 0x4000
     buf[code_at:code_at + len(code)] = code
 
+    # Keep the native four SGB palettes and border, but align their per-cell assignment
+    # with the English picture.  $44FA is referenced only by the native title/SGB setup
+    # routines and is transferred as one complete ATTR_TRN file.
+    attr_at = _off(SGB_ATTR_BANK, SGB_ATTR_ADDR)
+    actual_attr = bytes(buf[attr_at:attr_at + len(SGB_NATIVE_ATTRIBUTE_PACK)])
+    if actual_attr != SGB_NATIVE_ATTRIBUTE_PACK:
+        raise SystemExit('titlelogo: native SGB title attribute map at %d:$%04X changed '
+                         '(SHA-256 %s)' %
+                         (SGB_ATTR_BANK, SGB_ATTR_ADDR,
+                          hashlib.sha256(actual_attr).hexdigest()[:12]))
+    buf[attr_at:attr_at + len(SGB_ATTRIBUTE_PACK)] = SGB_ATTRIBUTE_PACK
+
     out = [
         'titlelogo: approved viewer-supplied Mystery Dungeon / Shiren / The Wanderer / '
         'Monster of Moonlight Village / GB four-colour full-screen title; native fade '
@@ -175,10 +242,12 @@ def install(buf, font, titlecard_built, notes=None):
         'titlelogo: %d deduplicated tiles; bank %d $%04X-$%04X; source SHA-256 %s'
         % (built['unique'], FAR_BANK, DATA_ORG, end_addr - 1,
            REFERENCE_SOURCE_SHA256[:12]),
+        'titlelogo: English-aligned 20x18 SGB palette attributes at %d:$%04X; native '
+        'palettes and border preserved' % (SGB_ATTR_BANK, SGB_ATTR_ADDR),
     ]
     if notes is not None:
         notes.extend(out)
     built.update({'data_org': DATA_ORG, 'group_addresses': tuple(group_addresses),
                   'map_org': map_org, 'code_org': code_org, 'end_addr': end_addr,
-                  'labels': labels})
+                  'labels': labels, 'sgb_attribute_pack': SGB_ATTRIBUTE_PACK})
     return built

@@ -112,6 +112,15 @@ def _check_title(problems, title, native, built, label):
     return exact, total
 
 
+def _check_sgb_attributes(problems, rom):
+    data = open(rom, 'rb').read()
+    at = titlelogo._off(titlelogo.SGB_ATTR_BANK, titlelogo.SGB_ATTR_ADDR)
+    actual = data[at:at + len(titlelogo.SGB_ATTRIBUTE_PACK)]
+    if actual != titlelogo.SGB_ATTRIBUTE_PACK:
+        problems.append('English title SGB 20x18 attribute map differs from the '
+                        'approved palette layout')
+
+
 def run(rom, ram=None, png=None):
     PyBoy = _import_pyboy()
     with tempfile.TemporaryDirectory(prefix='titlelogospill-') as tmp:
@@ -143,6 +152,7 @@ def run(rom, ram=None, png=None):
 
     built = titlelogo.compile_graphics(dotfont.load_approved())
     problems = []
+    _check_sgb_attributes(problems, rom)
     exact, total = _check_title(problems, title, native, built, 'fresh')
     if menu['image'].tobytes() != native_menu['image'].tobytes():
         problems.append('fresh file menu after PUSH START differs from native control')
@@ -163,8 +173,8 @@ def run(rom, ram=None, png=None):
                             'native control')
 
     print('titlelogospill: %d route(s), %d/%d generated tile byte(s) exact; %d unique '
-          'tile(s); full 160x144 reference maps exact; file-menu transitions exact; '
-          '%d problem(s)' %
+          'tile(s); full 160x144 reference maps exact; English 20x18 SGB attributes '
+          'exact; file-menu transitions exact; %d problem(s)' %
           (routes, exact, total, built['unique'], len(problems)))
     for problem in problems:
         print('  ' + problem)
