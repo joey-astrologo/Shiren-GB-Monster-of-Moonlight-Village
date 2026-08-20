@@ -126,6 +126,14 @@ if [ -f saves/shiren_en_path_select.srm ]; then
   python3 tools/nameflowspill.py build/shiren_en.gb \
           --ram saves/shiren_en_path_select.srm
 fi
+if [ -f saves/shiren_en_menu.srm ] &&
+   [ -f saves/shiren_en_ranking_repaired.srm ]; then
+  # The standing Trap/Stairs popup and Rank/Pass are both six cells wide. Exercise
+  # their complete classifiers together so one cannot steal the other's VWF route.
+  python3 tools/startspill.py build/shiren_en.gb \
+          --ram saves/shiren_en_menu.srm \
+          --wide-ram saves/shiren_en_ranking_repaired.srm
+fi
 if [ -f saves/shiren_en_fays_puzzles.srm ]; then
   python3 tools/faypathspill.py build/shiren_en.gb
   python3 tools/orochipopupspill.py build/shiren_en.gb

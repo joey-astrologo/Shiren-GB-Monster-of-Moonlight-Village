@@ -28,21 +28,21 @@ Screenshots from the current English build:
 |---|---|---|
 | Extracted script and cinematics | **Complete** | 1,406 of 1,424 ordinary records have supplied English; the remaining 18 records are unreachable/unrendered. All 12 separately encoded cinematic lines are translated. |
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
-| VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor, file, title, Rankings, status and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
+| VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
-| Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
+| Graphics | **Complete for known routes** | Copyright card, illustrated title, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **0.96 battery passed — 2026-08-18** | Continue manual playtesting before tagging or distributing a final build. |
+| Release validation | **Full release-candidate battery passed — 2026-08-20** | Continue manual playtesting before tagging or distributing a final build. |
 
-The complete normal, shuffled and redirect-all battery passed on 2026-08-18: all 72
+The complete normal, shuffled and redirect-all battery passed on 2026-08-20: all 72
 CPU-health seeds remained healthy, all renderer queues reached VBlank byte-exact, and
 1,226,703 text-visible containment frames had zero spill. Current artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `73af11f18ed73eb4f3f55cd3ed3b7df05976a3ef21054e8b1d7f3aca60a16548` |
-| `build/shiren_en_shuffle.gb` | `d0077e7fffd67561c16c9c918ba5ba50719974cdeec9aad9308b79de08d909df` |
-| `build/shiren_en_redirect_all.gb` | `13f3201c3a72a5678a668431ae0b060f03221a4922d70c3861feac5ef2c60c1e` |
+| `build/shiren_en.gb` | `6dd27e0bc98e94e41c6aa8ad100fc65e2670cdbd8c2f634b8350f2e528ec28b1` |
+| `build/shiren_en_shuffle.gb` | `cd065116db4814f60e51b66e3e2da421665adb43c6a514b49c480a542565c53b` |
+| `build/shiren_en_redirect_all.gb` | `01e015fd8792f40ccaf84968dd2f06544c157ea5a1425241b89d03429aa3d766` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

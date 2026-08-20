@@ -3064,7 +3064,10 @@ notitem:
   rst $10
   db $%02X,$%02X
   and a
-  jp z,fallback
+  ; Width six is shared by the standing Trap/Stairs popup and the title-screen
+  ; Rank/Pass popup.  A rejected ground-command shape must continue through the
+  ; start-flow classifier; falling straight back here leaves Rank/Pass fixed-width.
+  jp z,startshapecheck
   xor a
   ld [$C1B1],a
   inc a
