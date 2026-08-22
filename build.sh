@@ -89,6 +89,10 @@ if [ -f saves/shiren_en_log2_weapon_VWF_break.srm ]; then
 fi
 if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/itempagespill.py build/shiren_en.gb
+  # Apply the real hidden-menu GameShark writes only after Menu -> Items has borrowed
+  # its low font planes. Both category pages, all screen-28 item lists, and every
+  # reachable screen-29 weapon enhancement value 0..99 must remain plane-exact VWF.
+  python3 tools/debugmenuspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   python3 tools/floorinfospill.py build/shiren_en.gb

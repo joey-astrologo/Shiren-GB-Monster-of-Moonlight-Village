@@ -114,6 +114,7 @@ can consume more of a pool bank later.
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
+| 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 59 | `$405A-$40FF`, `$7F00-$7FFF` | `tools/normalending.py`: conditional Normal-clear teaser helper and approved 1bpp English rows | Exclusive |
 | 60 | `$5000-$76AF` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail |

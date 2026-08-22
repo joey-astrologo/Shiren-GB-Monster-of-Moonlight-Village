@@ -129,6 +129,7 @@ def main() -> int:
         py("shopspill.py", rom)
         py("conditionspill.py", rom)
         py("menuromspill.py", rom, "--ram", "saves/shiren_en_menu.srm")
+        py("debugmenuspill.py", rom)
         py("mainmenuspill.py", rom)
         py(
             "startspill.py",

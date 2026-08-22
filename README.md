@@ -28,7 +28,7 @@ Screenshots from the current English build:
 |---|---|---|
 | Extracted script and cinematics | **Complete** | 1,406 of 1,424 ordinary records have supplied English; the remaining 18 records are unreachable/unrendered. All 12 separately encoded cinematic lines are translated. |
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
-| VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
+| VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel, name-entry and hidden debug-menu failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
@@ -37,14 +37,16 @@ Screenshots from the current English build:
 The current normal, shuffled and redirect-all battery passed on 2026-08-22. All available
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
-1,226,703 text-visible containment frames had zero spill. Current release-candidate
+1,226,566 text-visible containment frames had zero spill. The hidden GameShark debug
+menu also passed both category pages, all ten item categories and every weapon
+enhancement value from 0 through 99 under all three layouts. Current release-candidate
 artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `27db3f6d247bb20321f68130766e9d27f2e36033757d612503f0dfb7b69e9c60` |
-| `build/shiren_en_shuffle.gb` | `580a6c0e4da3c603deb0ac6ab339ced436f188a6cea645d6a681963c059656b3` |
-| `build/shiren_en_redirect_all.gb` | `4495930a34ce8e49a068489852de5233fab0d8dc68dc43dd91e586ee950ee2f5` |
+| `build/shiren_en.gb` | `ab291ffeebe7c01da0a86b74136ca3e6da2f27a886d33950fa5cce2eb1492259` |
+| `build/shiren_en_shuffle.gb` | `fbfe7c2da7a8f33b28f1781e328b6c1fb920ea7a249ed35acfcf678c31ff8341` |
+| `build/shiren_en_redirect_all.gb` | `cccc1bcf47af70867cc45c04182f60dbbfa5fc6d5e4f62bec7b992b87e34a319` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,
@@ -179,6 +181,8 @@ This stops at the first failure and covers:
 - normal, shuffled and redirect-all text placement;
 - renderer timing and byte-exact VBlank upload delivery;
 - 72 seeded CPU-health runs plus long dialogue-box containment sweeps;
+- both hidden debug-category pages, all ten debug item lists and the complete 0–99
+  weapon-enhancement editor range;
 - title, menu, item, status, Rankings, Orochi badge, death-result, rescue-exit and save-summary ownership routes;
 - the translated Normal-clear teaser, the complete Hard ending-credit roll and their retained native end marks.
 

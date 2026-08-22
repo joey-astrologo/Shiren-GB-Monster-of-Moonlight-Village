@@ -46,9 +46,10 @@
 # proportional scanner; keeping width 6 also preserves every English row if one is found.
 20	0	0	6	# Close / Quit
 21	0	0	6	# Close / Exit / Quit
-# The category pages return to the Japanese width 5 where possible. Box 33 fits exactly;
-# box 34 needs one extra cell because `Weapon` paints 43px including the cursor.
-33	0	0	5	# Herb / Scroll / Staff / Pot / Food
+# Keep both hidden debug-category pages at the same width.  Box 33 fits in five cells,
+# but shrinking from box 34's six-cell page leaves its old right border visible one
+# column farther right.  A shared width makes repeated L/R paging redraw one clean edge.
+33	0	0	6	# Herb / Scroll / Staff / Pot / Food
 34	0	0	6	# Weapon / Shield / Bracer / Arrow / Other
 
 # ---- title screen ---------------------------------------------------------------

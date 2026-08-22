@@ -13,7 +13,8 @@ that x5,y9,w9 is shared by both the title-screen `Log N` selector and an over-di
 picker whose $9000-$97FF holds TERRAIN, not the font. The proportional path therefore
 requires both measured geometry and, for that shared shape, the exact staged
 `00 Log [1-3]` payload. Composing is only safe on screens the font upload built. The
-general allowlist is main (x0,y0,w5), item (x0,y3,w18), the one-row Floor item header
+general allowlist is main (x0,y0,w5), item (x0,y3,w18), the hidden debug item picker
+(x4,y0,rows4,w14), the one-row Floor item header
 (x0,y0,w18), action (x13,w5), the no-cursor
 item-information/seal shape (x0,y3,w18, flags 0), and the five-row clear-condition list
 (x0,y6,w18, flags 0). Start-flow additions are the title box
@@ -347,6 +348,26 @@ GROUND_POPUP_WIDTH = 6
 GROUND_POPUP_BANK = 0x35
 GROUND_POPUP_INDEX = 0x07
 
+# The GameShark-enabled debug category screen (screen 27) uses ROM boxes 33/34, already
+# covered by the static ROM-row VWF path.  Selecting a category dispatches screen 28 and
+# stages four item names through box 35 at $C616.  That box normally falls back to the
+# fixed font; after visiting the status/Items screens, statusvwf's private low-page tiles
+# deliberately no longer contain the fixed alphabet, so the fallback becomes garbage.
+# Admit only the exact hidden boxes.  The four-row picker resets the ordinary dynamic
+# allocator at row 0.  Its weapon enhancement editor then reuses that live generation
+# for the exact ``raw blank, '+', tens, ones, terminator`` payload; leaving the native
+# digits in place is unsafe because their fixed-font planes have already been borrowed
+# by proportional menu rows.  The helper lives in the next pool-bank prefix because
+# bank 32 has too little room.
+DEBUG_MENU_BOX = 35
+DEBUG_VALUE_BOX = 36
+DEBUG_MENU_BANK = 0x36
+DEBUG_MENU_INDEX = 0x05
+DEBUG_MENU_AT = 0x405A
+DEBUG_MENU_LIMIT = 0x4100
+DEBUG_MENU_SHAPE = (4, 0, 4, 14, 0)
+DEBUG_VALUE_SHAPE = (6, 13, 1, 5, 0)
+
 GLYPHS = 0x4400             # vwf DATA_ORG: 4 shifts x $B3 codes x 16 bytes (8 + 8 spill)
 SHIFT_STRIDE = 0xB30        # $B3 * 16
 
@@ -463,6 +484,118 @@ readhl:
   ld a,[hl+]
   ret
 """
+
+
+DEBUG_MENU_SRC = """
+debugshape:
+  ; Preserve the start/file selector classifications that used to be called directly
+  ; from startaux's ssnone tail, then own only the otherwise-unclassified debug box.
+  ; That classifier is free to use BC.  Here BC is also menurow's live staged-source
+  ; pointer, so preserve it or screen 28's next row advances from $C6xx into arbitrary
+  ; ROM and paints instruction bytes as menu text.
+  push bc
+  xor a
+  rst $10
+  db $%02X,$%02X
+  pop bc
+  and a
+  ret nz
+  ld a,[$C69A]
+  cp $04
+  jr z,debugpicker
+  cp $06
+  jr z,debugvalue
+  xor a
+  ret
+debugvalue:
+  ; Screen 29's enhancement control is the only box at this geometry, but also
+  ; validate its live WRAM source so another future five-cell box cannot borrow the
+  ; debug allocator merely by sharing coordinates.
+  ld a,[$C69B]
+  cp $0D
+  jr nz,debugvaluebad
+  ld a,[$C69C]
+  cp $01
+  jr nz,debugvaluebad
+  ld a,[$C69D]
+  cp $05
+  jr nz,debugvaluebad
+  ld a,[$C69E]
+  and a
+  jr nz,debugvaluebad
+  ld a,d
+  and a
+  jr nz,debugvaluebad
+  ld a,b
+  cp $C6
+  jr z,debugvaluesource
+debugvaluebad:
+  xor a
+  ret
+debugvaluesource:
+  push hl
+  ld h,b
+  ld l,c
+  ld a,[hl+]
+  and a
+  jr nz,debugbadpop
+  ld a,[hl+]
+  cp $7C
+  jr nz,debugbadpop
+  ld a,[hl+]
+  cp $0B
+  jr nc,debugbadpop
+  ld a,[hl+]
+  and a
+  jr z,debugbadpop
+  cp $0B
+  jr nc,debugbadpop
+  ld a,[hl]
+  cp $FF
+  jr nz,debugbadpop
+  pop hl
+  jr debugready
+debugbadpop:
+  pop hl
+  xor a
+  ret
+debugpicker:
+  ld a,[$C69B]
+  and a
+  jr nz,debugbad
+  ld a,[$C69C]
+  cp $04
+  jr nz,debugbad
+  ld a,[$C69D]
+  cp $0E
+  jr nz,debugbad
+  ld a,[$C69E]
+  and a
+  jr nz,debugbad
+  ld a,d
+  cp $04
+  jr nc,debugbad
+  and a
+  jr nz,debugready
+  ld a,$43
+  ld [$C1AE],a
+  ld a,$8B
+  ld [$C1AF],a
+  ld a,$9A
+  ld [$C1B0],a
+  xor a
+  ld [$C1B2],a
+debugready:
+  xor a
+  ld [$C1B1],a
+  inc a
+  ld [$C0D0],a
+  ld a,$03
+  ret
+debugbad:
+  xor a
+  ret
+""" % (SELECTOR_INDEX, SELECTOR_BANK)
 
 
 START_SRC = """
@@ -1071,6 +1204,29 @@ summaryprep:
   ret
 
 summaryrestore:
+  ; Screen 28 stages all four selected-category rows in WRAM. The native wrapper
+  ; republishes live BC after menurow returns, so return its next staged source here.
+  ; Other ROM boxes advance through their native producer and retain the incoming pair.
+  ld a,[$C69A]
+  cp $04
+  jr nz,summarynative
+  ld a,[$C69B]
+  and a
+  jr nz,summarynative
+  ld a,[$C69C]
+  cp $04
+  jr nz,summarynative
+  ld a,[$C69D]
+  cp $0E
+  jr nz,summarynative
+  ld a,[$C0CC]
+  ld c,a
+  ld [$C69F],a
+  ld a,[$C0CD]
+  ld b,a
+  ld [$C6A0],a
+  ret
+summarynative:
   ; A long row is scanned from private staging, but the native box loop still expects
   ; both BC and its saved source pointer at the original row-2 source after a successful
   ; proportional return. Publishing the private pointer skips the difficulty row.
@@ -1498,6 +1654,12 @@ starttransition:
   xor a
   rst $10
   db $%02X,$%02X
+  ; Classification 3 is the hidden debug item picker, not a layered title/file
+  ; transaction.  Treating it as generic start-flow disabled the LCD on row 0; only
+  ; Weapon happened to reach a compatible completion path; the other categories left
+  ; the native queue active and the LCD white forever.
+  cp $03
+  jp z,stdone
   and a
   jr nz,stgeneric
   ; Difficulty choice box 29 starts a composite ending at explanation box 48.
@@ -2689,8 +2851,8 @@ srcok:
     assert old in src
     src = src.replace(old, new, 1)
 
-    # A long save-summary place row scans from private staging. Restore the native next-
-    # row BC after composition so the box loop still visits difficulty row 2.
+    # A long save-summary place row and screen 28 both need a shape-specific final
+    # source handoff. Write the ordinary pointer first, then let the helper override it.
     old = """  ld a,[$C0CD]
   ld [$C6A0],a
   scf
@@ -3107,6 +3269,8 @@ startshapecheck:
   db $%02X,$%02X
   and a
   jp z,fallback
+  cp $03
+  jr z,shapeok
   cp $01
   jr z,starttitle
   ld a,$04
@@ -3474,6 +3638,7 @@ composenext:
     assert old in src
     src = src.replace(old, new, 1)
 
+    # Keep every rborder-side producer ahead of the final source-handoff helper.
     old = """rborder:
   ld a,$BF
   ld [hl],a
@@ -4063,6 +4228,16 @@ def install(buf, notes=None, font=None):
         if item_header != (0, 0, 1, 4, 0):
             raise SystemExit('menuvwf: item header box 14 geometry %s no longer matches '
                              'the V4F full-map publish boundary' % (item_header,))
+        debug_menu = _box_geometry(buf, DEBUG_MENU_BOX)
+        if debug_menu != DEBUG_MENU_SHAPE:
+            raise SystemExit('menuvwf: hidden debug item box %d geometry %s no longer '
+                             'matches the proportional allowlist %s' %
+                             (DEBUG_MENU_BOX, debug_menu, DEBUG_MENU_SHAPE))
+        debug_value = _box_geometry(buf, DEBUG_VALUE_BOX)
+        if debug_value != DEBUG_VALUE_SHAPE:
+            raise SystemExit('menuvwf: hidden debug value box %d geometry %s no longer '
+                             'matches the proportional allowlist %s' %
+                             (DEBUG_VALUE_BOX, debug_value, DEBUG_VALUE_SHAPE))
         fei_prompt_rows = _box_row_starts(buf, 32)
         if len(fei_prompt_rows) != 1:
             raise SystemExit('menuvwf: Fay prompt box 32 no longer has one row')
@@ -4209,6 +4384,29 @@ def install(buf, notes=None, font=None):
             buf[at + 1] = target >> 8
         buf[shop_at:shop_at + len(shop_suffix)] = shop_suffix
 
+        debug_menu_code, debug_menu_labels = gbasm.assemble(
+            DEBUG_MENU_SRC, DEBUG_MENU_AT)
+        if DEBUG_MENU_AT + len(debug_menu_code) > DEBUG_MENU_LIMIT:
+            raise SystemExit('menuvwf: debug-menu shape helper needs %d bytes, only %d '
+                             'available' %
+                             (len(debug_menu_code), DEBUG_MENU_LIMIT - DEBUG_MENU_AT))
+        if buf[_off(DEBUG_MENU_BANK, 0x4000)] != DEBUG_MENU_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             DEBUG_MENU_BANK)
+        debug_menu_at = _off(DEBUG_MENU_BANK, DEBUG_MENU_AT)
+        if any(value != 0xFF for value in
+               buf[debug_menu_at:debug_menu_at + len(debug_menu_code)]):
+            raise SystemExit('menuvwf: bank %d debug-menu helper region at $%04X is '
+                             'not free' % (DEBUG_MENU_BANK, DEBUG_MENU_AT))
+        debug_menu_ix = (_off(DEBUG_MENU_BANK, 0x4000) +
+                         DEBUG_MENU_INDEX - 1)
+        if bytes(buf[debug_menu_ix:debug_menu_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (DEBUG_MENU_INDEX, DEBUG_MENU_BANK))
+        buf[debug_menu_at:debug_menu_at + len(debug_menu_code)] = debug_menu_code
+        buf[debug_menu_ix] = debug_menu_labels['debugshape'] & 0xFF
+        buf[debug_menu_ix + 1] = debug_menu_labels['debugshape'] >> 8
+
         normal_rows = _box_row_starts(buf, 48)
         if len(normal_rows) != 2:
             raise SystemExit('menuvwf: difficulty box 48 no longer has two rows')
@@ -4235,7 +4433,7 @@ def install(buf, notes=None, font=None):
 
         start_src = start_template % (
             RANK_VALIDATE_AT, RANK_UPLOAD_AT, START_BLANK_AT,
-            SELECTOR_INDEX, SELECTOR_BANK,
+            DEBUG_MENU_INDEX, DEBUG_MENU_BANK,
             DIFFICULTY_ROW0_CAP + 1,
             normal_rows[0] & 0xFF, normal_rows[0] >> 8,
             DIFFICULTY_ALT_ROW0_BASE, DIFFICULTY_POOL_BASE,
@@ -4787,6 +4985,10 @@ def install(buf, notes=None, font=None):
                 raise SystemExit(
                     'menuvwf: start-flow box %d descriptor %s no longer matches %s -- '
                     'update both the helper and census' % (box, got, want))
+        debug_categories = (desc(33), desc(34))
+        if debug_categories != ((0, 0, 6, 0x50), (0, 0, 6, 0x50)):
+            raise SystemExit('menuvwf: hidden debug category pages no longer share one '
+                             'six-cell border geometry: %s' % (debug_categories,))
     if notes is not None:
         if proportional:
             notes.append('menuvwf: main/item/Floor-header/action/help/seal/condition '
@@ -4802,6 +5004,10 @@ def install(buf, notes=None, font=None):
                          'shop staging widened from %d to %d pre-price cells'
                          % (len(shop_suffix), SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT,
                             SHOP_OLD_CONTENT_CELLS, SHOP_CONTENT_CELLS))
+            notes.append('menuvwf: %d-byte hidden debug-menu shape helper at %d:$%04X; '
+                         'category pages, selected item rows, and enhancement values '
+                         '0..99 stay proportional'
+                         % (len(debug_menu_code), DEBUG_MENU_BANK, DEBUG_MENU_AT))
             if CONTEXT_STATIC_ROWS:
                 notes.append('menuvwf: title/file shapes use %d-byte helper at '
                              '33:$%04X; context-static start rows enabled'
