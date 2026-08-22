@@ -27,6 +27,7 @@ shiren_en_log2_walk_left.srm	b26f3aaac61342dbfe3ddc7ef9d0cdc37bf7c256f58f92486f7
 shiren_en_log3_invincible_herb_price.srm	e24638cf50a4773f63bc6594807c0d4f830964ea723430b92811d7518d37722f	Shiren	Log 3 has a 3000G Invincible Herb in priced Item row 4; validates the native $DC-$DE slot and VWF name together.
 shiren_en_log3_shop.srm	e5017b02405181c666719c4b7784c8f46bd23798ded1aacf04097f410729c685	Shiren	Log 3 starts inside a dungeon shop; validates Price/G headings and a priced item's VWF name plus raw value suffix after Take.
 shiren_log3_store_item_screen.srm	e425b49d72fe874b9f6fc5171411e1573d769e4a5d7bfe31e8b15b79d74f6298	Shiren	Log 3 stands on a shop Insight Bracer; validates proportional Price/G/value boxes and the four-choice Info return without debug cheats.
+shiren_log3_unidentified_naming.srm	21c38b8eb212f9cf5e0ae7987530e9ff2e7943f7e89c2fb501710693e0a2d5e8	Shiren	Log 3 stands above an unidentified Willow Staff; validates Floor -> Name restores the complete native keyboard font after six-action VWF ownership.
 shiren_en_log_2_action_pots.srm	c0d80326e65b8fcfeda65611175e02074a890eba1471f56bd1b24cdb1524ece9	Shiren	Log 2 contains Back and Todo Pots; validates per-charge Press rows.
 shiren_en_log_3_erase_copy_log_vwf.srm	45726c61e121b59dac67568b7c74ff6fc1fc07eca2f06c63dc8a9c3a7e6c5a48	Shiren	Direct Erase Log 3 route; validates Copy Log VWF restoration.
 shiren_en_log_3_gitan_crash.srm	7219d68f45bea5f164f3e6830d4154750252c8b2b653785f903ff9e3282707f2	Shiren	Log 3 starts above 699 Gitan; guards Gitan Info return and Continue card.

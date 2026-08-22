@@ -2,11 +2,13 @@
 """Proportional labels and live values for the in-dungeon status screen.
 
 The native status producer in bank 4 finishes every dynamic field, then calls the
-bank-31 Path copier at 4:$4FDD.  That boundary runs with LCDC.7 clear on every measured
-entry.  Replace the three-byte copier call with one far call which first performs the
-original copy and then composes the completed shadow fields directly into private BG
-tiles.  The game's existing full-map publisher remains authoritative, so this adds no
-VBlank waits and no visible intermediate map.
+bank-31 Path copier at 4:$4FDD.  Ordinary entries reach that boundary with LCDC.7 clear,
+but returning from the item-name picker can reach it with the LCD enabled during the
+visible scan.  Mesen and hardware reject those direct VRAM writes, leaving one status
+glyph plane native and the other proportional.  Replace the three-byte copier call with
+one far call which first performs the original copy, enters a fresh VBlank and disables
+the LCD when necessary, then composes the completed shadow fields directly into private
+BG tiles.  The game's existing full-map publisher remains authoritative.
 
 The private low-page IDs deliberately avoid $22/$24/$2A/$36, which the persistent
 bottom status Window references while the menu is open.  Weapon/Shield retain the
@@ -106,6 +108,35 @@ statusentry:
   ; Preserve the exact native Path shadow copier this hook replaces.
   rst $08
   db $11,$1F
+  ; Most native status builds already have the LCD off. Rename -> Items -> status is a
+  ; real exception: it arrives during the visible scan, where direct VRAM stores are
+  ; blocked on hardware (and accurately by Mesen). Use the same conservative fresh-
+  ; VBlank rendezvous as the complete name-screen font restore, then put LCDC.7 back.
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,statusdraw
+  call statusready
+  ldh a,[$FF40]
+  res 7,a
+  ldh [$FF40],a
+  call statusdraw
+  ldh a,[$FF40]
+  set 7,a
+  ldh [$FF40],a
+  ret
+statusready:
+  ldh a,[$FF44]
+  cp $90
+  jr c,statuswaitblank
+statuswaitvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,statuswaitvisible
+statuswaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,statuswaitblank
+  ret
 statusdraw:
 
   ; Static left-hand labels use structvwf's canonical four-tile fragments.
@@ -642,4 +673,5 @@ def install(buf, notes=None, font=None):
     if notes is not None:
         notes.append('statusvwf: full Strength/Experience labels and seven live status '
                      'values use approved proportional glyphs in 40 private low-page '
-                     'tiles; native LCD-off completion/map publication preserved')
+                     'tiles; LCD-on Rename returns rendezvous at VBlank before direct '
+                     'VRAM painting; native map publication preserved')

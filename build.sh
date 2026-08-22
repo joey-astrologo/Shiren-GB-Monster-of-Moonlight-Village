@@ -64,8 +64,8 @@ python3 tools/newgamesmoke.py build/shiren_en.gb
 # dungeon status fields and standing stair/trap command box, the Log-2 Path selector,
 # title/file-menu transitions (including Erase Log 3 rebuilding
 # Copy Log), cursed/plated/unidentified equipment-marker VWF, an exhaustive Items/Info
-# textual-glyph pass, the Copy/Erase/New-Log name-screen
-# restore, the Ground box-5 VWF path, the Decoy Staff live-name producer, rescued-child
+# textual-glyph pass, the Copy/Erase/New-Log and Floor Willow-Staff name-screen
+# restores, the Ground box-5 VWF path, the Decoy Staff live-name producer, rescued-child
 # nested dialogue entries and the one-HP death-result Rankings page. A fresh clone
 # therefore runs every SRAM-backed route; generate
 # town.state/dungeon.state with tools/fixtures.py to enable the remaining state routes.
@@ -129,6 +129,9 @@ if [ -f saves/shiren_en_path_select.srm ]; then
   python3 tools/mainmenuspill.py build/shiren_en.gb
   python3 tools/nameflowspill.py build/shiren_en.gb \
           --ram saves/shiren_en_path_select.srm
+fi
+if [ -f saves/shiren_log3_unidentified_naming.srm ]; then
+  python3 tools/unidentifiednamespill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_menu.srm ] &&
    [ -f saves/shiren_en_ranking_repaired.srm ]; then

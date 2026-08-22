@@ -75,7 +75,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import gbasm
-from latinfont import EN_CODES, FONT_BASE, GLYPH_BYTES
+from latinfont import EN_CODES
 
 gbdis = gbasm.gbdis          # dis.py loaded by path, not the stdlib module of that name
 
@@ -118,12 +118,12 @@ FAR_BANK = 0x20             # the DTE table bank: its table is $4100-$42FF, this
 FAR_INDEX = 0x03            # entry ($4002,$4003), unused; the far call reads it from there
 FAR_ORG = 0x4300
 
-# Start-menu VWF rows borrow these native tile IDs.  Erase confirmation uses $89 in its
-# Log header and $9E-$A0 for `Erase this?`; the name screen later needs the same IDs for
-# its field underline and fixed-cell `( ) :` keys.  Fresh entry happens before the
-# collision and cannot prove this lifetime, so both name-screen callers go through a
-# restore in the unused pre-text code area of pool bank 44.
-NAME_RESTORE_TILES = (0x89, 0x9E, 0x9F, 0xA0)
+# Start-menu and dungeon-menu VWF rows borrow native font tile IDs.  Fresh New Log entry
+# happens before either lifetime collision and cannot prove the restore: Copy/Erase can
+# overwrite the name underline/punctuation, while Floor -> Name can overwrite almost the
+# whole raw-code keyboard.  Both name-screen callers therefore run the cartridge's own
+# complete $00-$D2 font loader before initialization.  Keeping this in one shared entry
+# also makes future menu allocations safe without growing a hand-maintained tile list.
 NAME_RESTORE_BANK = 0x2C
 NAME_RESTORE_INDEX = 0x05
 NAME_RESTORE_AT = 0x405A
@@ -216,8 +216,8 @@ tmpl:   db %s
 """ % (SLOT, NEW_RECORD, ','.join('$%02X' % b for b in template))
 
 
-def _name_restore_src(planes):
-    """Restore the native name cursor and punctuation in one LCD-off transaction."""
+def _name_restore_src():
+    """Restore the complete native menu font in one LCD-off transaction."""
     return """
 namerestore:
         push af
@@ -229,13 +229,11 @@ namerestore:
         push af
         res 7,a
         ldh [$FF40],a
-        ld hl,nrdata
-        ld de,$8890
-        ld b,$01
-        call nrcopy
-        ld de,$89E0
-        ld b,$03
-        call nrcopy
+        ; Bank 13 far index $33 enters the native loader at $763F, including its own
+        ; register saves.  It restores doubled glyphs $00-$C3 and raw graphics $C4-$D2;
+        ; the patched $7643 entry also resets the proportional menu allocator.
+        rst $10
+        db $33,$0D
         pop af
         ldh [$FF40],a
         pop hl
@@ -259,20 +257,7 @@ nrwaitblank:
         cp $90
         jr c,nrwaitblank
         ret
-nrcopy:
-        ld c,$10
-nrbyte:
-        ld a,[hl+]
-        ld [de],a
-        inc de
-        dec c
-        jr nz,nrbyte
-        dec b
-        jr nz,nrcopy
-        ret
-nrdata:
-        db %s
-""" % ','.join('$%02X' % value for value in planes)
+"""
 
 
 def _helper_src():
@@ -381,16 +366,11 @@ def install(buf, notes=None):
     notes.append('name6: new-game template (%d bytes) + copier -> bank %d $%04X, far index $%02X'
                  % (NEW_RECORD, FAR_BANK, FAR_ORG, len(far) and FAR_INDEX))
 
-    # Restore the four native tiles that the start-menu VWF may have borrowed before
-    # either name-entry path. They all live in the 1bpp source page and are doubled into
-    # the two runtime planes by the normal font uploader. Deriving the payload from the
-    # already-patched ROM keeps it synchronized with latinfont automatically.
-    restore_planes = bytearray()
-    for tile in NAME_RESTORE_TILES:
-        at = FONT_BASE + tile * GLYPH_BYTES
-        glyph = buf[at:at + GLYPH_BYTES]
-        restore_planes += b''.join(bytes((row, row)) for row in glyph)
-    restore_src = _name_restore_src(restore_planes)
+    # Restore the complete native font before either name-entry path.  Calling the ROM's
+    # own loader is both smaller and stronger than embedding the four tiles once known to
+    # collide: Floor -> Name proved that the live dungeon-menu VWF can borrow essentially
+    # any raw keyboard code.
+    restore_src = _name_restore_src()
     restore, restore_labels = gbasm.assemble(restore_src, NAME_RESTORE_AT)
     if NAME_RESTORE_AT + len(restore) > NAME_RESTORE_LIMIT:
         raise SystemExit('name6: name-entry restore needs %d bytes, only %d available'
@@ -410,8 +390,9 @@ def install(buf, notes=None):
     buf[restore_at:restore_at + len(restore)] = restore
     buf[restore_ix] = restore_labels['namerestore'] & 0xFF
     buf[restore_ix + 1] = restore_labels['namerestore'] >> 8
-    notes.append('name6: name entry restores native $89/$9E-$A0 via bank %d $%04X '
-                 '(%d bytes)' % (NAME_RESTORE_BANK, NAME_RESTORE_AT, len(restore)))
+    notes.append('name6: name entry restores the complete native $00-$D2 menu font via '
+                 'bank %d $%04X (%d bytes)' %
+                 (NAME_RESTORE_BANK, NAME_RESTORE_AT, len(restore)))
 
     # `15:$4E0E..$4E1B`: `ld hl,$5994 / ld bc,$A700 / ld e,$4F / <copy loop>` -> one far
     # call. The `rst $20 / db $02` at $4E0C that selected SRAM bank 2 is left alone; the
@@ -670,10 +651,9 @@ def selftest():
     assert len(helper) == 15, len(helper)
     far, _ = gbasm.assemble(_far_src(b'\x00' * NEW_RECORD), FAR_ORG)
     assert len(far) == 25 + NEW_RECORD, len(far)
-    restore, labels = gbasm.assemble(
-        _name_restore_src(b'\x00' * (16 * len(NAME_RESTORE_TILES))), NAME_RESTORE_AT)
+    restore, labels = gbasm.assemble(_name_restore_src(), NAME_RESTORE_AT)
     assert labels['namerestore'] == NAME_RESTORE_AT, hex(labels['namerestore'])
-    assert len(restore) == 141, len(restore)
+    assert len(restore) == 49, len(restore)
     assert NAME_RESTORE_AT + len(restore) <= NAME_RESTORE_LIMIT
     selector_skip, _ = gbasm.assemble('jr $5F07', 0x5EFD)
     trampoline, _ = gbasm.assemble(

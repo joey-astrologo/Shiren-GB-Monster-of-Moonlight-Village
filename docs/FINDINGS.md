@@ -1563,10 +1563,34 @@ VWF is allowed to borrow `$89` while composing the Erase header and `$9E-$A0` wh
 composing `Erase this?`. Those tilemap references disappear when the confirmation closes,
 but their VRAM planes persist. Name entry reuses `$89` for the field underline and
 `$9E/$9F/$A0` for its fixed-cell `(`, `)` and `:` keys, so the exact Copy -> Erase -> New
-Log route used to show fragments of the outgoing words in all four places. Both name-screen
-entry points now pass through a 141-byte bank-44 restore before initialization.
-`tools/nameflowspill.py` drives that complete route and compares its settled pixels,
-visible shadow map, cursor positions and four native planes against fresh name entry.
+Log route used to show fragments of the outgoing words in all four places.
+
+The dungeon-menu lifetime is broader still. A six-action Floor menu for an unidentified
+Willow Staff can borrow almost every raw tile used by the name-entry keyboard before its
+`Name` action enters the same screen. Restoring only the four start-menu collisions left
+the field and most rows as fragments of the Floor/action VWF. Both name-screen entry
+points now pass through a 49-byte bank-44 wrapper which turns the LCD off safely and calls
+the cartridge's complete native `$00-$D2` menu-font loader before initialization.
+`tools/nameflowspill.py` retains the Copy -> Erase -> New Log regression;
+`tools/unidentifiednamespill.py` drives the real Willow Staff Floor -> Name route and
+compares the complete visible keyboard tilemap and all referenced glyph planes with fresh
+name entry.
+
+The inverse lifetime matters too. The complete native font load correctly repairs the
+keyboard, but it necessarily overwrites statusvwf's private low-page tiles. Returning
+through Items rebuilds status before revealing it. Most status builds reach
+`statusvwf.statusdraw` with LCDC.7 clear; the Rename return reaches it with LCDC.7 set
+during the visible scan. PyBoy accepted the renderer's direct VRAM stores, while Mesen
+and hardware reject stores made during mode 3. A Mesen savestate showed that the status
+tilemap and shadow were byte-exact but the `Strength`, `Experience`, and numeric-value
+planes contained mixtures of the native font and the intended VWF pixels.
+
+`statusvwf.statusentry` now detects that exceptional LCD-on entry, waits for a fresh
+VBlank, disables the LCD for the private-tile repaint, and restores LCDC.7 afterward.
+`tools/unidentifiednamespill.py` continues the fixture through Take -> Items -> Name,
+types `Stun`, confirms End, returns to Items, and backs out to status. It compares all 48
+private/structured status tile planes before and after the name-screen lifetime and
+requires both post-Name status paints to execute with LCDC.7 clear.
 
 **The general rule: when a block's byte layout changes, look for code that computes into it.
 A reference gets repointed; a hardcoded stride does not.**

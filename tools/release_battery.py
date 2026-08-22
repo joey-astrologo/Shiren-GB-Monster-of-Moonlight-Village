@@ -126,6 +126,7 @@ def main() -> int:
         py("equipmentmarkerspill.py", rom)
         py("fusioncountspill.py", rom)
         py("playernamedspill.py", rom)
+        py("unidentifiednamespill.py", rom)
         py("shopspill.py", rom)
         py("conditionspill.py", rom)
         py("menuromspill.py", rom, "--ram", "saves/shiren_en_menu.srm")
