@@ -12,6 +12,7 @@ onboarding — start with the repository [README](../README.md), and if you are 
 | [ROM_BANK_MAP.md](ROM_BANK_MAP.md) | Memory ownership | **Before** placing or moving ROM code, tables, text or graphics |
 | [ENGINEERING_RULES.md](ENGINEERING_RULES.md) | How to work here | Before changing anything: the gates a change must pass, fixtures, and how to verify a render-path change |
 | [TRAPS.md](TRAPS.md) | Mistakes that cost time | You are about to trust a measurement, a bisect, a scan, or a green build |
+| [FUTURE_PLANS.md](FUTURE_PLANS.md) | Deferred engineering plans | You are revisiting regional Item-menu blanking or another deliberately postponed design |
 
 ## A note on provenance
 

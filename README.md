@@ -34,19 +34,20 @@ Screenshots from the current English build:
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **Full release battery passed — 2026-08-22** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The current normal, shuffled and redirect-all battery passed on 2026-08-22. All available
+The current normal, shuffled and redirect-all battery passed on 2026-08-22. All 39 curated
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
-1,226,566 text-visible containment frames had zero spill. The hidden GameShark debug
-menu also passed both category pages, all ten item categories and every weapon
-enhancement value from 0 through 99 under all three layouts. Current release-candidate
-artifact hashes:
+1,226,679 text-visible containment frames had zero spill. The no-cheat shop route passed
+proportional `Price`/`G`, both visible amounts, all four actions, item Info and the return to
+Floor under all three layouts. The hidden GameShark debug menu also passed both category
+pages, all ten item categories and every weapon enhancement value from 0 through 99.
+Current release-candidate artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `ab291ffeebe7c01da0a86b74136ca3e6da2f27a886d33950fa5cce2eb1492259` |
-| `build/shiren_en_shuffle.gb` | `fbfe7c2da7a8f33b28f1781e328b6c1fb920ea7a249ed35acfcf678c31ff8341` |
-| `build/shiren_en_redirect_all.gb` | `cccc1bcf47af70867cc45c04182f60dbbfa5fc6d5e4f62bec7b992b87e34a319` |
+| `build/shiren_en.gb` | `bc599df712eaf8f83c01c639c787328cbe2fddcd2c2e68489d2e07bfc3f65e9e` |
+| `build/shiren_en_shuffle.gb` | `6444045dc5f0bbe8ec1bf63200f03798c23832508a5f6e7da77b2980945aff16` |
+| `build/shiren_en_redirect_all.gb` | `468a37d122bd650d18630c6306134692f571c6c6462c57ce4014d3a963d21d0b` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

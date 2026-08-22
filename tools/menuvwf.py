@@ -338,6 +338,36 @@ SHOP_CONTENT_PATCHES = (
     (0x45ED, 0xD6),             # sub n: truncation amount
 )
 
+# The two small value boxes on a shop Floor screen are drawn after the status menu has
+# deliberately borrowed the native low-font planes.  Their native ``Price``/``G``
+# headings and right-aligned amount rows therefore cannot safely keep referring to fixed
+# alphabet/digit tiles.  The amount rows enter the ordinary proportional allocator through
+# an exact shape gate in bank 56.  The headings use four private, screen-local tiles
+# $C0-$C3 staged by bank 55 and uploaded through the native VBlank queue by bank 57; neither
+# the outgoing status screen nor the settled Floor screen has another owner in that range.
+# LCD-off returns retain a direct copy because the queue cannot run there and unrestricted
+# VRAM access is already safe.  Both original heading calls are exactly three bytes, so
+# they can be replaced by one far call without moving bank-4 code.
+SHOP_LABEL_BANK = 0x37
+SHOP_LABEL_INDEX = 0x05
+SHOP_LABEL_AT = 0x405A
+SHOP_LABEL_LIMIT = 0x4100
+SHOP_SHAPE_BANK = 0x38
+SHOP_SHAPE_INDEX = 0x05
+SHOP_SHAPE_AT = 0x405A
+SHOP_SHAPE_LIMIT = 0x4100
+SHOP_UPLOAD_BANK = 0x39
+SHOP_UPLOAD_INDEX = 0x05
+SHOP_UPLOAD_AT = 0x405A
+SHOP_UPLOAD_LIMIT = 0x4100
+SHOP_LABEL_PATCHES = (0x4AC5, 0x4AF3)
+SHOP_LABEL_OLD_CALL = bytes((0xCF, 0x11, 0x1F))
+SHOP_LABEL_BASE = 0xC0
+SHOP_LABEL_VRAM = 0x8C00
+SHOP_PRICE_KEY = 0xC361
+SHOP_GITAN_KEY = 0xC4A1
+SHOP_VALUE_CLASS = 0x06
+
 # The standing stair/trap command is the unique WRAM box (x3,y4,rows2,width5,flags0).
 # Proceed/Trigger paint five tiles after the cursor, so widen only that descriptor to six
 # output cells. A bank-53 gate validates the exact shape and rewrites trap row 1 from the
@@ -505,8 +535,7 @@ debugshape:
   jr z,debugpicker
   cp $06
   jr z,debugvalue
-  xor a
-  ret
+  jp debugbad
 debugvalue:
   ; Screen 29's enhancement control is the only box at this geometry, but also
   ; validate its live WRAM source so another future five-cell box cannot borrow the
@@ -594,8 +623,10 @@ debugready:
   ret
 debugbad:
   xor a
+  rst $10
+  db $%02X,$%02X
   ret
-""" % (SELECTOR_INDEX, SELECTOR_BANK)
+""" % (SELECTOR_INDEX, SELECTOR_BANK, SHOP_SHAPE_INDEX, SHOP_SHAPE_BANK)
 
 
 START_SRC = """
@@ -2800,6 +2831,205 @@ copyloop:
 """ % (FUSED_FIRST, FUSED_LAST + 1)
 
 
+def _shop_label_src(font):
+    """Stage private Dot-font ``Price``/``G`` tiles and patch their shadow cells."""
+    def raster(text):
+        extent = font.text_extent(text)
+        tiles = [bytearray(8) for _ in range((extent + 7) >> 3)]
+        pen = 0
+        for ch in text:
+            for y, bits in enumerate(font.glyphs[ch]):
+                for x in range(8):
+                    if not bits & (0x80 >> x):
+                        continue
+                    pixel = pen + x
+                    if pixel < len(tiles) * 8:
+                        tiles[pixel >> 3][y] |= 0x80 >> (pixel & 7)
+            pen += font.advance(ch)
+        return tuple(bytes(tile) for tile in tiles)
+
+    price = raster('Price')
+    gitan = raster('G')
+    if (len(price), len(gitan)) != (3, 1):
+        raise SystemExit('menuvwf: shop Price/G raster needs %d+%d tiles, expected 3+1' %
+                         (len(price), len(gitan)))
+    payload = b''.join(price + gitan)
+    data = ','.join('$%02X' % value for value in payload)
+    return """
+shoplabel:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,h
+  cp $%02X
+  jr nz,shopgitan
+  ld a,l
+  cp $%02X
+  jr nz,shoplabeldone
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,shopdirect
+shopqueue:
+  ld a,[$C11A]
+  and a
+  jr z,shopqueuedest
+  call $06F7
+  jr shopqueue
+shopqueuedest:
+  ld c,$01
+  ld de,$C008
+  jr shopcopy
+shopdirect:
+  ld c,$00
+  ld de,$%04X
+shopcopy:
+  ld hl,shoplabeldata
+  ld b,$%02X
+shopcopyloop:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  ld [de],a
+  inc de
+  dec b
+  jr nz,shopcopyloop
+  ld a,c
+  and a
+  jr z,shopuploaded
+  xor a
+  rst $10
+  db $%02X,$%02X
+shopuploaded:
+  ld hl,$%04X
+  ld a,$%02X
+  ld b,$%02X
+shoppricemap:
+  ld [hl+],a
+  inc a
+  dec b
+  jr nz,shoppricemap
+  jr shoplabeldone
+shopgitan:
+  cp $%02X
+  jr nz,shoplabeldone
+  ld a,l
+  cp $%02X
+  jr nz,shoplabeldone
+  ld [hl],$%02X
+shoplabeldone:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+shoplabeldata:
+  db %s
+""" % (SHOP_PRICE_KEY >> 8, SHOP_PRICE_KEY & 0xFF,
+       SHOP_LABEL_VRAM, len(payload), SHOP_UPLOAD_INDEX, SHOP_UPLOAD_BANK,
+       SHOP_PRICE_KEY, SHOP_LABEL_BASE, len(price),
+       SHOP_GITAN_KEY >> 8, SHOP_GITAN_KEY & 0xFF,
+       SHOP_LABEL_BASE + len(price), data)
+
+
+SHOP_UPLOAD_SRC = """
+shopupload:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,[$C000]
+  push af
+  ld a,[$C001]
+  push af
+  ld hl,$C008
+  ld de,$C04A
+  ld b,$40
+shopdup:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,shopdup
+  ld hl,$C038
+  ld de,$C08C
+  ld b,$10
+shoptail:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,shoptail
+  xor a
+  ld [$C000],a
+  ld [$C006],a
+  ld [$C048],a
+  ld a,$8C
+  ld [$C001],a
+  ld [$C007],a
+  ld [$C049],a
+  ld a,$30
+  ld [$C08A],a
+  ld a,$8C
+  ld [$C08B],a
+  ld a,$0A
+  ld [$C11A],a
+  call $06F7
+  pop af
+  ld [$C001],a
+  pop af
+  ld [$C000],a
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+"""
+
+
+SHOP_SHAPE_SRC = """
+shopshape:
+  ld a,[$C69A]
+  and a
+  jr nz,shopshapebad
+  ld a,[$C69B]
+  cp $03
+  jr z,shopshapey
+  cp $0D
+  jr nz,shopshapebad
+shopshapey:
+  ld a,[$C69C]
+  cp $01
+  jr nz,shopshapebad
+  ld a,[$C69D]
+  cp $08
+  jr nz,shopshapebad
+  ld a,[$C69E]
+  and a
+  jr nz,shopshapebad
+  ld a,d
+  and a
+  jr nz,shopshapebad
+  ld a,b
+  cp $C6
+  jr nz,shopshapebad
+  ld a,c
+  cp $16
+  jr nz,shopshapebad
+  ld a,$%02X
+  ld [$C61D],a
+  ld a,$%02X
+  ld [$C1B1],a
+  ld a,$01
+  ld [$C0D0],a
+  ld a,$03
+  ret
+shopshapebad:
+  xor a
+  ret
+""" % (propvwf.EN_CODES['G'], SHOP_VALUE_CLASS)
+
+
 def _proportional_src(font, fei_prompt_y, rank_header_x):
     """Return the item-row renderer retargeted to propvwf's font tables.
 
@@ -4384,6 +4614,87 @@ def install(buf, notes=None, font=None):
             buf[at + 1] = target >> 8
         buf[shop_at:shop_at + len(shop_suffix)] = shop_suffix
 
+        shop_label_src = _shop_label_src(font)
+        shop_label_code, shop_label_labels = gbasm.assemble(
+            shop_label_src, SHOP_LABEL_AT)
+        if SHOP_LABEL_AT + len(shop_label_code) > SHOP_LABEL_LIMIT:
+            raise SystemExit('menuvwf: shop-label helper needs %d bytes, only %d '
+                             'available' %
+                             (len(shop_label_code), SHOP_LABEL_LIMIT - SHOP_LABEL_AT))
+        if buf[_off(SHOP_LABEL_BANK, 0x4000)] != SHOP_LABEL_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             SHOP_LABEL_BANK)
+        shop_label_at = _off(SHOP_LABEL_BANK, SHOP_LABEL_AT)
+        if any(value != 0xFF for value in
+               buf[shop_label_at:shop_label_at + len(shop_label_code)]):
+            raise SystemExit('menuvwf: bank %d shop-label region at $%04X is not free' %
+                             (SHOP_LABEL_BANK, SHOP_LABEL_AT))
+        shop_label_ix = (_off(SHOP_LABEL_BANK, 0x4000) +
+                         SHOP_LABEL_INDEX - 1)
+        if bytes(buf[shop_label_ix:shop_label_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (SHOP_LABEL_INDEX, SHOP_LABEL_BANK))
+        buf[shop_label_at:shop_label_at + len(shop_label_code)] = shop_label_code
+        buf[shop_label_ix] = shop_label_labels['shoplabel'] & 0xFF
+        buf[shop_label_ix + 1] = shop_label_labels['shoplabel'] >> 8
+
+        shop_upload_code, shop_upload_labels = gbasm.assemble(
+            SHOP_UPLOAD_SRC, SHOP_UPLOAD_AT)
+        if SHOP_UPLOAD_AT + len(shop_upload_code) > SHOP_UPLOAD_LIMIT:
+            raise SystemExit('menuvwf: shop-label VBlank uploader needs %d bytes, only '
+                             '%d available' %
+                             (len(shop_upload_code), SHOP_UPLOAD_LIMIT - SHOP_UPLOAD_AT))
+        if buf[_off(SHOP_UPLOAD_BANK, 0x4000)] != SHOP_UPLOAD_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             SHOP_UPLOAD_BANK)
+        shop_upload_at = _off(SHOP_UPLOAD_BANK, SHOP_UPLOAD_AT)
+        if any(value != 0xFF for value in
+               buf[shop_upload_at:shop_upload_at + len(shop_upload_code)]):
+            raise SystemExit('menuvwf: bank %d shop-label VBlank region at $%04X is '
+                             'not free' % (SHOP_UPLOAD_BANK, SHOP_UPLOAD_AT))
+        shop_upload_ix = (_off(SHOP_UPLOAD_BANK, 0x4000) +
+                          SHOP_UPLOAD_INDEX - 1)
+        if bytes(buf[shop_upload_ix:shop_upload_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (SHOP_UPLOAD_INDEX, SHOP_UPLOAD_BANK))
+        buf[shop_upload_at:shop_upload_at + len(shop_upload_code)] = shop_upload_code
+        buf[shop_upload_ix] = shop_upload_labels['shopupload'] & 0xFF
+        buf[shop_upload_ix + 1] = shop_upload_labels['shopupload'] >> 8
+
+        shop_shape_code, shop_shape_labels = gbasm.assemble(
+            SHOP_SHAPE_SRC, SHOP_SHAPE_AT)
+        if SHOP_SHAPE_AT + len(shop_shape_code) > SHOP_SHAPE_LIMIT:
+            raise SystemExit('menuvwf: shop-value shape helper needs %d bytes, only %d '
+                             'available' %
+                             (len(shop_shape_code), SHOP_SHAPE_LIMIT - SHOP_SHAPE_AT))
+        if buf[_off(SHOP_SHAPE_BANK, 0x4000)] != SHOP_SHAPE_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             SHOP_SHAPE_BANK)
+        shop_shape_at = _off(SHOP_SHAPE_BANK, SHOP_SHAPE_AT)
+        if any(value != 0xFF for value in
+               buf[shop_shape_at:shop_shape_at + len(shop_shape_code)]):
+            raise SystemExit('menuvwf: bank %d shop-value shape region at $%04X is not '
+                             'free' % (SHOP_SHAPE_BANK, SHOP_SHAPE_AT))
+        shop_shape_ix = (_off(SHOP_SHAPE_BANK, 0x4000) +
+                         SHOP_SHAPE_INDEX - 1)
+        if bytes(buf[shop_shape_ix:shop_shape_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (SHOP_SHAPE_INDEX, SHOP_SHAPE_BANK))
+        buf[shop_shape_at:shop_shape_at + len(shop_shape_code)] = shop_shape_code
+        buf[shop_shape_ix] = shop_shape_labels['shopshape'] & 0xFF
+        buf[shop_shape_ix + 1] = shop_shape_labels['shopshape'] >> 8
+
+        shop_label_call = bytes((0xD7, SHOP_LABEL_INDEX, SHOP_LABEL_BANK))
+        for address in SHOP_LABEL_PATCHES:
+            at = _off(4, address)
+            found = bytes(buf[at:at + len(SHOP_LABEL_OLD_CALL)])
+            if found != SHOP_LABEL_OLD_CALL:
+                raise SystemExit('menuvwf: shop-label writer at 4:$%04X changed: '
+                                 'expected %s, found %s' %
+                                 (address, SHOP_LABEL_OLD_CALL.hex(' '),
+                                  found.hex(' ')))
+            buf[at:at + len(shop_label_call)] = shop_label_call
+
         debug_menu_code, debug_menu_labels = gbasm.assemble(
             DEBUG_MENU_SRC, DEBUG_MENU_AT)
         if DEBUG_MENU_AT + len(debug_menu_code) > DEBUG_MENU_LIMIT:
@@ -5003,7 +5314,14 @@ def install(buf, notes=None, font=None):
                          'five raw $D0-$DE row slots outside the proportional pen; '
                          'shop staging widened from %d to %d pre-price cells'
                          % (len(shop_suffix), SHOP_SUFFIX_BANK, SHOP_SUFFIX_AT,
-                            SHOP_OLD_CONTENT_CELLS, SHOP_CONTENT_CELLS))
+                          SHOP_OLD_CONTENT_CELLS, SHOP_CONTENT_CELLS))
+            notes.append('menuvwf: %d-byte shop-label stager at %d:$%04X, %d-byte '
+                         'VBlank uploader at %d:$%04X, and %d-byte value-row shape '
+                         'gate at %d:$%04X keep Price/G and both shop amounts '
+                         'independent of borrowed native font planes'
+                         % (len(shop_label_code), SHOP_LABEL_BANK, SHOP_LABEL_AT,
+                            len(shop_upload_code), SHOP_UPLOAD_BANK, SHOP_UPLOAD_AT,
+                            len(shop_shape_code), SHOP_SHAPE_BANK, SHOP_SHAPE_AT))
             notes.append('menuvwf: %d-byte hidden debug-menu shape helper at %d:$%04X; '
                          'category pages, selected item rows, and enhancement values '
                          '0..99 stay proportional'

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regress shop headings and every priced-Item row slot.
+"""Regress shop headings, value boxes, Info, and every priced-Item row slot.
 
 The native formatter always assigns three dynamically painted price tiles to an Item
 row: `$D0-$D2` for row 0, then `$D3-$D5`, `$D6-$D8`, `$D9-$DB`, and `$DC-$DE` for rows
@@ -8,6 +8,12 @@ calculation's five-digit cap. Joey's first Log-3 fixture exercises row-0 Strengt
 at 500G. The second keeps Invincible Herb at 3000G on row 4, which proves both the row-4
 slot and the widened shop-name staging contract: the native 13-letter name field used to
 discard its final `rb` before VWF ran.
+
+The store-screen fixture is deliberately replayed without any debug/GameShark patch.
+It checks the ordinary four-choice ``Take/Toss/Swap/Info`` route, enters Info, and
+returns to the Floor screen.  Its map IDs, private heading pixels, proportional amount
+rows, and allocator records are all checked; checking only the heading IDs previously
+missed corrupted low-font tile planes.
 """
 import argparse
 import os
@@ -29,6 +35,7 @@ import dotfont                                              # noqa: E402
 
 RAM = 'saves/shiren_en_log3_shop.srm'
 INVINCIBLE_RAM = 'saves/shiren_en_log3_invincible_herb_price.srm'
+STORE_SCREEN_RAM = 'saves/shiren_log3_store_item_screen.srm'
 ITEM_SHAPE = (0, 3, 5, 18, 0x02)
 ITEM_KEY = 0xC380
 NAME = tuple(EN_CODES[ch] for ch in 'Strength Herb')
@@ -56,6 +63,23 @@ BOOT = {
     2440: 'a',
     2700: 'b', 2780: 'a',
 }
+STORE_BOOT = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 350: 'down', 400: 'down', 460: 'a', 530: 'a',
+    2600: 'b', 2700: 'down', 2800: 'a',
+    3040: 'down', 3100: 'down', 3160: 'down', 3220: 'a',
+    3600: 'b',
+}
+STORE_PRICE_CODES = tuple(EN_CODES[ch] for ch in '  3600G')
+STORE_GITAN_CODES = tuple(EN_CODES[ch] for ch in '  3540G')
+STORE_VALUE_ROWS = ((0xC380, STORE_PRICE_CODES), (0xC4C0, STORE_GITAN_CODES))
+STORE_ACTION_ROWS = tuple(
+    (0xC38D + row * 0x40, tuple(EN_CODES[ch] for ch in text))
+    for row, text in enumerate(('Take', 'Toss', 'Swap', 'Info')))
+STORE_INFO_ROWS = tuple(
+    (0xC3C0 + row * 0x40, tuple(EN_CODES[ch] for ch in text))
+    for row, text in enumerate(('When equipped:', 'you sense monsters',
+                                'and item locations.')))
 
 
 def staged_row(pb, source, limit=32):
@@ -67,6 +91,55 @@ def staged_row(pb, source, limit=32):
         if value == 0xFF:
             break
     return bytes(row)
+
+
+def shop_label_tiles():
+    """Return the exact private 2bpp planes installed for ``Price`` and ``G``."""
+    font = dotfont.load_approved()
+
+    def raster(text):
+        extent = font.text_extent(text)
+        tiles = [bytearray(8) for _ in range((extent + 7) >> 3)]
+        pen = 0
+        for ch in text:
+            for y, bits in enumerate(font.glyphs[ch]):
+                for x in range(8):
+                    if bits & (0x80 >> x):
+                        pixel = pen + x
+                        if pixel < len(tiles) * 8:
+                            tiles[pixel >> 3][y] |= 0x80 >> (pixel & 7)
+            pen += font.advance(ch)
+        return tuple(bytes(value for bits in tile for value in (bits, bits))
+                     for tile in tiles)
+
+    tiles = raster('Price') + raster('G')
+    if len(tiles) != 4:
+        raise SystemExit('shopspill: private Price/G raster is %d tiles, expected 4' %
+                         len(tiles))
+    return tiles
+
+
+def shop_label_problems(pb, label):
+    """Check both shadow/BG IDs and the physical planes those IDs resolve to."""
+    problems = []
+    expected = ((menuvwf.SHOP_PRICE_KEY, bytes((0xC0, 0xC1, 0xC2))),
+                (menuvwf.SHOP_GITAN_KEY, bytes((0xC3,))))
+    for key, want in expected:
+        shadow = bytes(pb.memory[key:key + len(want)])
+        bg_at = menuspill.BGMAP + key - menuspill.SHADOW
+        visible = bytes(pb.memory[bg_at:bg_at + len(want)])
+        if shadow != want or visible != want:
+            problems.append('%s shop heading map at $%04X is %s/%s, expected %s' %
+                            (label, key, shadow.hex(' '), visible.hex(' '),
+                             want.hex(' ')))
+    for tile, want in zip(range(menuvwf.SHOP_LABEL_BASE,
+                                menuvwf.SHOP_LABEL_BASE + 4),
+                          shop_label_tiles()):
+        at = menuspill.tile_data_addr(tile)
+        got = bytes(pb.memory[at:at + 16])
+        if got != want:
+            problems.append('%s shop heading tile $%02X planes differ' % (label, tile))
+    return problems
 
 
 def helper_problems(rom_path):
@@ -188,6 +261,56 @@ def helper_problems(rom_path):
         if cpu.f & gbemu.C_FLAG:
             problems.append('malformed shop suffix %s was accepted' %
                             bytes(malformed).hex(' '))
+
+    font = dotfont.load_approved()
+    label_code, label_symbols = gbasm.assemble(
+        menuvwf._shop_label_src(font), menuvwf.SHOP_LABEL_AT)
+    label_bank = rom[menuvwf.SHOP_LABEL_BANK * 0x4000:
+                     (menuvwf.SHOP_LABEL_BANK + 1) * 0x4000]
+    installed = label_bank[menuvwf.SHOP_LABEL_AT - 0x4000:
+                           menuvwf.SHOP_LABEL_AT - 0x4000 + len(label_code)]
+    if installed != label_code:
+        problems.append('installed shop-label helper differs from asserted source')
+    label_far = label_bank[menuvwf.SHOP_LABEL_INDEX - 1] | \
+        (label_bank[menuvwf.SHOP_LABEL_INDEX] << 8)
+    if label_far != label_symbols['shoplabel']:
+        problems.append('shop-label far index points to $%04X, expected $%04X' %
+                        (label_far, label_symbols['shoplabel']))
+
+    upload_code, upload_symbols = gbasm.assemble(
+        menuvwf.SHOP_UPLOAD_SRC, menuvwf.SHOP_UPLOAD_AT)
+    upload_bank = rom[menuvwf.SHOP_UPLOAD_BANK * 0x4000:
+                      (menuvwf.SHOP_UPLOAD_BANK + 1) * 0x4000]
+    installed = upload_bank[menuvwf.SHOP_UPLOAD_AT - 0x4000:
+                            menuvwf.SHOP_UPLOAD_AT - 0x4000 + len(upload_code)]
+    if installed != upload_code:
+        problems.append('installed shop-label VBlank uploader differs from asserted '
+                        'source')
+    upload_far = upload_bank[menuvwf.SHOP_UPLOAD_INDEX - 1] | \
+        (upload_bank[menuvwf.SHOP_UPLOAD_INDEX] << 8)
+    if upload_far != upload_symbols['shopupload']:
+        problems.append('shop-label VBlank far index points to $%04X, expected $%04X' %
+                        (upload_far, upload_symbols['shopupload']))
+
+    shape_code, shape_symbols = gbasm.assemble(
+        menuvwf.SHOP_SHAPE_SRC, menuvwf.SHOP_SHAPE_AT)
+    shape_bank = rom[menuvwf.SHOP_SHAPE_BANK * 0x4000:
+                     (menuvwf.SHOP_SHAPE_BANK + 1) * 0x4000]
+    installed = shape_bank[menuvwf.SHOP_SHAPE_AT - 0x4000:
+                           menuvwf.SHOP_SHAPE_AT - 0x4000 + len(shape_code)]
+    if installed != shape_code:
+        problems.append('installed shop-value shape helper differs from asserted source')
+    shape_far = shape_bank[menuvwf.SHOP_SHAPE_INDEX - 1] | \
+        (shape_bank[menuvwf.SHOP_SHAPE_INDEX] << 8)
+    if shape_far != shape_symbols['shopshape']:
+        problems.append('shop-value far index points to $%04X, expected $%04X' %
+                        (shape_far, shape_symbols['shopshape']))
+
+    label_call = bytes((0xD7, menuvwf.SHOP_LABEL_INDEX, menuvwf.SHOP_LABEL_BANK))
+    for address in menuvwf.SHOP_LABEL_PATCHES:
+        at = 4 * 0x4000 + address - 0x4000
+        if rom[at:at + len(label_call)] != label_call:
+            problems.append('shop-label call at 4:$%04X is not installed' % address)
     return problems
 
 
@@ -358,17 +481,7 @@ def route_problems(rom_path, ram_path, png=None):
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
             if frame == 2300:
-                top = bytes(pb.memory[0x9860:0x986A])
-                want = bytes([0xB8]) + bytes(EN_CODES[ch] for ch in 'Price') + \
-                    bytes([0xBC] * 3 + [0xB9])
-                if top != want:
-                    problems.append('Floor shop heading is %s, expected `Price` map %s' %
-                                    (top.hex(' '), want.hex(' ')))
-                cash = bytes(pb.memory[0x99A0:0x99AA])
-                want = bytes([0xB8, EN_CODES['G']] + [0xBC] * 7 + [0xB9])
-                if cash != want:
-                    problems.append('Floor cash heading is %s, expected `G` map %s' %
-                                    (cash.hex(' '), want.hex(' ')))
+                problems.extend(shop_label_problems(pb, 'Strength-Herb route'))
 
         if staged is None:
             problems.append('priced Strength Herb never reached the Item VWF hook')
@@ -397,6 +510,149 @@ def route_problems(rom_path, ram_path, png=None):
                             % len(invariant))
         if png:
             pb.screen.image.save(png)
+        pb.stop(save=False)
+    return problems
+
+
+def store_screen_route_problems(rom_path, ram_path, png=None):
+    """Replay Joey's ordinary shop Floor -> Info -> Floor route with cheats off."""
+    profile = menuspill.renderer_profile(rom_path)
+    problems = []
+    PyBoy = _import_pyboy()
+    with tempfile.TemporaryDirectory(prefix='shop-screen-') as tmp:
+        run_rom = os.path.join(tmp, 'shop.gb')
+        shutil.copyfile(rom_path, run_rom)
+        shutil.copyfile(ram_path, run_rom + '.ram')
+        pb = PyBoy(run_rom, window='null', cgb=True)
+        pb.set_emulation_speed(0)
+        frame = [0]
+        dispatches = []
+        checked = []
+        label_entries = []
+        queue_uploads = []
+        active_uploads = []
+        expected_label_planes = b''.join(shop_label_tiles())
+        label_vram_end = menuvwf.SHOP_LABEL_VRAM + len(expected_label_planes)
+
+        def dispatch(_context=None):
+            dispatches.append((frame[0], pb.register_file.A))
+
+        pb.hook_register(4, 0x48AA, dispatch, None)
+
+        def label_entry(_context=None):
+            key = pb.register_file.HL
+            if key != menuvwf.SHOP_PRICE_KEY or not pb.memory[0xFF40] & 0x80:
+                return
+            old = bytes(pb.memory[menuvwf.SHOP_LABEL_VRAM:label_vram_end])
+            label_entries.append(frame[0])
+            if old != expected_label_planes:
+                active_uploads.append({'frame': frame[0], 'old': old, 'done': False})
+
+        def queue_upload(_context=None):
+            dests = tuple(pb.memory[at] | (pb.memory[at + 1] << 8)
+                          for at in (0xC006, 0xC048, 0xC08A))
+            if dests == (menuvwf.SHOP_LABEL_VRAM, menuvwf.SHOP_LABEL_VRAM,
+                         menuvwf.SHOP_LABEL_VRAM + 0x30):
+                queue_uploads.append((frame[0], pb.memory[0xC11A], dests))
+
+        pb.hook_register(menuvwf.SHOP_LABEL_BANK, menuvwf.SHOP_LABEL_AT,
+                         label_entry, None)
+        pb.hook_register(0, 0x11A8, queue_upload, None)
+
+        def check_screen(label):
+            checked.append(label)
+            problems.extend(shop_label_problems(pb, label))
+            for key, codes in STORE_VALUE_ROWS:
+                records = [record for record in menuspill.records(pb, profile)
+                           if record[0] == key and record[3] == 1]
+                if not records:
+                    problems.append('%s amount row $%04X has no raw=1 VWF record' %
+                                    (label, key))
+                elif not menuspill.visible_row_matches(
+                        pb, profile, key, list(codes), raw=1):
+                    problems.append('%s amount row $%04X planes differ' % (label, key))
+            for key, codes in STORE_ACTION_ROWS:
+                records = [record for record in menuspill.records(pb, profile)
+                           if record[0] == key and record[3] == 1]
+                if not records:
+                    problems.append('%s action row $%04X has no raw=1 VWF record' %
+                                    (label, key))
+                elif not menuspill.visible_row_matches(
+                        pb, profile, key, list(codes), raw=1):
+                    problems.append('%s action row $%04X planes differ' % (label, key))
+            invariant = menuspill.frame_invariant(pb, profile)
+            if invariant:
+                problems.append('%s has %d allocator invariant violation(s)' %
+                                (label, len(invariant)))
+            if not pb.memory[0xFF40] & 0x80:
+                problems.append('%s leaves the LCD disabled' % label)
+
+        for current in range(4160):
+            frame[0] = current
+            button = STORE_BOOT.get(current)
+            if button:
+                pb.button(button, PRESS_FRAMES)
+            pb.tick()
+            planes = bytes(pb.memory[menuvwf.SHOP_LABEL_VRAM:label_vram_end])
+            for upload in active_uploads:
+                if upload['done']:
+                    continue
+                if planes == expected_label_planes:
+                    upload['done'] = True
+                elif planes != upload['old']:
+                    problems.append('shop heading planes are partially updated at frame '
+                                    '%d during the LCD-on transition' % current)
+                    upload['done'] = True
+                elif current - upload['frame'] > 4:
+                    problems.append('shop heading VBlank upload did not complete within '
+                                    'four frames after frame %d' % upload['frame'])
+                    upload['done'] = True
+            private_visible = (
+                bytes(pb.memory[0x9861:0x9864]) == bytes((0xC0, 0xC1, 0xC2)) or
+                pb.memory[0x99A1] == 0xC3)
+            if private_visible and planes != expected_label_planes:
+                problems.append('shop heading map exposes incomplete private planes at '
+                                'frame %d' % current)
+            if current == 3000:
+                check_screen('initial shop Floor')
+                if png:
+                    pb.screen.image.save(png)
+            elif current == 3400:
+                for key, codes in STORE_INFO_ROWS:
+                    records = [record for record in menuspill.records(pb, profile)
+                               if record[0] == key and record[3] == 0]
+                    if not records:
+                        problems.append('shop Info row $%04X has no VWF record' % key)
+                    elif not menuspill.visible_row_matches(
+                            pb, profile, key, list(codes), raw=0):
+                        problems.append('shop Info row $%04X planes differ' % key)
+            elif current == 3800:
+                check_screen('Info-return shop Floor')
+
+        indices = [screen for _at, screen in dispatches]
+        expected = (20, 4, 0, 20)
+        cursor = 0
+        for screen in indices:
+            if cursor < len(expected) and screen == expected[cursor]:
+                cursor += 1
+        if cursor != len(expected):
+            problems.append('no-cheat shop dispatch sequence %s does not contain %s' %
+                            (indices, list(expected)))
+        if checked != ['initial shop Floor', 'Info-return shop Floor']:
+            problems.append('shop screen checks ran at %s' % checked)
+        if not label_entries:
+            problems.append('shop Price label helper never ran with the LCD enabled')
+        if not queue_uploads:
+            problems.append('shop Price/G planes never used the native VBlank queue')
+        for at, mode, dests in queue_uploads:
+            if mode != 0x0A:
+                problems.append('shop heading queue entered at frame %d with C11A=$%02X, '
+                                'expected $0A (%s)' % (at, mode, dests))
+        if any(not upload['done'] for upload in active_uploads):
+            problems.append('shop heading upload remained incomplete at the end of route')
+        if pb.register_file.PC < 0x0100:
+            problems.append('no-cheat shop route ended at suspicious PC=$%04X' %
+                            pb.register_file.PC)
         pb.stop(save=False)
     return problems
 
@@ -489,14 +745,18 @@ def main():
     parser.add_argument('rom')
     parser.add_argument('--ram', default=RAM)
     parser.add_argument('--invincible-ram', default=INVINCIBLE_RAM)
+    parser.add_argument('--store-screen-ram', default=STORE_SCREEN_RAM)
     parser.add_argument('--png')
     parser.add_argument('--invincible-png')
     parser.add_argument('--max-png')
+    parser.add_argument('--store-screen-png')
     args = parser.parse_args()
     if not os.path.exists(args.ram):
         raise SystemExit('shopspill: missing fixture %s' % args.ram)
     if not os.path.exists(args.invincible_ram):
         raise SystemExit('shopspill: missing fixture %s' % args.invincible_ram)
+    if not os.path.exists(args.store_screen_ram):
+        raise SystemExit('shopspill: missing fixture %s' % args.store_screen_ram)
     problems = literal_problems(args.rom)
     problems.extend(name_contract_problems())
     problems.extend(price_contract_problems(args.rom))
@@ -507,7 +767,10 @@ def main():
                                               3000, args.invincible_png))
     problems.extend(invincible_route_problems(args.rom, args.invincible_ram,
                                               SHOP_BUY_CAP, args.max_png))
-    print('shopspill: Price/G; five D0-DE row slots; complete `%s`; '
+    problems.extend(store_screen_route_problems(
+        args.rom, args.store_screen_ram, args.store_screen_png))
+    print('shopspill: private proportional Price/G + two amount rows; '
+          'no-cheat Floor/Info/Floor; five D0-DE row slots; complete `%s`; '
           '500G row 0 + 3000G row 4 exact; '
           'controlled %dG maximum route exact; base max %d; %d problem(s)' %
           (LONG_TEXT, SHOP_BUY_CAP, MAX_BASE_PRICE, len(problems)))
