@@ -30,20 +30,21 @@ Screenshots from the current English build:
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel and name-entry failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
-| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators and all 22 ending-credit cards are localized. The final Japanese end mark is intentionally retained. |
+| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **RC1 full release battery passed — 2026-08-20** | Continue manual hardware and emulator playtesting before the final release tag. |
+| Release validation | **Full release battery passed — 2026-08-22** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The RC1 normal, shuffled and redirect-all battery passed on 2026-08-20. All available
+The current normal, shuffled and redirect-all battery passed on 2026-08-22. All available
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
-1,226,703 text-visible containment frames had zero spill. Current RC1 artifact hashes:
+1,226,703 text-visible containment frames had zero spill. Current release-candidate
+artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `ac7056b245727a2126b6b920d02b6f594620c774e1083c309f66d1f072482719` |
-| `build/shiren_en_shuffle.gb` | `9626c235be89fcf11e5b04756668af4c240fb8d3b0427951d566126d829dd65f` |
-| `build/shiren_en_redirect_all.gb` | `f563ec600a210add2076a8ccd70a018267b8f709910e112be398a54018c3b528` |
+| `build/shiren_en.gb` | `27db3f6d247bb20321f68130766e9d27f2e36033757d612503f0dfb7b69e9c60` |
+| `build/shiren_en_shuffle.gb` | `580a6c0e4da3c603deb0ac6ab339ced436f188a6cea645d6a681963c059656b3` |
+| `build/shiren_en_redirect_all.gb` | `4495930a34ce8e49a068489852de5233fab0d8dc68dc43dd91e586ee950ee2f5` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,
@@ -178,7 +179,8 @@ This stops at the first failure and covers:
 - normal, shuffled and redirect-all text placement;
 - renderer timing and byte-exact VBlank upload delivery;
 - 72 seeded CPU-health runs plus long dialogue-box containment sweeps;
-- title, menu, item, status, Rankings, Orochi badge, death-result, rescue-exit and save-summary ownership routes.
+- title, menu, item, status, Rankings, Orochi badge, death-result, rescue-exit and save-summary ownership routes;
+- the translated Normal-clear teaser, the complete Hard ending-credit roll and their retained native end marks.
 
 The hostile layouts are mandatory. Redirect-all placement previously exposed a real
 160-scanline VWF pass that the normal build did not; the scheduler limit is 154 scanlines.
@@ -343,7 +345,18 @@ replaces it, so the sheet doubles as a check on the romanizations. The base ROM 
 substituted here: the fixture and its frame-timed boot were captured against the English
 build, and the same input lands in Fay's Puzzles on `build/base.gb`.
 
-Neither is a test. `endingcreditspill.py` proves the shipped cards.
+Neither is a test. `endingcreditspill.py` proves the shipped Hard-ending cards.
+
+The Normal-clear teaser is a separate final card rather than part of the 22-card Hard
+credit roll. `normalending.py` replaces its two Japanese text bands with `That's all for
+now.` and `See the rest on Hard!` using the native black-background/white-letter tile
+polarity while retaining the green End mark, palette and hold. `normalendspill.py` drives
+the existing ending fixture to that unique renderer state
+by changing only the final native dispatcher selection from case 5 to case 4. It then
+observes the real case-4 producer and proves its native palette and black tile plus all 26
+replacement tile planes and map cells;
+`endingcreditspill.py` separately replays the fixture unmodified and proves that the Hard
+ending remains unchanged apart from its approved translated credits.
 
 ## Repository map
 
@@ -359,6 +372,8 @@ tests/fixtures/               tracked SRAMs, hashes, routes and setup notes
 tools/release_battery.py      complete release-candidate validation
 tools/build.py                translation installer and verifier
 tools/extract.py              Japanese-script extractor
+tools/normalending.py         Normal-clear final-card graphics installer
+tools/normalendspill.py       Normal-clear final-card emulator regression
 tools/propvwf.py              dialogue VWF renderer
 tools/menuvwf.py              menu/help/seal VWF renderer and allocator
 tools/rankvwf.py              Rankings VWF renderer

@@ -234,6 +234,7 @@ if [ -f saves/shiren_en_log_1_orochi_symbol.srm ]; then
 fi
 if [ -f saves/shiren_en_log_1_trigger_ending.srm ]; then
   python3 tools/endingcreditspill.py build/shiren_en.gb
+  python3 tools/normalendspill.py build/shiren_en.gb
 fi
 
 # `build/_base_expanded.gb` is KEPT, not deleted. It is the input every diagnostic build

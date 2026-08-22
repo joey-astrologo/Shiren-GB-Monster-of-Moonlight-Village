@@ -49,6 +49,7 @@ import titlecard                        # pre-intro English title/copyright grap
 import titlelogo                        # illustrated English title-screen logo
 import waitcard                         # active-dungeon Continue loading bubble
 import endingcredits                    # approved English ending-credit graphics
+import normalending                     # Normal-clear teaser around native End mark
 import pool as textpool          # `pool` is taken: build.py's free-run allocator
 from latinfont import EN_CODES, patch as patch_font
 
@@ -2187,8 +2188,9 @@ def main():
     # ---- ending credits: all 22 native cards translated over the native forest
     if not no_endingcredits:
         endingcredits.install(buf, approved_font, notes=notes)
+        normalending.install(buf, approved_font, notes=notes)
     else:
-        notes.append('--no-endingcredits/non-Dot: ending credits stay Japanese')
+        notes.append('--no-endingcredits/non-Dot: ending credits and Normal teaser stay Japanese')
 
     # ---- checksums
     h = 0
