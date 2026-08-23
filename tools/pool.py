@@ -123,6 +123,12 @@ TEXT_ORG = 0x4100           # text banks: past their own index table and reader
 # layouts disjoint by construction.
 RANK_SCREEN_BANK = 0x2E
 RANK_SCREEN_TEXT_ORG = 0x4400
+# Bank 60's prefix is a declared menu-transition code arena. menuvwf owns far indices
+# $05/$07/$09 and $405A-$43CF; markers owns far index $0B and its graphics tail. Starting
+# redirected text at $4400 makes that ownership structural in normal and redirect-all
+# layouts instead of depending on the current pool's high-water mark.
+MENU_TRANSITION_BANK = 0x3C
+MENU_TRANSITION_TEXT_ORG = 0x4400
 
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 
@@ -797,8 +803,11 @@ class Pool:
         self.index_at = index_org
         self.index_base = index_org
         self.index = bytearray()
-        self.at = {b: max(text_org, (RANK_SCREEN_TEXT_ORG
-                                     if b == RANK_SCREEN_BANK else text_org))
+        special_orgs = {
+            RANK_SCREEN_BANK: RANK_SCREEN_TEXT_ORG,
+            MENU_TRANSITION_BANK: MENU_TRANSITION_TEXT_ORG,
+        }
+        self.at = {b: max(text_org, special_orgs.get(b, text_org))
                    for b in TEXT_BANKS}
         self.base = dict(self.at)
         self.data = {b: bytearray() for b in TEXT_BANKS}

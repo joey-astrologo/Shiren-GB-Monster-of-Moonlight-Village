@@ -93,11 +93,12 @@ def lcdc_sites(rom):
 
 def publish_lcd_on():
     """Address of the `ldh [$FF40],a` that ends ``publishmap``."""
-    code, labels = gbasm.assemble(menuvwf.ITEM_PAGE_SRC, menuvwf.ITEM_PAGE_AT)
-    end = menuvwf.ITEM_PAGE_AT + len(code)
+    code, labels = gbasm.assemble(menuvwf.ITEM_PUBLISH_SRC, menuvwf.ITEM_PUBLISH_AT)
+    end = menuvwf.ITEM_PUBLISH_AT + len(code)
     # publishmap's last three bytes are `set 7,a` / `ldh [$FF40],a` / `ret`.
     at = end - 3
-    if code[at - menuvwf.ITEM_PAGE_AT:end - menuvwf.ITEM_PAGE_AT] != b'\xe0\x40\xc9':
+    if code[at - menuvwf.ITEM_PUBLISH_AT:end - menuvwf.ITEM_PUBLISH_AT] != \
+            b'\xe0\x40\xc9':
         raise SystemExit('potputspill: publishmap does not end in ldh [$FF40],a / ret')
     return labels['publishmap'], at
 
@@ -128,7 +129,7 @@ def run(rom, ram, png=None):
                 if not pb.register_file.A & 0x80:
                     blankers[0].append((bank, addr))
                     return
-                if (bank, addr) != (menuvwf.ITEM_PAGE_BANK, lcd_on_at):
+                if (bank, addr) != (menuvwf.ITEM_PUBLISH_BANK, lcd_on_at):
                     blankers[0] = []
                     return
                 publications.append((frame[0], pb.memory[STATE], tuple(blankers[0])))

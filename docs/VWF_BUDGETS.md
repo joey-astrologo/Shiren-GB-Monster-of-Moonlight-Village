@@ -202,12 +202,15 @@ pixels and temporary storage first.
    screen-scoped allocation and restores borrowed native graphics, including the Orochi
    badge, before an adjacent screen can reveal them. The former false-positive regression
    was replaced by the R3 route described below.
-6. **V4F — item-menu clearing and paging (COMPLETE; VISUALLY APPROVED 2026-08-10):**
-   exact item entry/paging and the three supplied Wood Arrow action/Info
-   transitions are `old -> white -> complete`; normal/shuffled/redirect-all real-save
-   checks preserve compact geometry, native cursors, page indicators and allocator
-   ownership. Gitan's shorter three-choice action box also returns safely after Info.
-   Box 14 composes the complete `Items` word and its spacing is approved.
+6. **V4F — item-menu clearing and paging:** the original whole-map implementation was
+   completed and visually approved 2026-08-10. On 2026-08-23 the narrower screen-1
+   paging/Start-sort checkpoint changed redraws to `old -> blank status/name cells ->
+   complete rows` with the LCD on. Manual review rejected the first four-page-only gate
+   and then exposed delayed equipped-marker remnants. Paging, sorting, and the regional
+   blank are visually accepted; the corrected one-to-four-page matrix now treats
+   `$83/$84` and `$85/$86` border/marker pairs atomically and awaits marker review.
+   Initial entry, Action/Info, Gitan, Pot, and rejected contexts retain the approved
+   whole-map fallback. Box 14 still composes the complete `Items` word.
 7. **V5 — graphics — COMPLETE:** **V5A COMPLETE** pre-intro title/copyright card; **V5B COMPLETE**
    illustrated title screen; **V5C COMPLETE** 12px-cap Poppins dungeon/town banners
    (Moonlight Village and Forest 1 reference-exact; all 50 live floors regressed);

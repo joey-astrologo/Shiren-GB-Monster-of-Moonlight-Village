@@ -24,6 +24,7 @@ sys.path.insert(0, HERE)
 from gbrun import PRESS_FRAMES, _import_pyboy                    # noqa: E402
 import menuspill                                                  # noqa: E402
 import menuvwf                                                    # noqa: E402
+import gbasm                                                      # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log3_fusion_name.srm')
@@ -39,6 +40,7 @@ WEAPON_MASK = 0x01FF
 SHIELD_MASK = 0x06FD
 EXPECTED_LOG3_OBJECT = bytes((MANJI, BONUS, 0, FLAGS, 0x06, 0, 0xFF, 0xFF))
 NAME = tuple(menuspill.encode('Manji Kabura+2'))
+PAGE_COUNT_CASES = (1, 6, 11, 16)
 
 
 def row_at(pb, source, limit=32):
@@ -68,6 +70,190 @@ def fixture_problems(path):
     return problems
 
 
+def expected_indicator(pages, active):
+    """The exact native 4:$4EB4 page-marker shape inside box 4's top border."""
+    if pages == 1:
+        return bytes((0xBC,)) * 4
+    return bytes((0xC6 if slot == active else 0xC5) if slot < pages else 0xBC
+                 for slot in range(4))
+
+
+def page_count_case(PyBoy, rom, state_path, item_count, profile, region_labels):
+    """Exercise page cycles and Start-sort with a shortest 1-, 2-, 3-, or 4-page list."""
+    pages = (item_count + 4) // 5
+    pb = PyBoy(rom, window='null')
+    pb.set_emulation_speed(0)
+    with open(state_path, 'rb') as source:
+        pb.load_state(source)
+
+    frame = [0]
+    injected = [False]
+    row0_draws = []
+    regional_begins = []
+    regional_fallbacks = []
+    regional_origins = []
+    blank_boundaries = []
+    lcd_off = []
+    bad_states = []
+    indicators = {}
+    selectors = {}
+    dispatches = []
+
+    def inject(_context=None):
+        if injected[0]:
+            return
+        free = [index for index in range(128)
+                if pb.memory[OBJECTS + 8 * index] == 0xFF]
+        if len(free) < item_count:
+            return
+        for ordinal, object_index in enumerate(free[:item_count]):
+            # Valid carried Manji Kabura objects with canonical 1..9 seal masks keep
+            # every row on the real Item formatter while producing nonempty short pages.
+            seal_count = ordinal % 9 + 1
+            mask = (1 << seal_count) - 1
+            record = (MANJI, BONUS, 0, FLAGS, mask & 0xFF, mask >> 8, 0xFF, 0xFF)
+            for offset, value in enumerate(record):
+                pb.memory[OBJECTS + 8 * object_index + offset] = value
+            pb.memory[INVENTORY + ordinal] = object_index
+        pb.memory[INVENTORY + item_count] = 0xFF
+        injected[0] = True
+
+    def far_entry(_context=None):
+        shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+        if frame[0] >= 250 and shape == ITEM_SHAPE and pb.register_file.D == 0:
+            row0_draws.append(frame[0])
+
+    pb.hook_register(6, 0x4B29, inject, None)
+    pb.hook_register(4, 0x48AA,
+                     lambda _ctx=None: dispatches.append((frame[0], pb.register_file.A)),
+                     None)
+    pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+
+    def regional_begin(_ctx=None):
+        regional_begins.append(frame[0])
+        regional_origins.append((bytes(pb.memory[0x9800:0x9C00]),
+                                 bytes(pb.memory[0xC300:0xC700])))
+
+    def blank_boundary(_ctx=None):
+        blank_boundaries.append((frame[0], pb.memory[0xFF44],
+                                 bytes(pb.memory[0x9800:0x9C00]),
+                                 bytes(pb.memory[0xC300:0xC700])))
+
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irshadow'],
+                     regional_begin, None)
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irarmed'],
+                     blank_boundary, None)
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
+                     lambda _ctx=None: regional_fallbacks.append(frame[0]), None)
+
+    actions = ['right'] * pages + ['left'] * pages + ['start']
+    action_events = [(280 + 110 * index, action)
+                     for index, action in enumerate(actions)]
+    schedule = {60: 'b', 120: 'a', **dict(action_events)}
+    sample_expectations = {220: 0}
+    active = 0
+    for at, action in action_events:
+        if action == 'right':
+            active = (active + 1) % pages
+        elif action == 'left':
+            active = (active - 1) % pages
+        sample_expectations[at + 80] = active
+    final_frame = action_events[-1][0] + 100
+    for frame[0] in range(final_frame):
+        button = schedule.get(frame[0])
+        if button:
+            pb.button(button, PRESS_FRAMES)
+        pb.tick()
+        if 260 <= frame[0] < final_frame - 1:
+            if not pb.memory[0xFF40] & 0x80:
+                lcd_off.append(frame[0])
+            if pb.memory[0xC1B3] not in (0, 1):
+                bad_states.append((frame[0], pb.memory[0xC1B3]))
+        if frame[0] in sample_expectations:
+            indicators[frame[0]] = bytes(pb.memory[0x986F:0x9873])
+            selectors[frame[0]] = pb.memory[0xC6AC]
+
+    actual_item_count = pb.memory[0xC6AA]
+    pb.stop(save=False)
+    problems = []
+    if not injected[0]:
+        problems.append('%d-item fixture was not injected' % item_count)
+    if actual_item_count != item_count:
+        problems.append('%d-item fixture reports native count %d' %
+                        (item_count, actual_item_count))
+    expected = {at: expected_indicator(pages, active_page)
+                for at, active_page in sample_expectations.items()}
+    for at, want in expected.items():
+        got = indicators.get(at)
+        if got != want:
+            problems.append('%d-page indicator at f%d is %s, expected %s' %
+                            (pages, at, 'missing' if got is None else got.hex(' '),
+                             want.hex(' ')))
+    if len(row0_draws) != len(actions):
+        problems.append('%d-page boundary/sort cycle produced %d redraws, expected %d '
+                        '(dispatches %s)' %
+                        (pages, len(row0_draws), len(actions),
+                         ' '.join('f%d:%d' % event for event in dispatches)))
+    if len(regional_begins) != len(row0_draws):
+        problems.append('%d-page paging/sort began %d/%d regional redraws' %
+                        (pages, len(regional_begins), len(row0_draws)))
+    if len(regional_origins) != len(blank_boundaries):
+        problems.append('%d-page paging/sort captured %d regional origins and %d '
+                        'blank boundaries' %
+                        (pages, len(regional_origins), len(blank_boundaries)))
+    blank_targets = {(4 + 2 * row) * 32 + col
+                     for row in range(5) for col in (1, *range(3, 19))}
+    borders = {(4 + 2 * row) * 32 for row in range(5)}
+    region_targets = blank_targets | borders
+    for (old_bg, old_shadow), (at, ly, new_bg, new_shadow) in zip(
+            regional_origins, blank_boundaries):
+        if ly < 0x90:
+            problems.append('%d-page regional blank occurred outside VBlank at f%d '
+                            '(LY=$%02X)' % (pages, at, ly))
+            break
+        for plane, old_map, new_map in (('BG', old_bg, new_bg),
+                                        ('shadow', old_shadow, new_shadow)):
+            retained = next((offset for offset in blank_targets
+                             if new_map[offset] != 0), None)
+            bad_border = next((offset for offset in borders
+                               if new_map[offset] != 0xBE), None)
+            changed = next((offset for offset in range(0x400)
+                            if offset not in region_targets and
+                            old_map[offset] != new_map[offset]),
+                           None)
+            if retained is not None:
+                problems.append('%d-page %s regional target +$%03X is nonzero at f%d' %
+                                (pages, plane, retained, at))
+                break
+            if bad_border is not None:
+                problems.append('%d-page %s regional border +$%03X is $%02X, '
+                                'expected $BE at f%d' %
+                                (pages, plane, bad_border, new_map[bad_border], at))
+                break
+            if changed is not None:
+                problems.append('%d-page %s regional blank changed lock +$%03X at f%d' %
+                                (pages, plane, changed, at))
+                break
+    if regional_fallbacks:
+        problems.append('%d-page paging/sort reached fallback at %s' %
+                        (pages, ' '.join('f%d' % at for at in regional_fallbacks)))
+    if lcd_off:
+        problems.append('%d-page paging/sort disabled LCD at %s' %
+                        (pages, ' '.join('f%d' % at for at in lcd_off)))
+    if bad_states:
+        problems.append('%d-page paging/sort entered states %s' %
+                        (pages, ' '.join('f%d:$%02X' % event for event in bad_states)))
+    return {
+        'pages': pages,
+        'count': item_count,
+        'draws': row0_draws,
+        'begins': regional_begins,
+        'indicators': indicators,
+        'selectors': selectors,
+        'dispatches': dispatches,
+    }, problems
+
+
 def run(rom, ram=None, state=STATE, png_dir=None):
     profile = menuspill.renderer_profile(rom)
     if profile['mode'] != 'dot-proportional':
@@ -81,6 +267,14 @@ def run(rom, ram=None, state=STATE, png_dir=None):
                         % (menuvwf.FUSED_LAST + 1))
 
     PyBoy = _import_pyboy()
+    _region_code, region_labels = gbasm.assemble(
+        menuvwf.ITEM_REGION_SRC, menuvwf.ITEM_REGION_AT)
+    matrix = []
+    for item_count in PAGE_COUNT_CASES:
+        result, failures = page_count_case(
+            PyBoy, rom, state, item_count, profile, region_labels)
+        matrix.append(result)
+        problems += failures
     pb = PyBoy(rom, window='null')
     pb.set_emulation_speed(0)
     with open(state, 'rb') as source:
@@ -90,6 +284,10 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     events = {}
     snapshots = {}
     frame = [0]
+    regional_begins = []
+    regional_fallbacks = []
+    page_flip_lcd_off = []
+    settled_indicator = [None]
 
     def inject(_context=None):
         if injected[0]:
@@ -150,6 +348,10 @@ def run(rom, ram=None, state=STATE, png_dir=None):
 
     pb.hook_register(6, 0x4B29, inject, None)
     pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irshadow'],
+                     lambda _ctx=None: regional_begins.append(frame[0]), None)
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
+                     lambda _ctx=None: regional_fallbacks.append(frame[0]), None)
     schedule = {
         60: 'b', 120: 'a',                    # Main -> Items
         280: 'right',                         # counts 6-9
@@ -161,7 +363,10 @@ def run(rom, ram=None, state=STATE, png_dir=None):
         if button:
             pb.button(button, PRESS_FRAMES)
         pb.tick()
+        if 280 <= frame[0] < 360 and not pb.memory[0xFF40] & 0x80:
+            page_flip_lcd_off.append(frame[0])
         if frame[0] == 220:
+            settled_indicator[0] = bytes(pb.memory[0x986F:0x9873])
             snapshot('Items page 1', range(1, 6), ITEM_SHAPE, 2)
         elif frame[0] == 360:
             snapshot('Items page 2', range(6, 10), ITEM_SHAPE, 2)
@@ -170,6 +375,15 @@ def run(rom, ram=None, state=STATE, png_dir=None):
 
     if not injected[0]:
         problems.append('nine canonical equipment objects were not injected')
+    if len(regional_begins) != 1:
+        problems.append('two-page Items flip began %d regional transactions, expected 1'
+                        % len(regional_begins))
+    if regional_fallbacks:
+        problems.append('two-page Items flip reached LCD-off fallback at %s'
+                        % ' '.join('f%d' % at for at in regional_fallbacks))
+    if page_flip_lcd_off:
+        problems.append('two-page Items flip disabled LCD at %s'
+                        % ' '.join('f%d' % at for at in page_flip_lcd_off))
     for label, failures in snapshots.items():
         problems += ['%s: %s' % (label, failure) for failure in failures]
     if set(snapshots) != {'Items page 1', 'Items page 2', 'count-9 Info title'}:
@@ -181,8 +395,20 @@ def run(rom, ram=None, state=STATE, png_dir=None):
 
     fixture = ('Log-3 Manji+2 fixture; ' if fixture_checked else
                'Log-3 fixture not present; ')
+    indicator_text = ('missing' if settled_indicator[0] is None else
+                      settled_indicator[0].hex(' '))
+    matrix_text = ', '.join('%dp/%di=%d/%d sel=%s' %
+                            (case['pages'], case['count'], len(case['begins']),
+                             len(case['draws']),
+                             '/'.join('$%02X' % value for _at, value in
+                                      sorted(case['selectors'].items())))
+                            for case in matrix)
     print('fusioncountspill: %scanonical counts 1-9 across two Items pages; '
-          'count 9 Info; %d problem(s)' % (fixture, len(problems)))
+          'indicator %s; regional begins/fallbacks/lcd-off %d/%d/%d; '
+          'matrix %s; count 9 Info; %d problem(s)'
+          % (fixture, indicator_text, len(regional_begins),
+             len(regional_fallbacks), len(page_flip_lcd_off), matrix_text,
+             len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:

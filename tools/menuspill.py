@@ -29,9 +29,10 @@ derives allocation expectations from the installed ROM instead of hard-coding ei
 font's outcome.
 
 --ram boots Joey's floor-7 fixture, checks three real pages and the equipped `Remove`
-overlay plane-exact, and audits every page-change frame. A legal V4F transition is old
-text, an LCD-off interval (reported as `WWWWW`), then the complete new page; any old/new
-mixture while the LCD is on fails. ``itempagespill.py`` owns rendered-frame acceptance.
+overlay plane-exact, and audits every page-change frame. A legal regional transition is
+old rows, five blank name interiors, then completed rows from top to bottom while the LCD
+stays on; any old/new mixture or unowned row fails. ``itempagespill.py`` owns the exact
+transaction-state, locked-cell, and real multi-page acceptance checks.
 
 --help-seals forces the real box-7 item-information screen and all five groups of box-19
 equipment seals. It also injects one 16-tile row and one 21-character narrow row, checks
@@ -676,9 +677,8 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
             # so a short fixed tail would miss the actual settle point.
             if flip is page_build['value'] and not flip['settled']:
                 if not pb.memory[0xFF40] & 0x80:
-                    # V4F deliberately composes into VRAM while the LCD is white. The
-                    # changing bytes are not visible and therefore are not mixed-screen
-                    # ownership; itempagespill separately verifies the rendered frames.
+                    # Retain the legacy classification for unrelated/fallback routes;
+                    # a true regional Items flip is required to avoid it below.
                     states = 'W' * len(flip['old']['rows'])
                 else:
                     states = []

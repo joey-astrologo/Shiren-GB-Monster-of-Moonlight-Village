@@ -86,20 +86,22 @@ resets the hidden prior epoch;
 same-destination redraws reuse a cap or fall back if they grow.
 
 PAGE FLIPS. Fresh pixels uploaded into reused tiles used to show through the old map.
-At exact item row 0 the proportional path waits for VBlank and disables the LCD; the
-screen stays white while all five item rows and the following Items header are composed.
-The header completion publishes the full 20x18 shadow map and re-enables the LCD. A
-short final page pre-stages its empty row 4 before taking the same completion path. The
-visible text transition is therefore old -> white -> complete new page; the native
-cursor and page-arrow writers may follow, but no mixed old/new text can be exposed.
+Screen-1 paging and Start-sort now prove the already-visible variable-length page
+indicator, drain the queue, normalize the five marker-coupled left borders, and blank the
+five raw status cells plus five 16-cell name interiors during VBlank with the LCD on.
+Each incoming row drains its complete tile upload before publishing its left border,
+marker, and name references together. Short-page rows use the native exact 19-zero
+representation. Initial Items entry and every rejected/unknown context retain the whole-map
+LCD-off fallback. The visible sequence is old -> blank status/name rows -> complete new
+rows; the cursor, right borders, header, and unrelated map cells remain owned throughout.
 
 FLOOR ACTION / INFO. The same reused-tile exposure occurred on action -> Info, Info page
 1 -> 2, and Info -> action. Exact help row 0 now starts an LCD-off transaction; its last
 row pre-stages an empty interior, bottom border, arrow and page counter before publishing
 the complete map. A settled-Info marker survives the intermediate screen-0 redraw on the
 return route; screen 20's final action row pre-stages its bottom edge and publishes. The
-155-byte controller and 105-byte finalizer live before text in pool banks 39/40 and share
-the item helper's full-map publisher at bank 37 far index 7.
+controller and finalizer live before text in pool banks 39/40 and share the menu
+subsystem's full-map publisher at bank 60 far index 5.
 
 THE UPLOAD. Composition goes into the `$C006` queue payloads (the three 66-byte slots,
 a flat 12-tile space with 2-byte dest gaps) plus a 16-byte extension buffer for TILE 12
@@ -146,8 +148,10 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    15 records (`$C163-$C1AD`) and puts three watermarks, shape kind and
                    count at `$C1AE-$C1B2`; 15 exceeds the measured 13-row stacked peak
                    and prevents propvwf's ephemeral `$C0D7/$C0D8` from corrupting them.
-  * `$C1B3`        the synchronous transaction state: 1 is item-page pending; 2/3 are
-                   pending/settled Info; 4 is Info-return pending; `$10/$11/$12/$13/$14`
+  * `$C1B3`        the synchronous transaction state: 1 is regional item-page pending;
+                   2/3 are pending/settled Info; 4 is Info-return pending; 5 is a
+                   regional-to-whole-map fallback; 6 latches declined/initial Item entry;
+                   `$10/$11/$12/$13/$14`
                    are title/file, difficulty, proportional Rankings, Fay-screen and
                    native Rankings transactions. It is cleared after the corresponding
                    map publication. Proven free 2026-08-17 the same way as the runs
@@ -238,11 +242,20 @@ CONFIRM_BANK = 0x24
 CONFIRM_INDEX = 0x05
 CONFIRM_AT = 0x4060
 CONFIRM_LIMIT = 0x4100
-ITEM_PAGE_BANK = 0x25       # pool bank 37: reader ends $405A, text starts at $4100
-ITEM_PAGE_INDEX = 0x05
-ITEM_PAGE_AT = 0x405A
-ITEM_PAGE_LIMIT = 0x4100
-ITEM_PUBLISH_INDEX = 0x07
+# Bank 60's redirected-text base is deliberately raised to $4400 for this menu subsystem.
+# Far indices 5/7/9 and $405A-$43CF are disjoint from markers' index $0B and graphics tail.
+ITEM_PUBLISH_BANK = 0x3C
+ITEM_PUBLISH_INDEX = 0x05
+ITEM_PUBLISH_AT = 0x405A
+ITEM_PUBLISH_LIMIT = 0x4090
+ITEM_REGION_BANK = 0x3C
+ITEM_REGION_INDEX = 0x07
+ITEM_REGION_AT = 0x4090
+ITEM_REGION_LIMIT = 0x4300
+ITEM_PAGE_BANK = 0x3C
+ITEM_PAGE_INDEX = 0x09
+ITEM_PAGE_AT = 0x4300
+ITEM_PAGE_LIMIT = 0x4400
 FLOOR_INFO_BANK = 0x27      # pool banks 39/40: reader ends $405A, text starts at $4100
 FLOOR_INFO_INDEX = 0x05
 FLOOR_INFO_AT = 0x405A
@@ -1313,13 +1326,13 @@ summaryclear:
 """
 
 
-# V4F item-page transitions cannot publish 80 name cells atomically inside VBlank: the
-# copy spans visible scan time, and a short final page never reaches the proportional
-# row-4 publisher because its empty row correctly falls back to the native drawer.  Keep
-# the exact five-row item list dark from its row-0 entry until the complete 20x18 shadow
-# map is ready, then enable the LCD with one finished page.  Mode 2 pre-stages an empty
-# final row before the native fallback writes the same bytes, so short pages share the
-# same completion boundary.  This helper needs no glyph tables and lives in pool bank 37.
+# Bank 60 retains the safe whole-screen controller for Pot screens and for a regional
+# screen-1 attempt that has to fall back. Screen 1's LCD-on paging/Start-sort path is begun and
+# published by ITEM_REGION_SRC; state 1 plus screen 1 therefore means "regional", while
+# state 5 means that regional rendering encountered a fallback and the old atomic
+# whole-map publication must finish it; state 6 keeps initial/declined Items entry on
+# that same path. Mode 2 still supports the legacy short-page/Pot
+# completion boundary when no regional transaction owns the row.
 ITEM_PAGE_SRC = """
 itempage:
   and a
@@ -1328,6 +1341,16 @@ itempage:
   jr z,pagepublish
   jr pageempty
 pageblank:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  ld a,[$C6A3]
+  dec a
+  jr nz,pblegacy
+  ld a,[$C1B3]
+  cp $01
+  ret z
+pblegacy:
   ld a,[$C0D5]
   and a
   ret z
@@ -1344,10 +1367,26 @@ pbwait:
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
+  ld a,[$C1B3]
+  cp $06
+  ret z
   ld a,$01
   ld [$C1B3],a
   ret
 pageempty:
+  ld a,$02
+  rst $10
+  db $%02X,$%02X
+  ld a,[$C6A3]
+  dec a
+  jr nz,pelegacy
+  ld a,[$C1B3]
+  cp $01
+  jr nz,pelegacy
+  ld a,$01
+  ld [$C0E7],a
+  ret
+pelegacy:
   ld a,[$C1B1]
   cp $01
   ret nz
@@ -1370,9 +1409,28 @@ perow:
   jr nz,perow
   ld [hl],$BF
 pagepublish:
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
   ld a,[$C1B3]
   and a
   ret z
+  ld a,[$C6A3]
+  dec a
+  jr nz,pagelegacy
+  ld a,[$C1B3]
+  cp $01
+  jr nz,pagelegacy
+  ld a,[$C1B1]
+  cp $04
+  ret nz
+  ld a,[$C69D]
+  cp $04
+  ret nz
+  xor a
+  ld [$C1B3],a
+  ret
+pagelegacy:
   ld a,[$C1B1]
   cp $04
   ret nz
@@ -1405,6 +1463,350 @@ pebottom:
   ld [hl],$BB
 pagefinish:
   xor a
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (ITEM_REGION_INDEX, ITEM_REGION_BANK,
+         ITEM_REGION_INDEX, ITEM_REGION_BANK,
+         ITEM_REGION_INDEX, ITEM_REGION_BANK,
+         ITEM_PUBLISH_INDEX, ITEM_PUBLISH_BANK)
+
+
+# Screen 1's same-screen Left/Right and Start-sort transaction. Mode 0 runs after row 0
+# has composed but before any reused tile pixels upload. The native item count and its
+# already-visible exact page-marker/border shape prove this is a same-screen redraw rather
+# than initial entry. It then normalizes the five marker-coupled left-border cells and
+# blanks exactly the five raw status-marker cells plus the five 16-cell name interiors in
+# shadow WRAM and, during VBlank, in the visible BG map.
+# Mode 1 publishes one completed proportional row after its synchronous upload. Mode 2
+# pre-stages and publishes an empty native-fallback row. Mode 3 recognizes the native
+# fixed-width all-zero empty representation; any other fallback converts the live regional
+# attempt to the legacy LCD-off state before it can repaint through the blank rows.
+ITEM_REGION_SRC = """
+itemregion:
+  and a
+  jr z,irbegin
+  dec a
+  jp z,irrow
+  dec a
+  jp z,irempty
+  jp irfail
+irbegin:
+  ld a,[$C6A3]
+  dec a
+  ret nz
+  ld a,[$C1B3]
+  and a
+  ret nz
+  ld a,[$C1B1]
+  dec a
+  ret nz
+  ld a,[$C0D9]
+  cp $80
+  ret nz
+  ld a,[$C0DA]
+  cp $C3
+  ret nz
+  ld a,[$C0D5]
+  and a
+  jr nz,iready
+  ; Initial Items entry reaches row 0 once before the allocator epoch exists, then
+  ; revisits the row after the new page indicator has been drawn. Remember that first
+  ; observation so the second pass cannot be mistaken for a same-screen page flip.
+  ld a,$06
+  ld [$C1B3],a
+  ret
+iready:
+  ldh a,[$FF40]
+  bit 7,a
+  ret z
+  push bc
+  push de
+  push hl
+irwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irwait
+  ; Native 4:$4EB4 leaves all four cells as $BC for one page. For two..four
+  ; pages it normally writes $C5/$C6 over exactly that many cells at $986F; unused cells
+  ; remain $BC. Right wrap from the last page to page 1 is the one exception: selector
+  ; zero is committed before the marker writer and all four old markers are retired to
+  ; $BC. Admit that exact transient as well. Initial Items entry remains excluded by its
+  ; fresh-allocation latch above.
+  ld a,[$C6AA]
+  and a
+  jp z,irdecline
+  cp $15
+  jp nc,irdecline
+  ld b,$01
+  cp $06
+  jr c,ircounted
+  inc b
+  cp $0B
+  jr c,ircounted
+  inc b
+  cp $10
+  jr c,ircounted
+  inc b
+ircounted:
+  ld c,b
+  dec b
+  jr z,ironepage
+  inc b
+  ld hl,$986F
+  ld a,[hl]
+  cp $BC
+  jr nz,irnormalindicator
+  ld a,[$C6AC]
+  and a
+  jp nz,irdecline
+  ld b,$04
+  jr ironeborder
+irnormalindicator:
+  ld d,$00
+irindicator:
+  ld a,[hl+]
+  cp $C6
+  jr nz,irinactive
+  inc d
+  jr irindicatornext
+irinactive:
+  cp $C5
+  jp nz,irdecline
+irindicatornext:
+  dec b
+  jr nz,irindicator
+  ld a,d
+  cp $01
+  jp nz,irdecline
+  ld a,$04
+  sub c
+  ld b,a
+  jr z,irdrain
+irunused:
+  ld a,[hl+]
+  cp $BC
+  jp nz,irdecline
+  dec b
+  jr nz,irunused
+  jr irdrain
+ironepage:
+  ld hl,$986F
+  ld b,$04
+ironeborder:
+  ld a,[hl+]
+  cp $BC
+  jp nz,irdecline
+  dec b
+  jr nz,ironeborder
+irdrain:
+  ld a,[$C11A]
+  and a
+  jr z,irshadow
+  call $06F7
+  jr irdrain
+irshadow:
+  ld de,$002D
+  xor a
+  ld hl,$C380
+  call irclear
+irvisible:
+  di
+irblanksync:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,irblanksync
+irblankwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irblankwait
+  xor a
+  ld hl,$9880
+  call irclear
+irarmed:
+  ld a,$01
+  ld [$C1B3],a
+  ei
+  pop hl
+  pop de
+  pop bc
+  ret
+irdecline:
+  ld a,$06
+  ld [$C1B3],a
+  pop hl
+  pop de
+  pop bc
+  ret
+irclear:
+  ld b,$05
+irclearrow:
+  ld [hl],$BE
+  inc hl
+  xor a
+  ld [hl],a
+  inc hl
+  inc hl
+  ld c,$10
+irclearcell:
+  ld [hl+],a
+  dec c
+  jr nz,irclearcell
+  add hl,de
+  dec b
+  jr nz,irclearrow
+  ret
+irempty:
+  ld b,$01
+  jr ircheck
+irrow:
+  ld b,$00
+ircheck:
+  ld a,[$C1B3]
+  dec a
+  ret nz
+  ld a,[$C6A3]
+  dec a
+  ret nz
+  ld a,[$C1B1]
+  dec a
+  ret nz
+  ld a,d
+  cp $05
+  ret nc
+  push bc
+  push de
+  push hl
+  ld a,b
+  and a
+  jr z,irpublish
+  ld a,[$C0D9]
+  ld l,a
+  ld a,[$C0DA]
+  ld h,a
+  ld a,[$C0E0]
+  ld [hl+],a
+  ld a,[$C0E1]
+  ld [hl+],a
+  ld b,$11
+  xor a
+iremptycell:
+  ld [hl+],a
+  dec b
+  jr nz,iremptycell
+  ld [hl],$BF
+irpublish:
+irrowdrain:
+  ld a,[$C11A]
+  and a
+  jr z,irrowready
+  call $06F7
+  jr irrowdrain
+irrowready:
+  di
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,ircopy
+irpubsync:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,irpubsync
+irpubwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irpubwait
+ircopy:
+  ld a,[$C0D9]
+  ld l,a
+  ld e,a
+  ld a,[$C0DA]
+  ld h,a
+  sub $2B
+  ld d,a
+  ld c,$02
+ircopyraw:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,ircopyraw
+  inc hl
+  inc de
+  ld c,$10
+ircopycell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,ircopycell
+  ei
+  pop hl
+  pop de
+  pop bc
+  ret
+irfail:
+  ld a,[$C1B3]
+  dec a
+  ret nz
+  ld a,[$C6A3]
+  dec a
+  jr nz,irfaillcd
+  ld a,[$C1B1]
+  dec a
+  jr nz,irfaillcd
+  ld a,d
+  cp $05
+  jr nc,irfaillcd
+  ld a,[$C69D]
+  cp $12
+  jr nz,irfaillcd
+  ; Empty slots on a short Items page are 19 zero bytes with no $FF terminator.
+  ; Accept only that exact fixed-width native representation; every other scanner
+  ; fallback still takes the conservative whole-screen publication path below.
+  push bc
+  push hl
+  ld a,[$C0CC]
+  ld l,a
+  ld a,[$C0CD]
+  ld h,a
+  ld b,$13
+irzero:
+  ld a,[hl+]
+  and a
+  jr nz,irnotzero
+  dec b
+  jr nz,irzero
+irfixedempty:
+  pop hl
+  pop bc
+  ld a,$01
+  ld [$C0E7],a
+  ld b,$01
+  jp ircheck
+irnotzero:
+  pop hl
+  pop bc
+irfaillcd:
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,irfailed
+irfailwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irfailwait
+  ldh a,[$FF40]
+  res 7,a
+  ldh [$FF40],a
+irfailed:
+  ld a,$05
+  ld [$C1B3],a
+  ret
+"""
+
+
+# Shared atomic fallback. It stays separate so the screen-1 regional controller can grow
+# without taking this safety path away from Floor/Info, title/file, Rankings, Fay, or Pot.
+ITEM_PUBLISH_SRC = """
 publishmap:
   ld [$C1B3],a
   ld hl,$C300
@@ -1449,7 +1851,7 @@ ppdestok:
 # following screen-20 action row completes it.  State 1 remains the item-page transaction.
 #
 # The controller and finalizer occupy the standard pre-text helper slots in pool banks
-# 39/40.  The final full-map copy is shared with ITEM_PAGE_SRC through bank 37 index 7.
+# 39/40. The final full-map copy is the shared bank-60 publisher.
 FLOOR_INFO_SRC = """
 floorinfo:
   and a
@@ -1528,6 +1930,13 @@ fifinish:
   db $%02X,$%02X
   ret
 fiempty:
+  ld a,[$C0E7]
+  and a
+  jr nz,fiemptyknown
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+fiemptyknown:
   ld a,[$C1B1]
   cp $03
   ret nz
@@ -1548,7 +1957,8 @@ fihelpcheck:
   ld a,[$C0DA]
   cp $C4
   ret
-""" % (FLOOR_INFO_FINISH_INDEX, FLOOR_INFO_FINISH_BANK)
+""" % (FLOOR_INFO_FINISH_INDEX, FLOOR_INFO_FINISH_BANK,
+         ITEM_REGION_INDEX, ITEM_REGION_BANK)
 
 
 FLOOR_INFO_FINISH_SRC = """
@@ -1655,7 +2065,7 @@ fipublish:
   rst $10
   db $%02X,$%02X
   ret
-""" % (ITEM_PUBLISH_INDEX, ITEM_PAGE_BANK)
+""" % (ITEM_PUBLISH_INDEX, ITEM_PUBLISH_BANK)
 
 
 # Title/file screens are composites, not independent boxes: the parent title remains
@@ -1663,7 +2073,7 @@ fipublish:
 # lifetimes therefore have to be changed atomically.  Mode 0 starts an exact allowlisted
 # multi-row transaction (or the Rankings transaction) before row 0 changes any pixels.
 # The finalizer below pre-stages the native bottom border and publishes the complete
-# 20x18 shadow map.  States $10-$13 stay disjoint from V4F's item/Floor states 1-4.
+# 20x18 shadow map.  States $10-$13 stay disjoint from V4F's item/Floor states $01-$06.
 START_TRANSITION_SRC = """
 starttransition:
   push af
@@ -1874,7 +2284,7 @@ rankrestorehook:
   rst $10
   db $%02X,$%02X
   ret
-""" % (ITEM_PUBLISH_INDEX, ITEM_PAGE_BANK, RESET_INDEX, FAR_BANK)
+""" % (ITEM_PUBLISH_INDEX, ITEM_PUBLISH_BANK, RESET_INDEX, FAR_BANK)
 
 
 def rom_reader():
@@ -3848,11 +4258,8 @@ composenext:
     assert old in src
     src = src.replace(old, new, 1)
 
-    # V4F makes the exact item-page transition an auxiliary-bank transaction. Row 0
-    # disables the LCD at VBlank before any reused tile changes; the following Items
-    # header publishes the complete visible shadow map and enables it. Calling the helper
-    # unconditionally is safe: it checks the item-mode/key/reset tuple, so Floor and
-    # non-page rows return.
+    # The item-page controller begins an exact screen-1 regional transaction before any
+    # reused tile upload, while retaining the legacy Pot and LCD-off entry paths.
     old = """upload:
   ldh a,[$FF40]
 """
@@ -3895,10 +4302,9 @@ composenext:
     assert old in src
     src = src.replace(old, new, 1)
 
-    # Empty trailing rows take the native fallback, but a short page still needs the
-    # same row-4 completion boundary.  Mode 2 writes that one blank shadow row exactly as
-    # the fallback is about to, publishes the full page, then lets native source-pointer
-    # advancement proceed unchanged.
+    # Empty trailing rows take the native fallback. The controller marks an intentional
+    # regional screen-1 empty row in per-row scratch; Floor/Info's generic fallback hook
+    # then leaves that transaction alone. Pot/Info rows retain their established path.
     old = """scanend:
   ld a,e
   and a
@@ -4457,7 +4863,7 @@ def install(buf, notes=None, font=None):
         item_header = _box_geometry(buf, 14)
         if item_header != (0, 0, 1, 4, 0):
             raise SystemExit('menuvwf: item header box 14 geometry %s no longer matches '
-                             'the V4F full-map publish boundary' % (item_header,))
+                             'the V4F item transition boundary' % (item_header,))
         debug_menu = _box_geometry(buf, DEBUG_MENU_BOX)
         if debug_menu != DEBUG_MENU_SHAPE:
             raise SystemExit('menuvwf: hidden debug item box %d geometry %s no longer '
@@ -4918,6 +5324,8 @@ def install(buf, notes=None, font=None):
         # inside that range: a stale read published the menu shadow map over the field
         # and cancelled the native LCD-off interval.  See the SCRATCH map above.
         for name, blob in (('ITEM_PAGE_SRC', ITEM_PAGE_SRC),
+                           ('ITEM_REGION_SRC', ITEM_REGION_SRC),
+                           ('ITEM_PUBLISH_SRC', ITEM_PUBLISH_SRC),
                            ('FLOOR_INFO_SRC', FLOOR_INFO_SRC),
                            ('FLOOR_INFO_FINISH_SRC', FLOOR_INFO_FINISH_SRC),
                            ('START_TRANSITION_SRC', START_TRANSITION_SRC),
@@ -4926,31 +5334,41 @@ def install(buf, notes=None, font=None):
                 raise SystemExit('menuvwf: %s references propvwf scratch $C0D7/$C0D8; '
                                  'the transaction state lives at $C1B3' % name)
 
-        item_page_code, item_page_labels = gbasm.assemble(ITEM_PAGE_SRC, ITEM_PAGE_AT)
-        if ITEM_PAGE_AT + len(item_page_code) > ITEM_PAGE_LIMIT:
-            raise SystemExit('menuvwf: item-page helper needs %d bytes, only %d available'
-                             % (len(item_page_code), ITEM_PAGE_LIMIT - ITEM_PAGE_AT))
-        if buf[_off(ITEM_PAGE_BANK, 0x4000)] != ITEM_PAGE_BANK:
-            raise SystemExit('menuvwf: bank %d pool code is not installed'
-                             % ITEM_PAGE_BANK)
-        item_page_at = _off(ITEM_PAGE_BANK, ITEM_PAGE_AT)
-        if any(b != 0xFF for b in
-               buf[item_page_at:item_page_at + len(item_page_code)]):
-            raise SystemExit('menuvwf: bank %d item-page region at $%04X is not free'
-                             % (ITEM_PAGE_BANK, ITEM_PAGE_AT))
-        item_page_ix = _off(ITEM_PAGE_BANK, 0x4000) + ITEM_PAGE_INDEX - 1
-        if bytes(buf[item_page_ix:item_page_ix + 2]) != b'\xff\xff':
-            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
-                             % (ITEM_PAGE_INDEX, ITEM_PAGE_BANK))
-        item_publish_ix = _off(ITEM_PAGE_BANK, 0x4000) + ITEM_PUBLISH_INDEX - 1
-        if bytes(buf[item_publish_ix:item_publish_ix + 2]) != b'\xff\xff':
-            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
-                             % (ITEM_PUBLISH_INDEX, ITEM_PAGE_BANK))
-        buf[item_page_at:item_page_at + len(item_page_code)] = item_page_code
-        buf[item_page_ix] = item_page_labels['itempage'] & 0xFF
-        buf[item_page_ix + 1] = item_page_labels['itempage'] >> 8
-        buf[item_publish_ix] = item_page_labels['publishmap'] & 0xFF
-        buf[item_publish_ix + 1] = item_page_labels['publishmap'] >> 8
+        item_publish_code, item_publish_labels = gbasm.assemble(
+            ITEM_PUBLISH_SRC, ITEM_PUBLISH_AT)
+        item_region_code, item_region_labels = gbasm.assemble(
+            ITEM_REGION_SRC, ITEM_REGION_AT)
+        item_page_code, item_page_labels = gbasm.assemble(
+            ITEM_PAGE_SRC, ITEM_PAGE_AT)
+        item_helpers = (
+            ('publisher', ITEM_PUBLISH_BANK, ITEM_PUBLISH_INDEX, ITEM_PUBLISH_AT,
+             ITEM_PUBLISH_LIMIT, item_publish_code, item_publish_labels['publishmap']),
+            ('regional controller', ITEM_REGION_BANK, ITEM_REGION_INDEX, ITEM_REGION_AT,
+             ITEM_REGION_LIMIT, item_region_code, item_region_labels['itemregion']),
+            ('fallback controller', ITEM_PAGE_BANK, ITEM_PAGE_INDEX, ITEM_PAGE_AT,
+             ITEM_PAGE_LIMIT, item_page_code, item_page_labels['itempage']),
+        )
+        for (helper_name, helper_bank, helper_index, helper_at, helper_limit,
+             helper_code, helper_entry) in item_helpers:
+            if helper_at + len(helper_code) > helper_limit:
+                raise SystemExit('menuvwf: item-page %s needs %d bytes, only %d available'
+                                 % (helper_name, len(helper_code),
+                                    helper_limit - helper_at))
+            if buf[_off(helper_bank, 0x4000)] != helper_bank:
+                raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                                 helper_bank)
+            helper_off = _off(helper_bank, helper_at)
+            if any(b != 0xFF for b in
+                   buf[helper_off:helper_off + len(helper_code)]):
+                raise SystemExit('menuvwf: bank %d item-page %s at $%04X is not free'
+                                 % (helper_bank, helper_name, helper_at))
+            helper_ix = _off(helper_bank, 0x4000) + helper_index - 1
+            if bytes(buf[helper_ix:helper_ix + 2]) != b'\xff\xff':
+                raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                                 % (helper_index, helper_bank))
+            buf[helper_off:helper_off + len(helper_code)] = helper_code
+            buf[helper_ix] = helper_entry & 0xFF
+            buf[helper_ix + 1] = helper_entry >> 8
 
         floor_info_code, floor_info_labels = gbasm.assemble(
             FLOOR_INFO_SRC, FLOOR_INFO_AT)
@@ -5337,10 +5755,12 @@ def install(buf, notes=None, font=None):
             notes.append('menuvwf: generated Pass selector terminates each English Log '
                          'row independently; two- and three-log forms stay inside the '
                          'title transaction')
-            notes.append('menuvwf: %d-byte item-page transaction helper at '
-                         '%d:$%04X; item text transitions are old -> white -> '
-                         'complete shadow map'
-                         % (len(item_page_code), ITEM_PAGE_BANK, ITEM_PAGE_AT))
+            notes.append('menuvwf: %d+%d+%d-byte item-page regional/fallback/publisher '
+                         'helpers in bank %d; screen-1 paging/Start-sort is old -> normal '
+                         'left borders + blank status/name cells -> '
+                         'complete rows with LCD on'
+                         % (len(item_region_code), len(item_page_code),
+                            len(item_publish_code), ITEM_REGION_BANK))
             notes.append('menuvwf: %d+%d-byte Floor/Info transaction at '
                          '%d:$%04X + %d:$%04X; action/page transitions publish one '
                          'complete shadow map'

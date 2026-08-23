@@ -723,7 +723,7 @@ rdslot2:
   ret
 """ % (AUX_INDEX, AUX_BANK,
          MANAGER_INDEX, MANAGER_BANK,
-         menuvwf.ITEM_PUBLISH_INDEX, menuvwf.ITEM_PAGE_BANK,
+         menuvwf.ITEM_PUBLISH_INDEX, menuvwf.ITEM_PUBLISH_BANK,
          MANAGER_INDEX, MANAGER_BANK)
 
 

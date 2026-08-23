@@ -2,9 +2,10 @@
 
 ## Regional blanking for proportional Item pages
 
-**Status:** Deferred design. This is not implemented and should be revisited with a fresh
-usage budget. Treat Item-menu Left/Right paging as the first prototype; do not expand it
-to every menu transition until that prototype is visually approved and regression-tested.
+**Status:** Checkpoint 1 remains in progress. Manual review accepted paging, sorting, the
+full-redraw regional blank, and the corrected equipped-marker lifetime. A rare right-wrap
+full-screen fallback was traced to the native sentinel phase and corrected narrowly; that
+last correction awaits visual review. Checkpoints 2-6 remain deferred.
 
 ### Motivation
 
@@ -26,12 +27,13 @@ DMG/SGB menu context, and adjacent menus temporarily own several of them.
 Regional blanking accepts a short-lived empty Item region in exchange for eliminating
 both the full white screen and unsafe tile reuse.
 
-### Proposed transition
+### Implemented checkpoint-1 transition
 
 1. Drain any pending VWF upload or map-publication job.
-2. During one VBlank, replace only the five Item-name interiors with blank tilemap cells.
-   Keep the LCD enabled and preserve the title, box borders, status panel, and other
-   unaffected screen regions.
+2. During one VBlank, normalize the five marker-coupled left-border cells to `$BE`, then
+   replace the five raw status-marker cells and five Item-name interiors with blank
+   tilemap cells. Keep the LCD enabled and preserve the title, right borders, status
+   panel, and other unaffected screen regions.
 3. Once that blank map is visible, release the old page's dynamic tile slots. They are
    now safe to reuse because no visible cell refers to them.
 4. Render the incoming rows through the existing VBlank upload queue. Do not busy-wait
@@ -47,10 +49,54 @@ The expected visual sequence is therefore:
 
 ```text
 complete old page
-empty Item-name rows, with the surrounding menu still visible
+empty Item status/name rows, with the surrounding menu still visible
 one or more complete new rows
 complete new page
 ```
+
+### Checkpoint-1 implementation record
+
+The implementation is deliberately narrower than the general proposal:
+
+- Bank 60 far index `$07` owns the regional controller at `$4090-$425E`; far index `$09`
+  owns the fallback controller at `$4300-$43CF`; far index `$05` retains the shared full
+  20x18 publisher at `$405A-$4084`. Redirected text begins at `$4400` in this bank.
+- The regional begin gate requires screen 1, proportional Item mode, row key `$C380`, an
+  active allocator epoch and LCDC bit 7. It derives one through four pages from native
+  item count `$C6AA` and validates the exact settled `4:$4EB4` shape: one page has four
+  `$BC` border cells; two through four have one `$C6`, the remaining live `$C5` cells,
+  then `$BC`. Right wrap has one additional exact transient: selector zero is committed
+  while all four old markers are retired to `$BC`. Initial entry is rejected by its
+  fresh-allocation latch.
+- The controller writes `$BE` to each marker-coupled left border (`key+0`) and zero to
+  each raw marker cell (`key+1`) and name interior (`key+3..key+18`), then applies the
+  same 90-cell regional state to BG. The 85 marker/name cells are blank; every other cell
+  remains outside this initial write set.
+- A completed row drains `$C11A` before publishing its left border, marker cell, and 16
+  name cells together. This is required because equipped `$84/$86` markers select the
+  paired `$83/$85` border; publishing only the marker leaves a visible vertical remnant.
+  The controller masks interrupts only across the VBlank rendezvous and map copy so the
+  native VBlank handler cannot consume the safe write window, then immediately restores
+  them. Cursor and right-border cells are not copied by the regional publisher. A short
+  page's native empty slot is accepted only when its exact 19-byte source field is all zero.
+- Any unknown nonempty fallback changes state to `$05`, disables the LCD during VBlank,
+  and completes through the retained whole-map publisher. Initial/declined entry is
+  latched as `$06` and also stays on that safe path.
+
+`tools/itempagespill.py` drives four unique pages, seven real direction presses, and one
+Start-sort redraw. The last-page right wrap deliberately exercises its two native stages:
+the first input selects the one-row `$FF` sentinel and the second selects page 1. It
+checks the exact blanking boundaries, both tile bitplanes, all locked BG cells, structural
+tiles, atomic border/marker/name lifetime, transaction states, cursor/page indicator, the
+short-page zero rows, and that all eight scoped redraws keep LCDC bit 7 enabled. The
+sentinel transaction and the page-1 transaction both remain regional while the wrap
+temporarily retires all four page markers to `$BC`.
+`tools/fusioncountspill.py`
+adds 1/6/11/16-item cases, cycles both directions through every page and wrap boundary,
+then invokes Start-sort. It proves all 3/5/7/9 redraws enter regional mode without
+fallback or LCD-off frames.
+`tools/menuspill.py --ram` independently observes the top-to-bottom `old -> blank -> new`
+row sequence and keeps allocator records plane-exact.
 
 An optional refinement can blank and replace one row at a time. That would retain more
 of the outgoing page during the redraw, but it requires a proven spare 11-tile row slice
@@ -61,8 +107,9 @@ and stricter per-row ownership. Start with the simpler five-row regional clear.
 Stop after every checkpoint for manual review. Do not combine these stages into one large
 rewrite.
 
-1. **Left/Right prototype:** full and short Item pages, repeated movement in both
-   directions, correct page indicator, cursor, and borders.
+1. **Screen-1 redraw checkpoint — paging/sort accepted; atomic marker pair awaiting
+   review:** full and short Item pages, repeated movement in both directions, Start-sort,
+   correct page indicator, cursor, and borders.
 2. **Item entry and exit:** status menu to Items, Items back to status, and re-entry after
    paging beyond page 1.
 3. **Action menu lifecycle:** open the action picker from every page, move its cursor,
@@ -91,8 +138,8 @@ only a settled endpoint.
   exact on every frame.
 - No tile-data slot is repainted while any BG or Window cell still visibly references it.
 - All queued uploads complete byte-exactly before their map references become visible.
-- Tests include a full inventory, a short final page, two-page inventories, repeated
-  Left/Right movement, and entry/exit from page 2 or later.
+- Tests include one-, two-, three-, and four-page inventories, short final pages, repeated
+  Left/Right movement through every boundary and wraparound, and entry/exit from page 2 or later.
 - Tests include Action and Info transitions from page 2 or later, because settled page-1
   fixtures do not prove allocator lifetime safety.
 - Tests continue past the first settled frame to catch delayed native publications,
