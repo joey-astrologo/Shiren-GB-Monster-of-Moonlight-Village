@@ -207,10 +207,15 @@ pixels and temporary storage first.
    paging/Start-sort checkpoint changed redraws to `old -> blank status/name cells ->
    complete rows` with the LCD on. Manual review rejected the first four-page-only gate
    and then exposed delayed equipped-marker remnants. Paging, sorting, and the regional
-   blank are visually accepted; the corrected one-to-four-page matrix now treats
-   `$83/$84` and `$85/$86` border/marker pairs atomically and awaits marker review.
-   Initial entry, Action/Info, Gitan, Pot, and rejected contexts retain the approved
-   whole-map fallback. Box 14 still composes the complete `Items` word.
+   blank are visually accepted; the committed one-to-four-page matrix treats `$83/$84`
+   and `$85/$86` border/marker pairs atomically. The checkpoint-2 Items-to-Status half
+   now leaves independently from pages 1-4 with zero LCD-off/white frames and lets the
+   native Status publisher progressively replace the intact outgoing page. Direct
+   Status-to-Items entry/re-entry now retires visible BG rows 0-15 in four VBlanks while
+   retaining the bottom Window, then commits empty box-14/box-4 perimeters before any
+   Item row becomes visible; all four outgoing-page re-entry cycles and their next page
+   change are regression-covered. Action/Info, Gitan, Pot, and rejected contexts retain
+   the approved whole-map fallback. Box 14 still composes the complete `Items` word.
 7. **V5 — graphics — COMPLETE:** **V5A COMPLETE** pre-intro title/copyright card; **V5B COMPLETE**
    illustrated title screen; **V5C COMPLETE** 12px-cap Poppins dungeon/town banners
    (Moonlight Village and Forest 1 reference-exact; all 50 live floors regressed);

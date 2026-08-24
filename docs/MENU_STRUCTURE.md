@@ -1,11 +1,13 @@
 # Menu systems and regional-blanking ownership
 
-**Status:** Engineering map plus revised screen-1 redraw checkpoint, measured 2026-08-23.
-The dispatcher, box catalogue, memory map, and fixture-backed routes below are established.
-Routes marked `outline` or `inferred` still need a real button-driven trace before later
-regional work depends on them. Manual review accepted paging, sorting, and the full-redraw
-regional blank, then exposed the marker-coupled border remnant. Checkpoint 1 remains in
-progress until the corrected atomic marker pair is reviewed.
+**Status:** Engineering map plus checkpoint-1 screen redraw and both checkpoint-2
+Item entry/exit directions, measured 2026-08-23. The dispatcher, box catalogue, memory map,
+and fixture-backed routes below are established. Routes marked `outline` or `inferred`
+still need a real button-driven trace before later regional work depends on them.
+Checkpoint 1 (paging and Start-sort) is committed and visually accepted. Leaving any of
+pages 1-4 keeps the outgoing page live until Status replaces it. Direct Status-to-Items
+entry/re-entry now blanks only BG rows 0-15 and preserves the bottom Window; the entry
+half commits empty box chrome before item text and awaits revised visual review.
 
 This document answers two separate questions:
 
@@ -382,7 +384,7 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | Value | Current meaning |
 |---:|---|
 | `$00` | no translation-owned synchronous menu transaction |
-| `$01` | screen-1 regional Item-page rebuild pending; also retained by legacy Pot handling |
+| `$01` | screen-1 regional Item-page rebuild or direct Status-to-Items entry pending; also retained by legacy Pot handling |
 | `$02` | Info construction/publication pending |
 | `$03` | settled Info marker used to begin its return transaction |
 | `$04` | Info-to-Action return pending |
@@ -394,19 +396,20 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | `$13` | Fay composite transaction |
 | `$14` | native Rankings transaction |
 
-Screen-1 Left/Right and Start-sort redraws use the regional transaction below. Initial
-Items entry, Pot pages,
-unexpected nonempty Item fallback, and Floor/Info still disable LCDC bit 7 before pixels
-are reused, build the replacement in `$C300`, publish all visible 20x18 cells, then
-re-enable the LCD. That retained path is the safe fallback. Regional publication changes
-scope and ownership timing, not the text renderer itself.
+Screen-1 Left/Right and Start-sort redraws use the narrow regional transaction below.
+Exact direct Status-to-Items entry and Items-to-Status pops use the two broader directions
+described afterward. Pot pages, unexpected nonempty Item fallback, Floor/Info, and unknown
+LCD-on Status reconstructions still disable LCDC bit 7 before pixels are reused, build the
+replacement in `$C300`, publish all visible 20x18 cells, then re-enable the LCD. That
+retained path is the safe fallback. Regional publication changes scope and ownership
+timing, not the text renderer itself.
 
 ## Item paging and Start-sort regional checkpoint
 
-This is the revised first-checkpoint implementation and the only regionalized route. It
+This is the narrow first-checkpoint implementation. It
 covers same-screen page replacement and the Start-button sort redraw within screen 1: the
-Items header, box borders, disabled Window state, and surrounding cells stay live. Action,
-Info, entry/exit, and adjacent special routes do not inherit this policy.
+Items header, box borders, enabled bottom Window, and surrounding cells stay live. Action,
+Info, entry/exit, and adjacent special routes do not inherit this five-row mask.
 
 ### Exact candidate mask
 
@@ -462,11 +465,18 @@ cannot be returned to the allocator even if its original VWF row record is being
    bit 7. It derives one through four pages from native item count `$C6AA`, matching
    `4:$4EB4`: one page leaves `$986F-$9872` as `$BC BC BC BC`; two through four pages
    contain exactly one active `$C6`, inactive `$C5` cells through the live span, and
-   `$BC` in unused cells. The exact right-wrap transient also admits selector zero with
+   `$BC` in unused cells. The controller first drains `$C11A`, rendezvouses with VBlank
+   again, and only then reads this visible marker. This ordering is
+   load-bearing: validating first could sample a partially published marker, while
+   reading immediately after a long drain could hit blocked mode-3 VRAM; either case can
+   misroute a valid page change to the LCD-off fallback. These are phase-sensitive
+   candidates consistent with the rare playtest report; the trigger itself has not been
+   captured deterministically. The
+   exact right-wrap transient also admits selector zero with
    all four cells `$BC`, after the native writer retires the old markers but before it
-   draws page 1. This check occurs before queue drain. Initial entry is excluded by the
-   fresh-allocation observation latched as state `$06`.
-2. After the predecessor proof, the controller drains selector `$C11A`. It writes `$BE`
+   draws page 1. Initial entry is owned by the separate screen-1 pre-clear gate below;
+   unknown/declined entry remains latched as state `$06`.
+2. After the predecessor proof, the controller writes `$BE`
    to the five marker-coupled left borders and clears exactly the five status-marker cells
    and five 16-cell name interiors in shadow, then applies the same regional state to
    visible BG during VBlank. Interrupts are masked only across the VBlank rendezvous/copy
@@ -519,8 +529,8 @@ regress from new to blank or old.
 `tools/itempagespill.py` exercises eight complete five-row draws plus the native one-row
 right-wrap sentinel over four unique pages. Its seven direction presses cross the equipped
 page-1 boundary both ways, then drive both physical stages of last-page-to-page-1 wrap;
-Start-sort supplies the final redraw. The initial draw records six LCD-off frames; every
-scoped Left/Right or Start-sort transaction records zero. For each redraw it hooks the controller
+Start-sort supplies the final redraw. Direct initial entry now records zero LCD-off frames;
+every scoped Left/Right or Start-sort transaction also records zero. For each redraw it hooks the controller
 immediately before shadow blanking,
 after shadow blanking, and after BG blanking, proving that all 85 marker/name targets are
 zero, all five left borders are `$BE`, and the complement is unchanged. Every sampled
@@ -532,6 +542,8 @@ same commit as its incoming row, while locking unrelated visible BG cells and st
 tiles `$81`, `$83-$85`, `$B8-$BF`, and `$C5/$C6`, and rejects state `$05/$06` on a
 scoped flip. The wrap sentinel additionally proves that selector `$FF`, followed by the
 selector-zero/all-`$BC` page-1 transient, begins two regional transactions with no fallback.
+The second build invocation uses a 20-frame cadence and a non-sentinel four-page cycle;
+all seven redraws remain regional with no fallback or LCD-off frame.
 
 `tools/fusioncountspill.py` synthesizes the shortest one-, two-, three-, and four-page
 inventories (1/6/11/16 items). It cycles Right through every page and wrap boundary, then
@@ -544,8 +556,123 @@ The real trace settles in top-to-bottom order. `tools/menuspill.py --ram` indepe
 reports `OOOOO -> BBBBB -> NBBBB -> ... -> NNNNN` and retains plane-exact allocator
 ownership. The Start-sort capture likewise exposes the accepted complete five-row regional
 blank and progressive return while the screen chrome remains visible. Automated correction
-coverage also forbids the observed `$83,$00`/`$85,$00` vertical remnants. Checkpoint 1
-remains open only for visual review of the rare right-wrap fallback correction.
+coverage also forbids the observed `$83,$00`/`$85,$00` vertical remnants. Checkpoint 1 is
+the committed and visually accepted paging/Start-sort POC.
+
+## Status-to-Items regional entry (checkpoint 2, entry direction)
+
+Status and Items share the persistent hardware Window but replace essentially the whole
+BG above it. A five-row Item mask is therefore insufficient on entry: Status VWF references
+also survive in the header, menu choices, and value fields. The safe entry region is all
+20 visible BG columns in rows 0-15. Rows 16-17 are covered by the Window at `WY=$80` and
+remain locked together with the complete Window map and all planes it references.
+
+The sibling `mgbdis` disassembly identifies the earliest safe screen-1 boundary:
+
+```text
+4:$494E  push af / push bc / push hl
+4:$4951  ld hl,$C300
+4:$4954  call $480E          ; clear 20x18 shadow cells, skipping stride tails
+4:$4957  ld hl,$C549         ; item count/selector preparation follows
+```
+
+`statusvwf` replaces the six bytes at `$4951-$4956` with bank 53 far index `$09`. The
+helper preserves the native shadow-clear result exactly and admits a live entry only with
+this complete predecessor proof:
+
+| State | Required value | Meaning |
+|---|---:|---|
+| `$C534` | `$01` | stack contains Status root plus the new Items child |
+| `$C535/$C536` | `$00,$01` | exact root/Items screen IDs |
+| `$C6A3/$C6A6` | `$01,$00` | direct screen-1 draw, not replay |
+| `$C1B3` | `$00` | no other translation transaction owns the screen |
+| `$C6AA` | `$01-$14` | one through twenty real items |
+| `$C6AC` | less than `$C6AA` | valid retained selector before native reset |
+| `LCDC & $F8` | `$E0` | LCD and Window enabled with signed BG tiles |
+| `SCY/SCX` | `$00,$00` | ordinary menu viewport |
+| `WY/WX` | `$80,$07` | persistent bottom Window |
+| BG `$986F-$9872` | four `$00` cells after queue drain | exact Status predecessor, not a same-stack Item-page redraw |
+
+The helper first drains `$C11A` and reacquires VBlank before reading the four predecessor
+cells. It then clears four 20-cell BG rows per complete VBlank,
+for four batches covering visible columns 0-19 in BG rows 0-15. Row tails, hidden BG rows
+16-17, the `$9C00` Window map, and every tile plane stay byte-exact. Interrupts are masked
+only while a batch is copied and are restored between VBlanks; all four measured batches
+finish at LY `$94`.
+
+The native order after this boundary is box 4's five Item rows, then box 14's `Items`
+header, and only then `$4620` full-map publication. Publishing completed rows immediately
+therefore produced the visually inverted sequence `text -> boxes`. At the end of the
+fourth entry VBlank, the helper now commits the static box-14 header perimeter and complete
+box-4 list perimeter while leaving both text interiors blank. The chrome commit finishes
+inside VBlank and changes no tile plane. Item rows then appear progressively inside the
+established list box; the native final publisher adds `Items`, the page indicator, and the
+exact completed map. The visible order is now `regional clear -> empty boxes -> complete
+text rows -> final decoration`, never text floating on an unframed field.
+
+After retirement and chrome publication, state `$01` authorizes the existing completed
+Item-row publisher. The helper performs the native 20x18 stride-aware shadow clear, each
+Item row appears only after its VWF upload completes, and native `$4620` remains the final
+map authority. Unknown callers receive only the original shadow clear and later fall
+through to the conservative path.
+
+`tools/itementryspill.py` independently starts from pages 1, 2, 3, and 4, exits to Status,
+reopens Items, and immediately pages right. Each run requires one accepted entry, four
+LY-`$94` blank batches, an exact chrome-first BG map completed inside VBlank before the
+first Item-row call, an unchanged Window and tile planes, zero LCD-off/all-white frames,
+and exactly one following five-row regional transaction with zero fallback. This covers
+re-entry after every prior page-selector lifetime, not only the first opening.
+
+## Items-to-Status live exit (checkpoint 2, exit direction)
+
+The exit requirement is explicit: pressing B on page 1, 2, 3, or 4 must not blank the
+screen. This route does not need an Item-region blank. The outgoing page owns the display
+until the native Status publisher progressively replaces its cells with completed Status
+content.
+
+The native B handler at `4:$5689` reaches the generic pop call at `4:$568C`, reconstructs
+screen 0, and invokes the Status field boundary at `4:$4FDD`. At that boundary the exact
+direct predecessor is:
+
+| State | Required value | Meaning |
+|---|---:|---|
+| `$C534` | `$00` | stack depth after the Items child was popped |
+| `$C535/$C536` | `$00,$01` | surviving Status root plus stale popped Items entry |
+| `$C6A3` | `$00` | Status is the screen currently being reconstructed |
+| `$C6AA` | `$01-$14` | one through twenty items, hence at most four pages |
+| `$C6AC` | less than `$C6AA` | a real selected item on any page, not a sentinel |
+| `LCDC & $F8` | `$E0` | LCD on, signed BG tiles, Window configuration intact |
+| `SCY/SCX` | `$00,$00` | ordinary menu viewport |
+| `WY/WX` | `$80,$07` | persistent two-row status Window at the bottom |
+
+Only that complete predicate selects the live exit. Any unknown LCD-on Status return uses
+the retained LCD-off fallback. In particular, Name-to-Items stack reconstruction is not
+silently admitted; after it settles, a later direct Items B pop can qualify normally.
+
+The outgoing visible BG and Window reference none of the 40 private Status field IDs or
+the eight structured Weapon/Shield IDs. Those 48 tile planes may therefore be restored
+without changing a displayed Item pixel. `statusvwf` composes nine fields—Strength,
+Experience, and seven values—then uploads each completed slice in its own VBlank. The
+largest slice is seven tiles/112 physical bytes. Every copy starts at LY `$90`; observed
+completion is LY `$92-$97`, inside the ten-line VBlank. Weapon and Shield retain their
+source-stable four-tile fragments and need only their map references restored.
+
+The VBlank rendezvous deliberately rejects a late VBlank tail. A real page-2 phase showed
+that a native interrupt can begin just before `DI` and return at LY `$97`; treating that
+as a fresh budget pushed the first upload through line 3. The controller now masks at the
+end of visible scanout, rechecks LY, waits through the next visible frame if it arrived
+late, and establishes BC/DE/HL only after interrupts are masked. Thus an interrupt cannot
+corrupt either the byte count or VRAM destination.
+
+`tools/itemexitspill.py` boots the real 18-item save four times and independently leaves
+selectors 0, 5, 10, and 15. For every page it requires the exact stack/hardware predicate,
+nine cap-ordered uploads `(6,7,5,2,4,4,4,4,4)`, starts at LY `$90`, completion no later
+than LY `$99`, zero LCD-off frames, and zero all-white frames. At every sampled frame each
+visible BG cell resolves to either its outgoing Item raster or final Status raster and
+never regresses; the enabled Window map and all of its referenced planes remain exact.
+All four routes settle to the same visible Status raster. The unidentified-item Name
+fixture separately proves one conservative Name reconstruction followed by one live
+direct Items exit.
 
 ## What is not safe to regionalize yet
 
@@ -562,15 +689,18 @@ remains open only for visual review of the rare right-wrap fallback correction.
 
 ## Remaining exploration and implementation worklist
 
-1. Stop for visual review after paging and Start-sort. Only then evaluate Items entry,
-   exit, and re-entry as checkpoint 2; map Action/Info intersection regions in checkpoint 3.
-2. Add direct Window-map reference-set auditing before a future route keeps the hardware
-   Window enabled; checkpoint 1 proves the Window-enable bit remains disabled and stable.
+1. Stop for visual review of the revised Status-to-Items sequence: regional clear, empty
+   boxes, then completed text rows. The automated ownership/order proof is complete, but
+   its full-redraw appearance is a product decision.
+2. Extend the direct Window reference-set audits used by `itemexitspill.py` and
+   `itementryspill.py` to any future
+   route that keeps the hardware Window enabled.
 3. Capture complete dispatcher logs for New Log, Copy Log, Erase Log, Rename, Rank, Replay,
    and every staged action verb. Replace every `outline`/`inferred` edge before using it as
    an implementation boundary.
 
-The implemented code change is therefore narrow: screen-1 paging and Start-sort only, an
-exact five-row mask, retained header/Window owners, explicit page/cursor commits, and a
-fallback to the existing full-screen-safe path whenever an allowlist or ownership assertion
-fails.
+The implemented scope remains narrow: screen-1 paging/Start-sort owns an exact five-row
+mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; and direct
+Items-to-Status owns only nine private field uploads while leaving native map publication
+authoritative. Every direction retains the existing full-screen-safe path whenever an
+allowlist or ownership assertion fails.

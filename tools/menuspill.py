@@ -522,9 +522,9 @@ def encode(text):
     return [EN_CODES[c] for c in text]
 
 
-def drive(rom, profile, long_mode, png, frames=580, ram=None):
+def drive(rom, profile, long_mode, png, frames=680, ram=None):
     if long_mode:
-        frames = max(frames, 720)
+        frames = max(frames, 780)
     if ram:
         frames = max(frames, 2240)
     PyBoy = _import_pyboy()
@@ -614,10 +614,10 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
         def rewrite(_ctx=None):
             # the item list is RE-STAGED by the game on every open, so the rewrite
             # must land at the first far call of one specific draw sequence -- the
-            # reopen at f500 draws a few frames later (traced) -- after the game
+            # reopen at f560 draws a few frames later (traced) -- after the game
             # staged and before any row was read. Anywhere earlier is silently
             # restaged over, which is exactly how this mode once verified nothing.
-            if armed['done'] or not 496 <= frame['n'] <= 512:
+            if armed['done'] or not 556 <= frame['n'] <= 572:
                 return
             armed['done'] = True
             for i, b in enumerate(rows):
@@ -631,8 +631,9 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
 
     # b opens the main menu, a enters the item list; then cursor moves, the action
     # menu over the list, close, and reopen -- the POC's proven redraw gauntlet.
-    # --long then closes the menu ENTIRELY (400) so the font-upload reset frees the
-    # records, reopens (440/500) and rewrites the fresh staging: reused records from
+    # --long then closes the menu entirely after the live Items -> Status redraw has
+    # settled, so the font-upload reset frees the records. It reopens (500/560) and
+    # rewrites the fresh staging: reused records from
     # the first open would cap the synthetic rows at the REAL rows' needs, which is
     # correct fallback behaviour but not the scenario under test
     if ram:
@@ -649,12 +650,12 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
         check_at = (1715, 1800, 1860, 1920, 2045, frames - 2)
     else:
         script = {60: 'b', 120: 'a', 200: 'down', 230: 'down', 260: 'a',
-                  320: 'b', 380: 'b', 400: 'b', 440: 'b', 500: 'a'}
-        check_at = (110, 180, 310, 560, 640, frames - 2)
+                  320: 'b', 380: 'b', 440: 'b', 500: 'b', 560: 'a'}
+        check_at = (110, 180, 310, 620, 660, frames - 2)
     if long_mode:
         # Stack the four-row action box over the fully composed 56-tile hostile
-        # page, then close it only after the f640 residency/plane snapshot.
-        script.update({580: 'a', 650: 'b'})
+        # page, then close it only after the f700 residency/plane snapshot.
+        script.update({640: 'a', 710: 'b'})
     problems, invariant_frames = [], 0
     long_records = action_records = None
     checked = [0]
@@ -708,9 +709,9 @@ def drive(rom, profile, long_mode, png, frames=580, ram=None):
                     flip['settled'] = True
         if f in check_at:
             problems += settled_check(pb, profile, 'f%d' % f, checked, drawn)
-        if long_mode and f == 560:
+        if long_mode and f == 620:
             long_records = records(pb, profile)
-        if long_mode and f == 640:
+        if long_mode and f == 700:
             action_records = records(pb, profile)
             if png:
                 stem, ext = os.path.splitext(png)

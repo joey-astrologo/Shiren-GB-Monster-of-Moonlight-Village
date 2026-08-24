@@ -89,6 +89,18 @@ if [ -f saves/shiren_en_log2_weapon_VWF_break.srm ]; then
 fi
 if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/itempagespill.py build/shiren_en.gb
+  # Repeat without a long idle gap. This catches queue/marker phase bugs that a fixed
+  # 90-frame settle cannot expose; avoid only the native two-input right-wrap sentinel,
+  # whose separate ownership path is covered by the ordinary run above.
+  python3 tools/itempagespill.py build/shiren_en.gb --settle-frames 20 --no-wrap
+  # Leave each real page independently. The outgoing Items screen must stay live until
+  # the native Status publisher replaces it; all nine private-field uploads are bounded
+  # to complete VBlanks and the persistent Window is immutable.
+  python3 tools/itemexitspill.py build/shiren_en.gb
+  # Reopen Items independently after leaving pages 1-4. Status -> Items must blank only
+  # visible BG rows 0-15 in four VBlanks, commit both empty box perimeters before item
+  # text, retain the bottom Window, and keep the next page change regional.
+  python3 tools/itementryspill.py build/shiren_en.gb
   # Apply the real hidden-menu GameShark writes only after Menu -> Items has borrowed
   # its low font planes. Both category pages, all screen-28 item lists, and every
   # reachable screen-29 weapon enhancement value 0..99 must remain plane-exact VWF.

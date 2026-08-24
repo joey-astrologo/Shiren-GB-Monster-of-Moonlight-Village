@@ -2,10 +2,11 @@
 
 ## Regional blanking for proportional Item pages
 
-**Status:** Checkpoint 1 remains in progress. Manual review accepted paging, sorting, the
-full-redraw regional blank, and the corrected equipped-marker lifetime. A rare right-wrap
-full-screen fallback was traced to the native sentinel phase and corrected narrowly; that
-last correction awaits visual review. Checkpoints 2-6 remain deferred.
+**Status:** Checkpoint 1 is the committed, visually accepted paging/Start-sort POC.
+Checkpoint 2 is implemented and regression-complete: Items-to-Status keeps pages 1-4 live,
+while Status-to-Items blanks only the replaceable BG above the persistent Window and
+commits empty box chrome before item text. The revised entry half awaits visual review.
+Checkpoints 3-6 remain deferred.
 
 ### Motivation
 
@@ -66,8 +67,12 @@ The implementation is deliberately narrower than the general proposal:
   item count `$C6AA` and validates the exact settled `4:$4EB4` shape: one page has four
   `$BC` border cells; two through four have one `$C6`, the remaining live `$C5` cells,
   then `$BC`. Right wrap has one additional exact transient: selector zero is committed
-  while all four old markers are retired to `$BC`. Initial entry is rejected by its
-  fresh-allocation latch.
+  while all four old markers are retired to `$BC`. It drains `$C11A` and reacquires
+  VBlank before validating that visible marker: this closes two phase-sensitive
+  false-fallback candidates consistent with the rare report, a partially published marker
+  and a blocked mode-3 VRAM read after a long drain. The rare trigger has not been
+  captured deterministically. Initial entry is handled separately at the screen-1
+  shadow-clear boundary.
 - The controller writes `$BE` to each marker-coupled left border (`key+0`) and zero to
   each raw marker cell (`key+1`) and name interior (`key+3..key+18`), then applies the
   same 90-cell regional state to BG. The 85 marker/name cells are blank; every other cell
@@ -91,6 +96,10 @@ tiles, atomic border/marker/name lifetime, transaction states, cursor/page indic
 short-page zero rows, and that all eight scoped redraws keep LCDC bit 7 enabled. The
 sentinel transaction and the page-1 transaction both remain regional while the wrap
 temporarily retires all four page markers to `$BC`.
+The build repeats a non-sentinel four-page cycle with only 20 frames between row-4
+completion and the next input; it has seven regional redraws, zero fallbacks, and zero
+LCD-off frames. This shorter cadence prevents the old fixed 90-frame idle from hiding
+queue/publication phase defects.
 `tools/fusioncountspill.py`
 adds 1/6/11/16-item cases, cycles both directions through every page and wrap boundary,
 then invokes Start-sort. It proves all 3/5/7/9 redraws enter regional mode without
@@ -107,11 +116,14 @@ and stricter per-row ownership. Start with the simpler five-row regional clear.
 Stop after every checkpoint for manual review. Do not combine these stages into one large
 rewrite.
 
-1. **Screen-1 redraw checkpoint — paging/sort accepted; atomic marker pair awaiting
-   review:** full and short Item pages, repeated movement in both directions, Start-sort,
-   correct page indicator, cursor, and borders.
-2. **Item entry and exit:** status menu to Items, Items back to status, and re-entry after
-   paging beyond page 1.
+1. **Screen-1 redraw checkpoint — COMPLETE and visually accepted:** full and short Item
+   pages, repeated movement in both directions, Start-sort, correct page indicator,
+   cursor, and borders.
+2. **Item entry and exit — IMPLEMENTED, entry awaiting visual review:** Items back to
+   Status from each of pages 1-4 keeps the LCD and outgoing page live. Direct
+   Status-to-Items entry/re-entry keeps the Window live, retires BG rows 0-15 in four
+   VBlanks, commits both empty box perimeters, and then uses the existing
+   completed-row/native-final publishers for text and final decoration.
 3. **Action menu lifecycle:** open the action picker from every page, move its cursor,
    cancel, consume an item, and return to Items without corrupting either screen.
 4. **Item Info lifecycle:** Action to Info, multi-page Info where applicable, and Info

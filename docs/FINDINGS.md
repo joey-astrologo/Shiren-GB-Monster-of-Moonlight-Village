@@ -1585,12 +1585,46 @@ and hardware reject stores made during mode 3. A Mesen savestate showed that the
 tilemap and shadow were byte-exact but the `Strength`, `Experience`, and numeric-value
 planes contained mixtures of the native font and the intended VWF pixels.
 
-`statusvwf.statusentry` now detects that exceptional LCD-on entry, waits for a fresh
-VBlank, disables the LCD for the private-tile repaint, and restores LCDC.7 afterward.
+`statusvwf.statusentry` now distinguishes two lifetimes. The Name -> Items reconstruction
+is not a proven direct pop, so it waits for a fresh VBlank, disables the LCD for the
+private-tile repaint, and restores LCDC.7 afterward. A later direct Items -> Status pop has
+the exact root/Items stack predicate and a stronger ownership proof: none of the 48
+private/structured Status tile IDs is referenced by the visible outgoing Items BG or
+Window. That route keeps the page live and uploads each of nine completed field slices in
+its own full VBlank before native Status map publication replaces the page.
+
 `tools/unidentifiednamespill.py` continues the fixture through Take -> Items -> Name,
-types `Stun`, confirms End, returns to Items, and backs out to status. It compares all 48
-private/structured status tile planes before and after the name-screen lifetime and
-requires both post-Name status paints to execute with LCDC.7 clear.
+types `Stun`, confirms End, returns to Items, and backs out to Status. It compares all 48
+private/structured status tile planes before and after the name-screen lifetime, requires
+one conservative LCD-off reconstruction followed by one LCD-on direct pop, and verifies
+all nine live uploads finish inside VBlank. `tools/itemexitspill.py` independently leaves
+the real four-page inventory from pages 1, 2, 3, and 4 with no LCD-off or white frame.
+
+The inverse direct lifetime now has its own boundary. `mgbdis` shows that screen 1 enters
+`4:$494E` and calls the stride-aware shadow clear at `$4951-$4956` before item count,
+boxes, page markers, or VWF pixels are rebuilt. Bank 53 far index `$09` replaces only that
+six-byte operation. With the exact `(Status root, Items child)` stack, screen/hardware
+state, valid item selector, and four zero Status cells at visible `$986F-$9872` after
+queue drain plus a fresh VBlank rendezvous, it retires BG rows 0-15 in four complete VBlanks and leaves the enabled
+two-row Window and every tile plane untouched. The native draw order is box 4's item rows,
+then box 14's header, then full-map publication; allowing row publication immediately
+therefore exposed item names on a blank field. The entry helper now commits the empty box-14
+and box-4 perimeters at the end of its fourth VBlank. Completed Item rows subsequently
+appear inside established chrome, and the native final map publisher adds the header text,
+page indicator, and final exact map. Unknown contexts still receive the original 20x18,
+stride-32 shadow clear and conservative path.
+
+`tools/itementryspill.py` proves the full cycle after independently leaving Items pages
+1-4: exactly four entry batches end at LY `$94`, the exact empty box chrome is committed
+inside VBlank before the first Item-row call, no frame disables the LCD or becomes
+all-white, the Window is byte/plane-exact, and the first post-entry page change begins one
+narrow regional transaction with no fallback. `tools/itempagespill.py` additionally runs
+a 20-frame non-sentinel cadence. The paging gate now drains `$C11A`, rendezvouses with
+VBlank again, and only then validates the visible page indicator. This closes two
+phase-sensitive false-rejection candidates consistent with the rare playtest report: a
+partially published marker before the drain, or a blocked mode-3 VRAM read after a drain
+that consumed the original VBlank. The rare trigger itself was not captured
+deterministically, so removal still needs playtest confirmation.
 
 **The general rule: when a block's byte layout changes, look for code that computes into it.
 A reference gets repointed; a hardcoded stride does not.**

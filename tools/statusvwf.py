@@ -2,13 +2,21 @@
 """Proportional labels and live values for the in-dungeon status screen.
 
 The native status producer in bank 4 finishes every dynamic field, then calls the
-bank-31 Path copier at 4:$4FDD.  Ordinary entries reach that boundary with LCDC.7 clear,
-but returning from the item-name picker can reach it with the LCD enabled during the
-visible scan.  Mesen and hardware reject those direct VRAM writes, leaving one status
-glyph plane native and the other proportional.  Replace the three-byte copier call with
-one far call which first performs the original copy, enters a fresh VBlank and disables
-the LCD when necessary, then composes the completed shadow fields directly into private
-BG tiles.  The game's existing full-map publisher remains authoritative.
+bank-31 Path copier at 4:$4FDD. Ordinary entries reach that boundary with LCDC.7 clear,
+but Items -> Status and returns from the item-name picker can reach it with the LCD
+enabled during the visible scan. Mesen and hardware reject unrestricted direct VRAM
+writes there, leaving one status glyph plane native and the other proportional.
+
+The exact Status-root -> Items entry is intercepted at screen 1's native shadow-clear
+boundary. It retires visible BG rows 0..15 over four complete VBlanks while preserving
+the enabled bottom Window, commits the empty header/list-box chrome, then lets the
+existing row and final-map publishers reveal only completed Item content inside it.
+
+The exact root -> Items -> root stack pop is special too: all 40 private status tiles are
+disjoint from every visible Item-page BG/Window reference. Keep that outgoing page live
+and upload each completed status field inside its own VBlank; the largest field is seven
+tiles and fits the ten-line interval. Unknown LCD-on returns retain the conservative
+LCD-off path. In both cases the game's existing status-map publisher remains authoritative.
 
 The private low-page IDs deliberately avoid $22/$24/$2A/$36, which the persistent
 bottom status Window references while the menu is open.  Weapon/Shield retain the
@@ -30,9 +38,12 @@ BANKSZ = 0x4000
 FAR_BANK = 0x35
 FAR_INDEX = 0x05
 POPUP_INDEX = 0x07
+ITEM_ENTRY_INDEX = 0x09
 CODE_AT = 0x405A
 HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
+ITEM_ENTRY_HOOK = (4, 0x4951)
+ITEM_ENTRY_OLD = bytes.fromhex('21 00 C3 CD 0E 48')
 
 # The four structured Weapon/Shield tiles are installed into the canonical menu font by
 # structvwf.  The remaining slices are private to the settled dungeon status screen.
@@ -104,17 +115,265 @@ def _source(widths):
     weapon = ','.join('$%02X' % value for value in WEAPON_TILES)
     shield = ','.join('$%02X' % value for value in SHIELD_TILES)
     return fr"""
+itementry:
+  ; This replaces screen 1's native `ld hl,$C300 / call $480E`.  Preserve that
+  ; exact 20x18, stride-32 shadow clear after optionally retiring a direct Status
+  ; predecessor.  Unknown callers therefore retain byte-for-byte native semantics.
+  push af
+  push bc
+  push de
+  push hl
+  call itementrygate
+  jr nc,itementryclear
+  call itementryblank
+  ld a,$01
+  ld [$C1B3],a
+itementryclear:
+  ld hl,$C300
+  ld de,$000C
+  ld b,$12
+itementryclearrow:
+  ld c,$14
+  xor a
+itementryclearcell:
+  ld [hl+],a
+  dec c
+  jr nz,itementryclearcell
+  add hl,de
+  dec b
+  jr nz,itementryclearrow
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+
+itementrygate:
+  ; Exact direct Status-root -> Items stack and hardware proof.  Screen 1 paging
+  ; has the same logical stack, so the four cells that are unused on Status must
+  ; also be zero.  Drain the preceding Status publication before observing them.
+  ld a,[$C6A3]
+  dec a
+  jr nz,itementrybad
+  ld a,[$C6A6]
+  and a
+  jr nz,itementrybad
+  ld a,[$C1B3]
+  and a
+  jr nz,itementrybad
+  ld a,[$C534]
+  dec a
+  jr nz,itementrybad
+  ld a,[$C535]
+  and a
+  jr nz,itementrybad
+  ld a,[$C536]
+  dec a
+  jr nz,itementrybad
+  ld a,[$C6AA]
+  and a
+  jr z,itementrybad
+  cp $15
+  jr nc,itementrybad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jr nc,itementrybad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,itementrybad
+  ldh a,[$FF42]
+  and a
+  jr nz,itementrybad
+  ldh a,[$FF43]
+  and a
+  jr nz,itementrybad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,itementrybad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,itementrybad
+itementrydrain:
+  ld a,[$C11A]
+  and a
+  jr z,itementrymapwait
+  call $06F7
+  jr itementrydrain
+itementrymapwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,itementrymapwait
+itementrymap:
+  ld hl,$986F
+  ld b,$04
+itementrymapcell:
+  ld a,[hl+]
+  and a
+  jr nz,itementrybad
+  dec b
+  jr nz,itementrymapcell
+  scf
+  ret
+itementrybad:
+  and a
+  ret
+
+itementryblank:
+  ; The hardware Window begins at y=128 and remains enabled, so BG rows 0..15 are
+  ; the complete visible predecessor owned by this transition.  Retire four rows
+  ; in each complete VBlank; the item renderer cannot reuse a Status tile until all
+  ; four batches finish.  The Window and hidden BG rows 16..17 are never touched.
+  ld hl,$9800
+  ld d,$04
+itementryvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,itementryvisible
+  di
+  ; Close the one-instruction race between observing visible scanout and DI.  If
+  ; VBlank arrived there, wait through the following visible frame and use the next
+  ; complete VBlank rather than writing in its late tail.
+  ldh a,[$FF44]
+  cp $90
+  jr c,itementrywaitblank
+itementrylate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,itementrylate
+itementrywaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,itementrywaitblank
+itementrybatch:
+  ld b,$04
+itementryblankrow:
+  ld c,$14
+  xor a
+itementryblankcell:
+  ld [hl+],a
+  dec c
+  jr nz,itementryblankcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,itementryblanknext
+  inc h
+itementryblanknext:
+  dec b
+  jr nz,itementryblankrow
+itementrybatchdone:
+  dec d
+  jr z,itementrychromebegin
+  ; Let the native VBlank/timer handlers run between batches.  They may clobber the
+  ; copy registers, so preserve the next destination and remaining count explicitly,
+  ; then mask them again before entering the following complete VBlank.
+  push de
+  push hl
+  ei
+itementrynextvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,itementrynextvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,itementrynextwaitblank
+itementrynextlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,itementrynextlate
+itementrynextwaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,itementrynextwaitblank
+  pop hl
+  pop de
+  jr itementrybatch
+itementrychromebegin:
+  ; Native screen 1 draws box 4's rows, then box 14's Items header, and publishes
+  ; the complete map only at the end.  The regional row publisher would otherwise
+  ; expose names against a blank field for most of that interval.  Commit only the
+  ; two static perimeters now; their text interiors remain blank until the existing
+  ; completed-row/final-map publishers fill them.
+  call itementrychrome
+itementryblankdone:
+  ei
+  ret
+
+itementrychrome:
+  ; Header box 14: x=0, y=0, one row, width 4.
+  ld hl,$9800
+  ld c,$04
+  call itementrytop
+  ld hl,$9820
+  ld a,$BE
+  ld [hl],a
+  ld de,$0005
+  add hl,de
+  ld a,$BF
+  ld [hl],a
+  ld hl,$9840
+  ld c,$04
+  call itementrybottom
+
+  ; Item box 4: x=0, y=3, five rows, width 18.  Text keys are on rows
+  ; 4,6,8,10,12; the vertical sides also cover their separator rows.
+  ld hl,$9860
+  ld c,$12
+  call itementrytop
+  ld hl,$9880
+  ld b,$09
+itementrychromeside:
+  ld a,$BE
+  ld [hl],a
+  ld de,$0013
+  add hl,de
+  ld a,$BF
+  ld [hl],a
+  ld de,$000D
+  add hl,de
+  dec b
+  jr nz,itementrychromeside
+  ld hl,$99A0
+  ld c,$12
+itementrybottom:
+  ld a,$BA
+  ld [hl+],a
+  ld a,$BD
+itementrybottomcell:
+  ld [hl+],a
+  dec c
+  jr nz,itementrybottomcell
+  ld a,$BB
+  ld [hl],a
+  ret
+itementrytop:
+  ld a,$B8
+  ld [hl+],a
+  ld a,$BC
+itementrytopcell:
+  ld [hl+],a
+  dec c
+  jr nz,itementrytopcell
+  ld a,$B9
+  ld [hl],a
+  ret
+
 statusentry:
   ; Preserve the exact native Path shadow copier this hook replaces.
   rst $08
   db $11,$1F
-  ; Most native status builds already have the LCD off. Rename -> Items -> status is a
-  ; real exception: it arrives during the visible scan, where direct VRAM stores are
-  ; blocked on hardware (and accurately by Mesen). Use the same conservative fresh-
-  ; VBlank rendezvous as the complete name-screen font restore, then put LCDC.7 back.
+  ; Most native status builds already have the LCD off. A direct pop from Items has an
+  ; exact native stack/hardware/item-state proof and can keep its outgoing page visible:
+  ; field uploads below rendezvous separately with VBlank. Other LCD-on returns retain
+  ; the conservative full-screen interval until their own ownership is mapped.
   ldh a,[$FF40]
   bit 7,a
   jr z,statusdraw
+  call itemexit
+  jr c,statusdraw
   call statusready
   ldh a,[$FF40]
   res 7,a
@@ -136,6 +395,49 @@ statuswaitblank:
   ldh a,[$FF44]
   cp $90
   jr c,statuswaitblank
+  ret
+itemexit:
+  ld a,[$C534]
+  and a
+  jr nz,itemexitbad
+  ld a,[$C535]
+  and a
+  jr nz,itemexitbad
+  ld a,[$C536]
+  dec a
+  jr nz,itemexitbad
+  ld a,[$C6A3]
+  and a
+  jr nz,itemexitbad
+  ld a,[$C6AA]
+  and a
+  jr z,itemexitbad
+  cp $15
+  jr nc,itemexitbad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jr nc,itemexitbad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,itemexitbad
+  ldh a,[$FF42]
+  and a
+  jr nz,itemexitbad
+  ldh a,[$FF43]
+  and a
+  jr nz,itemexitbad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,itemexitbad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,itemexitbad
+  scf
+  ret
+itemexitbad:
+  and a
   ret
 statusdraw:
 
@@ -478,6 +780,24 @@ fieldbad:
   ret
 
 upload:
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,uploaddirect
+  call uploadready
+  call uploadcopy
+uploadlivedone:
+  ei
+  nop
+  scf
+  ret
+uploaddirect:
+  call uploadcopy
+  scf
+  ret
+uploadcopy:
+  ; Establish every live copy register only after uploadready has masked interrupts.
+  ; The native VBlank handler does not preserve BC/DE/HL, so preparing these before
+  ; the wait made the first upload phase-dependent and could extend it into line 3.
   ; All status-private bases are below $80: VRAM = $9000 + base*16.
   ld a,[${S_BASE:04X}]
   ld l,a
@@ -505,7 +825,39 @@ uploadbyte:
   inc de
   dec b
   jr nz,uploadbyte
-  scf
+  ret
+uploadready:
+  ; Keep interrupts live through almost all ordinary scanout. Mask them at line 140,
+  ; safely before the line-144 VBlank interrupt: waiting until line 143 left a real race
+  ; in which that handler could run between the LY test and DI, delaying a cap-6 upload
+  ; into line 3. Returning with IME clear reserves the complete VBlank for at most 7*16
+  ; copied bytes.
+  ldh a,[$FF44]
+  cp $90
+  jr c,uploadline140
+uploadvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,uploadvisible
+uploadline140:
+  ldh a,[$FF44]
+  cp $8C
+  jr c,uploadline140
+  di
+  ; A long native interrupt may already have begun just before DI and return late in
+  ; VBlank. Never treat that tail as a complete budget: wait through visible scanout
+  ; with IME masked, then take the following VBlank from line 144.
+  ldh a,[$FF44]
+  cp $90
+  jr c,uploadblank
+uploadlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,uploadlate
+uploadblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,uploadblank
   ret
 
 ; Native status-cell normalisation -> dense font slot, carry set. A zero is a skip.
@@ -664,14 +1016,29 @@ def install(buf, notes=None, font=None):
                          (POPUP_INDEX, FAR_BANK))
     buf[popup_index] = labels['popupgate'] & 0xFF
     buf[popup_index + 1] = labels['popupgate'] >> 8
+    item_entry_index = bank + ITEM_ENTRY_INDEX - 1
+    if bytes(buf[item_entry_index:item_entry_index + 2]) != b'\xFF\xFF':
+        raise SystemExit('statusvwf: far index $%02X in bank %d is occupied' %
+                         (ITEM_ENTRY_INDEX, FAR_BANK))
+    buf[item_entry_index] = labels['itementry'] & 0xFF
+    buf[item_entry_index + 1] = labels['itementry'] >> 8
 
     hook = _off(*HOOK)
     if bytes(buf[hook:hook + len(HOOK_OLD)]) != HOOK_OLD:
         raise SystemExit('statusvwf: hook at %d:$%04X changed' % HOOK)
     buf[hook:hook + 3] = bytes((0xD7, FAR_INDEX, FAR_BANK))
 
+    item_entry_hook = _off(*ITEM_ENTRY_HOOK)
+    if bytes(buf[item_entry_hook:item_entry_hook + len(ITEM_ENTRY_OLD)]) != ITEM_ENTRY_OLD:
+        raise SystemExit('statusvwf: Item-entry hook at %d:$%04X changed' %
+                         ITEM_ENTRY_HOOK)
+    buf[item_entry_hook:item_entry_hook + len(ITEM_ENTRY_OLD)] = bytes(
+        (0xD7, ITEM_ENTRY_INDEX, FAR_BANK, 0x00, 0x00, 0x00))
+
     if notes is not None:
         notes.append('statusvwf: full Strength/Experience labels and seven live status '
                      'values use approved proportional glyphs in 40 private low-page '
-                     'tiles; LCD-on Rename returns rendezvous at VBlank before direct '
-                     'VRAM painting; native map publication preserved')
+                     'tiles; exact Status-to-Items entry retires only visible BG rows '
+                     '0-15, precommits empty box chrome, and preserves the Window; exact '
+                     'Items-to-Status pops keep LCD on with nine bounded field uploads; '
+                     'unknown LCD-on returns retain the conservative path')

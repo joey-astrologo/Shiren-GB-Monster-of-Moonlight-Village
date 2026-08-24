@@ -114,6 +114,7 @@ can consume more of a pool bank later.
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
+| 53 | `$405A-$6838` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09` |
 | 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 55 | `$405A-$40D7` | `tools/menuvwf.py`: shop `Price` / `G` private-raster stager and map writer | Exclusive, exact call-site guard |
 | 56 | `$405A-$40A0` | `tools/menuvwf.py`: exact shop amount-row VWF classifier | Exclusive, exact shape/source gate |

@@ -26,8 +26,10 @@ Two assertions, because either alone would miss a variant:
   menuvwf/rankvwf code contributed to.  Every legitimate in-game publication closes an
   interval its own transaction opened;
 * the route settles with the LCD on, the transaction byte clear and the CPU healthy,
-  and it really opened the item list and the Pot's action box first -- a run that never
-  published anything proves nothing.
+  and it really completed the initial item list, Pot action box, and Put selector -- a
+  run that never traversed those screens proves nothing.  The route advances from those
+  redraw completions rather than guessed frame delays, so changing an entry transition
+  cannot silently swallow its next input.
 
 The route is the player's: Log 2 stands on a Storage Pot.  Floor -> Take, dismiss both
 messages, then Menu -> Items -> Storage Pot -> Put -> Big Onigiri.
@@ -51,6 +53,8 @@ import menuvwf                                                    # noqa: E402
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log2_storage_pot_menu.srm')
 BANKSZ = 0x4000
 STATE = 0xC1B3
+ITEM_SHAPE = (0, 3, 5, 18, 0x02)
+ACTION_SHAPE = (13, 1, 5, 5, 0x02)
 
 # Take the floor Pot, clear its pickup and description messages, then put the first
 # inventory item inside it.  Both teardowns exercised the defect; the second is the one
@@ -61,12 +65,9 @@ SCRIPT = {
     2200: 'b', 2280: 'down', 2360: 'a', 2460: 'a',    # Menu -> Floor -> Take
     2700: 'a', 2800: 'a', 2900: 'a',                  # dismiss pickup + description
     3000: 'b', 3120: 'a',                             # Menu -> Items
-    3180: 'down', 3240: 'down', 3300: 'down',         # -> Storage Pot
-    3360: 'a', 3420: 'down', 3480: 'a',               # action box -> Put -> `Which?`
-    3600: 'a',                                        # -> Big Onigiri
 }
-FRAMES = 3800
-SETTLED = 3760              # by here the field and its message have published or never will
+FRAMES = 4700
+SETTLED = 4660              # by here the field and its message have published or never will
 # The title/file composite legitimately publishes into the blank the native boot loader
 # already holds, under a flat BGP nobody can see through.  This route owns the gameplay
 # teardowns; titlecardspill and copylogspill own the start flow.
@@ -119,10 +120,56 @@ def run(rom, ram, png=None):
         pb.set_emulation_speed(0)
 
         frame = [0]
+        schedule = dict(SCRIPT)
         blankers = [[]]                # sites that cleared LCDC bit 7 in this interval
         cancelled = []                 # our publications inside somebody else's blank
         publications = []
+        row_calls = []
+        item_completions = []          # redraw completions along the Items/Put route
+        action_completions = []
+        dispatches = []
+        status_returns = []
+        close_requested = [False]
         halts = []
+
+        def dispatch(_context=None):
+            stack = tuple(pb.memory[0xC534 + index] for index in range(3))
+            if frame[0] >= 3000:
+                dispatches.append((frame[0], pb.register_file.A, stack))
+            if (close_requested[0] and pb.register_file.A == 0 and
+                    not status_returns):
+                status_returns.append(frame[0])
+                schedule[frame[0] + 180] = 'b'
+
+        def item_row(_context=None):
+            shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+            if frame[0] >= 3000:
+                row_calls.append((frame[0], pb.register_file.D, shape))
+            if frame[0] < 3000 or pb.register_file.D != 4:
+                return
+            if shape == ACTION_SHAPE and not action_completions:
+                action_completions.append(frame[0])
+                schedule[frame[0] + 60] = 'down'
+                schedule[frame[0] + 120] = 'a'
+                return
+            if shape != ITEM_SHAPE:
+                return
+            item_completions.append((frame[0], pb.memory[0xC6AC]))
+            if len(item_completions) == 1:
+                # Storage Pot is row four in the acquired inventory.
+                schedule[frame[0] + 60] = 'down'
+                schedule[frame[0] + 120] = 'down'
+                schedule[frame[0] + 180] = 'down'
+                schedule[frame[0] + 240] = 'a'
+            elif len(item_completions) == 2:
+                # Put's selector starts on the Big Onigiri.
+                schedule[frame[0] + 80] = 'a'
+            elif len(item_completions) == 3:
+                # Put returns to the Pot action box over Items. Close both layers;
+                # the Status dispatcher below schedules the final return to the field.
+                close_requested[0] = True
+                schedule[frame[0] + 80] = 'b'
+                schedule[frame[0] + 200] = 'b'
 
         def lcdc_write(bank, addr):
             def callback(_context=None):
@@ -150,10 +197,12 @@ def run(rom, ram, png=None):
                 pb.hook_register(bank, addr, lcdc_write(bank, addr), None)
             except Exception:                    # a site may not exist in every build
                 pass
+        pb.hook_register(4, 0x48AA, dispatch, None)
+        pb.hook_register(menuvwf.FAR_BANK, profile['entry'], item_row, None)
 
         for current in range(FRAMES):
             frame[0] = current
-            button = SCRIPT.get(current)
+            button = schedule.get(current)
             if button:
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
@@ -163,6 +212,7 @@ def run(rom, ram, png=None):
         final = pb.screen.image.copy()
         final_state = pb.memory[STATE]
         final_lcdc = pb.memory[0xFF40]
+        final_stack = tuple(pb.memory[0xC534 + index] for index in range(3))
         if png:
             final.save(png)
             print('potputspill: wrote %s' % png)
@@ -173,26 +223,36 @@ def run(rom, ram, png=None):
                         'blank opened by %02d:$%04X (state $%02X, SCX=%d SCY=%d) -- '
                         'the half-restored screen is exposed for a frame'
                         % (at, site[0], site[1], state, scx, scy))
-    # The menu half of the route has to have happened, or a clean result proves nothing:
-    # opening Items and opening the Pot's action box are both real publications.
-    in_menu = [at for at, _state, _blankers in publications if at >= 3000]
-    if len(in_menu) < 2:
-        problems.append('only %d publication(s) after the menu opened (%s); the route '
-                        'did not reach the item list and the Pot action box'
-                        % (len(in_menu), in_menu))
+    # Direct Status -> Items and the Pot action box do not both complete through
+    # publishmap. Require their actual row events instead of assuming a shared publisher.
+    if len(item_completions) < 3:
+        problems.append('only %d item-list completion(s) after the menu opened (%s); '
+                        'the route did not reach Items, Put\'s selector, and its return; '
+                        'row calls %s'
+                        % (len(item_completions), item_completions, row_calls))
+    if len(action_completions) != 1:
+        problems.append('observed %d Pot action-box completion(s), expected 1 (%s)'
+                        % (len(action_completions), action_completions))
+    if len(status_returns) != 1:
+        problems.append('observed %d return(s) to Status, expected 1 (%s)'
+                        % (len(status_returns), status_returns))
     if final_state != 0:
         problems.append('transaction byte $%04X settled at $%02X, expected $00'
                         % (STATE, final_state))
     if not final_lcdc & 0x80:
         problems.append('route ended with the LCD disabled (LCDC=$%02X)' % final_lcdc)
+    if final_stack != (0, 0, 1):
+        problems.append('route ended with screen stack %s, expected field stack '
+                        '(0, 0, 1)' % (final_stack,))
     if halts:
         problems.append('CPU reached rst $38 at frame(s) %s' % halts[:8])
 
-    print('potputspill: %d publication(s) %s; %d cancelled native blank(s); '
-          'final state $%02X LCDC=$%02X; %d problem(s)'
-          % (len(publications),
+    print('potputspill: item completions %s; action completion(s) %s; '
+          'dispatches %s; %d publication(s) %s; %d cancelled native blank(s); final '
+          'stack %s state $%02X LCDC=$%02X; %d problem(s)'
+          % (item_completions, action_completions, dispatches, len(publications),
              ' '.join('f%d:$%02X' % (at, state) for at, state, _o in publications),
-             len(cancelled), final_state, final_lcdc, len(problems)))
+             len(cancelled), final_stack, final_state, final_lcdc, len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

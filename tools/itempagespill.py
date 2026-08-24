@@ -137,7 +137,8 @@ def staged_row(pb, source, limit=32):
     return tuple(row)
 
 
-def run(rom_path, ram_path, png_dir=None, frames=3900):
+def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
+        test_wrap=True):
     profile = menuspill.renderer_profile(rom_path)
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('itempagespill: requires the Dot proportional renderer')
@@ -167,6 +168,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
         scoped_lcd_off = []
         scoped_regional_begins = []
         scoped_legacy_fallbacks = []
+        pre_gate_queues = []
         sort_snapshots = []
         sort_blank_frame = [None]
 
@@ -178,7 +180,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
             # physical inputs so the transient all-$BC page marker is regression-tested.
             if (right_wrap_pending[0] and pb.register_file.A == 1 and
                     pb.memory[0xC6AC] == 0xFF):
-                at = frame[0] + 90
+                at = frame[0] + settle_frames
                 scheduled[at] = 'right'
                 page_presses.append((at, 'right'))
                 right_wrap_dispatches.append(frame[0])
@@ -221,7 +223,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
                 # Start. Schedule relative to the real row-4
                 # completion so renderer timing changes cannot swallow a press or
                 # accidentally overlap a draw.
-                directions = ('right', 'left', 'right', 'right', 'right', 'right')
+                directions = (('right', 'left', 'right', 'right', 'right', 'right')
+                              if test_wrap else
+                              ('right', 'left', 'right', 'right', 'right', 'left'))
                 if len(page_presses) < len(directions):
                     button = directions[len(page_presses)]
                 elif not sort_presses:
@@ -229,13 +233,13 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
                 else:
                     button = None
                 if button is not None:
-                    at = frame[0] + 90
+                    at = frame[0] + settle_frames
                     scheduled[at] = button
                     if button == 'start':
                         sort_presses.append((at, button))
                     else:
                         page_presses.append((at, button))
-                        if len(page_presses) == len(directions):
+                        if test_wrap and len(page_presses) == len(directions):
                             right_wrap_pending[0] = True
 
         pb.hook_register(4, 0x48AA, dispatch, None)
@@ -273,6 +277,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
         # fixed-width empty rows enter mode 3 and are deliberately recovered before it.
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irshadow'],
                          region_event('regional_begins'), None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irpredrain'],
+                         lambda _ctx=None: pre_gate_queues.append(
+                             (frame[0], pb.memory[0xC11A])), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irvisible'],
                          region_snapshot('shadow_blanked'), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irarmed'],
@@ -338,9 +345,10 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
             problems.append('real route never scheduled an item-page direction press')
         if not sort_presses:
             problems.append('real route never scheduled Start-sort')
-        if len(right_wrap_dispatches) != 1:
+        expected_wraps = 1 if test_wrap else 0
+        if len(right_wrap_dispatches) != expected_wraps:
             problems.append('real route observed %d right-wrap sentinel dispatches, '
-                            'expected 1' % len(right_wrap_dispatches))
+                            'expected %d' % (len(right_wrap_dispatches), expected_wraps))
         expected_regional = len(page_presses) + len(sort_presses)
         if len(scoped_regional_begins) != expected_regional:
             problems.append('Items route began %d scoped regional transactions, '
@@ -595,9 +603,10 @@ def run(rom_path, ram_path, png_dir=None, frames=3900):
     print('itempagespill: white-frame counts %s' %
           ' '.join(str(len(page['lcd_off_frames'])) for page in pages))
     print('itempagespill: scoped regional begins %d; fallbacks %d; LCD-off frames %d; '
-          'sort samples %d; regional blank %s' %
+          'pre-gate queue max $%02X; sort samples %d; regional blank %s' %
           (len(scoped_regional_begins), len(scoped_legacy_fallbacks),
-           len(scoped_lcd_off), len(sort_snapshots),
+           len(scoped_lcd_off), max((value for _at, value in pre_gate_queues), default=0),
+           len(sort_snapshots),
            'missing' if sort_blank_frame[0] is None else 'f%d' % sort_blank_frame[0]))
     for index, trace in transition_traces:
         print('itempagespill: regional flip %d %s' %
@@ -622,10 +631,15 @@ def main():
         ROOT, 'saves/shiren_en_item_menu.srm'))
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=3900)
+    parser.add_argument('--settle-frames', type=int, default=90,
+                        help='frames from row-4 completion to the next paging input')
+    parser.add_argument('--no-wrap', action='store_true',
+                        help='avoid the native two-input right-wrap sentinel')
     args = parser.parse_args()
     if not os.path.exists(args.ram):
         raise SystemExit('itempagespill: missing RAM fixture: %s' % args.ram)
-    run(args.rom, args.ram, args.png_dir, args.frames)
+    run(args.rom, args.ram, args.png_dir, args.frames, args.settle_frames,
+        not args.no_wrap)
 
 
 if __name__ == '__main__':

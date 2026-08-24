@@ -86,13 +86,14 @@ resets the hidden prior epoch;
 same-destination redraws reuse a cap or fall back if they grow.
 
 PAGE FLIPS. Fresh pixels uploaded into reused tiles used to show through the old map.
-Screen-1 paging and Start-sort now prove the already-visible variable-length page
-indicator, drain the queue, normalize the five marker-coupled left borders, and blank the
+Screen-1 paging and Start-sort now drain the preceding map queue, prove the resulting
+already-visible variable-length page indicator, normalize the five marker-coupled left borders, and blank the
 five raw status cells plus five 16-cell name interiors during VBlank with the LCD on.
 Each incoming row drains its complete tile upload before publishing its left border,
 marker, and name references together. Short-page rows use the native exact 19-zero
-representation. Initial Items entry and every rejected/unknown context retain the whole-map
-LCD-off fallback. The visible sequence is old -> blank status/name rows -> complete new
+representation. Direct Status-root -> Items entry is owned by statusvwf's earlier
+screen-1 shadow-clear hook; every rejected/unknown context retains the whole-map LCD-off
+fallback. The visible sequence is old -> blank status/name rows -> complete new
 rows; the cursor, right borders, header, and unrelated map cells remain owned throughout.
 
 FLOOR ACTION / INFO. The same reused-tile exposure occurred on action -> Info, Info page
@@ -1527,6 +1528,24 @@ irwait:
   ldh a,[$FF44]
   cp $90
   jr c,irwait
+  ; The preceding screen-1 publication can still own selector $C11A here.  In
+  ; particular, one of its final map chunks contains the four page-marker cells.
+  ; Validate only after that queue is complete: sampling it first could admit a
+  ; partially-published marker shape and incorrectly select the LCD-off fallback.
+irpredrain:
+  ld a,[$C11A]
+  and a
+  jr z,irvalidatedrain
+  call $06F7
+  jr irpredrain
+irvalidatedrain:
+  ; A manual queue pass can finish after VBlank.  Reading $986F in mode 3 would
+  ; return blocked-bus data and manufacture another false rejection, so rendezvous
+  ; with VBlank again before observing the now-stable marker.
+irvalidatewait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irvalidatewait
   ; Native 4:$4EB4 leaves all four cells as $BC for one page. For two..four
   ; pages it normally writes $C5/$C6 over exactly that many cells at $986F; unused cells
   ; remain $BC. Right wrap from the last page to page 1 is the one exception: selector
@@ -1600,11 +1619,6 @@ ironeborder:
   dec b
   jr nz,ironeborder
 irdrain:
-  ld a,[$C11A]
-  and a
-  jr z,irshadow
-  call $06F7
-  jr irdrain
 irshadow:
   ld de,$002D
   xor a
