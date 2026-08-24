@@ -6,7 +6,16 @@
 accepted. Checkpoint 2 keeps pages 1-4 live on Items-to-Status, while Status-to-Items
 blanks only the replaceable BG above the persistent Window and commits empty box chrome
 before item text. This accepted implementation is frozen at commit `3489572` on
-2026-08-23. Checkpoints 3-6 remain deferred.
+2026-08-23. The current checkpoint-3 working tree also fixes two regressions found during
+visual review: the first title-menu publication now includes the Adventure cursor, and
+the special standing-item Floor page after carried pages retires all four unused row
+borders, converts between complete one- and five-row chrome in both paging directions,
+and returns live to Status. Both have first-frame fixtures but still await the same manual
+review. Checkpoint 3's exact held-inventory Action-overlay scope is implemented
+and regression-complete. Its B-cancel now replaces the outgoing Action box with the
+reconstructed Item parent and restores the retained Item input state directly. The
+unpublished Status/Items replay is skipped, eliminating both shared-tile contamination
+and the former 40-frame input stall. Checkpoints 4-6 remain deferred.
 
 ### Motivation
 
@@ -59,8 +68,8 @@ complete new page
 
 The implementation is deliberately narrower than the general proposal:
 
-- Bank 60 far index `$07` owns the regional controller at `$4090-$425E`; far index `$09`
-  owns the fallback controller at `$4300-$43CF`; far index `$05` retains the shared full
+- Bank 60 far index `$07` owns the regional controller at `$4090-$4294`; far index `$09`
+  owns the fallback controller at `$4300-$43E9`; far index `$05` retains the shared full
   20x18 publisher at `$405A-$4084`. Redirected text begins at `$4400` in this bank.
 - The regional begin gate requires screen 1, proportional Item mode, row key `$C380`, an
   active allocator epoch and LCDC bit 7. It derives one through four pages from native
@@ -73,10 +82,16 @@ The implementation is deliberately narrower than the general proposal:
   and a blocked mode-3 VRAM read after a long drain. The rare trigger has not been
   captured deterministically. Initial entry is handled separately at the screen-1
   shadow-clear boundary.
-- The controller writes `$BE` to each marker-coupled left border (`key+0`) and zero to
+- The controller normally writes `$BE` to each marker-coupled left border (`key+0`) and zero to
   each raw marker cell (`key+1`) and name interior (`key+3..key+18`), then applies the
   same 90-cell regional state to BG. The 85 marker/name cells are blank; every other cell
-  remains outside this initial write set.
+  remains outside this initial write set. Selector `$FF` is not a dummy fifth Item row:
+  when Shiren stands on an item it is the real one-row Floor page appended after the
+  carried pages. That shape transition commits a complete empty one-row Floor rectangle
+  before Floor text. Leaving Floor by Right or Left commits a complete empty five-row
+  Items rectangle before page-1 or last-page text. Both finish before tilemap row 3 is
+  scanned—and currently inside VBlank; the four rows absent from Floor are structurally
+  zero after contraction.
 - A completed row drains `$C11A` before publishing its left border, marker cell, and 16
   name cells together. This is required because equipped `$84/$86` markers select the
   paired `$83/$85` border; publishing only the marker leaves a visible vertical remnant.
@@ -90,13 +105,14 @@ The implementation is deliberately narrower than the general proposal:
 
 `tools/itempagespill.py` drives four unique pages, seven real direction presses, and one
 Start-sort redraw. The last-page right wrap deliberately exercises its two native stages:
-the first input selects the one-row `$FF` sentinel and the second selects page 1. It
+the first input selects the one-row standing-item Floor page at `$FF` and the second
+selects page 1. It
 checks the exact blanking boundaries, both tile bitplanes, all locked BG cells, structural
 tiles, atomic border/marker/name lifetime, transaction states, cursor/page indicator, the
 short-page zero rows, and that all eight scoped redraws keep LCDC bit 7 enabled. The
-sentinel transaction and the page-1 transaction both remain regional while the wrap
+Floor-page transaction and the page-1 transaction both remain regional while the wrap
 temporarily retires all four page markers to `$BC`.
-The build repeats a non-sentinel four-page cycle with only 20 frames between row-4
+The build repeats a carried-page-only four-page cycle with only 20 frames between row-4
 completion and the next input; it has seven regional redraws, zero fallbacks, and zero
 LCD-off frames. This shorter cadence prevents the old fixed 90-frame idle from hiding
 queue/publication phase defects.
@@ -123,9 +139,20 @@ rewrite.
    each of pages 1-4 keeps the LCD and outgoing page live. Direct Status-to-Items
    entry/re-entry keeps the Window live, retires BG rows 0-15 in four VBlanks, commits
    both empty box perimeters, and then uses the existing completed-row/native-final
-   publishers for text and final decoration.
-3. **Action menu lifecycle:** open the action picker from every page, move its cursor,
-   cancel, consume an item, and return to Items without corrupting either screen.
+   publishers for text and final decoration. A 2026-08-24 follow-up additionally admits
+   the completed standing-item Floor page (`$C6AC=$FF`) through an exact settlement latch;
+   its automated evidence passes and its visual correction awaits review.
+3. **Held-inventory Action overlay — IMPLEMENTED, awaiting visual acceptance:** change only
+   the direct screen-1 Items to screen-2 Action open and B-cancel back to the identical
+   Item page/selection. Pages 1-4 and every proven four- through six-row box-6 verb set
+   are one acceptance unit. The validated B-pop now atomically replaces box 6 with its
+   reconstructed Item parent, restores the Item cursor/record/screen state, and returns
+   directly without rebuilding unpublished Status and Items screens. This prevents
+   shared-tile `Gitan / Floor / Path` contamination, the prolonged empty footprint, and
+   the former 40-frame input stall; observed B return and post-release D-pad acceptance
+   are both two frames. Cursor movement and gameplay-bound item use are regression checks,
+   not new regional transitions. Screen 16, shop context, Floor box 39, Info, Name entry,
+   and Pot descendants remain on their current paths until separately traced.
 4. **Item Info lifecycle:** Action to Info, multi-page Info where applicable, and Info
    back to Items with the correct selection and page restored.
 5. **Adjacent special routes:** priced shop items, Pot actions, Floor menus, debug menus,
@@ -152,6 +179,11 @@ only a settled endpoint.
 - All queued uploads complete byte-exactly before their map references become visible.
 - Tests include one-, two-, three-, and four-page inventories, short final pages, repeated
   Left/Right movement through every boundary and wraparound, and entry/exit from page 2 or later.
+- A standing-item fixture includes four carried pages plus the appended Floor page,
+  requires rows 6-15 to be structurally zero in shadow and BG, then independently leaves
+  that page by B, Right, and Left. B reaches Status; Right reaches page 1; Left reaches
+  page 4. Both paging directions require complete incoming chrome before text and every
+  route forbids LCD-off, all-white, and fallback frames.
 - Tests include Action and Info transitions from page 2 or later, because settled page-1
   fixtures do not prove allocator lifetime safety.
 - Tests continue past the first settled frame to catch delayed native publications,

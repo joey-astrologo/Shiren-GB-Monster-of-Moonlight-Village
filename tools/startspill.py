@@ -66,9 +66,82 @@ class Audit:
         self.calls = collections.Counter()
         self.exact = 0
         self.visible = 0
+        self.cursor_prepares = 0
+        self.cursor_publications = 0
+        self.cursor_pending = False
+        self.cursor_context = None
         self.problems = []
         self.live = {}
         self.reported_collisions = set()
+
+    def before_initial_cursor(self, pb):
+        if pb.memory[0xC6A3] != 0x0F:
+            return
+        self.cursor_context = {
+            'hl': pb.register_file.HL,
+            'bc': (pb.register_file.B, pb.register_file.C),
+            'shape': tuple(pb.memory[a] for a in range(0xC69A, 0xC69F)),
+        }
+
+    def check_initial_cursor(self, pb, published):
+        """Audit the first title map before the native cursor initializer runs."""
+        if pb.memory[0xC6A3] != 0x0F:
+            return
+        if published and not self.cursor_pending:
+            return
+        if not published:
+            if self.cursor_context is None:
+                self.problems.append(
+                    'f%d: initial cursor helper has no saved drawer context' % self.frame)
+            else:
+                got_context = (pb.register_file.HL,
+                               (pb.register_file.B, pb.register_file.C))
+                want_context = (self.cursor_context['hl'], self.cursor_context['bc'])
+                if got_context != want_context:
+                    self.problems.append(
+                        'f%d: initial cursor helper clobbered HL/BC: want %r got %r' %
+                        (self.frame, want_context, got_context))
+        selector = pb.memory[0xC6A5]
+        offset = 0x41 + selector * 0x40
+        source = BGMAP if published else SHADOW
+        got = pb.memory[source + offset]
+        if got != 0x81:
+            self.problems.append(
+                'f%d: initial title cursor at %s +$%03X is $%02X, expected $81' %
+                (self.frame, 'BG' if published else 'shadow', offset, got))
+        if published:
+            if self.cursor_context is not None:
+                x, y, rows, width, _flags = self.cursor_context['shape']
+                top = bytes((0xB8,)) + bytes((0xBC,)) * width + bytes((0xB9,))
+                bottom = bytes((0xBA,)) + bytes((0xBD,)) * width + bytes((0xBB,))
+                for layer, base in (('shadow', SHADOW), ('BG', BGMAP)):
+                    got_top = bytes(pb.memory[base + 32 * y + x:
+                                              base + 32 * y + x + width + 2])
+                    got_bottom = bytes(pb.memory[base + 32 * (y + 2 * rows) + x:
+                                                 base + 32 * (y + 2 * rows) + x +
+                                                 width + 2])
+                    if got_top != top:
+                        self.problems.append(
+                            'f%d: initial title %s top border differs: want %s got %s' %
+                            (self.frame, layer, top.hex(), got_top.hex()))
+                    if got_bottom != bottom:
+                        self.problems.append(
+                            'f%d: initial title %s bottom border differs: want %s got %s' %
+                            (self.frame, layer, bottom.hex(), got_bottom.hex()))
+                    for row in range(y + 1, y + 2 * rows):
+                        left = pb.memory[base + 32 * row + x]
+                        right = pb.memory[base + 32 * row + x + width + 1]
+                        if (left, right) != (0xBE, 0xBF):
+                            self.problems.append(
+                                'f%d: initial title %s row %d borders are $%02X/$%02X' %
+                                (self.frame, layer, row, left, right))
+                            break
+            self.cursor_publications += 1
+            self.cursor_pending = False
+            self.cursor_context = None
+        else:
+            self.cursor_prepares += 1
+            self.cursor_pending = True
 
     @staticmethod
     def classify(shape):
@@ -333,6 +406,17 @@ def run_scenario(PyBoy, rom_path, profile, scenario, frames, script, ram=None,
                          lambda _ctx: audit.at_entry(pb), None)
         pb.hook_register(ROW_EPILOG[0], ROW_EPILOG[1],
                          lambda _ctx: audit.at_epilog(pb), None)
+        _start_finish_code, start_finish_labels = menuvwf.gbasm.assemble(
+            menuvwf.START_FINISH_SRC, menuvwf.START_FINISH_AT)
+        pb.hook_register(menuvwf.START_FINISH_BANK,
+                         start_finish_labels['sfpublish'],
+                         lambda _ctx: audit.before_initial_cursor(pb), None)
+        pb.hook_register(menuvwf.START_FINISH_BANK,
+                         start_finish_labels['sfcursorready'],
+                         lambda _ctx: audit.check_initial_cursor(pb, False), None)
+        pb.hook_register(menuvwf.START_FINISH_BANK,
+                         start_finish_labels['sfpublished'],
+                         lambda _ctx: audit.check_initial_cursor(pb, True), None)
         if hook_setup is not None:
             hook_setup(pb, audit)
         if os.environ.get('STARTSPILL_TRACE'):
@@ -491,15 +575,22 @@ def main():
                         dict(calls))
     if not sum(audit.visible for audit in audits):
         problems.append('no composed start-flow row became visible')
+    if not sum(audit.cursor_prepares for audit in audits):
+        problems.append('no initial title cursor reached the pre-publication boundary')
+    if not sum(audit.cursor_publications for audit in audits):
+        problems.append('no initial title cursor reached the first complete BG map')
     for problem in problems[:20]:
         print('  ' + problem)
     print('startspill: %d title, %d selector, %d summary, %d confirm, %d Rank/Pass '
           'row call(s); '
-          '%d epilogue-exact and %d visible plane check(s); %d problem(s)' %
+          '%d epilogue-exact and %d visible plane check(s); '
+          '%d cursor prepare/publication pair(s); %d problem(s)' %
           (calls['title'], calls['selector'], calls['summary'], calls['confirm'],
            calls['rankpass'],
            sum(audit.exact for audit in audits),
-           sum(audit.visible for audit in audits), len(problems)))
+           sum(audit.visible for audit in audits),
+           min(sum(audit.cursor_prepares for audit in audits),
+               sum(audit.cursor_publications for audit in audits)), len(problems)))
     raise SystemExit(1 if problems else 0)
 
 

@@ -75,6 +75,9 @@ if [ -f saves/town.state ]; then
 fi
 if [ -f saves/dungeon.state ]; then
   python3 tools/menuspill.py build/shiren_en.gb
+  # Hostile 11-tile Item tails exercise the Action B parent reconstruction beyond
+  # the ordinary real-save rows, whose covered right-hand cells happen to be empty.
+  python3 tools/menuspill.py build/shiren_en.gb --long
   python3 tools/menuglyphspill.py build/shiren_en.gb
   python3 tools/equipmentmarkerspill.py build/shiren_en.gb
   python3 tools/fusioncountspill.py build/shiren_en.gb
@@ -107,6 +110,10 @@ if [ -f saves/shiren_en_item_menu.srm ]; then
   python3 tools/debugmenuspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
+  # This save has four carried-item pages plus the special one-row standing-item Floor
+  # page. Its retired rows must be structurally zero; B must return live to Status, while
+  # Right/Left must rebuild complete five-row Item chrome before returning to page 1/4.
+  python3 tools/floorpagespill.py build/shiren_en.gb
   python3 tools/floorinfospill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
@@ -199,6 +206,11 @@ fi
 if [ -f saves/shiren_en_log_1_dragons_maw.srm ]; then
   python3 tools/dragonmawmarkerspill.py build/shiren_en.gb
   python3 tools/identityhiddenspill.py build/shiren_en.gb
+  # Held Items -> Action -> B is one ownership unit across pages 1-4. The real save
+  # supplies Equip/Remove plus four-, five-, and six-row pickers; every run proves the
+  # parent restore returns directly to Item input, with no Status/Items replay, while
+  # keeping the bottom Window and all pixels outside box 6 live.
+  python3 tools/actionmenuspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log1_player_named_items.srm ]; then
   python3 tools/playernamedspill.py build/shiren_en.gb

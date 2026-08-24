@@ -214,7 +214,12 @@ pixels and temporary storage first.
    Status-to-Items entry/re-entry now retires visible BG rows 0-15 in four VBlanks while
    retaining the bottom Window, then commits empty box-14/box-4 perimeters before any
    Item row becomes visible; all four outgoing-page re-entry cycles and their next page
-   change are regression-covered. Action/Info, Gitan, Pot, and rejected contexts retain
+   change are regression-covered. The 2026-08-24 review additionally corrected the
+   one-row standing-item Floor page after carried pages: four retired left borders now
+   become zero, its transition first commits complete one-row chrome, and both Right and
+   Left return through complete empty five-row chrome before Item text. An exact
+   completed-page latch also admits its live Status exit. Automated coverage passes;
+   manual acceptance is still pending. Action/Info, Gitan, Pot, and rejected contexts retain
    the approved whole-map fallback. Box 14 still composes the complete `Items` word.
 7. **V5 — graphics — COMPLETE:** **V5A COMPLETE** pre-intro title/copyright card; **V5B COMPLETE**
    illustrated title screen; **V5C COMPLETE** 12px-cap Poppins dungeon/town banners

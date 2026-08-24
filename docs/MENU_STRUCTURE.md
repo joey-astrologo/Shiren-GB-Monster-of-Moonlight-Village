@@ -9,6 +9,13 @@ any of pages 1-4 keeps the outgoing page live until Status replaces it. Direct
 Status-to-Items entry/re-entry blanks only BG rows 0-15, preserves the bottom Window, and
 commits empty box chrome before item text.
 
+Checkpoint 3 is implemented and regression-complete but is still under visual review.
+Two review-found regressions are corrected in the current working tree: screen 15 stages
+its native cursor before the first atomic map publication, and the standing-item Floor
+page appended after carried Item pages clears its four retired row borders and returns
+live to Status. These corrections are fixture-backed but are not called visually accepted
+until the current review completes.
+
 This document answers two separate questions:
 
 1. What screen or box is the game drawing, and what other menu content survives behind it?
@@ -74,6 +81,9 @@ BG cell refers to it if a visible Window cell still does.
 | VWF row scratch | `$C0CC-$C0DD` | Translation-owned while the menu renderer is active |
 | VWF row records | `$C163-$C1B2` | Five-byte keyed records plus proportional metadata; ownership is per rendered row |
 | Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below |
+| Held-Action retained state | `$C1B4-$C1B6` | Verb-row count, packed Item record-count/selector, and private-pool admission latch; cleared or overwritten only by the exact lifecycle |
+| Standing-item Floor settlement | `$C1B7` | One only after screen 1 selector `$FF` has completed; authorizes its exact live Status pop, then clears |
+| Held-Action page-edge snapshot | `$C1B8-$C1BE` | Seven exact cells saved before box 6 overwrites the Item page marker; consumed by B-cancel parent reconstruction |
 | Tile-12 composition buffer | `$C12C-$C13B` | Translation-owned scratch |
 | WRAM-staged menu strings | usually `$C616-$C699` | The next draw can replace them; never treat the bytes as persistent row ownership |
 | Active box descriptor | `$C69A-$C6A0` | Seven bytes: x, y, rows, width, flags, text pointer |
@@ -327,6 +337,10 @@ Measured dispatcher sequences include:
 Title/file screens are composites. A child can borrow tile planes while title rows remain
 visible, and returning can restore native planes. Current translation states `$10-$14`
 protect these transactions; they are not candidates for the first regional checkpoint.
+The atomic screen-15 publisher finishes before the native cursor initializer at
+`4:$4E2B`. The translation therefore pre-stages cursor tile `$81` at
+`$C341 + 64*$C6A5`; `tools/startspill.py` checks both that shadow cell and the first
+published `$9841 + 64*$C6A5` BG cell, rather than accepting only the later settled menu.
 
 ## In-dungeon Status menu system
 
@@ -335,6 +349,7 @@ The established root is screen 0:
 ```text
 Status                                                     screen 0
 |-- Items                                                  screen 1, paged
+|   |-- standing-item Floor page                           screen 1, selector $FF; appended after carried pages
 |   |-- Action                                             screen 2 or 16
 |   |   |-- Info                                           screen 4, possibly paged
 |   |   |-- Name                                           screen 9 in the measured route
@@ -371,10 +386,177 @@ Representative real fixture sequences:
 | Ground Trap/Exit/Stairs | `...,0,3` | Screen 3 is the real two-choice ground popup |
 | Hidden debug picker | `...,0,1,27,(27),28` then `29` | Debug screens are reachable from an Items context |
 
-The action-verb inventory is deliberately not declared complete. Confirmed planning names
-include Take, Wave, Toss, Swap, Name, Info, Put, and Push; equipment, food, scrolls, Pots,
-Gitan, traps, and stairs stage different lists. Each verb must be classified by its actual
-destination: overlay, replay, or replacement.
+The complete global action-verb inventory is deliberately not declared from these traces:
+Floor, Pot-content, shop, Gitan, trap, stair, and debug contexts stage different lists.
+Checkpoint 3 uses the narrower, fully enumerated held-inventory scope below.
+
+## Checkpoint-3 exact scope: held-inventory Action overlay
+
+Checkpoint 3 changes one overlay lifecycle only:
+
+```text
+Status screen 0 -> Items screen 1 (page 1, 2, 3, or 4)
+                -> Action screen 2 / box 6
+                -> B cancel -> the identical Items page and selection
+```
+
+This is not shorthand for every menu containing an action verb. The admission predicate
+must prove the direct `0,1,2` stack, screen 2, an ordinary held-inventory selection, a
+valid selector below `$C6AA`, the standard menu viewport, and no shop-price context.
+Screen 16 calls the same `4:$4987` handler but has no established button-driven route; it
+remains conservative until such a trace exists.
+
+`mgbdis` confirms the native builder at `30:$7D3C-$7DD1`. Its pointer table at
+`30:$7DD2` selects three separate 11-category verb tables: held inventory at `$7DE8`,
+Floor at `$7E14`, and Pot contents at `$7E40`. Checkpoint 3 admits only the first. The
+held suffix at `$7DD8` adds `Drop`, optional `Name`, and `Info`; the separate Floor suffix
+at `$7DE0` adds `Swap` instead and is out of scope. An exhaustive item-ID census of the
+held table establishes these visible box-6 variants:
+
+| Held item/state | Item IDs | Box-6 rows |
+|---|---|---|
+| Weapon, Shield, or Bracer | `$00-$33` | `Equip / Toss / Drop / Info` |
+| Equipped Weapon, Shield, Bracer | `$00-$33`, equipped | `Remove / Toss / Drop / Info` |
+| Arrow | `$34-$36` | `Equip / Fire / Drop / Info` |
+| Equipped Arrow | `$34-$36`, equipped | `Remove / Fire / Drop / Info` |
+| Food or known Herb | `$37-$54` | `Eat / Toss / Drop / Info` |
+| Known Scroll | `$55-$6F` | `Read / Toss / Drop / Info` |
+| Known Staff | `$70-$7B` | `Wave / Toss / Drop / Info` |
+| Put-style Pot | `$7C-$80,$82-$84,$86-$87` | `See / Put / Toss / Drop / Info` |
+| Push-style Pot | `$81,$85,$88-$89` | `See / Push / Toss / Drop / Info` |
+| Any identity-hidden Bracer, Herb, Scroll, Staff, or Pot | corresponding range | insert `Name` immediately before `Info` |
+
+The ordinary picker therefore has four rows for most known items, five for a known Pot
+or an identity-hidden non-Pot, and six for an identity-hidden Pot. Those heights and both
+`Equip -> Remove` substitutions are part of checkpoint-3 acceptance, not optional edge
+cases. The builder also emits `Toss / Drop / Name / Info` for rare IDs `$8A-$8E` and
+`Toss / Drop / Info` for `$8F-$90`, but a genuine carried-item route has not established
+those as checkpoint admission cases; forced records may enumerate output but cannot prove
+screen ownership.
+
+### What changes in checkpoint 3
+
+- Opening screen 2 retains the native overlay publication. Its proportional verb rows use
+  six private four-tile slices only after proving that neither visible parent layer refers
+  to those tiles; no opening blank is needed and the Item page outside box 6 remains live.
+- Moving the Action cursor from first to last row and back must not redraw or blank either
+  parent or overlay.
+- B-cancel regionally retires box 6 and reconstructs the exact covered cells from the same
+  Item page. It must restore the original page number, selected row, page marker, Item
+  names, equipment markers, borders, and Window without a full-screen blank.
+- The contract applies independently to pages 1, 2, 3, and 4. Passing on page 1 cannot
+  authorize the other three.
+
+### What does not change in checkpoint 3
+
+- Selecting `Eat`, `Read`, `Wave`, `Equip`, `Remove`, `Fire`, `Toss`, or `Drop` may replace
+  the menu with gameplay/effect handling; its native transition remains authoritative.
+- `Info` to screen 4 and back is checkpoint 4. `Name` to screen 9 is a separate ownership
+  epoch. Selecting a Pot's `See`, `Put`, or `Push` and any following selector/content
+  screen is deferred with the Pot lifecycle.
+- Floor screen 20/box 39, Pot screens 12/13, shop-priced/`Tag` variants, ground popup
+  screen 3, debug screens 27-29, and the untraced screen-16 alias retain their current
+  full-map-safe paths.
+
+### Implemented ownership transaction
+
+The exact screen-2 row-0 gate requires state `$00`, current screen/depth `$02`, stack
+`0,1,2`, a valid selector within a 1-20-item inventory, `$C6DE=$00`, and the standard
+LCD/scroll/Window configuration. It then scans visible BG rows 0-15 and Window rows 0-1.
+Any reference to `$C7-$DE` rejects the private path; this also rejects shop Item pages
+structurally because their price rasters occupy `$D0-$DE`.
+
+An admitted Action picker assigns verb row `r` the fixed four-tile slice
+`$C7 + 4*r`, for `r=0..5`. Thus the largest six-row picker owns exactly `$C7-$DE` and
+cannot exhaust or alias the 72-tile Item-page allocator. The opening draw, box chrome,
+cursor writer, and final map publication remain native; the new work is lifetime proof
+and disjoint raster allocation, not a replacement overlay renderer.
+
+The Action admission hook snapshots the exact seven-cell Item page-marker/top edge from
+shadow `$C36D-$C373` into translation-owned `$C1B8-$C1BE` and saves the retained Item
+record count in `$C1B5`'s high three bits before box 6 publication. The B handler at
+`4:$5689` reaches the generic pop arithmetic with `HL=$5689`; the hook at
+`4:$485A-$4861` preserves that arithmetic for every caller and arms state `$07` only for
+this exact call site and admitted screen-2 stack. While that pre-pop proof is still live,
+it reconstructs the covered parent in shadow: rows 1-2 are truly empty, the saved row 3
+restores the complete page marker, and retained Item VWF records restore any name tails
+at x=13..18 plus the native right/bottom borders. It then drains the VWF queue, enters a
+fresh VBlank, and copies that completed parent only to box 6's physical footprint:
+
+```text
+BG start $982D = (x=13, y=1)
+width             7 cells, x=13..19
+height            2 * verb_rows + 1
+four rows         y=1..9
+five rows         y=1..11
+six rows          y=1..13
+```
+
+Once the parent is visible, the helper restores the retained Item-record count, row shape,
+cursor limit/position/base, and current screen state. Carry returns to the patched bytes at
+`4:$485D`, which jump directly to the existing pop epilogue at `4:$4878`. The generic
+shadow clear, screen-0 Status reconstruction, screen-1 Item reconstruction, and final map
+copy are therefore skipped only for this already-complete transaction. That replay was
+the source of the roughly 40-frame input stall after the screen looked settled. The exact
+route now returns from the B handler two frames after the press, and a post-release D-pad
+press is accepted normally. If any proof or restore fails, carry remains clear and
+execution falls through at `4:$4862` to the unchanged conservative native replay.
+
+This direct return is safe because Action uses disjoint `$C7-$DE` rasters, its admission
+preserves the Item VWF records, and the restorer makes both shadow and visible box-6 cells
+match their Item parent before the jump. The page number, item selector, page marker,
+cursor, borders, equipment markers, all cells outside the footprint, and the hardware
+Window retain their existing owners.
+
+ROM/WRAM ownership for this checkpoint is:
+
+| Owner | Range / value | Responsibility |
+|---|---|---|
+| Bank 37, far `$05` | `$405A-$40FB` | live-layer admission, collision scan, and page-edge save dispatch |
+| Bank 61, far `$07/$09` | `$405A-$40EF` | private Action-row allocator plus register-transparent initial screen-15 cursor staging |
+| Bank 62, far `$07` | `$405A-$42A5` | exact box-6 parent and Item-machine-state restorer |
+| Bank 60, far `$0D` | `$4298-$42FA` | exact generic-pop proof and direct-return dispatch |
+| `$C1B4` | four, five, or six | retained box-6 verb-row count |
+| `$C1B5` | `rrr ii iii` | retained Item record count in bits 7-5 plus selector in bits 4-0 |
+| `$C1B6` | zero or one | private-pool admission latch |
+| `$C1B7` | zero or one | completed standing-item Floor page; consumed only by its direct Status pop |
+| `$C1B8-$C1BE` | seven tile references | saved Item page-marker/top edge under box 6 |
+
+`tools/actionmenuspill.py` boots the real four-page Dragon's Maw inventory independently
+for five full-inventory paths: page-1 `Equip`, page-1 equipped `Remove`, page-2 hidden
+Bracer with five rows, page-3 `Eat`, and page-4 hidden Pot with six rows. Four additional
+exact short-page shapes cover one through four pages and retained record counts below
+five. Every run moves the Action cursor first-to-last-to-first, B-cancels, then immediately
+moves Down and Up on the returned Item page. It verifies the exact `0,1,2` admission, all
+private tile bases and both bitplanes, one `HL=$5689` pop, one VBlank parent restore, no
+post-B Status/Items replay, B-handler return within two observed frames, accepted D-pad
+input within two observed frames, no blank/mixed/unowned footprint, an immutable Window,
+the identical final Item page/selector and menu-machine state, and zero LCD-off or
+all-white frames. `menuspill.py --long` independently forces 11-tile Item rows so the
+covered nonempty VWF tail reconstruction is exercised.
+
+The complete `build.sh` battery passes with this controller in the final ROM. That
+includes both Item-page cadences, synthesized one- through four-page inventories, direct
+entry/exit, held Action-to-Info and Name entry, Floor/Info, Pot/Info and Pot Put, the
+seven-row out-of-scope Pot picker, shop prices, debug menus, and all start-menu composites.
+This is automated regression completion, not manual visual acceptance.
+
+### Manual visual acceptance paths
+
+1. On each of Item pages 1, 2, 3, and 4, open one screen-2 picker, move its cursor to the
+   last row and back, then press B. Confirm the surrounding Item page never disappears
+   and the same page/selection returns.
+2. Separately inspect a four-row known item, a four-row equipped item showing `Remove`, a
+   five-row known Pot or identity-hidden non-Pot, and a six-row identity-hidden Pot.
+3. For the Pot representatives, stop after B-cancel. Do not select `See`, `Put`, or `Push`
+   when judging checkpoint 3; those descendants are deliberately unchanged.
+4. Optionally select one gameplay-bound verb only to confirm its existing transition was
+   not broken. A full-screen blank on that replacement path is not a checkpoint-3 defect.
+5. From PUSH START, open the initial title menu and confirm its cursor is already beside
+   Adventure before any D-pad input.
+6. While standing on an item with four carried pages, page right from page 4 to the
+   appended Floor page. Confirm there are no vertical borders below its single item box,
+   then press B and confirm Status replaces it without a full-screen blank.
 
 ## Current transition controller
 
@@ -390,15 +572,22 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | `$04` | Info-to-Action return pending |
 | `$05` | regional Item attempt rejected after blanking; finish through whole-map fallback |
 | `$06` | initial/declined Items entry latch; never reinterpret a later row-0 pass as Left/Right |
+| `$07` | transient admitted held-Action B parent/machine-state restore; cleared before direct return |
 | `$10` | title/file composite transaction |
 | `$11` | difficulty composite transaction |
 | `$12` | proportional Rankings map-swap transaction |
 | `$13` | Fay composite transaction |
 | `$14` | native Rankings transaction |
 
+`$C1B7` is a separate one-bit settlement proof, not another `$C1B3` mode. It is set only
+after screen 1 completes selector `$FF`, and is cleared as soon as the exact direct
+Floor-page-to-Status pop is admitted. A stale or partially built `$FF` page therefore
+cannot broaden the live-exit path.
+
 Screen-1 Left/Right and Start-sort redraws use the narrow regional transaction below.
 Exact direct Status-to-Items entry and Items-to-Status pops use the two broader directions
-described afterward. Pot pages, unexpected nonempty Item fallback, Floor/Info, and unknown
+described afterward. Pot pages, unexpected nonempty Item fallback, standalone screen-20
+Floor/Info, and unknown
 LCD-on Status reconstructions still disable LCDC bit 7 before pixels are reused, build the
 replacement in `$C300`, publish all visible 20x18 cells, then re-enable the LCD. That
 retained path is the safe fallback. Regional publication changes scope and ownership
@@ -438,6 +627,16 @@ The retirement state therefore normalizes `key+0` to `$BE` while blanking `key+1
 This is a 90-cell write set: five normalized borders plus 85 blank marker/name cells. It
 still retires at most 55 dynamic tile-data slots for five 11-tile proportional rows. The
 border and marker tile planes remain immutable; only their map references change.
+For the standing-item Floor page (`$C6AC=$FF`), the same transaction has a narrower final
+shape: only item row 0 exists. Its blank commit retains row 0's `$BE` left border but
+zeros the left borders of outgoing rows 1-4 along with their interiors. This prevents
+the four permanent vertical remnants that result from treating a one-row page as a short
+five-row Item list. The shape-specific commit also rebuilds the complete empty Floor
+rectangle at rows 3-5 before its first text row. In the reverse direction, a completed
+Floor latch plus the incoming carried selector commits the complete empty five-row Items
+rectangle at rows 3-13 before page text. Right selects page 1; Left selects the last
+carried page. The regional controller masks IE around the ROM's internally-`EI` far-call
+trampoline so both conversions finish inside the VBlank that begins their publication.
 
 ### Locked and separately mutable cells
 
@@ -476,12 +675,16 @@ cannot be returned to the allocator even if its original VWF row record is being
    all four cells `$BC`, after the native writer retires the old markers but before it
    draws page 1. Initial entry is owned by the separate screen-1 pre-clear gate below;
    unknown/declined entry remains latched as state `$06`.
-2. After the predecessor proof, the controller writes `$BE`
+2. After the predecessor proof, the controller normally writes `$BE`
    to the five marker-coupled left borders and clears exactly the five status-marker cells
    and five 16-cell name interiors in shadow, then applies the same regional state to
    visible BG during VBlank. Interrupts are masked only across the VBlank rendezvous/copy
    so the native handler cannot consume the write window, and are restored immediately
-   afterward. State becomes `$01`; LCDC bit 7 never changes.
+   afterward. Selector `$FF` instead converts the complete five-row Items box to a
+   complete empty one-row Floor box and structurally zeros rows 6-13. A completed Floor
+   latch with an incoming carried selector performs the inverse conversion to a complete
+   empty five-row Items box. These shape commits finish inside VBlank; state then becomes
+   `$01`, and LCDC bit 7 never changes.
 3. The existing allocator resets its row records at the new row-0 epoch, but no reused
    tile pixels are uploaded until the old visible name references are gone. Each renderer
    row completes its tile upload, then the controller drains `$C11A` again before copying
@@ -502,8 +705,9 @@ ROM ownership is explicit:
 | Bank 60 range | Far index | Responsibility |
 |---:|---:|---|
 | `$405A-$4084` | `$05` | shared 20x18 fallback publisher |
-| `$4090-$425E` | `$07` | exact screen-1 regional controller |
-| `$4300-$43CF` | `$09` | initial/Pot/fallback controller |
+| `$4090-$4294` | `$07` | exact screen-1 regional controller |
+| `$4298-$42FA` | `$0D` | held-Action B-pop proof and direct-return dispatch |
+| `$4300-$43E9` | `$09` | initial/Pot/fallback controller |
 | `$4400-$4FFF` | — | redirected text; allocator origin raised to protect the code arena |
 
 Allowed visual row states are `old -> blank -> complete new`. A row may skip directly from
@@ -527,7 +731,7 @@ regress from new to blank or old.
   they are adjacent ownership regressions even though their transitions remain LCD-off.
 
 `tools/itempagespill.py` exercises eight complete five-row draws plus the native one-row
-right-wrap sentinel over four unique pages. Its seven direction presses cross the equipped
+standing-item Floor page over four unique carried pages. Its seven direction presses cross the equipped
 page-1 boundary both ways, then drive both physical stages of last-page-to-page-1 wrap;
 Start-sort supplies the final redraw. Direct initial entry now records zero LCD-off frames;
 every scoped Left/Right or Start-sort transaction also records zero. For each redraw it hooks the controller
@@ -540,10 +744,19 @@ physical bitplanes to old, blank, an in-VBlank blank-to-new publication, or comp
 content. It also proves the raw marker is blank with its outgoing name and returns in the
 same commit as its incoming row, while locking unrelated visible BG cells and structural
 tiles `$81`, `$83-$85`, `$B8-$BF`, and `$C5/$C6`, and rejects state `$05/$06` on a
-scoped flip. The wrap sentinel additionally proves that selector `$FF`, followed by the
+scoped flip. The standing-Floor wrap additionally proves that selector `$FF`, followed by the
 selector-zero/all-`$BC` page-1 transient, begins two regional transactions with no fallback.
-The second build invocation uses a 20-frame cadence and a non-sentinel four-page cycle;
+The second build invocation uses a 20-frame cadence and a carried-page-only four-page cycle;
 all seven redraws remain regional with no fallback or LCD-off frame.
+
+`tools/floorpagespill.py` uses the Wood Arrow save to traverse selectors
+`0,5,10,15,$FF`. After settlement it requires the one ground-item box at rows 3-5 and
+twenty zero cells in every shadow and BG row 6-15. Three independent boots then leave
+Floor by B, Right, and Left. B requires the same nine live Status uploads; Right returns
+to selector 0 and Left to selector 15. Both paging exits require a byte-exact empty
+five-row rectangle before text, while Items-to-Floor requires a byte-exact empty one-row
+rectangle. All three routes require zero regional/status fallbacks, zero LCD-off frames,
+and zero all-white frames.
 
 `tools/fusioncountspill.py` synthesizes the shortest one-, two-, three-, and four-page
 inventories (1/6/11/16 items). It cycles Right through every page and wrap boundary, then
@@ -625,8 +838,9 @@ re-entry after every prior page-selector lifetime, not only the first opening.
 
 ## Items-to-Status live exit (checkpoint 2, exit direction)
 
-The exit requirement is explicit: pressing B on page 1, 2, 3, or 4 must not blank the
-screen. This route does not need an Item-region blank. The outgoing page owns the display
+The exit requirement is explicit: pressing B on carried page 1, 2, 3, or 4, or on the
+settled standing-item Floor page after them, must not blank the screen. This route does
+not need an Item-region blank. The outgoing page owns the display
 until the native Status publisher progressively replaces its cells with completed Status
 content.
 
@@ -640,7 +854,7 @@ direct predecessor is:
 | `$C535/$C536` | `$00,$01` | surviving Status root plus stale popped Items entry |
 | `$C6A3` | `$00` | Status is the screen currently being reconstructed |
 | `$C6AA` | `$01-$14` | one through twenty items, hence at most four pages |
-| `$C6AC` | less than `$C6AA` | a real selected item on any page, not a sentinel |
+| `$C6AC` | less than `$C6AA`, or `$FF` with `$C1B7=$01` | a real selected carried item, or the independently proven completed standing-item Floor page |
 | `LCDC & $F8` | `$E0` | LCD on, signed BG tiles, Window configuration intact |
 | `SCY/SCX` | `$00,$00` | ordinary menu viewport |
 | `WY/WX` | `$80,$07` | persistent two-row status Window at the bottom |
@@ -648,6 +862,8 @@ direct predecessor is:
 Only that complete predicate selects the live exit. Any unknown LCD-on Status return uses
 the retained LCD-off fallback. In particular, Name-to-Items stack reconstruction is not
 silently admitted; after it settles, a later direct Items B pop can qualify normally.
+The `$FF` branch consumes and clears `$C1B7` before returning; selector `$FF` alone is
+never sufficient.
 
 The outgoing visible BG and Window reference none of the 40 private Status field IDs or
 the eight structured Weapon/Shield IDs. Those 48 tile planes may therefore be restored
@@ -674,6 +890,11 @@ All four routes settle to the same visible Status raster. The unidentified-item 
 fixture separately proves one conservative Name reconstruction followed by one live
 direct Items exit.
 
+`tools/floorpagespill.py` independently covers the fifth-page form. Its Status-entry
+snapshot requires selector `$FF`, latch `$01`, the exact `0,0,1` stale stack and standard
+viewport. It observes the same nine VBlank uploads and verifies that the latch is zero
+after the final Status screen, with no full-screen blank.
+
 ## Checkpoint-2 acceptance record
 
 Checkpoint 2 was frozen on 2026-08-23 against implementation commit `3489572` after it
@@ -691,10 +912,15 @@ Any later change to these routes must preserve the ownership predicates and fixt
 fallbacks documented above, then pass a new visual review. Checkpoint 3 must not broaden
 this frozen scope implicitly.
 
+The 2026-08-24 standing-item Floor correction extends the implementation beyond that
+historical pages-1-4 acceptance record. Its automated contract passes; it remains part of
+the current manual review until explicitly accepted.
+
 ## What is not safe to regionalize yet
 
-- **Action and Info opens/closes:** their boxes overlap Item/Floor content and Back invokes
-  replay. Existing `$02-$04` full-map transactions remain the baseline.
+- **Info and non-held Action opens/closes:** the held Items screen-2 B-cancel described
+  above is the only Action replay regionalized here. Floor, Pot, shop, screen 16, and
+  Action-to-Info lifecycles retain their established full-map transactions.
 - **Start/title composites:** log summaries, confirmation, difficulty, Rank/Pass, Fay, and
   Rankings borrow planes across several boxes. Their current atomic controller remains.
 - **Map, Quit, Replay, and gameplay verbs:** these are replacement paths. Preserve their
@@ -706,8 +932,8 @@ this frozen scope implicitly.
 
 ## Remaining exploration and implementation worklist
 
-1. Trace the checkpoint-3 Action-menu lifecycle from every Item page—open, cursor move,
-   cancel, item use, and return—before changing its current full-map transaction.
+1. Complete manual visual acceptance of the fixture-backed checkpoint-3 paths, then
+   freeze the checkpoint before beginning Action-to-Info work.
 2. Extend the direct Window reference-set audits used by `itemexitspill.py` and
    `itementryspill.py` to any future
    route that keeps the hardware Window enabled.
@@ -716,7 +942,8 @@ this frozen scope implicitly.
    an implementation boundary.
 
 The implemented scope remains narrow: screen-1 paging/Start-sort owns an exact five-row
-mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; and direct
-Items-to-Status owns only nine private field uploads while leaving native map publication
-authoritative. Every direction retains the existing full-screen-safe path whenever an
+mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; direct
+Items-to-Status owns only nine private field uploads; and held screen-2 Action B-cancel
+owns box 6 plus the exact Item input state needed for its direct return. Native final-map
+publication remains authoritative on every rebuilding route. Every direction retains the existing full-screen-safe path whenever an
 allowlist or ownership assertion fails.

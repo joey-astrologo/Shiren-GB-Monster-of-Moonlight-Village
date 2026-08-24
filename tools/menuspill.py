@@ -65,6 +65,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gbrun import _import_pyboy, PRESS_FRAMES               # noqa: E402
 import menuvwf                                               # noqa: E402
+import gbasm                                                  # noqa: E402
 import propvwf                                               # noqa: E402
 import structvwf                                             # noqa: E402
 import statusvwf                                             # noqa: E402
@@ -658,7 +659,30 @@ def drive(rom, profile, long_mode, png, frames=680, ram=None):
         script.update({640: 'a', 710: 'b'})
     problems, invariant_frames = [], 0
     long_records = action_records = None
+    long_parent_region = None
+    long_restore_events = []
     checked = [0]
+
+    def action_region():
+        planes = []
+        for row in range(1, 10):
+            for col in range(13, 20):
+                tile = pb.memory[BGMAP + 32 * row + col]
+                at = tile_data_addr(tile)
+                planes.append(bytes(pb.memory[at:at + 16]))
+        return tuple(planes)
+
+    if long_mode:
+        _blank_code, blank_labels = gbasm.assemble(
+            menuvwf.ACTION_BLANK_SRC, menuvwf.ACTION_BLANK_AT)
+
+        def long_restored(_ctx=None):
+            if frame['n'] >= 700:
+                long_restore_events.append((frame['n'], action_region()))
+
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, blank_labels['abrestored'],
+                         long_restored, None)
+
     for f in range(frames):
         frame['n'] = f
         if f in script:
@@ -711,6 +735,7 @@ def drive(rom, profile, long_mode, png, frames=680, ram=None):
             problems += settled_check(pb, profile, 'f%d' % f, checked, drawn)
         if long_mode and f == 620:
             long_records = records(pb, profile)
+            long_parent_region = action_region()
         if long_mode and f == 700:
             action_records = records(pb, profile)
             if png:
@@ -819,14 +844,24 @@ def drive(rom, profile, long_mode, png, frames=680, ram=None):
                                     % (len(caps), sum(caps), len(expected_caps),
                                        sum(expected_caps)))
                 occupied = []
+                admitted_runs = tuple(profile['runs']) + (
+                    (menuvwf.ACTION_POOL_BASE, menuvwf.ACTION_POOL_END),)
                 for _key, base, cap, _raw in action_records:
                     if not any(lo <= base and base + cap <= hi
-                               for lo, hi in profile['runs']):
+                               for lo, hi in admitted_runs):
                         problems.append('--long: slice $%02X+%d crosses a proven pool run'
                                         % (base, cap))
                     occupied.extend(range(base, base + cap))
                 if len(occupied) != len(set(occupied)):
                     problems.append('--long: worst item+action slices overlap in VRAM')
+        if long_parent_region is None:
+            problems.append('--long: hostile parent region snapshot was not captured')
+        if len(long_restore_events) != 1:
+            problems.append('--long: B-cancel parent restore events are %s, expected one'
+                            % [event[0] for event in long_restore_events])
+        elif long_parent_region is not None and \
+                long_restore_events[0][1] != long_parent_region:
+            problems.append('--long: exact B-cancel restore differs from hostile parent')
     pb.stop(save=False)
     if tmp is not None:
         tmp.cleanup()

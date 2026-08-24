@@ -2,7 +2,7 @@
 """Replay the multi-page item-menu transition from cartridge RAM.
 
 ``saves/shiren_en_item_menu.srm`` contains one populated log with enough inventory for
-four or five pages. This route boots that log normally, opens Menu -> Items, then pages
+four carried pages plus the standing-item Floor page. This route boots that log normally, opens Menu -> Items, then pages
 right and left and invokes Start-sort through the real input handler. It records every
 item-row draw and audits the regional transaction at frame granularity: LCD-on ownership,
 old/blank/new row states,
@@ -52,6 +52,8 @@ def transition_snapshot(pb):
         'lcd': bool(pb.memory[0xFF40] & 0x80),
         'window': bool(pb.memory[0xFF40] & 0x20),
         'ly': pb.memory[0xFF44],
+        'selector': pb.memory[0xC6AC],
+        'floor_latch': pb.memory[0xC1B7],
     }
 
 
@@ -111,13 +113,16 @@ def row_blanking(snapshot, outgoing, row):
     return saw_blank and refs != bytes(16)
 
 
-def locked_map_changes(before, after, kind):
+def locked_map_changes(before, after, kind, floor_expand=False):
     """Return visible cells changed outside the regional transaction's write set."""
     allowed = {(3, col) for col in range(15, 19)}
     for row in range(5):
         # The visible transaction owns the marker-coupled left border, marker,
         # cursor, and name cells. The cursor is separately published by native code.
         allowed.update((4 + 2 * row, col) for col in range(0, 19))
+    if floor_expand:
+        # The one-row Floor rectangle is becoming the five-row Items rectangle.
+        allowed.update((row, col) for row in range(3, 14) for col in range(20))
     changed = []
     for row in range(18):
         for col in range(20):
@@ -175,8 +180,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         def dispatch(_ctx=None):
             dispatches.append((frame[0], pb.register_file.A))
             # Native right wrap is deliberately two-stage for this real four-page save:
-            # the first Right selects $FF and draws a one-row sentinel, while the next
-            # Right selects page 1 and restores the ordinary five-row shape. Drive both
+            # the first Right selects $FF and draws the one-row standing-item Floor page,
+            # while the next Right selects page 1 and restores the ordinary five-row shape. Drive both
             # physical inputs so the transient all-$BC page marker is regression-tested.
             if (right_wrap_pending[0] and pb.register_file.A == 1 and
                     pb.memory[0xC6AC] == 0xFF):
@@ -347,7 +352,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             problems.append('real route never scheduled Start-sort')
         expected_wraps = 1 if test_wrap else 0
         if len(right_wrap_dispatches) != expected_wraps:
-            problems.append('real route observed %d right-wrap sentinel dispatches, '
+            problems.append('real route observed %d standing-Floor wrap dispatches, '
                             'expected %d' % (len(right_wrap_dispatches), expected_wraps))
         expected_regional = len(page_presses) + len(sort_presses)
         if len(scoped_regional_begins) != expected_regional:
@@ -360,7 +365,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         if right_wrap_dispatches and not any(
                 right_wrap_dispatches[0] <= at <= right_wrap_dispatches[0] + 5
                 for at in scoped_regional_begins):
-            problems.append('right-wrap $FF sentinel did not begin a regional '
+            problems.append('standing-Floor $FF page did not begin a regional '
                             'transaction')
         if scoped_lcd_off:
             problems.append('Items route disabled LCD at %s' %
@@ -502,14 +507,21 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             origin = page['regional_origin']
             shadow_blanked = page['shadow_blanked']
             visible_blanked = page['visible_blanked']
+            floor_expand = False
             if origin is None or shadow_blanked is None or visible_blanked is None:
                 problems.append('page flip %d did not capture all regional blank '
                                 'boundaries' % index)
             else:
+                floor_expand = (origin['floor_latch'] == 1 and
+                                origin['selector'] != 0xFF)
                 if not origin['lcd'] or not shadow_blanked['lcd'] or not visible_blanked['lcd']:
                     problems.append('page flip %d disabled LCD across regional blank '
                                     'boundary' % index)
-                if visible_blanked['ly'] < 0x90:
+                if floor_expand and not 0x90 <= visible_blanked['ly'] <= 0x99:
+                    problems.append('page flip %d Floor expansion ended outside VBlank '
+                                    '(LY=$%02X)' %
+                                    (index, visible_blanked['ly']))
+                elif not floor_expand and visible_blanked['ly'] < 0x90:
                     problems.append('page flip %d published regional blank outside '
                                     'VBlank (LY=$%02X)' %
                                     (index, visible_blanked['ly']))
@@ -519,29 +531,48 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 if visible_blanked['shadow'] != shadow_blanked['shadow']:
                     problems.append('page flip %d changed shadow map while publishing '
                                     'the regional blank' % index)
-                for label, before, after, plane in (
-                        ('shadow', origin['shadow'], shadow_blanked['shadow'], 'shadow'),
-                        ('visible BG', origin['bg'], visible_blanked['bg'], 'BG')):
-                    retained = next((offset for offset in blank_targets
-                                     if after[offset] != 0),
-                                    None)
-                    bad_border = next((offset for offset in borders
-                                       if after[offset] != 0xBE), None)
-                    changed = next((offset for offset in range(0x400)
-                                    if offset not in region_targets and
-                                    before[offset] != after[offset]), None)
-                    if retained is not None:
-                        problems.append('page flip %d left %s target +$%03X nonblank' %
-                                        (index, label, retained))
-                    if bad_border is not None:
-                        problems.append('page flip %d left %s border +$%03X as $%02X, '
-                                        'expected $BE' %
-                                        (index, label, bad_border, after[bad_border]))
-                    if changed is not None:
-                        problems.append('page flip %d changed locked %s cell +$%03X '
-                                        'during blank' % (index, plane, changed))
+                if floor_expand:
+                    top = bytes((0xB8,)) + bytes((0xBC,)) * 18 + bytes((0xB9,))
+                    side = bytes((0xBE,)) + bytes(18) + bytes((0xBF,))
+                    bottom = bytes((0xBA,)) + bytes((0xBD,)) * 18 + bytes((0xBB,))
+                    for label, after in (('shadow', shadow_blanked['shadow']),
+                                         ('visible BG', visible_blanked['bg'])):
+                        expected = {3: top, 13: bottom}
+                        expected.update((row, side) for row in range(4, 13))
+                        bad = next(((row, after[row * 32:row * 32 + 20], want)
+                                    for row, want in sorted(expected.items())
+                                    if after[row * 32:row * 32 + 20] != want), None)
+                        if bad is not None:
+                            row, actual, want = bad
+                            problems.append('page flip %d Floor expansion %s row %d '
+                                            'is %s, expected %s' %
+                                            (index, label, row, actual.hex(' '),
+                                             want.hex(' ')))
+                else:
+                    for label, before, after, plane in (
+                            ('shadow', origin['shadow'], shadow_blanked['shadow'], 'shadow'),
+                            ('visible BG', origin['bg'], visible_blanked['bg'], 'BG')):
+                        retained = next((offset for offset in blank_targets
+                                         if after[offset] != 0),
+                                        None)
+                        bad_border = next((offset for offset in borders
+                                           if after[offset] != 0xBE), None)
+                        changed = next((offset for offset in range(0x400)
+                                        if offset not in region_targets and
+                                        before[offset] != after[offset]), None)
+                        if retained is not None:
+                            problems.append('page flip %d left %s target +$%03X nonblank' %
+                                            (index, label, retained))
+                        if bad_border is not None:
+                            problems.append('page flip %d left %s border +$%03X as $%02X, '
+                                            'expected $BE' %
+                                            (index, label, bad_border, after[bad_border]))
+                        if changed is not None:
+                            problems.append('page flip %d changed locked %s cell +$%03X '
+                                            'during blank' % (index, plane, changed))
             for at, _image, memory in samples[:first_new + 1]:
-                changed = locked_map_changes(old['bg'], memory['bg'], 'BG')
+                changed = locked_map_changes(old['bg'], memory['bg'], 'BG',
+                                             floor_expand=floor_expand)
                 if changed:
                     kind, row, col, before, after = changed[0]
                     problems.append('page flip %d changed locked %s cell (%d,%d) at '
@@ -634,7 +665,7 @@ def main():
     parser.add_argument('--settle-frames', type=int, default=90,
                         help='frames from row-4 completion to the next paging input')
     parser.add_argument('--no-wrap', action='store_true',
-                        help='avoid the native two-input right-wrap sentinel')
+                        help='avoid the standing-Floor then page-1 two-input wrap')
     args = parser.parse_args()
     if not os.path.exists(args.ram):
         raise SystemExit('itempagespill: missing RAM fixture: %s' % args.ram)

@@ -2,7 +2,7 @@
 """Prove Status -> Items entry/re-entry and its first page change stay LCD-on.
 
 The real 18-item SRAM is exercised independently from each of its four Item pages:
-leave to the root Status screen, reopen Items, then page once in a non-sentinel
+leave to the root Status screen, reopen Items, then page once through carried pages
 direction.  The entry controller must retire only visible BG rows 0..15 over four
 complete VBlanks, commit the empty header/list-box chrome before any item text, preserve
 the enabled two-row Window, and hand the incoming screen to the existing row/final-map

@@ -1619,12 +1619,24 @@ stride-32 shadow clear and conservative path.
 inside VBlank before the first Item-row call, no frame disables the LCD or becomes
 all-white, the Window is byte/plane-exact, and the first post-entry page change begins one
 narrow regional transaction with no fallback. `tools/itempagespill.py` additionally runs
-a 20-frame non-sentinel cadence. The paging gate now drains `$C11A`, rendezvouses with
+a 20-frame carried-page-only cadence. The paging gate now drains `$C11A`, rendezvouses with
 VBlank again, and only then validates the visible page indicator. This closes two
 phase-sensitive false-rejection candidates consistent with the rare playtest report: a
 partially published marker before the drain, or a blocked mode-3 VRAM read after a drain
 that consumed the original VBlank. The rare trigger itself was not captured
 deterministically, so removal still needs playtest confirmation.
+
+The selector `$FF` stage is the actual standing-item Floor page, not a dummy sentinel.
+Its incoming descriptor has one row, so a five-row regional clear must zero the four
+retired left borders rather than preserve them as empty Item chrome. A shape-specific
+bank-58 helper now converts the settled five-row rectangle to a complete empty one-row
+rectangle before Floor text, and converts it back to a complete empty five-row rectangle
+before either Right-to-page-1 or Left-to-page-4 text. The Wood Arrow route proves both
+directions, exact zero BG/shadow rows below the settled ground-item box, and uses `$C1B7`
+to admit only its completed direct pop through the live Items-to-Status controller. The
+same review also found that screen 15's atomic publisher preceded the native cursor
+initializer; the selected `$81` cursor is now pre-staged by a register-transparent helper
+and the entire first-published title perimeter is tested with it.
 
 **The general rule: when a block's byte layout changes, look for code that computes into it.
 A reference gets repointed; a hardcoded stride does not.**

@@ -15,8 +15,15 @@ existing row and final-map publishers reveal only completed Item content inside 
 The exact root -> Items -> root stack pop is special too: all 40 private status tiles are
 disjoint from every visible Item-page BG/Window reference. Keep that outgoing page live
 and upload each completed status field inside its own VBlank; the largest field is seven
-tiles and fits the ten-line interval. Unknown LCD-on returns retain the conservative
-LCD-off path. In both cases the game's existing status-map publisher remains authoritative.
+tiles and fits the ten-line interval. The standing-item Floor page appended at selector
+`$FF` receives the same treatment only after menuvwf marks its completed one-row map in
+`$C1B7`. Unknown LCD-on returns retain the conservative LCD-off path. In both cases the
+game's existing status-map publisher remains authoritative.
+
+Held Action B-cancel is handled earlier by menuvwf's exact pop proof. It restores both
+the covered Item parent and the retained Item input-machine state, so the generic pop
+skips its otherwise invisible screen-0/screen-1 reconstruction entirely. A rejected
+proof reaches the ordinary conservative status path here.
 
 The private low-page IDs deliberately avoid $22/$24/$2A/$36, which the persistent
 bottom status Window references while the menu is open.  Weapon/Shield retain the
@@ -371,9 +378,9 @@ statusentry:
   ; the conservative full-screen interval until their own ownership is mapped.
   ldh a,[$FF40]
   bit 7,a
-  jr z,statusdraw
+  jp z,statusdraw
   call itemexit
-  jr c,statusdraw
+  jp c,statusdraw
   call statusready
   ldh a,[$FF40]
   res 7,a
@@ -399,41 +406,50 @@ statuswaitblank:
 itemexit:
   ld a,[$C534]
   and a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ld a,[$C535]
   and a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ld a,[$C536]
   dec a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ld a,[$C6A3]
   and a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ld a,[$C6AA]
   and a
-  jr z,itemexitbad
+  jp z,itemexitbad
   cp $15
-  jr nc,itemexitbad
+  jp nc,itemexitbad
   ld b,a
   ld a,[$C6AC]
   cp b
-  jr nc,itemexitbad
+  jr c,itemexithardware
+  inc a
+  jp nz,itemexitbad
+  ld a,[$C1B7]
+  dec a
+  jp nz,itemexitbad
+  jr itemexithardware
+itemexithardware:
   ldh a,[$FF40]
   and $F8
   cp $E0
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ldh a,[$FF42]
   and a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ldh a,[$FF43]
   and a
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ldh a,[$FF4A]
   cp $80
-  jr nz,itemexitbad
+  jp nz,itemexitbad
   ldh a,[$FF4B]
   cp $07
-  jr nz,itemexitbad
+  jp nz,itemexitbad
+  xor a
+  ld [$C1B7],a
   scf
   ret
 itemexitbad:
@@ -1041,4 +1057,5 @@ def install(buf, notes=None, font=None):
                      'tiles; exact Status-to-Items entry retires only visible BG rows '
                      '0-15, precommits empty box chrome, and preserves the Window; exact '
                      'Items-to-Status pops keep LCD on with nine bounded field uploads; '
+                     'held-Action B restores its Item parent and input state without replay; '
                      'unknown LCD-on returns retain the conservative path')
