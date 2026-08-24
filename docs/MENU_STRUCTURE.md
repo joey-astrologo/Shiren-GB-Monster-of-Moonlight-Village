@@ -4,10 +4,10 @@
 Item entry/exit directions, measured 2026-08-23. The dispatcher, box catalogue, memory map,
 and fixture-backed routes below are established. Routes marked `outline` or `inferred`
 still need a real button-driven trace before later regional work depends on them.
-Checkpoint 1 (paging and Start-sort) is committed and visually accepted. Leaving any of
-pages 1-4 keeps the outgoing page live until Status replaces it. Direct Status-to-Items
-entry/re-entry now blanks only BG rows 0-15 and preserves the bottom Window; the entry
-half commits empty box chrome before item text and awaits revised visual review.
+Checkpoints 1 and 2 are committed, regression-complete, and visually accepted. Leaving
+any of pages 1-4 keeps the outgoing page live until Status replaces it. Direct
+Status-to-Items entry/re-entry blanks only BG rows 0-15, preserves the bottom Window, and
+commits empty box chrome before item text.
 
 This document answers two separate questions:
 
@@ -674,6 +674,23 @@ All four routes settle to the same visible Status raster. The unidentified-item 
 fixture separately proves one conservative Name reconstruction followed by one live
 direct Items exit.
 
+## Checkpoint-2 acceptance record
+
+Checkpoint 2 was frozen on 2026-08-23 against implementation commit `3489572` after it
+passed manual review and the complete regression battery. The accepted visual contract
+is:
+
+- Status-to-Items retains the bottom status Window, regionally clears only the replaceable
+  BG, publishes both empty box perimeters, and then reveals completed Item text rows.
+- Items-to-Status leaves pages 1-4 visible until completed Status fields replace them; no
+  Item page may trigger a full-screen blank on this direct exit.
+- Paging in either direction and Start-sort retain the checkpoint-1 five-row regional
+  redraw, including short inventories and every wrap boundary.
+
+Any later change to these routes must preserve the ownership predicates and fixture-backed
+fallbacks documented above, then pass a new visual review. Checkpoint 3 must not broaden
+this frozen scope implicitly.
+
 ## What is not safe to regionalize yet
 
 - **Action and Info opens/closes:** their boxes overlap Item/Floor content and Back invokes
@@ -689,9 +706,8 @@ direct Items exit.
 
 ## Remaining exploration and implementation worklist
 
-1. Stop for visual review of the revised Status-to-Items sequence: regional clear, empty
-   boxes, then completed text rows. The automated ownership/order proof is complete, but
-   its full-redraw appearance is a product decision.
+1. Trace the checkpoint-3 Action-menu lifecycle from every Item page—open, cursor move,
+   cancel, item use, and return—before changing its current full-map transaction.
 2. Extend the direct Window reference-set audits used by `itemexitspill.py` and
    `itementryspill.py` to any future
    route that keeps the hardware Window enabled.

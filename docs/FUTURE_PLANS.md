@@ -2,11 +2,11 @@
 
 ## Regional blanking for proportional Item pages
 
-**Status:** Checkpoint 1 is the committed, visually accepted paging/Start-sort POC.
-Checkpoint 2 is implemented and regression-complete: Items-to-Status keeps pages 1-4 live,
-while Status-to-Items blanks only the replaceable BG above the persistent Window and
-commits empty box chrome before item text. The revised entry half awaits visual review.
-Checkpoints 3-6 remain deferred.
+**Status:** Checkpoints 1 and 2 are committed, regression-complete, and visually
+accepted. Checkpoint 2 keeps pages 1-4 live on Items-to-Status, while Status-to-Items
+blanks only the replaceable BG above the persistent Window and commits empty box chrome
+before item text. This accepted implementation is frozen at commit `3489572` on
+2026-08-23. Checkpoints 3-6 remain deferred.
 
 ### Motivation
 
@@ -119,11 +119,11 @@ rewrite.
 1. **Screen-1 redraw checkpoint — COMPLETE and visually accepted:** full and short Item
    pages, repeated movement in both directions, Start-sort, correct page indicator,
    cursor, and borders.
-2. **Item entry and exit — IMPLEMENTED, entry awaiting visual review:** Items back to
-   Status from each of pages 1-4 keeps the LCD and outgoing page live. Direct
-   Status-to-Items entry/re-entry keeps the Window live, retires BG rows 0-15 in four
-   VBlanks, commits both empty box perimeters, and then uses the existing
-   completed-row/native-final publishers for text and final decoration.
+2. **Item entry and exit — COMPLETE and visually accepted:** Items back to Status from
+   each of pages 1-4 keeps the LCD and outgoing page live. Direct Status-to-Items
+   entry/re-entry keeps the Window live, retires BG rows 0-15 in four VBlanks, commits
+   both empty box perimeters, and then uses the existing completed-row/native-final
+   publishers for text and final decoration.
 3. **Action menu lifecycle:** open the action picker from every page, move its cursor,
    cancel, consume an item, and return to Items without corrupting either screen.
 4. **Item Info lifecycle:** Action to Info, multi-page Info where applicable, and Info
