@@ -4,17 +4,17 @@
 Item entry/exit directions, measured 2026-08-23. The dispatcher, box catalogue, memory map,
 and fixture-backed routes below are established. Routes marked `outline` or `inferred`
 still need a real button-driven trace before later regional work depends on them.
-Checkpoints 1 and 2 are committed, regression-complete, and visually accepted. Leaving
+Checkpoints 1-3 are committed, regression-complete, and visually accepted. Leaving
 any of pages 1-4 keeps the outgoing page live until Status replaces it. Direct
 Status-to-Items entry/re-entry blanks only BG rows 0-15, preserves the bottom Window, and
 commits empty box chrome before item text.
 
-Checkpoint 3 is implemented and regression-complete but is still under visual review.
-Two review-found regressions are corrected in the current working tree: screen 15 stages
-its native cursor before the first atomic map publication, and the standing-item Floor
-page appended after carried Item pages clears its four retired row borders and returns
-live to Status. These corrections are fixture-backed but are not called visually accepted
-until the current review completes.
+Checkpoint 3 is frozen at implementation commit `34a20ec` on 2026-08-25. Its accepted
+scope includes the screen-15 Adventure cursor correction, complete one- and five-row
+Items/Floor shape conversion, live standing-Floor exit and paging, atomic Item-body/page
+indicator publication, and direct screen-2 Action B-cancel back to its exact carried-Item
+or settled standing-Floor parent. The acceptance record below separates conclusions
+proved by `mgbdis` from conclusions proved by frame-level runtime fixtures.
 
 This document answers two separate questions:
 
@@ -561,7 +561,7 @@ entry/exit, held Action-to-Info and Name entry, Floor/Info, Pot/Info and Pot Put
 seven-row out-of-scope Pot picker, shop prices, debug menus, and all start-menu composites.
 This is automated regression completion, not manual visual acceptance.
 
-### Manual visual acceptance paths
+### Frozen manual visual acceptance paths
 
 1. On each of Item pages 1, 2, 3, and 4, open one screen-2 picker, move its cursor to the
    last row and back, then press B. Confirm the surrounding Item page never disappears
@@ -577,6 +577,43 @@ This is automated regression completion, not manual visual acceptance.
 6. While standing on an item with four carried pages, page right from page 4 to the
    appended Floor page. Confirm there are no vertical borders below its single item box,
    then press B and confirm Status replaces it without a full-screen blank.
+
+### Checkpoint-3 acceptance record
+
+Checkpoint 3 was frozen on 2026-08-25 against implementation commit `34a20ec`. The full
+`build.sh` battery passed, and manual playtest accepted paging, Start-sort, both directions
+of the carried-Items/Floor boundary, live Floor-to-Status, the first title-menu cursor,
+all scoped Action overlay heights, prompt B-cancel, and immediate post-cancel input.
+
+`mgbdis` supplied control-flow facts, not visual timing. Most importantly, the Japanese
+base-ROM handlers at `4:$7339` and `4:$7354` update `$C6AC` and immediately invoke the
+stack redraw at `4:$483E`; neither handler reads visible page-indicator cells
+`$986F-$9872`. That disproved the translation-added indicator veto responsible for rare
+state-`$06` full-screen fallbacks. Disassembly also established the real `$FF` Floor
+selector, screen/box dispatchers, the box-6 verb-table split, and the exact
+`HL=$5689` Action pop call site used to narrow the direct return.
+
+Runtime fixtures supplied the facts that code alone could not prove:
+
+- `itempagespill.py` showed that removing the false veto exposed slow proportional
+  composition rather than an ownership failure. Holding rows 0-3 unreferenced and
+  committing all five Item bodies plus the page indicator at final row 4 changed the
+  visible sequence to complete old page, complete regional blank, complete new page.
+- Rapid-cadence and synthesized-inventory fixtures showed that ordinary carried-page
+  paging could be fast, while the one-row Floor/five-row Items shape boundary had to stay
+  serialized to prevent overlapping input and corrupted chrome.
+- `actionmenuspill.py` showed that the visually complete Item parent remained input-locked
+  because native B-cancel replayed unpublished Status and Items screens. Exact footprint
+  reconstruction plus direct restoration of screen-1 state removed that replay and its
+  roughly 40-frame stall.
+- `flooractionspill.py` proved that the same direct return is safe for selector `$FF` only
+  with the independent settlement latch: B returns in two observed frames, the following
+  Left input is accepted in one, and no sampled frame disables the LCD or becomes white.
+
+The reusable engineering lesson is to use static disassembly to establish native control
+flow and state producers, then use frame-level fixtures to establish ownership lifetime,
+publication order, VBlank timing, and responsiveness. Neither evidence source replaces
+the other.
 
 ## Current transition controller
 
@@ -967,12 +1004,12 @@ is:
   redraw, including short inventories and every wrap boundary.
 
 Any later change to these routes must preserve the ownership predicates and fixture-backed
-fallbacks documented above, then pass a new visual review. Checkpoint 3 must not broaden
-this frozen scope implicitly.
+fallbacks documented above, then pass a new visual review. Later checkpoints must not
+broaden this frozen scope implicitly.
 
 The 2026-08-24 standing-item Floor correction extends the implementation beyond that
-historical pages-1-4 acceptance record. Its automated contract passes; it remains part of
-the current manual review until explicitly accepted.
+historical pages-1-4 acceptance record. Its automated and visual contracts are accepted
+as part of the checkpoint-3 freeze at `34a20ec`.
 
 ## What is not safe to regionalize yet
 
@@ -991,8 +1028,8 @@ the current manual review until explicitly accepted.
 
 ## Remaining exploration and implementation worklist
 
-1. Complete manual visual acceptance of the fixture-backed checkpoint-3 paths, then
-   freeze the checkpoint before beginning Action-to-Info work.
+1. Trace the exact checkpoint-4 Action-to-Info, Info-page, and Info-return control flow
+   with `mgbdis` and real button-driven fixtures before choosing any regional mask.
 2. Extend the direct Window reference-set audits used by `itemexitspill.py` and
    `itementryspill.py` to any future
    route that keeps the hardware Window enabled.

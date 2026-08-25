@@ -2,21 +2,17 @@
 
 ## Regional blanking for proportional Item pages
 
-**Status:** Checkpoints 1 and 2 are committed, regression-complete, and visually
-accepted. Checkpoint 2 keeps pages 1-4 live on Items-to-Status, while Status-to-Items
-blanks only the replaceable BG above the persistent Window and commits empty box chrome
-before item text. This accepted implementation is frozen at commit `3489572` on
-2026-08-23. The current checkpoint-3 working tree also fixes two regressions found during
-visual review: the first title-menu publication now includes the Adventure cursor, and
-the special standing-item Floor page after carried pages retires all four unused row
-borders, converts between complete one- and five-row chrome in both paging directions,
-and returns live to Status. Both have first-frame fixtures but still await the same manual
-review. Checkpoint 3's exact screen-2 Action-overlay scope is implemented and
-regression-complete for carried pages 1-4 and the settled standing-item Floor page.
-Its B-cancel now replaces the outgoing Action box with the reconstructed Item/Floor
-parent and restores the retained screen-1 input state directly. The unpublished
-Status/Items replay is skipped, eliminating both shared-tile contamination and the
-former 40-frame input stall. Checkpoints 4-6 remain deferred.
+**Status:** Checkpoints 1-3 are committed, regression-complete, and visually accepted.
+Checkpoint 2 keeps pages 1-4 live on Items-to-Status, while Status-to-Items blanks only
+the replaceable BG above the persistent Window and commits empty box chrome before item
+text. It is frozen at commit `3489572` on 2026-08-23. Checkpoint 3 is frozen at commit
+`34a20ec` on 2026-08-25. Its accepted scope includes carried-page paging and sorting, the
+real appended standing-item Floor page in both paging directions, live Floor-to-Status,
+the initial Adventure cursor, and screen-2 Action B-cancel over carried Items pages 1-4
+and the settled standing-item Floor page. B-cancel replaces the outgoing Action box with
+the reconstructed Item/Floor parent and restores the retained screen-1 input state
+directly. The unpublished Status/Items replay is skipped, eliminating both shared-tile
+contamination and the former 40-frame input stall. Checkpoints 4-6 remain deferred.
 
 ### Motivation
 
@@ -155,8 +151,8 @@ rewrite.
    both empty box perimeters, and then uses the existing completed-body/native-final
    publishers for text and final decoration. A 2026-08-24 follow-up additionally admits
    the completed standing-item Floor page (`$C6AC=$FF`) through an exact settlement latch;
-   its automated evidence passes and its visual correction awaits review.
-3. **Screen-1 Item/Floor Action overlay — IMPLEMENTED, awaiting visual acceptance:**
+   its automated and visual evidence is accepted as part of the checkpoint-3 freeze.
+3. **Screen-1 Item/Floor Action overlay — COMPLETE and visually accepted:**
    change only direct screen-1 carried Items or the settled standing-item Floor page to
    screen-2 Action, followed by B-cancel back to the identical parent. Pages 1-4, the
    appended `$FF` Floor page, and every proven four- through six-row box-6 verb set are
@@ -176,6 +172,40 @@ rewrite.
    and transitions that legitimately return directly to gameplay.
 6. **Release validation:** normal, shuffled, and redirect-all layouts followed by the
    complete release battery.
+
+### Checkpoint-3 freeze record
+
+Checkpoint 3 was frozen on 2026-08-25 against implementation commit `34a20ec` after the
+complete automated battery and manual playtest accepted the final transitions. The
+investigation used two complementary kinds of evidence:
+
+- A fresh `../mgbdis` disassembly of the Japanese base ROM established that native
+  Right/Left handlers `4:$7339` and `4:$7354` store `$C6AC` and synchronously call
+  `4:$483E`; they do not read the visible green page indicator at `$986F-$9872`. The
+  translation-added visible-indicator veto was therefore invalid. The indicator is
+  redraw output, not permission to begin a redraw.
+- Frame-level PyBoy fixtures established the behavior that static disassembly could not:
+  which intermediate pixels were visible, when VBlank was missed, whether the LCD was
+  disabled, whether rapid input overlapped a transaction, and when the input machine
+  became responsive. Those traces required completed Item rows to remain hidden until
+  one atomic final-body publication and identified the unnecessary screen `2 -> 0 -> 1`
+  replay behind Action B-cancel.
+
+The resulting accepted rules are:
+
+1. Prove redraw admission from native selector, screen, stack, allocator, and ownership
+   state; never infer ownership from a visible decoration produced by the redraw.
+2. Compose variable-time proportional text behind the regional blank, then publish the
+   complete body and page indicator atomically during VBlank.
+3. Treat selector `$FF` as a real one-row Floor page, not a paging sentinel. Convert the
+   complete box shape in both directions and retire all four unused Item-row borders.
+4. Serialize the Floor/Items shape boundary even when ordinary carried-page paging can
+   accept a shorter cadence; this prevents rapid-input overlap and menu corruption.
+5. Give Action rows a proven disjoint tile pool. On exact B-cancel, reconstruct the
+   covered Item/Floor parent and restore its retained input state directly; do not replay
+   invisible Status and Items screens after the visible parent is already complete.
+6. Preserve a conservative native fallback whenever any admission or ownership proof
+   fails. A forced or plausible-looking screen is not evidence that the route is owned.
 
 Blanking used by an original Japanese transition or by an immediate return to gameplay
 is outside this plan. The primary target is translation-only full-screen blanking during

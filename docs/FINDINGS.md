@@ -1627,9 +1627,10 @@ outgoing page while the incoming transaction is valid. The regional gate now dra
 stale or partially published visible indicator. That veto was the remaining route to
 state `$06` and its LCD-off full-map publisher. The separate state `$05` safety for a
 genuinely unsupported regional row remains. The rare trigger was not captured
-deterministically, so removal still needs playtest confirmation; the fixture now hooks
-the admission decline, regional fallback, and exact full-map LCD-disable instruction
-independently so none can hide between sampled frames.
+deterministically, so the fixture hooks the admission decline, regional fallback, and
+exact full-map LCD-disable instruction independently so none can hide between sampled
+frames. Manual playtest accepted its removal in the checkpoint-3 freeze at commit
+`34a20ec` on 2026-08-25.
 
 The selector `$FF` stage is the actual standing-item Floor page, not a dummy sentinel.
 Its incoming descriptor has one row, so a five-row regional clear must zero the four
