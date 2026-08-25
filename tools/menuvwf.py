@@ -86,28 +86,34 @@ resets the hidden prior epoch;
 same-destination redraws reuse a cap or fall back if they grow.
 
 PAGE FLIPS. Fresh pixels uploaded into reused tiles used to show through the old map.
-Screen-1 paging and Start-sort now drain the preceding map queue, prove the resulting
-already-visible variable-length page indicator, normalize the five marker-coupled left borders, and blank the
+Screen-1 paging and Start-sort now drain the preceding map queue, prove the native
+screen/row/allocator/count ownership state, normalize the five marker-coupled left borders, and blank the
 five raw status cells plus five 16-cell name interiors during VBlank with the LCD on.
-Each incoming row drains its complete tile upload before publishing its left border,
-marker, and name references together. Short-page rows use the native exact 19-zero
-representation. Direct Status-root -> Items entry is owned by statusvwf's earlier
-screen-1 shadow-clear hook; every rejected/unknown context retains the whole-map LCD-off
-fallback. The visible sequence is old -> blank status/name rows -> complete new
-rows; the cursor, right borders, header, and unrelated map cells remain owned throughout.
+Because those map cells are blank, each incoming tile can be copied in four synchronized
+four-byte HBlank slices without exposing partial pixels. Completed row references remain
+hidden until final row 4 publishes the entire owned body in one VBlank. The final redraw
+tail copies only the four
+page-indicator cells rather than fourteen unchanged rows. Short-page rows use the native
+exact 19-zero representation. Direct Status-root -> Items entry is owned by statusvwf's
+earlier screen-1 shadow-clear hook; every rejected/unknown context retains the whole-map
+LCD-off fallback and native tile queue. The visible sequence is old -> blank status/name
+rows -> one complete new body; the cursor, right borders, header, and unrelated map cells
+remain owned throughout.
 
-HELD ACTION OVERLAY. Direct screen-1 Items -> screen-2 Action retains the native overlay
-draw but allocates its four- through six-row verb raster from six private four-tile slices
-at `$C7-$DE`. Row 0 admits those slices only for the exact `0,1,2` held-inventory stack,
-valid item selector, ordinary viewport and a live BG/Window scan with no private-ID
-reference; priced shop rows therefore reject structurally. Exact B-cancel arms state 7 at
+SCREEN-1 ACTION OVERLAY. Direct carried Items or a settled standing-item Floor page to
+screen-2 Action retains the native overlay draw but allocates its four- through six-row
+verb raster from six private four-tile slices at `$C7-$DE`. Row 0 admits those slices only
+for the exact `0,1,2` stack, a valid carried selector or `$FF` Floor settlement proof,
+ordinary viewport and a live BG/Window scan with no private-ID reference; priced shop rows
+therefore reject structurally. Exact B-cancel arms state 7 at
 the generic pop only when HL still names screen 2's `$5689` handler, reconstructs the
 covered parent cells in shadow, and restores the complete seven-column,
-`2*rows+1`-high footprint during VBlank. It then restores the retained Item record count,
-cursor geometry, and screen state and returns directly to the Item input loop. This
+`2*rows+1`-high footprint during VBlank. It then restores the retained Item/Floor record
+state, cursor geometry, and screen state and returns directly to the screen-1 input loop.
+This
 retires every Action-map reference without exposing an empty rectangle or spending 40
-frames on an invisible Status/Items replay. Every other Action, Info, Name, shop, Floor
-and Pot route retains its established path.
+frames on an invisible Status/Items replay. Every other Action, Info, Name, shop,
+screen-20 Floor and Pot route retains its established path.
 
 FLOOR ACTION / INFO. The same reused-tile exposure occurred on action -> Info, Info page
 1 -> 2, and Info -> action. Exact help row 0 now starts an LCD-off transaction; its last
@@ -165,7 +171,7 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
   * `$C1B3`        the synchronous transaction state: 1 is regional item-page pending;
                    2/3 are pending/settled Info; 4 is Info-return pending; 5 is a
                    regional-to-whole-map fallback; 6 latches declined/initial Item entry;
-                   7 is the transient held-Action B parent-restore proof;
+                   7 is the transient admitted screen-2 Action B parent-restore proof;
                    `$10/$11/$12/$13/$14`
                    are title/file, difficulty, proportional Rankings, Fay-screen and
                    native Rankings transactions. It is cleared after the corresponding
@@ -191,12 +197,16 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    teardown redraw looks like anyway. The state is nonzero after almost
                    every message; only the several-frame overlap with the native blank
                    made it intermittent. `tools/potputspill.py` is the regression.
-  * `$C1B4-$C1B6`  held-Action row count, packed retained Item record count/selector,
-                   and private-pool admission latch. `$C1B7` marks a fully settled standing-item Floor
-                   page so its direct Status pop can retain the live-exit proof. The same
+  * `$C1B4-$C1B6`  Action row count, packed retained Item/Floor record state/selector,
+                   and private-pool admission latch. The mutually exclusive Item-page
+                   path temporarily uses `$C1B4` as its four-slice counter, `$C1B5` as
+                   the Items/Floor shape-header marker, and `$C1B6` as phases 2 (live),
+                   4 (replacement header), and 3 (redraw tail). `$C1B7` marks a fully settled standing-item Floor
+                   page so its direct Status pop, paging, and screen-2 Action parent can
+                   retain the live-owner proof. The same
                    `$C1B3-$C1B7` free-space proof covers all four bytes.
   * `$C1B8-$C1BE`  exact seven-cell Item page-marker/top-edge snapshot retained across a
-                   held Action overlay. Proven independently on 2026-08-24 with zero
+                   admitted Action overlay. Proven independently on 2026-08-24 with zero
                    static opcode references and zero dynamic writes in wramfree's menu,
                    walk, and forced-screen scenarios.
   * `$C12C-$C13B`  tile 12's composition buffer
@@ -265,9 +275,10 @@ CONFIRM_BANK = 0x24
 CONFIRM_INDEX = 0x05
 CONFIRM_AT = 0x4060
 CONFIRM_LIMIT = 0x4100
-# Bank 60's redirected-text base is deliberately raised to $4400 for this menu subsystem.
-# Far indices 5/7/9/13 and helpers through $43E9 are disjoint from markers' index $0B and
-# graphics tail.
+# Bank 60's redirected-text base is deliberately raised to $4700 for this menu subsystem.
+# Far indices 5/7/9/13/15, the same-frame Item-row publisher through $4479, the
+# page-return and tile publishers through $46FF, and markers' index $0B/graphics tail
+# remain disjoint.
 ITEM_PUBLISH_BANK = 0x3C
 ITEM_PUBLISH_INDEX = 0x05
 ITEM_PUBLISH_AT = 0x405A
@@ -280,6 +291,24 @@ ITEM_PAGE_BANK = 0x3C
 ITEM_PAGE_INDEX = 0x09
 ITEM_PAGE_AT = 0x4300
 ITEM_PAGE_LIMIT = 0x4400
+ITEM_ROW_FAST_AT = 0x43F0
+ITEM_ROW_FAST_LIMIT = 0x4480
+ITEM_RETURN_BANK = 0x3C
+ITEM_RETURN_INDEX = 0x0F
+ITEM_RETURN_AT = 0x4480
+ITEM_RETURN_LIMIT = 0x45E0
+ITEM_RETURN_HOOK = (0x04, 0x4D7A)
+ITEM_RETURN_OLD = bytes.fromhex('f5c5e5faa3c6cb27c6966f3e00ce4d')
+# The row blitter has only six bytes left in its fixed slot.  Its one same-bank call
+# lands here, in the return helper's unused tail, to mark the final body row of an
+# Items/Floor shape change before native box 14/18 composes the replacement header.
+ITEM_SHAPE_PHASE_AT = 0x45A6
+ITEM_SHAPE_PHASE_LIMIT = 0x45E0
+ITEM_TILE_FAST_BANK = 0x3C
+ITEM_TILE_FAST_AT = 0x45E0
+ITEM_INDICATOR_AT = 0x46B1
+ITEM_TILE_FAST_LIMIT = ITEM_INDICATOR_AT
+ITEM_INDICATOR_LIMIT = 0x4700
 # A direct held-Items Action overlay needs six four-tile verb slices without retaining
 # pressure on the 72-tile Item allocator.  Bank 37 proves the live parent owns none of
 # $C7-$DE, bank 61 chooses those private slices (its title-card owner begins at $7000),
@@ -289,7 +318,7 @@ ITEM_PAGE_LIMIT = 0x4400
 ACTION_GATE_BANK = 0x25
 ACTION_GATE_INDEX = 0x05
 ACTION_GATE_AT = 0x405A
-ACTION_GATE_LIMIT = 0x4100
+ACTION_GATE_LIMIT = 0x4120
 ACTION_ALLOC_BANK = 0x3D
 ACTION_ALLOC_INDEX = 0x07
 TITLE_CURSOR_INDEX = 0x09
@@ -298,10 +327,10 @@ ACTION_ALLOC_LIMIT = 0x4100
 ACTION_BLANK_BANK = 0x3E
 ACTION_BLANK_INDEX = 0x07
 ACTION_BLANK_AT = 0x405A
-ACTION_BLANK_LIMIT = 0x42C0
+ACTION_BLANK_LIMIT = 0x4400
 ACTION_POP_BANK = 0x3C
 ACTION_POP_INDEX = 0x0D
-ACTION_POP_AT = 0x4298
+ACTION_POP_AT = 0x422E
 ACTION_POP_LIMIT = 0x4300
 ACTION_POOL_BASE = 0xC7
 ACTION_POOL_END = 0xDF
@@ -1385,11 +1414,12 @@ summaryclear:
 """
 
 
-# Screen-2 held Action rows have a private six-by-four-tile pool.  The admission gate
+# Admitted screen-2 Action rows have a private six-by-four-tile pool. The admission gate
 # runs on row 0 before allocation and proves the direct Status/Items/Action stack, the
-# ordinary held-inventory context, standard viewport, and absence of every private ID in
-# both live layers.  A shop page therefore rejects structurally because its $D0-$DE price
-# cells intersect the private run.  Unknown callers retain the shared allocator.
+# carried inventory or settled standing-Floor context, standard viewport, and absence of
+# every private ID in both live layers. A shop page therefore rejects structurally because
+# its $D0-$DE price cells intersect the private run. Unknown callers retain the shared
+# allocator.
 ACTION_GATE_SRC = """
 actiongate:
   push bc
@@ -1426,7 +1456,15 @@ actiongate:
   ld b,a
   ld a,[$C6AC]
   cp b
-  jr nc,agdone
+  jr c,agselectorok
+  ; The settled standing-item Floor page uses selector $FF. It is a real screen-1
+  ; parent, but only its explicit settlement latch may broaden the held-item gate.
+  inc a
+  jr nz,agdone
+  ld a,[$C1B7]
+  dec a
+  jr nz,agdone
+agselectorok:
   ldh a,[$FF40]
   and $F8
   cp $E0
@@ -1493,7 +1531,8 @@ agcollision:
 
 # The allocator entry replaces the in-bank packing block, returning B=base, C=cap and
 # carry on rejection.  Non-screen-2 rows execute the prior 57+11+4 policy byte-for-byte;
-# an admitted held Action row instead receives $C7+4*row and can never exhaust Item RAM.
+# an admitted carried-/Floor-Action row instead receives $C7+4*row and can never exhaust
+# Item RAM.
 ACTION_ALLOC_SRC = """
 actionalloc:
   ld a,[$C6A3]
@@ -1631,12 +1670,21 @@ actionpop:
   jr nc,apsub
   ld [$C1B4],a
   ld a,[$C6AC]
+  cp $FF
+  jr nz,apheldselector
+  ld a,[$C1B7]
+  dec a
+  jr nz,apsub
+  ld b,$1F
+  jr appack
+apheldselector:
   ld b,a
   inc b
   ld a,[$C6AA]
   cp b
   dec b
   jr c,apsub
+appack:
   ld a,[$C1B5]
   or b
   ld [$C1B5],a
@@ -1720,8 +1768,19 @@ abstack:
   and $1F
   ld b,a
   ld a,[$C6AC]
+  cp $FF
+  jr nz,abheldselector
+  ld a,b
+  cp $1F
+  jp nz,abfail
+  ld a,[$C1B7]
+  dec a
+  jp nz,abfail
+  jr abselectorok
+abheldselector:
   cp b
   jp nz,abfail
+abselectorok:
   ldh a,[$FF40]
   and $F8
   cp $E0
@@ -1838,6 +1897,11 @@ abtailstore:
   jr nc,abkeyready
   inc d
 abkeyready:
+  ; A settled Floor parent has one real row. Its first separator is the bottom border;
+  ; every later cell covered by the Action box belongs to the blank field.
+  ld a,[$C6AC]
+  inc a
+  jr z,abfloorbottom
   ; Four- and five-row Action boxes end above the Item bottom edge. A six-row box
   ; covers it, so its final intervening line is the native bottom border, not spacer.
   ld a,[$C1B4]
@@ -1850,6 +1914,9 @@ abspacer:
   xor a
   jr abseparator
 abbottom:
+  ld a,$BD
+  jr abseparator
+abfloorbottom:
   ld a,$BD
 abseparator:
   ld c,$06
@@ -1864,10 +1931,31 @@ abseparatorcell:
 abseparatorend:
   ld [hl],a
   inc hl
+  ld a,[$C6AC]
+  inc a
+  jr z,abfloorrest
   dec b
   jr z,abshadowready
   call abnextline
-  jr abparentrow
+  jp abparentrow
+abfloorrest:
+  dec b
+  jr z,abshadowready
+  ld a,b
+  add a,a
+  ld b,a
+  call abnextline
+abfloorline:
+  xor a
+  ld c,$07
+abfloorcell:
+  ld [hl+],a
+  dec c
+  jr nz,abfloorcell
+  dec b
+  jr z,abshadowready
+  call abnextline
+  jr abfloorline
 abnextline:
   ld a,l
   add a,$19
@@ -1935,9 +2023,9 @@ abcopyseven:
   ret
 abrestored:
 abblanked:
-  ; The Action builder appended private records to the retained Item records. Restore
-  ; the saved Item count, then re-establish the compact menu state that native screen-1
-  ; reconstruction would produce. Both tilemaps are already the exact Item parent.
+  ; The Action builder appended private records to the retained Item/Floor records.
+  ; Restore the saved count, then re-establish the compact menu state that native
+  ; screen-1 reconstruction would produce. Both tilemaps are already the exact parent.
   ld a,[$C1B5]
   rlca
   rlca
@@ -1946,6 +2034,11 @@ abblanked:
   ld [$C1B2],a
   ld a,$04
   ld [$C1B1],a
+  ld a,[$C6AC]
+  cp $FF
+  jr z,abfloorstate
+abheldstate:
+  ld a,$04
   ld [$C6A4],a
   inc a
   ld [$C6BB],a
@@ -1975,6 +2068,33 @@ abcursorready:
   ld [hl+],a
   ld a,$02
   ld [hl],a
+  jr abstatecommon
+abfloorstate:
+  xor a
+  ld [$C6A4],a
+  ld [$C6A5],a
+  inc a
+  ld [$C6BB],a
+  ; Restore the exact settled box-18 descriptor left by the standing Floor page.
+  ld hl,$C69A
+  xor a
+  ld [hl+],a
+  ld [hl+],a
+  inc a
+  ld [hl+],a
+  ld a,$04
+  ld [hl+],a
+  ld a,$50
+  ld [hl+],a
+  ld a,$5C
+  ld [hl+],a
+  ld a,$43
+  ld [hl],a
+  ld a,$82
+  ld [$C6A7],a
+  xor a
+  ld [$C6A8],a
+abstatecommon:
   ld a,$01
   ld [$C6A3],a
   xor a
@@ -2057,6 +2177,17 @@ absavecell:
 # already saved the caller's BC/DE.
 FLOOR_CHROME_SRC = """
 floorchrome:
+  ; Box 4 (the list body) is followed by box 14 or 18 (the Items/Floor header) in
+  ; native screen-1 order.  Both headers use the same four-cell interior and the same
+  ; private VWF tiles.  Retire those references with the body so the incoming word can
+  ; be composed without repainting a title that scanout can still see.
+  ld l,$21
+  xor a
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl+],a
+  ld [hl],a
+  ld l,$80
   ld a,[$C6AC]
   inc a
   jr z,fccontract
@@ -2220,6 +2351,7 @@ pbwait:
   ldh a,[$FF44]
   cp $90
   jr c,pbwait
+pbdisable:
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
@@ -2297,6 +2429,8 @@ pagepublish:
 pagecomplete:
   xor a
   ld [$C1B3],a
+  ld a,$03
+  ld [$C1B6],a
   ret
 pagelegacy:
   ld a,[$C1B1]
@@ -2344,11 +2478,12 @@ pagefinish:
 
 # Screen 1's same-screen Left/Right and Start-sort transaction. Mode 0 runs after row 0
 # has composed but before any reused tile pixels upload. The native item count and its
-# already-visible exact page-marker/border shape prove this is a same-screen redraw rather
-# than initial entry. It then normalizes the five marker-coupled left-border cells and
+# synchronous redraw state prove this is a same-screen redraw rather than initial entry;
+# the visible page marker is transaction output, not an admission input. It then
+# normalizes the five marker-coupled left-border cells and
 # blanks exactly the five raw status-marker cells plus the five 16-cell name interiors in
 # shadow WRAM and, during VBlank, in the visible BG map.
-# Mode 1 publishes one completed proportional row after its synchronous upload. Mode 2
+# Mode 1 publishes one completed proportional row after its tile publication. Mode 2
 # pre-stages and publishes an empty native-fallback row. Mode 3 recognizes the native
 # fixed-width all-zero empty representation; any other fallback converts the live regional
 # attempt to the legacy LCD-off state before it can repaint through the blank rows.
@@ -2408,92 +2543,16 @@ irpredrain:
   call $06F7
   jr irpredrain
 irvalidatedrain:
-  ; A manual queue pass can finish after VBlank.  Reading $986F in mode 3 would
-  ; return blocked-bus data and manufacture another false rejection, so rendezvous
-  ; with VBlank again before observing the now-stable marker.
-irvalidatewait:
-  ldh a,[$FF44]
-  cp $90
-  jr c,irvalidatewait
-  ; Native 4:$4EB4 leaves all four cells as $BC for one page. For two..four
-  ; pages it normally writes $C5/$C6 over exactly that many cells at $986F; unused cells
-  ; remain $BC. Right wrap from the last page to page 1 is the one exception: selector
-  ; zero is committed before the marker writer and all four old markers are retired to
-  ; $BC. Admit that exact transient as well. Initial Items entry remains excluded by its
-  ; fresh-allocation latch above.
+  ; Native Right/Left has already committed $C6AC and synchronously owns this screen-1
+  ; redraw. It never reads the visible page indicator. Do not turn a harmless stale or
+  ; partially-published $986F-$9872 into an LCD-off fallback: the screen/shape/epoch
+  ; gates above and the native item-count bound below are the ownership proof. Initial
+  ; Items entry remains excluded by its fresh-allocation latch above.
   ld a,[$C6AA]
   and a
   jp z,irdecline
   cp $15
   jp nc,irdecline
-  ld b,$01
-  cp $06
-  jr c,ircounted
-  inc b
-  cp $0B
-  jr c,ircounted
-  inc b
-  cp $10
-  jr c,ircounted
-  inc b
-ircounted:
-  ld c,b
-  dec b
-  jr z,ironepage
-  inc b
-  ld hl,$986F
-  ld a,[hl]
-  cp $BC
-  jr nz,irnormalindicator
-  ld a,[$C6AC]
-  and a
-  jr z,irallborder
-  ; From a completed standing-item Floor page, Left selects the last carried page
-  ; while the four page-indicator cells are still the Floor page's all-$BC border.
-  ; The settlement latch distinguishes this from an unknown all-border predecessor.
-  ld a,[$C1B7]
-  dec a
-  jp nz,irdecline
-irallborder:
-  ld b,$04
-  jr ironeborder
-irnormalindicator:
-  ld d,$00
-irindicator:
-  ld a,[hl+]
-  cp $C6
-  jr nz,irinactive
-  inc d
-  jr irindicatornext
-irinactive:
-  cp $C5
-  jp nz,irdecline
-irindicatornext:
-  dec b
-  jr nz,irindicator
-  ld a,d
-  cp $01
-  jp nz,irdecline
-  ld a,$04
-  sub c
-  ld b,a
-  jr z,irdrain
-irunused:
-  ld a,[hl+]
-  cp $BC
-  jp nz,irdecline
-  dec b
-  jr nz,irunused
-  jr irdrain
-ironepage:
-  ld hl,$986F
-  ld b,$04
-ironeborder:
-  ld a,[hl+]
-  cp $BC
-  jp nz,irdecline
-  dec b
-  jr nz,ironeborder
 irdrain:
 irshadow:
   ld de,$002D
@@ -2524,6 +2583,8 @@ irblankwait:
 irarmed:
   ld a,$01
   ld [$C1B3],a
+  inc a
+  ld [$C1B6],a
   ei
   pop hl
   pop de
@@ -2532,6 +2593,8 @@ irarmed:
 irdecline:
   ld a,$06
   ld [$C1B3],a
+  xor a
+  ld [$C1B6],a
   pop hl
   pop de
   pop bc
@@ -2633,14 +2696,12 @@ irrowready:
   ldh a,[$FF40]
   bit 7,a
   jr z,ircopy
-irpubsync:
-  ldh a,[$FF44]
-  cp $90
-  jr nc,irpubsync
-irpubwait:
-  ldh a,[$FF44]
-  cp $90
-  jr c,irpubwait
+  ; The tile queue returns near the top of the next visible frame. Publish this
+  ; completed map row through safe LCD-on VRAM slots in that same frame instead of
+  ; idling until another VBlank. The helper finishes either before this row's scanout
+  ; or after it has passed, so the player still sees only blank or complete content.
+  call $%04X
+  jr ircopied
 ircopy:
   ld a,[$C0D9]
   ld l,a
@@ -2665,6 +2726,7 @@ ircopycell:
   inc de
   dec c
   jr nz,ircopycell
+ircopied:
   ei
   pop hl
   pop de
@@ -2726,8 +2788,474 @@ irfailwait:
 irfailed:
   ld a,$05
   ld [$C1B3],a
+  xor a
+  ld [$C1B6],a
   ret
-""" % (FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK)
+""" % (FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK, ITEM_ROW_FAST_AT)
+
+
+# Keep completed incoming rows unreferenced behind the regional blank until the final
+# body row is ready, then publish every owned row together in one VBlank. This removes
+# the visibly variable top-to-bottom fill time: wide proportional rows can take longer
+# to compose, but the player sees blank -> complete page rather than a slow cascade.
+# Selector $FF has one body row and uses the same helper with a one-row count.
+ITEM_ROW_FAST_SRC = """
+itemrowfast:
+  ld a,[$C6AC]
+  inc a
+  jr z,irffinal
+  ld a,d
+  cp $04
+  ret nz
+irffinal:
+  call $%04X
+  di
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,irfcopy
+irfphase:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irfwait
+  cp $92
+  jr c,irfcopy
+irfnext:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,irfnext
+irfwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irfwait
+irfcopy:
+  ld hl,$C380
+  ld de,$9880
+  ld a,[$C6AC]
+  inc a
+  ld b,$01
+  jr z,irfrow
+  ld b,$05
+irfrow:
+  ld c,$02
+irfleft:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,irfleft
+  inc hl
+  inc de
+  ld c,$10
+irfname:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,irfname
+  ld a,l
+  add a,$2D
+  ld l,a
+  jr nc,irfsourceready
+  inc h
+irfsourceready:
+  ld a,e
+  add a,$2D
+  ld e,a
+  jr nc,irfdestready
+  inc d
+irfdestready:
+  dec b
+  jr nz,irfrow
+  ei
+  ret
+""" % ITEM_SHAPE_PHASE_AT
+
+
+# Native screen 1 draws the five-/one-row body before it draws the Items/Floor header.
+# The regional body publisher calls this while D still holds the completed body row.
+# Phase 4 suppresses the static-title reuse only after row 4 is complete, preserving the
+# fast body path while forcing box 14/18 to compose the correct replacement word.
+ITEM_SHAPE_PHASE_SRC = """
+itemshapephase:
+  ld a,[$C6AC]
+  inc a
+  jr nz,ispitems
+  ; The selector-$FF body has one real row, so its header follows row 0.
+  ld a,d
+  and a
+  ret nz
+  jr ispshape
+ispitems:
+  ; Carried Items always finish the five-row body at row 4. Clear any stale Action
+  ; packing there, then distinguish an ordinary page from a completed Floor source.
+  ld a,d
+  cp $04
+  ret nz
+  xor a
+  ld [$C1B5],a
+  ld a,[$C1B7]
+  dec a
+  jr z,ispshape
+  jp $%04X
+ispshape:
+  ld a,$01
+  ld [$C1B5],a
+  ld a,$04
+  ld [$C1B6],a
+  jp $%04X
+""" % (ITEM_INDICATOR_AT, ITEM_INDICATOR_AT)
+
+
+# Call_004_483E's native tail republishes fourteen complete map rows after an Item
+# page's five rows are already scan-safe and visible.  For an exact regional page flip,
+# only the four page-indicator cells can still differ.  Publish those cells as soon as
+# their scanline is safe and let a small Call_004_4D7A gate skip Call_004_44A2. Every
+# other caller receives the original range setup and continues into the untouched native
+# map publisher. A=0 selects the renderer's optional fast-tile service; A=1 selects the
+# redraw-tail service.
+ITEM_RETURN_SRC = """
+itemservice:
+  and a
+  jp z,$%04X
+itemreturn:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,[$C1B6]
+  cp $03
+  jp nz,irtlegacy
+  ld a,[$C1B3]
+  and a
+  jp nz,irtfail
+  ld a,[$C6A3]
+  cp $01
+  jp nz,irtfail
+  ld a,[$C1B1]
+  cp $04
+  jp nz,irtfail
+  ld a,[$C69D]
+  cp $04
+  jp nz,irtfail
+  ld a,[$C534]
+  cp $01
+  jp nz,irtfail
+  ld a,[$C6A6]
+  and a
+  jp nz,irtfail
+  ld a,[$C11A]
+  and a
+  jp nz,irtfail
+  ld a,[$C1B5]
+  dec a
+  jr z,irtshape
+  ld a,[$C6AC]
+  inc a
+  jp z,irtfail
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,irtfail
+  ; The indicator occupies tile row 3 (scanlines 24-31).  If scanout is about
+  ; to enter it, wait until the row has passed; otherwise publish immediately
+  ; after any current mode-3 interval.
+  ldh a,[$FF44]
+  cp $20
+  jr nc,irtaccess
+  add a,$03
+  cp $18
+  jr c,irtaccess
+irtwaitrow:
+  ldh a,[$FF44]
+  cp $20
+  jr c,irtwaitrow
+irtaccess:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,irtcopy
+irtwaitmode:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr z,irtwaitmode
+irtcopy:
+  ld hl,$C36F
+  ld de,$986F
+  ld b,$04
+irtcopyloop:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,irtcopyloop
+  jr irtdone
+irtshape:
+  ; The regional VBlank retired the four shared title cells before either private
+  ; title plane was repainted.  Commit the complete incoming box-14/18 word and its
+  ; indicator together in VBlank; the identical surrounding header chrome stays live.
+  di
+irtshapewait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,irtshapewait
+  ld hl,$C321
+  ld de,$9821
+  ld b,$04
+irtshapetitle:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,irtshapetitle
+  ld hl,$C36F
+  ld de,$986F
+  ld b,$04
+irtshapeindicator:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,irtshapeindicator
+  ; The shape conversion clears the shared row-0 cursor cell. Native 4:$4E2B has
+  ; rebuilt it in shadow by this point, but the skipped full-map publisher cannot expose
+  ; it. Commit that one separately-owned cell with the title and page indicator.
+  ld a,[$C382]
+  ld [$9882],a
+  ei
+irtdone:
+  xor a
+  ld [$C1B5],a
+  ld [$C1B6],a
+  pop hl
+  pop de
+  pop bc
+  pop af
+  scf
+  ret
+irtfail:
+  xor a
+  ld [$C1B5],a
+  ld [$C1B6],a
+irtlegacy:
+  ; Call_004_4D7A range setup. Its caller continues into the original
+  ; Call_004_44A2 map publisher when carry is clear.
+  ld a,[$C6A3]
+  add a,a
+  ld e,a
+  ld d,$00
+  ld hl,irtranges
+  add hl,de
+  ld a,[hl+]
+  ld [$C6A1],a
+  ld a,[hl]
+  ld [$C6A2],a
+  pop hl
+  pop de
+  pop bc
+  pop af
+  and a
+  ret
+irtranges:
+  db $00,$12,$00,$0E,$00,$12,$00,$12,$03,$0D,$03,$0D,$00,$12,$00,$12
+  db $00,$12,$00,$12,$00,$12,$00,$12,$00,$12,$00,$12,$00,$12,$00,$12
+  db $00,$12,$00,$12,$00,$12,$0D,$0F,$00,$12,$00,$12,$00,$12,$00,$12
+  db $00,$12,$00,$12,$00,$12,$00,$12,$00,$0A,$0D,$0F,$00,$12,$00,$12
+  db $00,$12,$00,$12,$06,$10
+""" % ITEM_TILE_FAST_AT
+
+
+# Once the exact Item transaction has blanked its five owned rows, none of the newly
+# composed name tiles is referenced by the visible map. Copy each 16-byte tile in four
+# synchronized four-byte HBlank slices (continued immediately if VBlank begins), instead of
+# parking the CPU behind the general once-per-frame tile queue.  Carry reports that the
+# renderer can proceed directly to its shadow-map row; every unproved shape retains the
+# native queue.
+ITEM_TILE_FAST_SRC = """
+itemtilefast:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $01
+  jp nz,itffail
+  ld a,[$C6A3]
+  cp $01
+  jp nz,itffail
+  ld a,[$C1B1]
+  cp $01
+  jp nz,itffail
+  ld a,[$C69D]
+  cp $12
+  jp nz,itffail
+  ld a,[$C11A]
+  and a
+  jp nz,itffail
+  ld a,[$C0D3]
+  and a
+  jp z,itffail
+  cp $0E
+  jp nc,itffail
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,itffail
+  di
+  ; Signed $8800 addressing: IDs below $80 are based at $9000; IDs above it
+  ; wrap into $8800-$8FF0.
+  ld a,[$C0DB]
+  ld l,a
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  ld a,[$C0DB]
+  bit 7,a
+  ld a,h
+  jr nz,itfsigned
+  add a,$90
+  jr itfdest
+itfsigned:
+  add a,$80
+itfdest:
+  ld h,a
+  xor a
+  ld [$C0DD],a
+itftile:
+  ld a,[$C0D3]
+  ld b,a
+  ld a,[$C0DD]
+  cp b
+  jr z,itfsuccess
+  add a,a
+  ld e,a
+  ld d,$00
+  push hl
+  ld hl,itfsources
+  add hl,de
+  ld a,[hl+]
+  ld d,[hl]
+  ld e,a
+  pop hl
+itfsource:
+  ld a,$04
+  ld [$C1B4],a
+itfchunk:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,itfcopyfour
+itfmode3:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr nz,itfmode3
+itfhblank:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr z,itfhblank
+itfcopyfour:
+  ld b,$04
+itfcopy:
+  ld a,[de]
+  ld [hl+],a
+  inc de
+  dec b
+  jr nz,itfcopy
+  ld a,[$C1B4]
+  dec a
+  ld [$C1B4],a
+  jr nz,itfchunk
+  jr itfnext
+itfnext:
+  ld a,[$C0DD]
+  inc a
+  ld [$C0DD],a
+  jr itftile
+itfsuccess:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  scf
+  ei
+  ret
+itffail:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  and a
+  ret
+itfsources:
+  db $08,$C0,$18,$C0,$28,$C0,$38,$C0
+  db $4A,$C0,$5A,$C0,$6A,$C0,$7A,$C0
+  db $8C,$C0,$9C,$C0,$AC,$C0,$BC,$C0
+  db $2C,$C1
+"""
+
+
+# Native 4:$4EB4 builds the page indicator only after all five body rows and the Items
+# header.  That ordering lets the completed page appear for several frames with the old
+# green dot.  The exact regional row path already owns the final body-row transaction, so
+# reproduce 4:$4EB4's count/selector mapping there and publish its four cells in VBlank.
+# The later native builder and redraw-tail copy are idempotent confirmation writes.
+ITEM_INDICATOR_SRC = """
+itemindicator:
+  push af
+  push bc
+  push de
+  push hl
+  ld a,[$C6AC]
+  cp $FF
+  jr z,iidone
+  ld c,a
+  ld a,[$C6AA]
+  cp $06
+  jr c,iidone
+  dec a
+  ld b,$00
+iipages:
+  inc b
+  sub $05
+  jr nc,iipages
+  ld hl,$C36F
+  ld a,$C5
+iifill:
+  ld [hl+],a
+  dec b
+  jr nz,iifill
+  ld a,c
+  ld c,$FF
+iiactive:
+  inc c
+  sub $05
+  jr nc,iiactive
+  ld b,$00
+  ld hl,$C36F
+  add hl,bc
+  ld [hl],$C6
+  di
+iiwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,iiwait
+  ld hl,$C36F
+  ld de,$986F
+  ld b,$04
+iicopy:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,iicopy
+  ei
+iidone:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+"""
 
 
 # Shared atomic fallback. It stays separate so the screen-1 regional controller can grow
@@ -5201,33 +5729,61 @@ composenext:
   xor a
   rst $10
   db $%02X,$%02X
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jp c,shadow
   ldh a,[$FF40]
-""" % (ITEM_PAGE_INDEX, ITEM_PAGE_BANK)
+""" % (ITEM_PAGE_INDEX, ITEM_PAGE_BANK,
+         ITEM_RETURN_INDEX, ITEM_RETURN_BANK)
     assert old in src
     src = src.replace(old, new, 1)
 
-    # Keep every rborder-side producer ahead of the final source-handoff helper.
+    # A proven live screen-1 Item row needs only its regional publisher. Skipping the
+    # four unrelated Action/shop/title/Floor finalizers here saves enough CPU time to
+    # arm the following row before the next VBlank. Every other shape retains the full
+    # shared finalizer chain.
     old = """rborder:
   ld a,$BF
   ld [hl],a
   ld a,[$C0CC]
 """
     new = """rborder:
-  rst $10
-  db $%02X,$%02X
-  ld a,$BF
-  ld [hl],a
-  ld a,$01
-  rst $10
-  db $%02X,$%02X
-  ld a,$01
-  rst $10
-  db $%02X,$%02X
-  ld a,$01
-  rst $10
-  db $%02X,$%02X
+  ld [hl],$BF
+  ld a,[$C1B3]
+  dec a
+  jr nz,rbgeneric
+  ld a,[$C1B6]
+  cp $02
+  jr nz,rbgeneric
+  ld a,[$C1B1]
+  dec a
+  jr nz,rbgeneric
   ld a,[$C0CC]
-""" % (SHOP_COPY_INDEX, SHOP_SUFFIX_BANK,
+  ld [$C69F],a
+  ld a,[$C0CD]
+  ld [$C6A0],a
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+  scf
+  ret
+rbgeneric:
+  rst $10
+  db $%02X,$%02X
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+rbfinished:
+  ld a,[$C0CC]
+""" % (ITEM_REGION_INDEX, ITEM_REGION_BANK,
+         SHOP_COPY_INDEX, SHOP_SUFFIX_BANK,
          START_FINISH_INDEX, START_FINISH_BANK,
          ITEM_PAGE_INDEX, ITEM_PAGE_BANK, FLOOR_INFO_INDEX, FLOOR_INFO_BANK)
     assert old in src
@@ -5319,7 +5875,7 @@ reuseok:
     src = src[:start] + reuse + src[end:]
 
     # Deterministic packing policy for the measured 57+11+4 runs now lives in bank 61,
-    # where the exact held-Action gate can select its disjoint $C7-$DE slices without
+    # where the exact carried-/Floor-Action gate can select its disjoint $C7-$DE slices without
     # growing bank 32 (which is full). The ordinary allocator policy and outputs are
     # unchanged for every other shape.
     start = src.index("anew:\n")
@@ -5445,6 +6001,19 @@ romfivecaps:
 romdifficultytab:
   db $CB,$CF,$D3
 allocok:
+  ; Same-screen Item paging preserves the already-visible static Items title planes.
+  ; Rebuild only its shadow references; initial Status -> Items has no $C1B6=$02 proof
+  ; and therefore still composes/uploads the title normally.
+  ld a,[$C1B1]
+  cp $04
+  jr nz,alloccompose
+  ld a,[$C1B6]
+  cp $02
+  jr nz,alloccompose
+  ld a,[$C1B3]
+  dec a
+  jp z,shadow
+alloccompose:
   ld hl,$C008
 """ % (START_AUX_INDEX, START_AUX_BANK, fei_prompt_y, rank_header_x,
          ROM_RANK_HEADER_CAP + 1, ROM_RANK_HEADER_BASE,
@@ -6219,6 +6788,11 @@ def install(buf, notes=None, font=None):
         # and cancelled the native LCD-off interval.  See the SCRATCH map above.
         for name, blob in (('ITEM_PAGE_SRC', ITEM_PAGE_SRC),
                            ('ITEM_REGION_SRC', ITEM_REGION_SRC),
+                           ('ITEM_ROW_FAST_SRC', ITEM_ROW_FAST_SRC),
+                           ('ITEM_RETURN_SRC', ITEM_RETURN_SRC),
+                           ('ITEM_SHAPE_PHASE_SRC', ITEM_SHAPE_PHASE_SRC),
+                           ('ITEM_TILE_FAST_SRC', ITEM_TILE_FAST_SRC),
+                           ('ITEM_INDICATOR_SRC', ITEM_INDICATOR_SRC),
                            ('ITEM_PUBLISH_SRC', ITEM_PUBLISH_SRC),
                            ('ACTION_GATE_SRC', ACTION_GATE_SRC),
                            ('ACTION_ALLOC_SRC', ACTION_ALLOC_SRC),
@@ -6239,6 +6813,16 @@ def install(buf, notes=None, font=None):
             ITEM_REGION_SRC, ITEM_REGION_AT)
         item_page_code, item_page_labels = gbasm.assemble(
             ITEM_PAGE_SRC, ITEM_PAGE_AT)
+        item_row_fast_code, item_row_fast_labels = gbasm.assemble(
+            ITEM_ROW_FAST_SRC, ITEM_ROW_FAST_AT)
+        item_return_code, item_return_labels = gbasm.assemble(
+            ITEM_RETURN_SRC, ITEM_RETURN_AT)
+        item_shape_phase_code, item_shape_phase_labels = gbasm.assemble(
+            ITEM_SHAPE_PHASE_SRC, ITEM_SHAPE_PHASE_AT)
+        item_tile_fast_code, item_tile_fast_labels = gbasm.assemble(
+            ITEM_TILE_FAST_SRC, ITEM_TILE_FAST_AT)
+        item_indicator_code, item_indicator_labels = gbasm.assemble(
+            ITEM_INDICATOR_SRC, ITEM_INDICATOR_AT)
         action_gate_code, action_gate_labels = gbasm.assemble(
             ACTION_GATE_SRC, ACTION_GATE_AT)
         action_alloc_code, action_alloc_labels = gbasm.assemble(
@@ -6327,6 +6911,62 @@ def install(buf, notes=None, font=None):
         if ITEM_REGION_AT + len(item_region_code) > ACTION_POP_AT:
             raise SystemExit('menuvwf: item regional controller overlaps Action pop gate '
                              'at bank %d:$%04X' % (ACTION_POP_BANK, ACTION_POP_AT))
+        if ITEM_ROW_FAST_AT + len(item_row_fast_code) > ITEM_ROW_FAST_LIMIT:
+            raise SystemExit('menuvwf: same-frame Item-row publisher needs %d bytes, '
+                             'only %d available' %
+                             (len(item_row_fast_code),
+                              ITEM_ROW_FAST_LIMIT - ITEM_ROW_FAST_AT))
+        item_row_fast_at = _off(ITEM_REGION_BANK, ITEM_ROW_FAST_AT)
+        if any(value != 0xFF for value in
+               buf[item_row_fast_at:item_row_fast_at + len(item_row_fast_code)]):
+            raise SystemExit('menuvwf: bank %d same-frame Item-row region at $%04X '
+                             'is not free' %
+                             (ITEM_REGION_BANK, ITEM_ROW_FAST_AT))
+        buf[item_row_fast_at:item_row_fast_at + len(item_row_fast_code)] = \
+            item_row_fast_code
+        if ITEM_RETURN_AT + len(item_return_code) > ITEM_SHAPE_PHASE_AT:
+            raise SystemExit('menuvwf: Item redraw-tail helper overlaps shape-phase '
+                             'helper at bank %d:$%04X' %
+                             (ITEM_RETURN_BANK, ITEM_SHAPE_PHASE_AT))
+        if ITEM_SHAPE_PHASE_AT + len(item_shape_phase_code) > ITEM_SHAPE_PHASE_LIMIT:
+            raise SystemExit('menuvwf: Item shape-phase helper needs %d bytes, only %d '
+                             'available' %
+                             (len(item_shape_phase_code),
+                              ITEM_SHAPE_PHASE_LIMIT - ITEM_SHAPE_PHASE_AT))
+        item_shape_phase_at = _off(ITEM_RETURN_BANK, ITEM_SHAPE_PHASE_AT)
+        if any(value != 0xFF for value in
+               buf[item_shape_phase_at:
+                   item_shape_phase_at + len(item_shape_phase_code)]):
+            raise SystemExit('menuvwf: bank %d Item shape-phase region at $%04X is '
+                             'not free' %
+                             (ITEM_RETURN_BANK, ITEM_SHAPE_PHASE_AT))
+        buf[item_shape_phase_at:
+            item_shape_phase_at + len(item_shape_phase_code)] = item_shape_phase_code
+        if ITEM_TILE_FAST_AT + len(item_tile_fast_code) > ITEM_TILE_FAST_LIMIT:
+            raise SystemExit('menuvwf: same-frame Item-tile publisher needs %d bytes, '
+                             'only %d available' %
+                             (len(item_tile_fast_code),
+                              ITEM_TILE_FAST_LIMIT - ITEM_TILE_FAST_AT))
+        item_tile_fast_at = _off(ITEM_TILE_FAST_BANK, ITEM_TILE_FAST_AT)
+        if any(value != 0xFF for value in
+               buf[item_tile_fast_at:item_tile_fast_at + len(item_tile_fast_code)]):
+            raise SystemExit('menuvwf: bank %d same-frame Item-tile region at $%04X '
+                             'is not free' %
+                             (ITEM_TILE_FAST_BANK, ITEM_TILE_FAST_AT))
+        buf[item_tile_fast_at:item_tile_fast_at + len(item_tile_fast_code)] = \
+            item_tile_fast_code
+        if ITEM_INDICATOR_AT + len(item_indicator_code) > ITEM_INDICATOR_LIMIT:
+            raise SystemExit('menuvwf: Item indicator publisher needs %d bytes, only %d '
+                             'available' %
+                             (len(item_indicator_code),
+                              ITEM_INDICATOR_LIMIT - ITEM_INDICATOR_AT))
+        item_indicator_at = _off(ITEM_TILE_FAST_BANK, ITEM_INDICATOR_AT)
+        if any(value != 0xFF for value in
+               buf[item_indicator_at:item_indicator_at + len(item_indicator_code)]):
+            raise SystemExit('menuvwf: bank %d Item indicator region at $%04X is not free'
+                             % (ITEM_TILE_FAST_BANK, ITEM_INDICATOR_AT))
+        buf[item_indicator_at:item_indicator_at + len(item_indicator_code)] = \
+            item_indicator_code
         item_helpers = (
             ('publisher', ITEM_PUBLISH_BANK, ITEM_PUBLISH_INDEX, ITEM_PUBLISH_AT,
              ITEM_PUBLISH_LIMIT, item_publish_code, item_publish_labels['publishmap']),
@@ -6334,6 +6974,8 @@ def install(buf, notes=None, font=None):
              ITEM_REGION_LIMIT, item_region_code, item_region_labels['itemregion']),
             ('fallback controller', ITEM_PAGE_BANK, ITEM_PAGE_INDEX, ITEM_PAGE_AT,
              ITEM_PAGE_LIMIT, item_page_code, item_page_labels['itempage']),
+            ('return publisher', ITEM_RETURN_BANK, ITEM_RETURN_INDEX, ITEM_RETURN_AT,
+             ITEM_RETURN_LIMIT, item_return_code, item_return_labels['itemservice']),
         )
         for (helper_name, helper_bank, helper_index, helper_at, helper_limit,
              helper_code, helper_entry) in item_helpers:
@@ -6356,6 +6998,14 @@ def install(buf, notes=None, font=None):
             buf[helper_off:helper_off + len(helper_code)] = helper_code
             buf[helper_ix] = helper_entry & 0xFF
             buf[helper_ix + 1] = helper_entry >> 8
+
+        return_hook = _off(*ITEM_RETURN_HOOK)
+        if bytes(buf[return_hook:return_hook + len(ITEM_RETURN_OLD)]) != ITEM_RETURN_OLD:
+            raise SystemExit('menuvwf: redraw-tail publisher at 4:$%04X changed' %
+                             ITEM_RETURN_HOOK[1])
+        buf[return_hook:return_hook + len(ITEM_RETURN_OLD)] = bytes(
+            (0xF5, 0x3E, 0x01, 0xD7, ITEM_RETURN_INDEX, ITEM_RETURN_BANK,
+             0x38, 0x02, 0xF1, 0xC9, 0xF1, 0xE1, 0xC3, 0x54, 0x48))
 
         floor_info_code, floor_info_labels = gbasm.assemble(
             FLOOR_INFO_SRC, FLOOR_INFO_AT)
@@ -6745,13 +7395,17 @@ def install(buf, notes=None, font=None):
             notes.append('menuvwf: %d+%d+%d-byte item-page regional/fallback/publisher '
                          'helpers in bank %d; screen-1 paging/Start-sort is old -> normal '
                          'left borders + blank status/name cells -> '
-                         'complete rows with LCD on'
+                         'one complete body with LCD on; %d-byte body, %d-byte tile, and '
+                         '%d-byte redraw-tail and %d-byte early-indicator helpers remove '
+                         'redundant waits and settle the page/dot together'
                          % (len(item_region_code), len(item_page_code),
-                            len(item_publish_code), ITEM_REGION_BANK))
-            notes.append('menuvwf: held screen-2 Action uses six private four-tile '
+                            len(item_publish_code), ITEM_REGION_BANK,
+                            len(item_row_fast_code), len(item_tile_fast_code),
+                            len(item_return_code), len(item_indicator_code)))
+            notes.append('menuvwf: carried-/settled-Floor screen-2 Action uses six private four-tile '
                          '$C7-$DE slices after a %d-byte live-layer gate; B-cancel uses '
                          '%d-byte pop proof plus a %d-byte box-6 parent/machine-state '
-                         'restorer and returns to Item input without redundant replay'
+                         'restorer and returns to screen-1 input without redundant replay'
                          % (len(action_gate_code), len(action_pop_code),
                             len(action_blank_code)))
             notes.append('menuvwf: %d-byte standing-item Floor chrome helper at '

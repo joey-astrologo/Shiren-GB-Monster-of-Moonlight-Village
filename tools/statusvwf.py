@@ -20,8 +20,8 @@ tiles and fits the ten-line interval. The standing-item Floor page appended at s
 `$C1B7`. Unknown LCD-on returns retain the conservative LCD-off path. In both cases the
 game's existing status-map publisher remains authoritative.
 
-Held Action B-cancel is handled earlier by menuvwf's exact pop proof. It restores both
-the covered Item parent and the retained Item input-machine state, so the generic pop
+Admitted screen-2 Action B-cancel is handled earlier by menuvwf's exact pop proof. It
+restores both the covered carried-Item or settled-Floor parent and the retained screen-1 state, so the generic pop
 skips its otherwise invisible screen-0/screen-1 reconstruction entirely. A rejected
 proof reaches the ordinary conservative status path here.
 
@@ -1057,5 +1057,6 @@ def install(buf, notes=None, font=None):
                      'tiles; exact Status-to-Items entry retires only visible BG rows '
                      '0-15, precommits empty box chrome, and preserves the Window; exact '
                      'Items-to-Status pops keep LCD on with nine bounded field uploads; '
-                     'held-Action B restores its Item parent and input state without replay; '
+                     'admitted Action B restores its Item/Floor parent and input state '
+                     'without replay; '
                      'unknown LCD-on returns retain the conservative path')

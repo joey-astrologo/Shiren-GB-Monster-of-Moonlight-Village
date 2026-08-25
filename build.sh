@@ -114,6 +114,13 @@ if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   # page. Its retired rows must be structurally zero; B must return live to Status, while
   # Right/Left must rebuild complete five-row Item chrome before returning to page 1/4.
   python3 tools/floorpagespill.py build/shiren_en.gb
+  # Repeat at the earliest input boundary exposed by the native screen-1 redraw return.
+  # This crosses pages 1-4 and the Items/Floor shape boundary with only one idle frame,
+  # catching mixed headers, swallowed ownership, LCD-off fallbacks and white frames.
+  python3 tools/floorpagespill.py build/shiren_en.gb --rapid --settle-frames 1
+  # The standing-item Floor page also owns a four-row Action overlay. B must restore
+  # that exact one-row parent in one VBlank and return directly to responsive input.
+  python3 tools/flooractionspill.py build/shiren_en.gb
   python3 tools/floorinfospill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then

@@ -63,7 +63,19 @@ def visible_row(tilemap, row):
     return tilemap[row * 32:row * 32 + 20]
 
 
-def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
+def title_matches(pb, profile, text):
+    """Compare the four-cell ROM-static header by pixels, not allocator membership."""
+    want = menuspill.compose(menuspill.encode(text), profile)
+    for index, expected in enumerate(want):
+        tile = pb.memory[0x9821 + index]
+        at = menuspill.tile_data_addr(tile)
+        if bytes(pb.memory[at:at + 16]) != bytes(expected):
+            return False
+    return True
+
+
+def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b',
+        trace_render=False, rapid=False, settle_frames=1):
     profile = menuspill.renderer_profile(rom_path)
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('floorpagespill: requires the Dot proportional renderer')
@@ -87,6 +99,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
         right_presses = []
         floor_at = [None]
         floor_state = [None]
+        floor_title_ok = [None]
+        return_title_ok = [None]
         floor_exit_at = [None]
         return_completes = []
         floor_entry_blank_commits = []
@@ -100,6 +114,16 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
         regional_fallbacks = []
         regional_rows = []
         samples = []
+        render_trace = []
+
+        def trace_row(source, limit=32):
+            values = []
+            for address in range(source, source + limit):
+                value = pb.memory[address]
+                values.append(value)
+                if value == 0xFF:
+                    break
+            return tuple(values)
 
         def dispatch(_ctx=None):
             screen = pb.register_file.A
@@ -111,6 +135,12 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
 
         def item_row(_ctx=None):
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+            if trace_render and item_open[0]:
+                source = pb.memory[0xC69F] | (pb.memory[0xC6A0] << 8)
+                render_trace.append((frame[0], 'row', shape, pb.register_file.D,
+                                     pb.memory[0xC6AC], pb.memory[0xC1B3],
+                                     pb.memory[0xC1B5], pb.memory[0xC1B6],
+                                     source, trace_row(source)))
             if shape != ITEM_SHAPE or pb.register_file.D != 4:
                 return
             selector = pb.memory[0xC6AC]
@@ -123,9 +153,32 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
             if page_completes and page_completes[-1][1] == selector:
                 return
             page_completes.append((frame[0], selector))
-            at = frame[0] + 90
-            scheduled[at] = 'right'
-            right_presses.append(at)
+            if not rapid or len(page_completes) == 1:
+                at = frame[0] + 90
+                scheduled[at] = 'right'
+                right_presses.append(at)
+
+        def redraw_return(_ctx=None):
+            if not rapid or not item_open[0]:
+                return
+            selector = pb.memory[0xC6AC]
+            if selector == 0xFF and pb.memory[0xC1B7] == 1:
+                if floor_at[0] is None:
+                    floor_at[0] = frame[0]
+                    floor_state[0] = snapshot(pb)
+                    floor_title_ok[0] = title_matches(pb, profile, 'Floor')
+                    at = frame[0] + settle_frames
+                    scheduled[at] = leave_button
+                return
+            if floor_at[0] is not None:
+                if leave_button in ('left', 'right'):
+                    return_title_ok[0] = title_matches(pb, profile, 'Items')
+                return
+            if (page_completes and
+                    len(right_presses) < len(page_completes)):
+                at = frame[0] + settle_frames
+                scheduled[at] = 'right'
+                right_presses.append(at)
 
         def status_entry(_ctx=None):
             if b_at[0] is None:
@@ -168,6 +221,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
                                             pb.memory[0xC1B7], snapshot(pb)))
 
         pb.hook_register(4, 0x48AA, dispatch, None)
+        pb.hook_register(4, 0x4856, redraw_return, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], item_row, None)
         pb.hook_register(statusvwf.FAR_BANK, labels['statusentry'], status_entry, None)
         pb.hook_register(statusvwf.FAR_BANK, labels['uploadcopy'], upload_start, None)
@@ -175,6 +229,10 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
         pb.hook_register(statusvwf.FAR_BANK, labels['statusready'], fallback, None)
         _region_code, region_labels = gbasm.assemble(
             menuvwf.ITEM_REGION_SRC, menuvwf.ITEM_REGION_AT)
+        _phase_code, phase_labels = gbasm.assemble(
+            menuvwf.ITEM_SHAPE_PHASE_SRC, menuvwf.ITEM_SHAPE_PHASE_AT)
+        _return_code, return_labels = gbasm.assemble(
+            menuvwf.ITEM_RETURN_SRC, menuvwf.ITEM_RETURN_AT)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['ircheck'],
                          lambda _ctx=None: regional_rows.append(
                              (frame[0], pb.register_file.D, pb.register_file.B,
@@ -184,15 +242,28 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
                          regional_fallback, None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irarmed'],
                          regional_blank_done, None)
+        if trace_render:
+            def trace_hook(label):
+                return lambda _ctx=None: render_trace.append(
+                    (frame[0], label, pb.register_file.D, pb.memory[0xC6AC],
+                     pb.memory[0xC1B3], pb.memory[0xC1B5], pb.memory[0xC1B6]))
+            pb.hook_register(menuvwf.ITEM_RETURN_BANK,
+                             phase_labels['itemshapephase'],
+                             trace_hook('phase-entry'), None)
+            pb.hook_register(menuvwf.ITEM_RETURN_BANK, phase_labels['ispshape'],
+                             trace_hook('phase-shape'), None)
+            pb.hook_register(menuvwf.ITEM_RETURN_BANK, return_labels['irtshape'],
+                             trace_hook('tail-shape'), None)
 
         for frame[0] in range(frames):
-            if (floor_at[0] is None and pb.memory[0xC6A3] == 1 and
+            if (not rapid and floor_at[0] is None and pb.memory[0xC6A3] == 1 and
                     pb.memory[0xC6AC] == 0xFF and pb.memory[0xC1B7] == 1):
                 floor_at[0] = frame[0]
                 scheduled[frame[0] + 90] = leave_button
-            if (floor_at[0] is not None and floor_state[0] is None and
+            if (not rapid and floor_at[0] is not None and floor_state[0] is None and
                     frame[0] == floor_at[0] + 60):
                 floor_state[0] = snapshot(pb)
+                floor_title_ok[0] = title_matches(pb, profile, 'Floor')
                 if png_dir:
                     pb.screen.image.save(os.path.join(
                         png_dir, 'standing_floor_%s_settled_f%04d.png' %
@@ -232,7 +303,13 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
         if floor_at[0] is None or floor_state[0] is None:
             problems.append('standing-item Floor page never reached its settled latch')
         else:
+            if not floor_title_ok[0]:
+                problems.append('settled standing-item page header is not exact `Floor`')
             state = floor_state[0]
+            floor_cursor = (state['shadow'][0x82], state['bg'][0x82])
+            if floor_cursor != (0x81, 0x81):
+                problems.append('settled Floor cursor shadow/BG is $%02X/$%02X, '
+                                'expected $81/$81' % floor_cursor)
             top = bytes((0xB8,)) + bytes((0xBC,)) * 18 + bytes((0xB9,))
             bottom = bytes((0xBA,)) + bytes((0xBD,)) * 18 + bytes((0xBB,))
             for layer in ('bg', 'shadow'):
@@ -307,6 +384,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
                                 ' '.join('f%d' % at for at in fallbacks))
         else:
             expected_selector = 0 if leave_button == 'right' else 15
+            if return_title_ok[0] is None:
+                return_title_ok[0] = title_matches(pb, profile, 'Items')
             if tuple(selector for _at, selector in return_completes) != \
                     (expected_selector,):
                 problems.append('Floor %s completed selectors %s, expected ($%02X,)' %
@@ -344,6 +423,14 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
             if pb.memory[0xC6AC] != expected_selector:
                 problems.append('Floor %s ended on selector $%02X, expected $%02X' %
                                 (leave_button, pb.memory[0xC6AC], expected_selector))
+            if return_title_ok[0] is not True:
+                problems.append('Floor %s return header is not exact `Items`' %
+                                leave_button)
+            cursor = (pb.memory[0xC382], pb.memory[0x9882])
+            if cursor != (0x81, 0x81):
+                problems.append('Floor %s return cursor shadow/BG is $%02X/$%02X, '
+                                'expected $81/$81' %
+                                (leave_button, cursor[0], cursor[1]))
         if regional_fallbacks:
             problems.append('Items-to-Floor used regional LCD-off fallback at %s' %
                             ' '.join('f%d' % at for at in regional_fallbacks))
@@ -387,6 +474,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b'):
           'regional/status fallbacks %d/%d' %
           (len(uploads), len(lcd_off), len(whites), len(regional_fallbacks),
            len(fallbacks)))
+    if trace_render:
+        for event in render_trace:
+            print('floorpagespill: trace %r' % (event,))
     for problem in problems:
         print('  ' + problem)
         if problems:
@@ -406,12 +496,18 @@ def main():
         ROOT, 'saves/shiren_en_item_menu_wood_arrow.srm'))
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=3700)
+    parser.add_argument('--trace-render', action='store_true')
+    parser.add_argument('--rapid', action='store_true',
+                        help='schedule each page input from the native redraw return')
+    parser.add_argument('--settle-frames', type=int, default=1,
+                        help='with --rapid, frames from redraw return to next input')
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('floorpagespill: missing %s' % path)
     for leave_button in ('b', 'right', 'left'):
-        run(args.rom, args.ram, args.png_dir, args.frames, leave_button)
+        run(args.rom, args.ram, args.png_dir, args.frames, leave_button,
+            args.trace_render, args.rapid, args.settle_frames)
 
 
 if __name__ == '__main__':

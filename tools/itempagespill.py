@@ -53,8 +53,30 @@ def transition_snapshot(pb):
         'window': bool(pb.memory[0xFF40] & 0x20),
         'ly': pb.memory[0xFF44],
         'selector': pb.memory[0xC6AC],
+        'item_count': pb.memory[0xC6AA],
         'floor_latch': pb.memory[0xC1B7],
+        'fast_latch': pb.memory[0xC1B6],
     }
+
+
+def expected_indicator(snapshot):
+    """Native 4:$4EB4 marker map for the selected carried-item page."""
+    selector = snapshot['selector']
+    if selector == 0xFF:
+        return bytes((0xBC,)) * 4
+    pages = min(4, (snapshot['item_count'] + 4) // 5)
+    active = selector // 5
+    cells = bytearray((0xBC,)) * 4
+    for index in range(pages):
+        cells[index] = 0xC5
+    if active < pages:
+        cells[active] = 0xC6
+    return bytes(cells)
+
+
+def visible_indicator(snapshot):
+    offset = PAGE_INDICATOR_AT - 0x9800
+    return snapshot['bg'][offset:offset + 4]
 
 
 def tile_planes(snapshot, tile):
@@ -123,6 +145,9 @@ def locked_map_changes(before, after, kind, floor_expand=False):
     if floor_expand:
         # The one-row Floor rectangle is becoming the five-row Items rectangle.
         allowed.update((row, col) for row in range(3, 14) for col in range(20))
+        # Box 18's Floor word and box 14's Items word share four private tiles. The
+        # shape transaction retires and replaces exactly their common interior.
+        allowed.update((1, col) for col in range(1, 5))
     changed = []
     for row in range(18):
         for col in range(20):
@@ -172,10 +197,13 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         captured = set()
         scoped_lcd_off = []
         scoped_regional_begins = []
+        scoped_regional_declines = []
         scoped_legacy_fallbacks = []
+        scoped_fullmap_blanks = []
         pre_gate_queues = []
         sort_snapshots = []
         sort_blank_frame = [None]
+        redraw_returns = []
 
         def dispatch(_ctx=None):
             dispatches.append((frame[0], pb.register_file.A))
@@ -207,6 +235,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             if rownum == 0:
                 current[0] = {
                     'start': frame[0], 'rows': {},
+                    'selector': pb.memory[0xC6AC],
                     'old': transition_snapshot(pb),
                     'old_image': pb.screen.image.copy(), 'frames': [],
                     'lcd_off_frames': [], 'cursor_seen': False,
@@ -248,10 +277,17 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                             right_wrap_pending[0] = True
 
         pb.hook_register(4, 0x48AA, dispatch, None)
+        pb.hook_register(4, 0x4856,
+                         lambda _ctx=None: redraw_returns.append(
+                             (frame[0], pb.memory[0xFF44])), None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
 
         _region_code, region_labels = gbasm.assemble(
             menuvwf.ITEM_REGION_SRC, menuvwf.ITEM_REGION_AT)
+        _page_code, page_labels = gbasm.assemble(
+            menuvwf.ITEM_PAGE_SRC, menuvwf.ITEM_PAGE_AT)
+        _fast_code, fast_labels = gbasm.assemble(
+            menuvwf.ITEM_ROW_FAST_SRC, menuvwf.ITEM_ROW_FAST_AT)
 
         def region_event(field):
             def record(_ctx=None):
@@ -282,6 +318,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         # fixed-width empty rows enter mode 3 and are deliberately recovered before it.
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irshadow'],
                          region_event('regional_begins'), None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irdecline'],
+                         lambda _ctx=None: scoped_regional_declines.append(frame[0])
+                         if page_presses else None, None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irpredrain'],
                          lambda _ctx=None: pre_gate_queues.append(
                              (frame[0], pb.memory[0xC11A])), None)
@@ -291,9 +330,14 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                          region_snapshot('visible_blanked'), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
                          region_event('legacy_fallbacks'), None)
+        pb.hook_register(menuvwf.ITEM_PAGE_BANK, page_labels['pbdisable'],
+                         lambda _ctx=None: scoped_fullmap_blanks.append(frame[0])
+                         if page_presses else None, None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfixedempty'],
                          region_event('fixed_empty_rows'), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['ircopy'],
+                         row_commit, None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, fast_labels['irfcopy'],
                          row_commit, None)
 
         for current_frame in range(frames):
@@ -362,6 +406,12 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         if scoped_legacy_fallbacks:
             problems.append('Items route reached scoped LCD-off fallback at %s' %
                             ' '.join('f%d' % at for at in scoped_legacy_fallbacks))
+        if scoped_regional_declines:
+            problems.append('Items route declined its exact regional gate at %s' %
+                            ' '.join('f%d' % at for at in scoped_regional_declines))
+        if scoped_fullmap_blanks:
+            problems.append('Items route entered the full-map LCD-off publisher at %s' %
+                            ' '.join('f%d' % at for at in scoped_fullmap_blanks))
         if right_wrap_dispatches and not any(
                 right_wrap_dispatches[0] <= at <= right_wrap_dispatches[0] + 5
                 for at in scoped_regional_begins):
@@ -372,14 +422,36 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                             ' '.join('f%d' % at for at in scoped_lcd_off))
 
         transition_traces = []
+        indicator_traces = []
         for index, page in enumerate(pages):
-            samples = page['frames']
+            # Input changes $C6AC before the next row-0 dispatch. Do not attribute that
+            # short outgoing-page interval to the page that just settled; it is exactly
+            # where an old indicator is correct until the incoming transaction begins.
+            samples = []
+            for sample in page['frames']:
+                if sample[2]['selector'] != page['selector']:
+                    break
+                samples.append(sample)
             if not samples:
                 problems.append('transition %d has no rendered-frame samples' % index)
                 continue
             if not page['cursor_seen']:
                 problems.append('transition %d never restores the row-0 cursor at $C382'
                                 % index)
+
+            changes = []
+            for at, _image, memory in samples:
+                state = (memory['selector'], visible_indicator(memory),
+                         expected_indicator(memory))
+                if not changes or changes[-1][1:] != state:
+                    changes.append((at,) + state)
+            indicator_traces.append((index, changes))
+            if visible_indicator(samples[-1][2]) != expected_indicator(samples[-1][2]):
+                problems.append('page flip %d leaves indicator %s for selector $%02X, '
+                                'expected %s' %
+                                (index, visible_indicator(samples[-1][2]).hex(' '),
+                                 samples[-1][2]['selector'],
+                                 expected_indicator(samples[-1][2]).hex(' ')))
 
             if index == 0:
                 if page['regional_begins']:
@@ -408,16 +480,18 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 problems.append('page flip %d recovered %d fixed empty row(s), expected %d'
                                 % (index, len(page['fixed_empty_rows']), empty_rows))
             committed_rows = [row for _at, _ly, row in page['row_commits']]
-            if committed_rows != list(range(5)):
-                problems.append('page flip %d committed rows %s, expected 0 1 2 3 4'
-                                % (index, ' '.join(str(row)
-                                                   for row in committed_rows)))
-            late_commit = next(((at, ly, row) for at, ly, row in page['row_commits']
-                                if ly < 0x90), None)
-            if late_commit is not None:
-                at, ly, row = late_commit
-                problems.append('page flip %d committed row %d outside VBlank at f%d '
-                                '(LY=$%02X)' % (index, row, at, ly))
+            if committed_rows != [4]:
+                problems.append('page flip %d atomic body commits are %s, expected '
+                                'final row 4 only' %
+                                (index, ' '.join(str(row)
+                                                 for row in committed_rows)))
+            unsafe_commit = next(((at, ly, row) for at, ly, row in page['row_commits']
+                                  if ly < 0x90), None)
+            if unsafe_commit is not None:
+                at, ly, row = unsafe_commit
+                problems.append('page flip %d began atomic body publication outside '
+                                'VBlank at f%d/LY=$%02X (final row %d)' %
+                                (index, at, ly, row))
 
             old = page['old']
             new = samples[-1][2]
@@ -463,6 +537,16 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             if first_new is None:
                 problems.append('page flip %d never reaches five settled rows' % index)
                 continue
+            page['settled'] = samples[first_new][0]
+            indicator_at = next((at for at, _image, memory in samples
+                                 if visible_indicator(memory) ==
+                                 expected_indicator(memory)), None)
+            if indicator_at is None:
+                problems.append('page flip %d never publishes the indicator for '
+                                'selector $%02X' % (index, page['selector']))
+            elif index and indicator_at > page['settled']:
+                problems.append('page flip %d body settles at f%d before its indicator '
+                                'at f%d' % (index, page['settled'], indicator_at))
             audit = observations[:first_new + 1]
             reached_new = [False] * 5
             for at, states in audit:
@@ -600,6 +684,10 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 if not changes or changes[-1][1] != observation[1]:
                     changes.append(observation)
             transition_traces.append((index, changes))
+            if samples[-1][2]['fast_latch'] != 0:
+                problems.append('page flip %d leaves same-screen latch $C1B6=$%02X '
+                                'after settlement' %
+                                (index, samples[-1][2]['fast_latch']))
 
         if sort_snapshots and pages:
             occupied = [row for row in range(5)
@@ -624,6 +712,50 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 problems.append('page indicator tile $%02X is %s, expected solid-border %s'
                                 % (tile, got.hex(' '), want.hex(' ')))
 
+        inputs = sorted(page_presses + sort_presses)
+        scoped_returns = [event for event in redraw_returns
+                          if inputs and event[0] >= inputs[0][0]]
+        # The four-page standing-item fixture inserts a native Floor sentinel between
+        # page 4 and page 1. It has no five-row Item draw of its own, so associate each
+        # observed Item page with the latest physical input that precedes it instead of
+        # blindly zipping pages and presses.
+        visual_latencies = []
+        for page in pages[1:]:
+            prior = [(at, button) for at, button in inputs if at <= page['start']]
+            if not prior:
+                continue
+            at, _button = prior[-1]
+            visual_latencies.append(
+                page.get('settled', page.get('complete', page['start'])) - at)
+        return_latencies = []
+        return_cursor = 0
+        for at, _button in inputs:
+            while (return_cursor < len(scoped_returns) and
+                   scoped_returns[return_cursor][0] < at):
+                return_cursor += 1
+            if return_cursor >= len(scoped_returns):
+                break
+            return_latencies.append(scoped_returns[return_cursor][0] - at)
+            return_cursor += 1
+        if len(visual_latencies) != len(pages) - 1:
+            problems.append('measured %d visual page latencies for %d page draws' %
+                            (len(visual_latencies), len(pages) - 1))
+        if len(return_latencies) != len(inputs):
+            problems.append('measured %d redraw returns for %d inputs' %
+                            (len(return_latencies), len(inputs)))
+        visual_budget = 16 if test_wrap else 13
+        # The standing-Floor boundary also composes and commits the replacement
+        # four-cell header during VBlank. Atomic five-row publication can meet the next
+        # VBlank one frame later depending on input scanline; ordinary page-only redraws
+        # retain the lower budget.
+        return_budget = 23 if test_wrap else 17
+        if visual_latencies and max(visual_latencies) > visual_budget:
+            problems.append('page visual latency reached %d frames, budget is %d' %
+                            (max(visual_latencies), visual_budget))
+        if return_latencies and max(return_latencies) > return_budget:
+            problems.append('page handler latency reached %d frames, budget is %d' %
+                            (max(return_latencies), return_budget))
+
         pb.stop(save=False)
 
     print('itempagespill: dispatches %s' %
@@ -633,15 +765,25 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                    for page in pages))
     print('itempagespill: white-frame counts %s' %
           ' '.join(str(len(page['lcd_off_frames'])) for page in pages))
-    print('itempagespill: scoped regional begins %d; fallbacks %d; LCD-off frames %d; '
+    print('itempagespill: scoped regional begins %d; declines/fallbacks/full-map '
+          'blanks %d/%d/%d; LCD-off frames %d; '
           'pre-gate queue max $%02X; sort samples %d; regional blank %s' %
-          (len(scoped_regional_begins), len(scoped_legacy_fallbacks),
+          (len(scoped_regional_begins), len(scoped_regional_declines),
+           len(scoped_legacy_fallbacks), len(scoped_fullmap_blanks),
            len(scoped_lcd_off), max((value for _at, value in pre_gate_queues), default=0),
            len(sort_snapshots),
            'missing' if sort_blank_frame[0] is None else 'f%d' % sort_blank_frame[0]))
+    print('itempagespill: input-to-complete %s frames; input-to-handler-return %s frames' %
+          (' '.join(str(value) for value in visual_latencies),
+           ' '.join(str(value) for value in return_latencies)))
     for index, trace in transition_traces:
         print('itempagespill: regional flip %d %s' %
               (index, ', '.join('f%d:%s' % observation for observation in trace)))
+    for index, trace in indicator_traces:
+        print('itempagespill: indicator flip %d %s' %
+              (index, ', '.join('f%d:sel$%02X/%s want %s' %
+                                (at, selector, got.hex(), want.hex())
+                                for at, selector, got, want in trace)))
     print('itempagespill: direction presses %s; sort presses %s; '
           '%d unique complete page(s)' %
           (' '.join('f%d:%s' % event for event in page_presses),

@@ -11,11 +11,12 @@ visual review: the first title-menu publication now includes the Adventure curso
 the special standing-item Floor page after carried pages retires all four unused row
 borders, converts between complete one- and five-row chrome in both paging directions,
 and returns live to Status. Both have first-frame fixtures but still await the same manual
-review. Checkpoint 3's exact held-inventory Action-overlay scope is implemented
-and regression-complete. Its B-cancel now replaces the outgoing Action box with the
-reconstructed Item parent and restores the retained Item input state directly. The
-unpublished Status/Items replay is skipped, eliminating both shared-tile contamination
-and the former 40-frame input stall. Checkpoints 4-6 remain deferred.
+review. Checkpoint 3's exact screen-2 Action-overlay scope is implemented and
+regression-complete for carried pages 1-4 and the settled standing-item Floor page.
+Its B-cancel now replaces the outgoing Action box with the reconstructed Item/Floor
+parent and restores the retained screen-1 input state directly. The unpublished
+Status/Items replay is skipped, eliminating both shared-tile contamination and the
+former 40-frame input stall. Checkpoints 4-6 remain deferred.
 
 ### Motivation
 
@@ -46,10 +47,13 @@ both the full white screen and unsafe tile reuse.
    panel, and other unaffected screen regions.
 3. Once that blank map is visible, release the old page's dynamic tile slots. They are
    now safe to reuse because no visible cell refers to them.
-4. Render the incoming rows through the existing VBlank upload queue. Do not busy-wait
-   for LY and directly copy a large payload into VRAM.
-5. Publish each row only after all of its tile pixels are complete. Rows may appear
-   progressively from top to bottom; partially painted or aliased rows are forbidden.
+4. Render the incoming rows into the existing WRAM payloads. For the proven blank Item
+   region, copy each 16-byte glyph tile as four synchronized four-byte HBlank slices;
+   every unproved context retains the existing VBlank upload queue. The bounded slices,
+   not an unbounded LY copy, are the implemented exception to the original caution.
+5. Keep every completed incoming row unreferenced until the final body row is ready,
+   then publish all five owned row regions together in one VBlank. The proportional
+   composition cost may vary, but a top-to-bottom visible cascade is forbidden.
 6. Publish the correct cursor and page indicator with the relevant completed map state,
    then release input once the transaction has settled.
 7. Keep the WRAM shadow map and visible BG map synchronized, and cancel or redirect any
@@ -60,7 +64,6 @@ The expected visual sequence is therefore:
 ```text
 complete old page
 empty Item status/name rows, with the surrounding menu still visible
-one or more complete new rows
 complete new page
 ```
 
@@ -68,20 +71,28 @@ complete new page
 
 The implementation is deliberately narrower than the general proposal:
 
-- Bank 60 far index `$07` owns the regional controller at `$4090-$4294`; far index `$09`
-  owns the fallback controller at `$4300-$43E9`; far index `$05` retains the shared full
-  20x18 publisher at `$405A-$4084`. Redirected text begins at `$4400` in this bank.
+- Bank 60 far index `$07` owns the regional controller at `$4090-$422D`; far index `$09`
+  owns the fallback controller at `$4300-$43EE`; far index `$05` retains the shared full
+  20x18 publisher at `$405A-$4084`. The atomic body helper occupies
+  `$43F0-$444E`; far index `$0F` owns the redraw-tail service at `$4480-$45A5`, with a
+  final-body shape marker at `$45A6-$45CE`, and
+  dispatches the direct tile helper at `$45E0-$46B0`. The final row also calls the
+  native-equivalent indicator builder at `$46B1-$46FF`, so the new page and green dot
+  settle together. Redirected text begins at `$4700`.
 - The regional begin gate requires screen 1, proportional Item mode, row key `$C380`, an
-  active allocator epoch and LCDC bit 7. It derives one through four pages from native
-  item count `$C6AA` and validates the exact settled `4:$4EB4` shape: one page has four
-  `$BC` border cells; two through four have one `$C6`, the remaining live `$C5` cells,
-  then `$BC`. Right wrap has one additional exact transient: selector zero is committed
-  while all four old markers are retired to `$BC`. It drains `$C11A` and reacquires
-  VBlank before validating that visible marker: this closes two phase-sensitive
-  false-fallback candidates consistent with the rare report, a partially published marker
-  and a blocked mode-3 VRAM read after a long drain. The rare trigger has not been
-  captured deterministically. Initial entry is handled separately at the screen-1
-  shadow-clear boundary.
+  active allocator epoch, LCDC bit 7, and native item count `$C6AA` in the supported
+  one-through-twenty range. `mgbdis` confirms that native Right/Left commits `$C6AC` and
+  synchronously calls the redraw; that path never reads the visible `$986F-$9872` page
+  indicator. The indicator is transaction output, not an ownership proof. The former
+  visible-marker veto could observe an outgoing or partially published marker and
+  incorrectly select state `$06`'s LCD-off full-map publisher, so it has been removed.
+  Items/Floor shape changes additionally
+  retire the four shared title references, compose box 14/18 while those tiles are
+  unreferenced, and commit the completed replacement title with the indicator. It drains
+  `$C11A` before beginning its own transaction, but does not use the resulting visible
+  marker as an admission input. Initial entry is handled separately at the screen-1
+  shadow-clear boundary, while an unsupported regional row retains its distinct LCD-off
+  safety fallback.
 - The controller normally writes `$BE` to each marker-coupled left border (`key+0`) and zero to
   each raw marker cell (`key+1`) and name interior (`key+3..key+18`), then applies the
   same 90-cell regional state to BG. The 85 marker/name cells are blank; every other cell
@@ -92,13 +103,15 @@ The implementation is deliberately narrower than the general proposal:
   Items rectangle before page-1 or last-page text. Both finish before tilemap row 3 is
   scanned—and currently inside VBlank; the four rows absent from Floor are structurally
   zero after contraction.
-- A completed row drains `$C11A` before publishing its left border, marker cell, and 16
-  name cells together. This is required because equipped `$84/$86` markers select the
-  paired `$83/$85` border; publishing only the marker leaves a visible vertical remnant.
-  The controller masks interrupts only across the VBlank rendezvous and map copy so the
-  native VBlank handler cannot consume the safe write window, then immediately restores
-  them. Cursor and right-border cells are not copied by the regional publisher. A short
-  page's native empty slot is accepted only when its exact 19-byte source field is all zero.
+- Each row's tile pixels are completed first, but rows 0-3 remain unreferenced behind the
+  regional blank. Final row 4 derives and publishes the page indicator, then copies all
+  five left-border/marker pairs and 16-cell name interiors together in one VBlank. This
+  is required because equipped `$84/$86` markers select the paired `$83/$85` border;
+  publishing only the marker leaves a visible vertical remnant. Exact glyph tiles still
+  use four-byte HBlank slices with interrupts masked. Cursor and right-border cells are
+  not copied by the body publisher. A short page's native empty slot is accepted only
+  when its exact 19-byte source field is all zero. Selector `$FF` uses the same helper
+  with its single real row.
 - Any unknown nonempty fallback changes state to `$05`, disables the LCD during VBlank,
   and completes through the retained whole-map publisher. Initial/declined entry is
   latched as `$06` and also stays on that safe path.
@@ -120,8 +133,9 @@ queue/publication phase defects.
 adds 1/6/11/16-item cases, cycles both directions through every page and wrap boundary,
 then invokes Start-sort. It proves all 3/5/7/9 redraws enter regional mode without
 fallback or LCD-off frames.
-`tools/menuspill.py --ram` independently observes the top-to-bottom `old -> blank -> new`
-row sequence and keeps allocator records plane-exact.
+`tools/itempagespill.py` observes `complete old -> complete regional blank -> complete
+new body`, hooks the sole final-row VBlank commit directly, and keeps allocator records
+plane-exact.
 
 An optional refinement can blank and replace one row at a time. That would retain more
 of the outgoing page during the redraw, but it requires a proven spare 11-tile row slice
@@ -138,21 +152,24 @@ rewrite.
 2. **Item entry and exit — COMPLETE and visually accepted:** Items back to Status from
    each of pages 1-4 keeps the LCD and outgoing page live. Direct Status-to-Items
    entry/re-entry keeps the Window live, retires BG rows 0-15 in four VBlanks, commits
-   both empty box perimeters, and then uses the existing completed-row/native-final
+   both empty box perimeters, and then uses the existing completed-body/native-final
    publishers for text and final decoration. A 2026-08-24 follow-up additionally admits
    the completed standing-item Floor page (`$C6AC=$FF`) through an exact settlement latch;
    its automated evidence passes and its visual correction awaits review.
-3. **Held-inventory Action overlay — IMPLEMENTED, awaiting visual acceptance:** change only
-   the direct screen-1 Items to screen-2 Action open and B-cancel back to the identical
-   Item page/selection. Pages 1-4 and every proven four- through six-row box-6 verb set
-   are one acceptance unit. The validated B-pop now atomically replaces box 6 with its
-   reconstructed Item parent, restores the Item cursor/record/screen state, and returns
+3. **Screen-1 Item/Floor Action overlay — IMPLEMENTED, awaiting visual acceptance:**
+   change only direct screen-1 carried Items or the settled standing-item Floor page to
+   screen-2 Action, followed by B-cancel back to the identical parent. Pages 1-4, the
+   appended `$FF` Floor page, and every proven four- through six-row box-6 verb set are
+   one acceptance unit. The validated B-pop now atomically replaces box 6 with its
+   reconstructed Item/Floor parent, restores the cursor/record/screen state, and returns
    directly without rebuilding unpublished Status and Items screens. This prevents
    shared-tile `Gitan / Floor / Path` contamination, the prolonged empty footprint, and
    the former 40-frame input stall; observed B return and post-release D-pad acceptance
-   are both two frames. Cursor movement and gameplay-bound item use are regression checks,
-   not new regional transitions. Screen 16, shop context, Floor box 39, Info, Name entry,
-   and Pot descendants remain on their current paths until separately traced.
+   are at most two frames. The standing Floor fixture independently measures a two-frame
+   B return and one-frame acceptance of the next page input. Cursor movement and
+   gameplay-bound item use are regression checks, not new regional transitions. Screen
+   16, shop context, screen-20 Floor box 39, Info, Name entry, and Pot descendants remain
+   on their current paths until separately traced.
 4. **Item Info lifecycle:** Action to Info, multi-page Info where applicable, and Info
    back to Items with the correct selection and page restored.
 5. **Adjacent special routes:** priced shop items, Pot actions, Floor menus, debug menus,
@@ -184,6 +201,9 @@ only a settled endpoint.
   that page by B, Right, and Left. B reaches Status; Right reaches page 1; Left reaches
   page 4. Both paging directions require complete incoming chrome before text and every
   route forbids LCD-off, all-white, and fallback frames.
+- From that settled Floor page, a separate fixture opens the real `Take / Fire / Swap /
+  Info` screen-2 Action box, B-cancels, requires one exact VBlank parent restore and no
+  replay, then proves the first post-B Left input is accepted promptly.
 - Tests include Action and Info transitions from page 2 or later, because settled page-1
   fixtures do not prove allocator lifetime safety.
 - Tests continue past the first settled frame to catch delayed native publications,

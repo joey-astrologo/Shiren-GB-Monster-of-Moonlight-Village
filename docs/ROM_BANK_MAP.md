@@ -107,7 +107,7 @@ can consume more of a pool bank later.
 | 33 | `$4400-$7FFF` | `tools/pool.py`: redirected-string index | Exclusive |
 | 34-57 | `$4100-$7FFF` | `tools/pool.py`: redirected English text arena, subject to exclusions below | Pool-only; bank 46 begins at `$4400` |
 | 34-45 | `$405A-$40FF` when assigned | VWF carry/transition helpers | See per-module constants; otherwise reader-owned |
-| 37 | `$405A-$40FB` | `tools/menuvwf.py`: held-Action live-layer admission/collision gate and page-edge save dispatch | Exclusive, far index `$05` |
+| 37 | `$405A-$4104` | `tools/menuvwf.py`: carried-/Floor-Action live-layer admission/collision gate and page-edge save dispatch | Exclusive, far index `$05`; redirected text begins at `$4120` |
 | 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fei restore | Exclusive |
 | 46 | `$4100-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: rank-screen helpers | Exclusive |
 | 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
@@ -115,23 +115,28 @@ can consume more of a pool bank later.
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
-| 53 | `$405A-$6897` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers, completed standing-Floor exit, held-Action intermediate replay, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09` |
+| 53 | `$405A-$6897` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers, completed standing-Floor exit, screen-2 Action intermediate replay, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09` |
 | 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 55 | `$405A-$40D7` | `tools/menuvwf.py`: shop `Price` / `G` private-raster stager and map writer | Exclusive, exact call-site guard |
 | 56 | `$405A-$40A0` | `tools/menuvwf.py`: exact shop amount-row VWF classifier | Exclusive, exact shape/source gate |
 | 57 | `$405A-$40B5` | `tools/menuvwf.py`: shop `Price` / `G` native-queue VBlank uploader | Exclusive, called only by bank 55 |
-| 58 | `$405A-$40F5` | `tools/menuvwf.py`: standing-item Floor/Items one-row/five-row chrome converter | Exclusive, far index `$07`; ending-credit code begins at `$4100` |
+| 58 | `$405A-$40FE` | `tools/menuvwf.py`: standing-item Floor/Items one-row/five-row chrome and shared-title-reference converter | Exclusive, far index `$07`; ending-credit code begins at `$4100` |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 59 | `$405A-$40FF`, `$7F00-$7FFF` | `tools/normalending.py`: conditional Normal-clear teaser helper and approved 1bpp English rows | Exclusive |
 | 60 | `$405A-$4084` | `tools/menuvwf.py`: shared 20x18 fallback publisher | Exclusive, far index `$05` |
-| 60 | `$4090-$4294` | `tools/menuvwf.py`: screen-1 Item paging/Start-sort/standing-Floor regional controller | Exclusive, far index `$07` |
-| 60 | `$4298-$42FA` | `tools/menuvwf.py`: held-Action B-pop proof and completed-parent direct-return dispatch | Exclusive, far index `$0D` |
-| 60 | `$4300-$43E9` | `tools/menuvwf.py`: Item entry/Pot/fallback controller | Exclusive, far index `$09` |
-| 60 | `$4400-$4FFF` | `tools/pool.py`: redirected English text | Pool-only; raised origin protects the menu controller arena |
+| 60 | `$4090-$422D` | `tools/menuvwf.py`: screen-1 Item paging/Start-sort/standing-Floor regional controller | Exclusive, far index `$07` |
+| 60 | `$422E-$429E` | `tools/menuvwf.py`: carried-/Floor-Action B-pop proof and completed-parent direct-return dispatch | Exclusive, far index `$0D` |
+| 60 | `$4300-$43EE` | `tools/menuvwf.py`: Item entry/Pot/fallback controller | Exclusive, far index `$09` |
+| 60 | `$43F0-$444E` | `tools/menuvwf.py`: atomic five-row Item / one-row Floor body-map publisher | Exclusive, direct helper |
+| 60 | `$4480-$45A5` | `tools/menuvwf.py`: Item page/header/cursor fast return plus native range-selector continuation | Exclusive, far index `$0F` |
+| 60 | `$45A6-$45CE` | `tools/menuvwf.py`: final-body-row Items/Floor shape-phase marker and indicator dispatch | Exclusive, direct helper |
+| 60 | `$45E0-$46B0` | `tools/menuvwf.py`: scan-safe Item glyph-tile publisher | Exclusive, dispatched through far index `$0F` |
+| 60 | `$46B1-$46FF` | `tools/menuvwf.py`: native-equivalent page-indicator builder and VBlank publisher | Exclusive, direct from the completed-body path |
+| 60 | `$4700-$4FFF` | `tools/pool.py`: redirected English text | Pool-only; raised origin protects the menu controller arena |
 | 60 | `$5000-$78AF` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail, far index `$0B` |
-| 61 | `$405A-$40EF` | `tools/menuvwf.py`: held-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09`; redirected text begins at `$4100` |
+| 61 | `$405A-$40EF` | `tools/menuvwf.py`: admitted carried-/Floor-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09`; redirected text begins at `$4100` |
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
-| 62 | `$405A-$42A5` | `tools/menuvwf.py`: held-Action box-6 parent and Item-machine-state restorer | Exclusive, far index `$07`; redirected text begins at `$42C0` |
+| 62 | `$405A-$4314` | `tools/menuvwf.py`: carried-/Floor-Action box-6 parent and screen-1 machine-state restorer | Exclusive, far index `$07`; redirected text begins at `$4400` |
 | 62 | `$7000-$7F43` | `tools/titlelogo.py`: illustrated title screen | Exclusive tail |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |
 

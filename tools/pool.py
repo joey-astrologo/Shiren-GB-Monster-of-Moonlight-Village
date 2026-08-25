@@ -124,17 +124,21 @@ TEXT_ORG = 0x4100           # text banks: past their own index table and reader
 RANK_SCREEN_BANK = 0x2E
 RANK_SCREEN_TEXT_ORG = 0x4400
 # Bank 60's prefix is a declared menu-transition code arena. menuvwf owns far indices
-# $05/$07/$09/$0D and helpers through $43E9; markers owns far index $0B and its graphics
-# tail. Starting redirected text at $4400 makes that ownership structural in normal and
+# $05/$07/$09/$0D/$0F and helpers through $46FF; markers owns far index $0B and its
+# graphics tail. Starting redirected text at $4700 makes that ownership structural in normal and
 # redirect-all
 # layouts instead of depending on the current pool's high-water mark.
 MENU_TRANSITION_BANK = 0x3C
-MENU_TRANSITION_TEXT_ORG = 0x4400
-# Bank 62 shares its far table/tail with the title logo. The held-Action parent restorer
-# occupies the prefix below $42C0, so redirected text begins at $42C0 while the title
+MENU_TRANSITION_TEXT_ORG = 0x4700
+# Bank 37's exact held-/Floor-Action admission gate grows slightly past the ordinary
+# text origin; keep the following redirected text structurally clear of it.
+ACTION_GATE_BANK = 0x25
+ACTION_GATE_TEXT_ORG = 0x4120
+# Bank 62 shares its far table/tail with the title logo. The carried-/Floor-Action parent
+# restorer occupies the prefix below $4400, so redirected text begins there while the title
 # asset remains independently protected at $7000.
 ACTION_BLANK_BANK = 0x3E
-ACTION_BLANK_TEXT_ORG = 0x42C0
+ACTION_BLANK_TEXT_ORG = 0x4400
 
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 
@@ -811,6 +815,7 @@ class Pool:
         self.index = bytearray()
         special_orgs = {
             RANK_SCREEN_BANK: RANK_SCREEN_TEXT_ORG,
+            ACTION_GATE_BANK: ACTION_GATE_TEXT_ORG,
             MENU_TRANSITION_BANK: MENU_TRANSITION_TEXT_ORG,
             ACTION_BLANK_BANK: ACTION_BLANK_TEXT_ORG,
         }

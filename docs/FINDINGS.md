@@ -1619,12 +1619,17 @@ stride-32 shadow clear and conservative path.
 inside VBlank before the first Item-row call, no frame disables the LCD or becomes
 all-white, the Window is byte/plane-exact, and the first post-entry page change begins one
 narrow regional transaction with no fallback. `tools/itempagespill.py` additionally runs
-a 20-frame carried-page-only cadence. The paging gate now drains `$C11A`, rendezvouses with
-VBlank again, and only then validates the visible page indicator. This closes two
-phase-sensitive false-rejection candidates consistent with the rare playtest report: a
-partially published marker before the drain, or a blocked mode-3 VRAM read after a drain
-that consumed the original VBlank. The rare trigger itself was not captured
-deterministically, so removal still needs playtest confirmation.
+a 20-frame carried-page-only cadence. `mgbdis` shows that native Right/Left commits
+`$C6AC` and synchronously calls `4:$483E`; it never reads visible `$986F-$9872` to decide
+whether that redraw is owned. The page indicator is output and may still describe the
+outgoing page while the incoming transaction is valid. The regional gate now drains
+`$C11A` and admits from the native screen/row/allocator/count state without vetoing a
+stale or partially published visible indicator. That veto was the remaining route to
+state `$06` and its LCD-off full-map publisher. The separate state `$05` safety for a
+genuinely unsupported regional row remains. The rare trigger was not captured
+deterministically, so removal still needs playtest confirmation; the fixture now hooks
+the admission decline, regional fallback, and exact full-map LCD-disable instruction
+independently so none can hide between sampled frames.
 
 The selector `$FF` stage is the actual standing-item Floor page, not a dummy sentinel.
 Its incoming descriptor has one row, so a five-row regional clear must zero the four
@@ -1637,6 +1642,34 @@ to admit only its completed direct pop through the live Items-to-Status controll
 same review also found that screen 15's atomic publisher preceded the native cursor
 initializer; the selected `$81` cursor is now pre-staged by a register-transparent helper
 and the entire first-published title perimeter is tested with it.
+
+The removed visible-indicator predicate was translation code, not a Japanese-ROM check.
+A fresh `../mgbdis` pass over `build/base.gb` confirms the native direction handlers at
+`4:$7339` and `4:$7354`: each computes and stores the next `$C6AC`, plays the paging
+sound, and immediately calls the synchronous stack redraw at `4:$483E`. That redraw
+dispatches the current stacked screen and never reads visible `$986F-$9872`. The green
+indicator is therefore output, not proof that the new selector owns the screen.
+
+Removing that false veto eliminates the rare LCD-off fallback, but it also made the
+renderer’s variable proportional composition time visible as a slow top-to-bottom fill.
+The exact regional path now leaves completed rows 0-3 unreferenced; final body row 4
+derives the native-equivalent indicator and commits all five owned row regions in one
+VBlank. The visible sequence is complete old body, complete regional blank, complete new
+body. `tools/itempagespill.py` hooks that sole row-4 commit directly and records zero
+gate declines, fallbacks, full-map blanks, or LCD-off frames in both ordinary and rapid
+cadences. Floor-to-five-row-Items can return at 23 frames when the final header/body commit
+just misses a VBlank; preserving that serialized boundary prevents the previously
+observed corruption under rapid page input.
+
+The standing-item Floor page also opens screen 2/box 6, even though its verbs come from
+the separate Floor table (`Take / Fire / Swap / Info` for the Wood Arrow fixture). Its B
+path is the same `HL=$5689` generic pop that formerly replayed screens 0 and 1 and briefly
+disabled the LCD. The private Action gate now admits selector `$FF` only with the settled
+`$C1B7=$01` proof. Its VBlank restorer rebuilds the saved Floor top edge, one ground-item
+row and bottom edge, zeros the remainder of box 6’s footprint, restores the exact
+screen-1 Floor descriptor/state, and skips replay. `tools/flooractionspill.py` measures a
+two-frame B return, one-frame acceptance of the following Left input, and zero LCD-off or
+white frames.
 
 **The general rule: when a block's byte layout changes, look for code that computes into it.
 A reference gets repointed; a hardcoded stride does not.**
