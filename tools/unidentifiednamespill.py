@@ -110,6 +110,7 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         status_draws = []
         status_uploads = []
         status_fallbacks = []
+        status_explicit_blanks = []
         checkpoints = {}
 
         def fresh_entry(_context=None):
@@ -136,6 +137,13 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusready'],
                              lambda _context=None: status_fallbacks.append(
                                  (frame[0], pb.memory[0xFF40], pb.memory[0xFF44])), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusdisable'],
+                             lambda _context=None: status_explicit_blanks.append(
+                                 (frame[0], pb.memory[0xFF40], pb.memory[0xFF44],
+                                  pb.memory[0xC6A3], pb.memory[0xC1B3],
+                                  pb.memory[0xC1B6],
+                                  tuple(pb.memory[0xC535 + index]
+                                        for index in range(pb.memory[0xC534] + 1)))), None)
         for frame[0] in range(frames):
             if cursor_overrides and frame[0] in cursor_overrides:
                 pb.memory[0xC6F5], pb.memory[0xC6F0] = cursor_overrides[frame[0]]
@@ -170,6 +178,7 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             'status_draws': status_draws,
             'status_uploads': status_uploads,
             'status_fallbacks': status_fallbacks,
+            'status_explicit_blanks': status_explicit_blanks,
             'checkpoints': checkpoints,
             'status_tiles': {
                 tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
@@ -269,6 +278,16 @@ def main():
         problems.append('rename return used conservative status fallback %d times, '
                         'expected once for Name -> Items reconstruction' %
                         len(after_name_fallbacks))
+    after_name_blanks = [entry for entry in roundtrip['status_explicit_blanks']
+                         if entry[0] > 5800]
+    # The carried-Pot entry classifier adds a bounded check to the shared menu-row
+    # completion path, moving this still-intentional legacy Name blank two scanlines
+    # earlier without changing its screen/state/stack ownership.
+    expected_name_blanks = ((0xE7, 0x96, 0, 0, 1, (0, 1)),)
+    name_blank_states = tuple(entry[1:] for entry in after_name_blanks)
+    if name_blank_states != expected_name_blanks:
+        problems.append('rename-return LCD-on Status blank states are %s, expected %s' %
+                        (name_blank_states, expected_name_blanks))
     after_name_uploads = [entry for entry in roundtrip['status_uploads']
                           if entry[0] > 5800]
     expected_caps = (6, 7, 5, 2, 4, 4, 4, 4, 4)

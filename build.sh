@@ -12,6 +12,11 @@ python3 tools/expand.py    build/_m.gb  build/_base_expanded.gb --size-code 5 >/
 python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en.gb \
         --report build/worklist.tsv --dot-font
 
+# Whole-LCD blanking is a governed resource. Catalogue every native/English LCDC writer
+# and fail if a translation-added explicit bit-7 clear has no reviewed owner/policy.
+python3 tools/lcdblankaudit.py build/base.gb build/shiren_en.gb \
+        --tsv build/lcd_blank_audit.tsv
+
 # Gameplay-data collision gate. Ending-credit code once occupied a zero-filled-looking
 # span which was actually the high-byte plane of the native tier-3 enemy EXP table.
 # Protect all 303 rewards across all three tiers in their split low/middle/high
@@ -121,10 +126,37 @@ if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   # The standing-item Floor page also owns a four-row Action overlay. B must restore
   # that exact one-row parent in one VBlank and return directly to responsive input.
   python3 tools/flooractionspill.py build/shiren_en.gb
+  # Checkpoint 4: carried Item Info leaves with B, while the standing-item Floor Info
+  # advances both pages and leaves its final page with A. Screen-4 descriptions and
+  # screen-5 equipment-seal pages preserve box chrome and the Window, restore the exact
+  # parent, and keep LCDC.7 set. A local dungeon state adds the five-page Fusion Pot audit.
+  if [ -f saves/shiren_en_log_1_shield_VWF.srm ] && \
+     [ -f saves/shiren_en_log_1_dragons_maw.srm ]; then
+    python3 tools/iteminfospill.py build/shiren_en.gb
+  fi
+  # Audit the regional screen-20 lifecycle with both its original Wood Arrow route and
+  # a six-row/five-page Fusion Pot route. Entry retains complete Action chrome until
+  # Info chrome plus row zero; paging keeps at least one whole old/new row visible.
+  # Neither direction may disable the LCD or retain old Action tail/footer pixels.
   python3 tools/floorinfospill.py build/shiren_en.gb
+  python3 tools/floorinfospill.py build/shiren_en.gb --fusion
+  python3 tools/floorinfospill.py build/shiren_en.gb --seal
+  # Reproduce mesen_spawn_fusion_kit.lua exactly, first isolating the injected bytes and
+  # then visiting the carried Fusion Pot Action before screen-20 Floor Info. A
+  # gameplay-bound Action used to leave its private-pool admission at one and
+  # incorrectly force this later route to LCD-off.
+  python3 tools/floorinfospill.py build/shiren_en.gb --fusion-kit
+  python3 tools/floorinfospill.py build/shiren_en.gb --fusion-kit-history
 fi
 if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
   python3 tools/storagepotinfospill.py build/shiren_en.gb
+  # The no-Lua Storage Pot path reaches screen 13 above screen-20 Floor. Entry must keep
+  # LCDC enabled and publish empty Pot chrome before text. Its B return must publish the
+  # complete six-row parent before labels, suppress the transient underlying Floor-page
+  # indicator, and settle byte-exactly.
+  python3 tools/groundpotreturnspill.py build/shiren_en.gb --screen20
+  python3 tools/groundpotreturnspill.py build/shiren_en.gb --items-first
+  python3 tools/groundpotreturnspill.py build/shiren_en.gb --screen20 --items-first
   # Closing the menu is a NATIVE LCD-off reload of $9000-$97FF from menu font back to
   # terrain. A V4F publication that re-enables the LCD inside it exposes one frame of
   # dungeon map drawn through menu glyphs. That is what a transaction state sharing
@@ -188,17 +220,36 @@ if [ -f saves/shiren_en_log_1_pot_see_action.srm ]; then
 fi
 if [ -f saves/shiren_en_log_2_action_pots.srm ]; then
   python3 tools/actionpotspill.py build/shiren_en.gb
+  # Carried Pot See -> Items is a two-level pop from screen 12 or 13. Keep the viewer live until
+  # complete empty Items windows are committed, then reveal restored rows. Repeat on
+  # a full page-4 inventory and require the settled Items title raster to be identical.
+  python3 tools/potreturnspill.py build/shiren_en.gb
+  python3 tools/potreturnspill.py build/shiren_en.gb --full-page
+  # The five-row Egg/Egg/Happy/Fusion/Manji mix rejects the private Action tile pool,
+  # so screen 12 legitimately reaches See with a zero admission latch. Keep this exact
+  # route in the release battery; it exposed the old LCD-off and `Potms` return.
+  python3 tools/potreturnspill.py build/shiren_en.gb --exact-five
 fi
 # Queued message fragments are composed by native code with substitutions pushed between
 # them, so an authored <br> is not part of that ABI. One in the Fluffy Bunny heal line --
 # the only one among all 179 fragments in the ROM -- garbled the line, blanked the box and
 # fired unrelated actor behaviour. Static: floor actors are not serializable to a fixture.
 python3 tools/healfragmentspill.py build/_base_expanded.gb
-# The only seven-row Floor action box. A row past the per-box proportional cap does not
-# merely lose VWF: it skips the floor-info hook, so the Info return never publishes and
-# the LCD stays disabled. Asserts full proportional coverage AND that the screen returns.
+# The only seven-row Floor action box. Freeze proportional coverage plus the independent
+# screen-7 Info lifecycle: no whole-LCD blank, armed 4 -> 0 -> 7 replay, chrome before
+# text, exact returned BG/Window pixels, and responsive final state.
 if [ -f saves/shiren_en_log3_unidentified_pot_crash.srm ]; then
   python3 tools/unidentifiedpotspill.py build/shiren_en.gb
+  # The same Pot reached through Items is a different native parent: screen 1 pushes
+  # screen 2, whose protected Action pool has six slices. Freeze the seventh Info row's
+  # collision-safe ordinary allocation so it cannot fall back to corrupt raw tiles.
+  python3 tools/unidentifiedflooractionspill.py build/shiren_en.gb
+  python3 tools/unidentifiedflooractionspill.py build/shiren_en.gb --path info
+  # The same no-Lua save reaches ground-Pot screen 12 above the alternate screen-7
+  # picker. Entry keeps LCDC enabled and publishes empty Pot chrome before text. B is a
+  # one-level 0,7,12 pop: suppress only disposable screen 0, publish complete parent
+  # chrome before labels, and restore exact pixels.
+  python3 tools/groundpotreturnspill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_log_1_password.srm ]; then
   python3 tools/awardspill.py build/shiren_en.gb \

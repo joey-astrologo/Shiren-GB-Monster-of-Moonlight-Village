@@ -112,6 +112,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b',
         upload_starts = []
         fallbacks = []
         regional_fallbacks = []
+        regional_blanks = []
         regional_rows = []
         samples = []
         render_trace = []
@@ -240,6 +241,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b',
                               pb.memory[0xC69D])), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
                          regional_fallback, None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irdisable'],
+                         lambda _ctx=None: regional_blanks.append(frame[0]), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irarmed'],
                          regional_blank_done, None)
         if trace_render:
@@ -434,6 +437,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b',
         if regional_fallbacks:
             problems.append('Items-to-Floor used regional LCD-off fallback at %s' %
                             ' '.join('f%d' % at for at in regional_fallbacks))
+        if regional_blanks:
+            problems.append('Items-to-Floor executed regional LCD-off write at %s' %
+                            ' '.join('f%d' % at for at in regional_blanks))
         expected_caps = EXPECTED_CAPS if leave_button == 'b' else ()
         if tuple(cap for _at, _ly, cap in uploads) != expected_caps:
             problems.append('live Status upload caps are %s, expected %s' %
@@ -471,9 +477,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3700, leave_button='b',
           (leave_button, ' '.join('f%d:$%02X' % event for event in page_completes),
            floor_at[0], floor_exit_at[0], destination))
     print('floorpagespill: %d live Status uploads; LCD-off %d, white %d; '
-          'regional/status fallbacks %d/%d' %
+          'regional branch/write, status fallback %d/%d/%d' %
           (len(uploads), len(lcd_off), len(whites), len(regional_fallbacks),
-           len(fallbacks)))
+           len(regional_blanks), len(fallbacks)))
     if trace_render:
         for event in render_trace:
             print('floorpagespill: trace %r' % (event,))

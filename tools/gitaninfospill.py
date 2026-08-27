@@ -64,6 +64,7 @@ def run(rom, ram, png=None):
         white = []
         bad_frames = []
         halts = []
+        explicit_blanks = []
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
@@ -76,6 +77,12 @@ def run(rom, ram, png=None):
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+                pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
         for frame[0] in range(FRAMES):
             for button in SCRIPT.get(frame[0], ()):
                 pb.button(button, PRESS_FRAMES)
@@ -110,8 +117,11 @@ def run(rom, ram, png=None):
     rows = [row for _at, row, _key, _state in action_rows]
     if rows != [0, 1, 2]:
         problems.append('returned Gitan action rows are %s, expected [0, 1, 2]' % rows)
-    if not white:
-        problems.append('dismissal never entered its atomic LCD-off interval')
+    if white:
+        problems.append('dismissal disabled the LCD on frame(s) %s' % white[:16])
+    if explicit_blanks:
+        problems.append('route reached explicit Info LCD blanker at %s' %
+                        (explicit_blanks,))
     if final_state != 0:
         problems.append('Floor/Info transaction ended in state %d, expected 0' % final_state)
     if not final_lcdc & 0x80:
@@ -123,10 +133,12 @@ def run(rom, ram, png=None):
     if halts:
         problems.append('CPU reached rst $38 at frame(s) %s' % halts[:8])
 
-    print('gitaninfospill: dispatches %s; action rows %s; %d white frame(s); '
+    print('gitaninfospill: dispatches %s; action rows %s; %d white frame(s), '
+          '%d explicit blank(s); '
           'final state=%d LCDC=$%02X PC=$%04X dark=%d; %d problem(s)'
           % (' '.join('f%d:%d' % event for event in dispatches), rows, len(white),
-             final_state, final_lcdc, final_pc, dark_pixels(final), len(problems)))
+             len(explicit_blanks), final_state, final_lcdc, final_pc,
+             dark_pixels(final), len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

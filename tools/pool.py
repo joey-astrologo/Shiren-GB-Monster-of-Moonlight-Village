@@ -135,10 +135,12 @@ MENU_TRANSITION_TEXT_ORG = 0x4700
 ACTION_GATE_BANK = 0x25
 ACTION_GATE_TEXT_ORG = 0x4120
 # Bank 62 shares its far table/tail with the title logo. The carried-/Floor-Action parent
-# restorer occupies the prefix below $4400, so redirected text begins there while the title
-# asset remains independently protected at $7000.
+# restorer, exact screen-1/screen-20 Info lifecycle, and carried-Pot entry publisher
+# occupy the prefix below $5400, so
+# redirected text begins there while the title asset remains independently protected at
+# $7000.
 ACTION_BLANK_BANK = 0x3E
-ACTION_BLANK_TEXT_ORG = 0x4400
+ACTION_BLANK_TEXT_ORG = 0x5400
 
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 

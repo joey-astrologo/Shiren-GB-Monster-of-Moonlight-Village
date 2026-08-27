@@ -19,6 +19,7 @@ sys.path.insert(0, HERE)
 from gbrun import PRESS_FRAMES, _import_pyboy                  # noqa: E402
 import menuspill                                                # noqa: E402
 import menuvwf                                                  # noqa: E402
+import gbasm                                                    # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log2_storage_pot_menu.srm')
@@ -40,7 +41,7 @@ def navigation_script(action_count, dismiss_button='b'):
 
 
 def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
-        dismiss_button='b'):
+        dismiss_button='b', trace=False):
     action_shape = (13, 3, action_count, 5, 2)
     script, return_frame, frame_count = navigation_script(action_count, dismiss_button)
     profile = menuspill.renderer_profile(rom)
@@ -60,6 +61,8 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
         action_rows = []
         white = []
         halts = []
+        lifecycle = []
+        explicit_blanks = []
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
@@ -71,6 +74,29 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+                pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
+        if trace:
+            labels = info_labels
+            def life(label):
+                def capture(_context=None):
+                    depth = pb.memory[0xC534]
+                    lifecycle.append((
+                        frame[0], label, pb.register_file.A, pb.register_file.D,
+                        pb.memory[0xC1B3], pb.memory[0xC1B4], pb.memory[0xC1B6],
+                        pb.memory[0xC6A3], pb.memory[0xC1B1], pb.memory[0xC6BB],
+                        tuple(pb.memory[address] for address in range(0xC69A, 0xC69F)),
+                        tuple(pb.memory[0xC535 + index]
+                              for index in range(depth + 1))))
+                return capture
+            for hook in ('infopop', 'inforeturn', 'info20chrome',
+                         'info20chromedone', 'inforeturn20publish'):
+                pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels[hook],
+                                 life(hook), None)
         for frame[0] in range(frame_count):
             for button in script.get(frame[0], ()):
                 pb.button(button, PRESS_FRAMES)
@@ -103,8 +129,11 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
     if rows != list(range(action_count)):
         problems.append('returned action rows are %s, expected 0..%d'
                         % (rows, action_count - 1))
-    if not white:
-        problems.append('return never entered its atomic LCD-off interval')
+    if white:
+        problems.append('return disabled the LCD on frame(s) %s' % white[:16])
+    if explicit_blanks:
+        problems.append('route reached explicit Info LCD blanker at %s' %
+                        (explicit_blanks,))
     if final_state != 0:
         problems.append('Floor/Info transaction ended in state %d, expected 0' % final_state)
     if not final_lcdc & 0x80:
@@ -138,10 +167,13 @@ def run(rom, ram, png=None, action_count=6, label='storagepotinfospill',
             problems.append('stale action-box cells remain on row %d: %s'
                             % (row, cells(row).hex(' ')))
 
-    print('%s: dispatches %s; action rows %s; %d white frame(s); '
+    print('%s: dispatches %s; action rows %s; %d white frame(s), %d explicit blank(s); '
           'row11=%s row%d=%s; %d problem(s)'
           % (label, ' '.join('f%d:%d' % event for event in dispatches), rows, len(white),
-             cells(11).hex(' '), bottom_row, cells(bottom_row).hex(' '), len(problems)))
+             len(explicit_blanks), cells(11).hex(' '), bottom_row,
+             cells(bottom_row).hex(' '), len(problems)))
+    if trace:
+        print('  lifecycle %s' % (lifecycle,))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0
@@ -152,11 +184,12 @@ def main():
     parser.add_argument('rom')
     parser.add_argument('--ram', default=RAM)
     parser.add_argument('--png')
+    parser.add_argument('--trace', action='store_true')
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('storagepotinfospill: missing %s' % path)
-    return run(args.rom, args.ram, args.png)
+    return run(args.rom, args.ram, args.png, trace=args.trace)
 
 
 if __name__ == '__main__':

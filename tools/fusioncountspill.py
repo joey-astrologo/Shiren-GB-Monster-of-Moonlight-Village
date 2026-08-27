@@ -202,7 +202,7 @@ def page_count_case(PyBoy, rom, state_path, item_count, profile, region_labels):
                         'blank boundaries' %
                         (pages, len(regional_origins), len(blank_boundaries)))
     blank_targets = {(4 + 2 * row) * 32 + col
-                     for row in range(5) for col in (1, *range(3, 19))}
+                     for row in range(5) for col in range(1, 19)}
     borders = {(4 + 2 * row) * 32 for row in range(5)}
     region_targets = blank_targets | borders
     for (old_bg, old_shadow), (at, ly, new_bg, new_shadow) in zip(
@@ -254,6 +254,82 @@ def page_count_case(PyBoy, rom, state_path, item_count, profile, region_labels):
     }, problems
 
 
+def short_page_cursor_case(PyBoy, rom, state_path, profile, region_labels):
+    """A row-4 selection must clamp visibly when page 2 contains only one item."""
+    pb = PyBoy(rom, window='null')
+    pb.set_emulation_speed(0)
+    with open(state_path, 'rb') as source:
+        pb.load_state(source)
+
+    injected = [False]
+    regional_begins = []
+
+    def inject(_context=None):
+        if injected[0]:
+            return
+        free = [index for index in range(128)
+                if pb.memory[OBJECTS + 8 * index] == 0xFF]
+        if len(free) < 6:
+            return
+        for ordinal, object_index in enumerate(free[:6]):
+            record = (MANJI, BONUS, 0, FLAGS, 1 << (ordinal % 9), 0,
+                      0xFF, 0xFF)
+            for offset, value in enumerate(record):
+                pb.memory[OBJECTS + 8 * object_index + offset] = value
+            pb.memory[INVENTORY + ordinal] = object_index
+        pb.memory[INVENTORY + 6] = 0xFF
+        injected[0] = True
+
+    pb.hook_register(6, 0x4B29, inject, None)
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irshadow'],
+                     lambda _ctx=None: regional_begins.append(frame), None)
+    schedule = {
+        60: 'b', 120: 'a',
+        280: 'down', 340: 'down', 400: 'down', 460: 'down',
+        540: 'right',
+    }
+    lcd_off = []
+    for frame in range(701):
+        button = schedule.get(frame)
+        if button:
+            pb.button(button, PRESS_FRAMES)
+        pb.tick()
+        if 520 <= frame and not pb.memory[0xFF40] & 0x80:
+            lcd_off.append(frame)
+
+    selector = pb.memory[0xC6AC]
+    row = pb.memory[0xC6A5]
+    visible = tuple(pb.memory[0x9882 + 0x40 * index] for index in range(5))
+    shadow = tuple(pb.memory[0xC382 + 0x40 * index] for index in range(5))
+    count = pb.memory[0xC6AA]
+    pb.stop(save=False)
+
+    problems = []
+    if not injected[0] or count != 6:
+        problems.append('short-page cursor fixture reports %d items after injection' %
+                        count)
+    if (selector, row) != (5, 0):
+        problems.append('short-page cursor settled at selector/row $%02X/%d, '
+                        'expected $05/0' % (selector, row))
+    expected = (0x81, 0, 0, 0, 0)
+    if visible != expected or shadow != expected:
+        problems.append('short-page cursor visible/shadow are %s/%s, expected %s' %
+                        (bytes(visible).hex(' '), bytes(shadow).hex(' '),
+                         bytes(expected).hex(' ')))
+    if len(regional_begins) != 1:
+        problems.append('short-page cursor used %d regional redraws, expected one' %
+                        len(regional_begins))
+    if lcd_off:
+        problems.append('short-page cursor disabled LCD at %s' %
+                        ' '.join('f%d' % at for at in lcd_off))
+    return {
+        'selector': selector,
+        'row': row,
+        'visible': visible,
+        'regional': len(regional_begins),
+    }, problems
+
+
 def run(rom, ram=None, state=STATE, png_dir=None):
     profile = menuspill.renderer_profile(rom)
     if profile['mode'] != 'dot-proportional':
@@ -275,6 +351,9 @@ def run(rom, ram=None, state=STATE, png_dir=None):
             PyBoy, rom, state, item_count, profile, region_labels)
         matrix.append(result)
         problems += failures
+    cursor_case, cursor_failures = short_page_cursor_case(
+        PyBoy, rom, state, profile, region_labels)
+    problems += cursor_failures
     pb = PyBoy(rom, window='null')
     pb.set_emulation_speed(0)
     with open(state, 'rb') as source:
@@ -287,6 +366,12 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     regional_begins = []
     regional_fallbacks = []
     page_flip_lcd_off = []
+    info_lcd_off = []
+    info_white = []
+    info_attempts = []
+    pop_calls = []
+    admitted_pops = []
+    explicit_info_blanks = []
     settled_indicator = [None]
 
     def inject(_context=None):
@@ -352,26 +437,65 @@ def run(rom, ram=None, state=STATE, png_dir=None):
                      lambda _ctx=None: regional_begins.append(frame[0]), None)
     pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
                      lambda _ctx=None: regional_fallbacks.append(frame[0]), None)
+    _info_code, info_labels = gbasm.assemble(
+        menuvwf.INFO_LIFECYCLE_SRC, menuvwf.INFO_LIFECYCLE_AT)
+
+    def info_attempt(_ctx=None):
+        depth = pb.memory[0xC534]
+        info_attempts.append((
+            frame[0], pb.memory[0xC1B3], pb.memory[0xC1B6],
+            pb.memory[0xC6A3], pb.memory[0xC6DE], pb.memory[0xC6AC],
+            tuple(pb.memory[0xC535 + index] for index in range(depth + 1))))
+
+    pb.hook_register(menuvwf.ACTION_BLANK_BANK, info_labels['infotry'],
+                     info_attempt, None)
+    pb.hook_register(
+        menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+        lambda _ctx=None: explicit_info_blanks.append((
+            frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+            pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
+    pb.hook_register(4, 0x485A,
+                     lambda _ctx=None: pop_calls.append((
+                         frame[0], pb.register_file.A, pb.register_file.HL,
+                         pb.memory[0xC6A3], pb.memory[0xC1B3],
+                         tuple(pb.memory[0xC535 + index]
+                               for index in range(pb.memory[0xC534] + 1)))), None)
+    pb.hook_register(menuvwf.ACTION_BLANK_BANK, info_labels['infopop'],
+                     lambda _ctx=None: admitted_pops.append((
+                         frame[0], pb.register_file.HL, pb.memory[0xC6A3],
+                         pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
     schedule = {
         60: 'b', 120: 'a',                    # Main -> Items
         280: 'right',                         # counts 6-9
         400: 'down', 440: 'down', 480: 'down', 540: 'a',  # select count 9
         620: 'down', 660: 'down', 700: 'down', 760: 'a',  # Info
+        940: 'b',                              # screen-5 seals -> Items
     }
-    for frame[0] in range(1000):
+    screen_at_info = None
+    for frame[0] in range(1160):
         button = schedule.get(frame[0])
         if button:
             pb.button(button, PRESS_FRAMES)
         pb.tick()
         if 280 <= frame[0] < 360 and not pb.memory[0xFF40] & 0x80:
             page_flip_lcd_off.append(frame[0])
+        if 700 <= frame[0] < 1100:
+            if not pb.memory[0xFF40] & 0x80:
+                info_lcd_off.append(frame[0])
+            if len(set(pb.screen.image.convert('RGB').getdata())) == 1:
+                info_white.append(frame[0])
         if frame[0] == 220:
             settled_indicator[0] = bytes(pb.memory[0x986F:0x9873])
             snapshot('Items page 1', range(1, 6), ITEM_SHAPE, 2)
         elif frame[0] == 360:
             snapshot('Items page 2', range(6, 10), ITEM_SHAPE, 2)
         elif frame[0] == 900:
+            screen_at_info = pb.memory[0xC6A3]
             snapshot('count-9 Info title', (9,), INFO_SHAPE, 0)
+        if png_dir and 920 <= frame[0] <= 1020:
+            os.makedirs(png_dir, exist_ok=True)
+            pb.screen.image.save(os.path.join(
+                png_dir, 'seal_return_f%04d.png' % frame[0]))
 
     if not injected[0]:
         problems.append('nine canonical equipment objects were not injected')
@@ -384,6 +508,31 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     if page_flip_lcd_off:
         problems.append('two-page Items flip disabled LCD at %s'
                         % ' '.join('f%d' % at for at in page_flip_lcd_off))
+    if info_lcd_off:
+        problems.append('sealed count-9 Info/return disabled LCD at %s; attempts %s'
+                        % (' '.join('f%d' % at for at in info_lcd_off),
+                           ' '.join('f%d:s%d/p%d/id%d/de$%02X/sel$%02X/%s' %
+                                    (at, state, phase, screen, context, selector,
+                                     ','.join(str(value) for value in stack))
+                                    for at, state, phase, screen, context, selector, stack
+                                    in info_attempts)))
+    if explicit_info_blanks:
+        problems.append('sealed count-9 route reached explicit Info LCD blanker at %s' %
+                        (explicit_info_blanks,))
+    if info_white:
+        problems.append('sealed count-9 Info/return rendered uniform frame(s) %s' %
+                        ' '.join('f%d' % at for at in info_white))
+    if screen_at_info != 5:
+        problems.append('sealed count-9 route reached screen %s, expected screen 5' %
+                        screen_at_info)
+    if not pop_calls:
+        problems.append('sealed count-9 B never reached the native popper')
+    if not admitted_pops:
+        problems.append('sealed count-9 B never reached the regional Info pop gate; '
+                        'native calls %s' % (pop_calls,))
+    if pb.memory[0xC6A3] != 1:
+        problems.append('sealed count-9 B settled on screen %d, expected Items screen 1'
+                        % pb.memory[0xC6A3])
     for label, failures in snapshots.items():
         problems += ['%s: %s' % (label, failure) for failure in failures]
     if set(snapshots) != {'Items page 1', 'Items page 2', 'count-9 Info title'}:
@@ -405,10 +554,13 @@ def run(rom, ram=None, state=STATE, png_dir=None):
                             for case in matrix)
     print('fusioncountspill: %scanonical counts 1-9 across two Items pages; '
           'indicator %s; regional begins/fallbacks/lcd-off %d/%d/%d; '
-          'matrix %s; count 9 Info; %d problem(s)'
+          'matrix %s; short-page cursor $%02X/r%d (%d regional); '
+          'count 9 screen-5 Info/B, explicit blanks %d; %d problem(s)'
           % (fixture, indicator_text, len(regional_begins),
              len(regional_fallbacks), len(page_flip_lcd_off), matrix_text,
-             len(problems)))
+             cursor_case['selector'], cursor_case['row'],
+             cursor_case['regional'],
+             len(explicit_info_blanks), len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:

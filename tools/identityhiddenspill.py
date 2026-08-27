@@ -116,6 +116,7 @@ def run_case(rom_path, ram_path, case, png=None):
         checks = {'list': False, 'title': False, 'body': False}
         observed_item_rows = set()
         observed_info_rows = set()
+        explicit_blanks = []
         schedule = dict(BOOT)
         schedule.update(dict(case['presses']))
 
@@ -142,6 +143,12 @@ def run_case(rom_path, ram_path, case, png=None):
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+                pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
         for current in range(case['frames']):
             frame[0] = current
             button = schedule.get(current)
@@ -167,6 +174,9 @@ def run_case(rom_path, ram_path, case, png=None):
 
     if not any(screen == 4 for _at, screen in dispatches):
         problems.append(case['label'] + ' never dispatched the Info screen')
+    if explicit_blanks:
+        problems.append(case['label'] + ' reached explicit Info LCD blanker at %s' %
+                        (explicit_blanks,))
     if events['list'] is None:
         problems.append(case['label'] + ' observed item rows: ' + ' | '.join(
             ' '.join('$%02X' % code for code in row) for row in sorted(observed_item_rows)))
@@ -174,11 +184,13 @@ def run_case(rom_path, ram_path, case, png=None):
         problems.append(case['label'] + ' observed Info rows: ' + ' | '.join(
             'd%d:%s' % (rownum, ' '.join('$%02X' % code for code in row))
             for rownum, row in sorted(observed_info_rows)))
-    print('identityhiddenspill: %s dispatches %s; list=%s title=%s body=%s; %d problem(s)'
+    print('identityhiddenspill: %s dispatches %s; list=%s title=%s body=%s; '
+          'explicit blanks=%d; %d problem(s)'
           % (case['label'], ' '.join('f%d:%d' % event for event in dispatches),
              'exact' if checks['list'] else 'FAILED',
              'exact' if checks['title'] else 'FAILED',
-             'exact' if checks['body'] else 'FAILED', len(problems)))
+             'exact' if checks['body'] else 'FAILED', len(explicit_blanks),
+             len(problems)))
     for problem in problems:
         print('  ' + problem)
     return problems

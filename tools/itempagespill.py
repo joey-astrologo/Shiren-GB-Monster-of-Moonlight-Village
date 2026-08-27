@@ -140,7 +140,8 @@ def locked_map_changes(before, after, kind, floor_expand=False):
     allowed = {(3, col) for col in range(15, 19)}
     for row in range(5):
         # The visible transaction owns the marker-coupled left border, marker,
-        # cursor, and name cells. The cursor is separately published by native code.
+        # cursor, and name cells. The regional body publishes the visible cursor and
+        # native code confirms the same shadow cell afterward.
         allowed.update((4 + 2 * row, col) for col in range(0, 19))
     if floor_expand:
         # The one-row Floor rectangle is becoming the five-row Items rectangle.
@@ -199,6 +200,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         scoped_regional_begins = []
         scoped_regional_declines = []
         scoped_legacy_fallbacks = []
+        scoped_regional_blanks = []
         scoped_fullmap_blanks = []
         pre_gate_queues = []
         sort_snapshots = []
@@ -330,6 +332,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                          region_snapshot('visible_blanked'), None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
                          region_event('legacy_fallbacks'), None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irdisable'],
+                         lambda _ctx=None: scoped_regional_blanks.append(frame[0])
+                         if page_presses else None, None)
         pb.hook_register(menuvwf.ITEM_PAGE_BANK, page_labels['pbdisable'],
                          lambda _ctx=None: scoped_fullmap_blanks.append(frame[0])
                          if page_presses else None, None)
@@ -406,6 +411,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         if scoped_legacy_fallbacks:
             problems.append('Items route reached scoped LCD-off fallback at %s' %
                             ' '.join('f%d' % at for at in scoped_legacy_fallbacks))
+        if scoped_regional_blanks:
+            problems.append('Items route executed the regional LCD-off write at %s' %
+                            ' '.join('f%d' % at for at in scoped_regional_blanks))
         if scoped_regional_declines:
             problems.append('Items route declined its exact regional gate at %s' %
                             ' '.join('f%d' % at for at in scoped_regional_declines))
@@ -585,7 +593,7 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             old_structural = {tile: tile_planes(old, tile)
                               for tile in STRUCTURAL_TILES}
             blank_targets = {(4 + 2 * row) * 32 + col
-                             for row in range(5) for col in (1, *range(3, 19))}
+                             for row in range(5) for col in range(1, 19)}
             borders = {(4 + 2 * row) * 32 for row in range(5)}
             region_targets = blank_targets | borders
             origin = page['regional_origin']
@@ -743,12 +751,12 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         if len(return_latencies) != len(inputs):
             problems.append('measured %d redraw returns for %d inputs' %
                             (len(return_latencies), len(inputs)))
-        visual_budget = 16 if test_wrap else 13
-        # The standing-Floor boundary also composes and commits the replacement
-        # four-cell header during VBlank. Atomic five-row publication can meet the next
-        # VBlank one frame later depending on input scanline; ordinary page-only redraws
-        # retain the lower budget.
-        return_budget = 23 if test_wrap else 17
+        visual_budget = 18 if test_wrap else 13
+        # The standing-Floor boundary also clamps an invalid carried-row selector,
+        # publishes the corrected cursor, and commits the replacement four-cell header.
+        # Those correctness writes add at most two frames to the wrap-only route;
+        # ordinary page-only redraws retain the lower budget.
+        return_budget = 25 if test_wrap else 17
         if visual_latencies and max(visual_latencies) > visual_budget:
             problems.append('page visual latency reached %d frames, budget is %d' %
                             (max(visual_latencies), visual_budget))
@@ -765,11 +773,12 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                    for page in pages))
     print('itempagespill: white-frame counts %s' %
           ' '.join(str(len(page['lcd_off_frames'])) for page in pages))
-    print('itempagespill: scoped regional begins %d; declines/fallbacks/full-map '
-          'blanks %d/%d/%d; LCD-off frames %d; '
+    print('itempagespill: scoped regional begins %d; declines/branches/regional-writes/'
+          'full-map-blanks %d/%d/%d/%d; LCD-off frames %d; '
           'pre-gate queue max $%02X; sort samples %d; regional blank %s' %
           (len(scoped_regional_begins), len(scoped_regional_declines),
-           len(scoped_legacy_fallbacks), len(scoped_fullmap_blanks),
+           len(scoped_legacy_fallbacks), len(scoped_regional_blanks),
+           len(scoped_fullmap_blanks),
            len(scoped_lcd_off), max((value for _at, value in pre_gate_queues), default=0),
            len(sort_snapshots),
            'missing' if sort_blank_frame[0] is None else 'f%d' % sort_blank_frame[0]))

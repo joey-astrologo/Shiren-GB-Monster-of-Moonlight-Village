@@ -12,13 +12,14 @@ boundary. It retires visible BG rows 0..15 over four complete VBlanks while pres
 the enabled bottom Window, commits the empty header/list-box chrome, then lets the
 existing row and final-map publishers reveal only completed Item content inside it.
 
-The exact root -> Items -> root stack pop is special too: all 40 private status tiles are
-disjoint from every visible Item-page BG/Window reference. Keep that outgoing page live
-and upload each completed status field inside its own VBlank; the largest field is seven
-tiles and fits the ten-line interval. The standing-item Floor page appended at selector
-`$FF` receives the same treatment only after menuvwf marks its completed one-row map in
-`$C1B7`. Unknown LCD-on returns retain the conservative LCD-off path. In both cases the
-game's existing status-map publisher remains authoritative.
+The exact root -> Items -> root and root -> alternate-Floor-screen-7 -> root stack pops
+are special too: all 40 private status tiles and the structured Weapon/Shield fragments
+are disjoint from every visible outgoing BG/Window reference. Keep either outgoing page
+live and upload each completed status field inside its own VBlank; the largest field is
+seven tiles and fits the ten-line interval. The standing-item Floor page appended at
+selector `$FF` receives the same treatment only after menuvwf marks its completed one-row
+map in `$C1B7`. Unknown LCD-on returns retain the conservative LCD-off path. In every
+case the game's existing status-map publisher remains authoritative.
 
 Admitted screen-2 Action B-cancel is handled earlier by menuvwf's exact pop proof. It
 restores both the covered carried-Item or settled-Floor parent and the retained screen-1 state, so the generic pop
@@ -46,6 +47,7 @@ FAR_BANK = 0x35
 FAR_INDEX = 0x05
 POPUP_INDEX = 0x07
 ITEM_ENTRY_INDEX = 0x09
+STATUS_PRE_INDEX = 0x0B
 CODE_AT = 0x405A
 HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
@@ -68,6 +70,25 @@ PRIVATE_RUNS = {
     'Experience value': (0x2F, 4),
 }
 WINDOW_LIVE_IDS = frozenset((0x22, 0x24, 0x2A, 0x36))
+
+# Empty screen-0 chrome for the exact screen-7 Floor -> Status handoff.  Publishing this
+# four rows per VBlank establishes every destination box before the native producer is
+# allowed to reveal any Status text.  BG rows 16-17 are hidden by the persistent Window.
+STATUS_EMPTY_ROWS = (
+    (0xB8,) + (0xBC,) * 5 + (0xB9, 0xB8) + (0xBC,) * 11 + (0xB9,),
+    *((0xBE,) + (0,) * 5 + (0xBF, 0xBE) + (0,) * 11 + (0xBF,)
+      for _ in range(6)),
+    (0xBE,) + (0,) * 5 + (0xBF, 0xBA) + (0xBD,) * 11 + (0xBB,),
+    (0xBA,) + (0xBD,) * 5 + (0xBB,) + (0,) * 13,
+    (0,) * 20,
+    (0xB8,) + (0xBC,) * 18 + (0xB9,),
+    *((0xBE,) + (0,) * 8 + (0xB6,) + (0,) * 9 + (0xBF,)
+      for _ in range(4)),
+    (0xBA,) + (0xBD,) * 18 + (0xBB,),
+)
+STATUS_EMPTY_MAP = bytes(value for row in STATUS_EMPTY_ROWS for value in row)
+if len(STATUS_EMPTY_MAP) != 16 * 20:
+    raise AssertionError('statusvwf: empty Status map must cover 16 visible rows')
 
 # The status values use native fixed-font digits $01-$0A, which are the same codes as
 # English 0-9. Slash is native/English $B0; native F/G are $B4/$B5. Plus is sparse.
@@ -122,6 +143,179 @@ def _source(widths):
     weapon = ','.join('$%02X' % value for value in WEAPON_TILES)
     shield = ','.join('$%02X' % value for value in SHIELD_TILES)
     return fr"""
+statusfloorpre:
+  ; Called from the shared native popper while screen 7 and its exact Action descriptor
+  ; still own the display. A rejected caller is register/flag transparent. An admitted
+  ; Floor -> Status pop publishes complete empty Status chrome before native screen 0 can
+  ; reveal any of its text.
+  push af
+  push bc
+  push de
+  push hl
+  call statusfloorcheck
+  jr nc,statusprerestore
+  call statusprepublish
+statusprerestore:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+
+statusfloorcheck:
+  ld a,c
+  dec a
+  jp nz,statusprebad
+  ld a,h
+  cp $56
+  jp nz,statusprebad
+  ld a,l
+  cp $89
+  jp nz,statusprebad
+  ld a,[$C534]
+  dec a
+  jp nz,statusprebad
+  ld a,[$C535]
+  and a
+  jp nz,statusprebad
+  ld a,[$C536]
+  cp $07
+  jp nz,statusprebad
+  ld a,[$C6A3]
+  cp $07
+  jr nz,statusprebad
+  ld a,[$C1B3]
+  and a
+  jr nz,statusprebad
+  ld a,[$C1B6]
+  and a
+  jr nz,statusprebad
+  ld a,[$C1B7]
+  and a
+  jr nz,statusprebad
+  ld a,[$C6A6]
+  and a
+  jr nz,statusprebad
+  ld a,[$C6AC]
+  inc a
+  jr nz,statusprebad
+  ld a,[$C6BB]
+  cp $07
+  jr nz,statusprebad
+  ld a,[$C6DE]
+  dec a
+  jr nz,statusprebad
+  ld hl,$C69A
+  ld a,[hl+]
+  cp $0D
+  jr nz,statusprebad
+  ld a,[hl+]
+  dec a
+  jr nz,statusprebad
+  ld a,[hl+]
+  cp $07
+  jr nz,statusprebad
+  ld a,[hl+]
+  cp $05
+  jr nz,statusprebad
+  ld a,[hl]
+  cp $02
+  jr nz,statusprebad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,statusprebad
+  ldh a,[$FF42]
+  and a
+  jr nz,statusprebad
+  ldh a,[$FF43]
+  and a
+  jr nz,statusprebad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,statusprebad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,statusprebad
+  scf
+  ret
+statusprebad:
+  and a
+  ret
+
+statusprepublish:
+  ld hl,statusempty
+  ld de,$9800
+statusprevisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,statusprevisible
+  di
+  ; Close the visible-to-VBlank race exactly as the Status -> Items regional owner does.
+  ldh a,[$FF44]
+  cp $90
+  jr c,statusprewaitblank
+statusprelate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,statusprelate
+statusprewaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,statusprewaitblank
+  ld a,$04
+statusprebatch:
+  push af
+  ld b,$04
+statusprerow:
+  ld c,$14
+statusprecell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,statusprecell
+  ld a,e
+  add a,$0C
+  ld e,a
+  jr nc,statusprenextrow
+  inc d
+statusprenextrow:
+  dec b
+  jr nz,statusprerow
+  pop af
+  dec a
+  jr z,statuspredone
+  ; Preserve the ROM source, VRAM destination, and remaining batch count while the
+  ; native handlers run between complete VBlanks.
+  push af
+  push hl
+  push de
+  ei
+statusprenextvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,statusprenextvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,statusprenextwaitblank
+statusprenextlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,statusprenextlate
+statusprenextwaitblank:
+  ldh a,[$FF44]
+  cp $90
+  jr c,statusprenextwaitblank
+  pop de
+  pop hl
+  pop af
+  jr statusprebatch
+statuspredone:
+  ei
+  ret
+
 itementry:
   ; This replaces screen 1's native `ld hl,$C300 / call $480E`.  Preserve that
   ; exact 20x18, stride-32 shadow clear after optionally retiring a direct Status
@@ -372,16 +566,18 @@ statusentry:
   ; Preserve the exact native Path shadow copier this hook replaces.
   rst $08
   db $11,$1F
-  ; Most native status builds already have the LCD off. A direct pop from Items has an
-  ; exact native stack/hardware/item-state proof and can keep its outgoing page visible:
-  ; field uploads below rendezvous separately with VBlank. Other LCD-on returns retain
-  ; the conservative full-screen interval until their own ownership is mapped.
+  ; Most native status builds already have the LCD off. Direct pops from Items and the
+  ; alternate screen-7 Floor page have exact native stack/hardware/state proofs and can
+  ; keep their disjoint outgoing page visible: field uploads below rendezvous separately
+  ; with VBlank. Other LCD-on returns retain the conservative full-screen interval until
+  ; their own ownership is mapped.
   ldh a,[$FF40]
   bit 7,a
   jp z,statusdraw
   call itemexit
   jp c,statusdraw
   call statusready
+statusdisable:
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
@@ -391,6 +587,49 @@ statusentry:
   ldh [$FF40],a
   ret
 statusready:
+  ; Screen-1 Action/Info return state 8 has already retired every visible BG row and
+  ; will replay Items immediately after this intermediate screen-0 build. Its status
+  ; shadow is disposable, and the final screen-1 entry clears it. Discard statusentry's
+  ; local return address and return directly to its caller before the unknown-return
+  ; branch disables the LCD. Ordinary Status/Items timing never enters this special arm.
+  ld a,[$C1B3]
+  cp $08
+  jr z,statusreadydiscard
+  ; Screen-20 Floor/Info return uses the same disposable intermediate screen-0
+  ; build, but has its own transaction state so that the final Floor chrome can
+  ; be published independently of the carried-Items return protocol.
+  cp $09
+  jr z,statusreadydiscard
+  ; The alternate screen-7 unidentified-Pot Info replay also owns its final parent
+  ; directly; its box-6 geometry is rebuilt by the independent state-$0B lifecycle.
+  cp $0B
+  jr z,statusreadydiscard
+  cp $0A
+  jr z,statusreadypot
+  jr statusreadywait
+statusreadypot:
+  ; Normalize the proven Pot pop to the ordinary direct-entry contract while the
+  ; screen-0 build is still disposable. The marker cells are the only additional
+  ; Status-root proof; clear them during VBlank, then let the unchanged hot Items
+  ; gate perform the normal four-batch retirement and chrome commit.
+  call statusreadywait
+  ld hl,$986F
+  ld b,$04
+  xor a
+statusreadypotmarker:
+  ld [hl+],a
+  dec b
+  jr nz,statusreadypotmarker
+  ld [$C1B3],a
+  ; The native replay increments this counter once between screen 0 and screen 1.
+  ; Seed $FF so the unchanged direct-entry proof observes its ordinary zero.
+  dec a
+  ld [$C6A6],a
+statusreadydiscard:
+  inc sp
+  inc sp
+  ret
+statusreadywait:
   ldh a,[$FF44]
   cp $90
   jr c,statuswaitblank
@@ -404,18 +643,68 @@ statuswaitblank:
   jr c,statuswaitblank
   ret
 itemexit:
+  ; Common root-pop proof. C536 is the stale child slot after the native pop: screen 1
+  ; denotes Items and screen 7 denotes the alternate standing-item Floor page.
   ld a,[$C534]
   and a
   jp nz,itemexitbad
   ld a,[$C535]
   and a
   jp nz,itemexitbad
-  ld a,[$C536]
-  dec a
-  jp nz,itemexitbad
   ld a,[$C6A3]
   and a
   jp nz,itemexitbad
+  ld a,[$C536]
+  cp $01
+  jr z,itemexititems
+  cp $07
+  jp nz,itemexitbad
+
+  ; Screen 7 has already been popped and the native producer has staged the exact
+  ; Status-root descriptor. Its retained Floor/Action page uses menu tiles $43+ and the
+  ; private Action slices $C7-$DE, so none of statusdraw's low private runs or structured
+  ; Weapon/Shield fragments are visible. Direct Floor exits and exits after See share
+  ; this predicate; C537 is deliberately not consulted because it is only stale history.
+  ld a,[$C1B3]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C1B6]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C1B7]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C6A6]
+  dec a
+  jp nz,itemexitbad
+  ld a,[$C6AC]
+  inc a
+  jp nz,itemexitbad
+  ld a,[$C6BB]
+  cp $04
+  jp nz,itemexitbad
+  ld a,[$C6DE]
+  dec a
+  jp nz,itemexitbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,itemexitbad
+  ld a,[hl+]
+  cp $0A
+  jp nz,itemexitbad
+  ld a,[hl+]
+  cp $02
+  jp nz,itemexitbad
+  ld a,[hl+]
+  cp $12
+  jp nz,itemexitbad
+  ld a,[hl]
+  cp $04
+  jp nz,itemexitbad
+  jr itemexithardware
+
+itemexititems:
   ld a,[$C6AA]
   and a
   jp z,itemexitbad
@@ -448,8 +737,14 @@ itemexithardware:
   ldh a,[$FF4B]
   cp $07
   jp nz,itemexitbad
+  ; A completed initial Items entry can retain menu VWF phase 3 because its native
+  ; Status-entry path has no same-screen redraw-tail call.  This exact pop proves the
+  ; Item page is gone, so retire that stale transaction before any later direct Floor
+  ; child can inherit it.
   xor a
+  ld [$C1B6],a
   ld [$C1B7],a
+itemexitaccepted:
   scf
   ret
 itemexitbad:
@@ -981,6 +1276,8 @@ popupback:
   db $00,%s,$FF
 popupstairs:
   db $00,%s,$FF,$00,%s,$FF
+statusempty:
+  db %s
 widths:
   db %s
 glyphs:
@@ -988,7 +1285,16 @@ glyphs:
        EN_CODES['F'], EN_CODES['G'], strength, experience, weapon, shield,
        ','.join('$%02X' % EN_CODES[ch] for ch in 'Back'),
        ','.join('$%02X' % EN_CODES[ch] for ch in 'Proceed'),
-       ','.join('$%02X' % EN_CODES[ch] for ch in 'Stay'), width_bytes)
+       ','.join('$%02X' % EN_CODES[ch] for ch in 'Stay'),
+       ','.join('$%02X' % value for value in STATUS_EMPTY_MAP), width_bytes)
+
+
+def runtime_labels(font=None):
+    """Return emitted hook labels for instruction-exact runtime fixtures."""
+    if font is None:
+        font = propvwf.dotfont.load_approved()
+    widths = tuple(font.advance_code(code) for code in SLOT_CODES)
+    return gbasm.assemble(_source(widths), CODE_AT)[1]
 
 
 def install(buf, notes=None, font=None):
@@ -1005,6 +1311,9 @@ def install(buf, notes=None, font=None):
         raise AssertionError('statusvwf: private tiles overlap persistent Window IDs')
     if used & set(WEAPON_TILES + SHIELD_TILES):
         raise AssertionError('statusvwf: dynamic tiles overlap structured labels')
+    if len(STATUS_EMPTY_ROWS) != 16 or any(
+            len(row) != 20 for row in STATUS_EMPTY_ROWS):
+        raise AssertionError('statusvwf: empty Status chrome is not 20x16')
 
     widths = tuple(font.advance_code(code) for code in SLOT_CODES)
     code, labels = gbasm.assemble(_source(widths), CODE_AT)
@@ -1038,6 +1347,12 @@ def install(buf, notes=None, font=None):
                          (ITEM_ENTRY_INDEX, FAR_BANK))
     buf[item_entry_index] = labels['itementry'] & 0xFF
     buf[item_entry_index + 1] = labels['itementry'] >> 8
+    status_pre_index = bank + STATUS_PRE_INDEX - 1
+    if bytes(buf[status_pre_index:status_pre_index + 2]) != b'\xFF\xFF':
+        raise SystemExit('statusvwf: far index $%02X in bank %d is occupied' %
+                         (STATUS_PRE_INDEX, FAR_BANK))
+    buf[status_pre_index] = labels['statusfloorpre'] & 0xFF
+    buf[status_pre_index + 1] = labels['statusfloorpre'] >> 8
 
     hook = _off(*HOOK)
     if bytes(buf[hook:hook + len(HOOK_OLD)]) != HOOK_OLD:
@@ -1057,6 +1372,9 @@ def install(buf, notes=None, font=None):
                      'tiles; exact Status-to-Items entry retires only visible BG rows '
                      '0-15, precommits empty box chrome, and preserves the Window; exact '
                      'Items-to-Status pops keep LCD on with nine bounded field uploads; '
+                     'exact screen-7 Floor exits prepublish empty Status chrome before '
+                     'those same bounded uploads; '
                      'admitted Action B restores its Item/Floor parent and input state '
-                     'without replay; '
+                     'without replay; exact screen-1/screen-7/screen-20 Info and carried-Pot '
+                     'returns suppress only their disposable Status reconstruction; '
                      'unknown LCD-on returns retain the conservative path')

@@ -96,6 +96,7 @@ def run(rom_path, ram_path, png=None, frames=3460):
         dispatches = []
         events = {'list': None, 'info': None}
         checks = {'list': False, 'info': False}
+        explicit_blanks = []
 
         def dispatch(_ctx=None):
             dispatches.append((frame[0], pb.register_file.A))
@@ -113,6 +114,12 @@ def run(rom_path, ram_path, png=None, frames=3460):
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+                pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
         for current in range(frames):
             frame[0] = current
             button = BOOT.get(current)
@@ -137,10 +144,15 @@ def run(rom_path, ram_path, png=None, frames=3460):
         problems.append('real route never dispatched the Items screen')
     if not any(screen == 4 for _at, screen in dispatches):
         problems.append('real route never dispatched the Info screen')
-    print('unidentifiedspill: dispatches %s; list=%s info=%s; %d problem(s)'
+    if explicit_blanks:
+        problems.append('route reached explicit Info LCD blanker at %s' %
+                        (explicit_blanks,))
+    print('unidentifiedspill: dispatches %s; list=%s info=%s; explicit blanks=%d; '
+          '%d problem(s)'
           % (' '.join('f%d:%d' % event for event in dispatches),
              'plane-exact' if checks['list'] else 'FAILED',
-             'plane-exact' if checks['info'] else 'FAILED', len(problems)))
+             'plane-exact' if checks['info'] else 'FAILED', len(explicit_blanks),
+             len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:

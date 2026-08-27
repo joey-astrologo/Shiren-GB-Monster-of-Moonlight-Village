@@ -21,6 +21,7 @@ from gbrun import PRESS_FRAMES, _import_pyboy                    # noqa: E402
 import itemfix                                                   # noqa: E402
 import menuspill                                                  # noqa: E402
 import menuvwf                                                    # noqa: E402
+import potreturnspill                                             # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log_1_pot_see_action.srm')
@@ -40,6 +41,7 @@ LOG2_SCRIPT = {
 FRAMES = 3400
 CONTENT_SOURCE = 0xC616
 TARGET = bytes(menuspill.encode(itemfix.EMPTY_POT_ROW))
+POT_TARGET = bytes(menuspill.encode('Pot'))
 
 
 def staged_row(pb, source, limit=48):
@@ -69,6 +71,12 @@ def run(rom, ram=RAM, png=None, trace=False):
         dispatches = []
         calls = []
         content_calls = []
+        title_calls = []
+        page_blanks = []
+        regional_fallbacks = []
+        regional_blanks = []
+        entry_samples = []
+        pot_entry_lifecycle = []
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
@@ -86,14 +94,45 @@ def run(rom, ram=RAM, png=None, trace=False):
             # begins at y=3 and spans the same 18-cell interior.
             if (shape[0], shape[1], shape[3]) == (0, 3, 18) and pb.register_file.D == 0:
                 content_calls.append(call)
+            if shape == (0, 0, 1, 3, 0x40) and pb.register_file.D == 0:
+                title_calls.append(call)
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
+        page_labels, region_labels = menuvwf.item_transition_labels()
+        pb.hook_register(
+            menuvwf.ITEM_PAGE_BANK, page_labels['pbdisable'],
+            lambda _ctx=None: page_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B3],
+                pb.memory[0xC1B6])), None)
+        pb.hook_register(
+            menuvwf.ITEM_REGION_BANK, region_labels['irfaillcd'],
+            lambda _ctx=None: regional_fallbacks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B3],
+                pb.memory[0xC1B6])), None)
+        pb.hook_register(
+            menuvwf.ITEM_REGION_BANK, region_labels['irdisable'],
+            lambda _ctx=None: regional_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B3],
+                pb.memory[0xC1B6])), None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        for label in ('potentrychrome', 'potentrypublish', 'potentrypublished'):
+            pb.hook_register(
+                menuvwf.ACTION_BLANK_BANK, info_labels[label],
+                lambda _ctx=None, name=label: pot_entry_lifecycle.append((
+                    frame[0], name, pb.memory[0xC6A3], pb.memory[0xC1B3],
+                    pb.memory[0xC1B6], pb.memory[0xC6BB])), None)
         script = LOG2_SCRIPT if os.path.basename(ram) == os.path.basename(STORAGE_RAM) else LOG1_SCRIPT
         for frame[0] in range(FRAMES):
             for button in script.get(frame[0], ()):
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
+            if frame[0] >= 2500 and pb.memory[0xC6A3] in (12, 13):
+                entry_samples.append((
+                    frame[0], bytes(pb.memory[0x9800:0x9C00]),
+                    bool(pb.memory[0xFF40] & 0x80), pb.memory[0xC6A3],
+                    pb.memory[0xC1B3], pb.memory[0xC1B6],
+                    pb.memory[0xC6BB], pb.screen.image.copy()))
 
         final = pb.screen.image.copy()
         if png:
@@ -134,6 +173,22 @@ def run(rom, ram=RAM, png=None, trace=False):
             problems.append('Pot title text/tail is %s' % row1.hex(' '))
         if row2[:5] != bottom or any(row2[5:]):
             problems.append('Pot title bottom/tail is %s' % row2.hex(' '))
+        if not title_calls:
+            problems.append('Pot title never reached the proportional row renderer')
+        else:
+            key = title_calls[-1][2]
+            expected_tiles = menuspill.compose(POT_TARGET, profile)
+            for index, expected_pixels in enumerate(expected_tiles):
+                tile = row1[1 + index]
+                tile_at = menuspill.tile_data_addr(tile)
+                if bytes(pb.memory[tile_at:tile_at + 16]) != bytes(expected_pixels):
+                    problems.append('Pot title tile %d pixels differ' % index)
+            if any(row1[1 + len(expected_tiles):4]):
+                problems.append('Pot title retains cells after proportional `Pot`: %s'
+                                % row1.hex(' '))
+        if trace:
+            print('  title row=%s records=%s'
+                  % (row1.hex(' '), menuspill.records(pb, profile)))
         pb.stop(save=False)
 
     indices = [index for _at, index in dispatches]
@@ -143,10 +198,54 @@ def run(rom, ram=RAM, png=None, trace=False):
         problems.append('real route never dispatched Pot See screen 13')
     if not calls:
         problems.append('See never entered the proportional row renderer')
-    print('potseespill: dispatches %s; %d See-era row call(s); compact title exact; '
+    expected_page_blanks = ()
+    if tuple(event[1:] for event in page_blanks) != expected_page_blanks:
+        problems.append('Pot See Item-page blank states are %s, expected %s' %
+                        (tuple(event[1:] for event in page_blanks),
+                         expected_page_blanks))
+    if regional_blanks:
+        problems.append('Pot See wrote the regional LCD-off site at %s' %
+                        (regional_blanks,))
+    entry_off = [sample[0] for sample in entry_samples if not sample[2]]
+    if entry_off:
+        problems.append('Floor -> Pot See disabled the LCD on frame(s) %s' %
+                        entry_off[:16])
+    viewer_samples = [sample for sample in entry_samples if 1 <= sample[6] <= 5]
+    chrome_frames = [sample[0] for sample in viewer_samples
+                     if potreturnspill.pot_chrome_complete(sample[1], sample[6])]
+    settled_title = (potreturnspill.pot_title_pixels(viewer_samples[-1][7])
+                     if viewer_samples else None)
+    text_frames = [sample[0] for sample in viewer_samples
+                   if settled_title is not None and
+                   potreturnspill.pot_title_pixels(sample[7]) == settled_title]
+    if not chrome_frames:
+        problems.append('Floor -> Pot See never exposed complete Pot chrome')
+    elif not text_frames or not potreturnspill.pot_text_visible(
+            viewer_samples[-1][7]):
+        problems.append('Floor -> Pot See never exposed Pot title/body text')
+    elif chrome_frames[0] >= text_frames[0]:
+        problems.append('Pot text first appears at f%d without earlier empty chrome '
+                        '(first chrome f%d)' %
+                        (text_frames[0], chrome_frames[0]))
+    lifecycle = tuple(label for _at, label, screen, _state, _phase, _rows
+                      in pot_entry_lifecycle if screen in (12, 13))
+    if (lifecycle.count('potentrychrome') != 1 or
+            lifecycle.count('potentrypublished') != 1 or
+            not lifecycle or lifecycle[-1] != 'potentrypublished' or
+            len(lifecycle) < 3 or lifecycle[-2] != 'potentrypublish'):
+        problems.append('Floor -> Pot entry lifecycle order is %s' % (lifecycle,))
+    if trace:
+        print('  Pot entry lifecycle %s; first chrome/text %s/%s' %
+              (pot_entry_lifecycle,
+               chrome_frames[0] if chrome_frames else None,
+               text_frames[0] if text_frames else None))
+    print('potseespill: dispatches %s; %d See-era row call(s); Item-page blank %s; '
+          'regional branch/write %s/%s; empty chrome/text %s/%s; compact title exact; '
           '%d problem(s)'
           % (' '.join('f%d:%d' % event for event in dispatches), len(calls),
-             len(problems)))
+             page_blanks, regional_fallbacks, regional_blanks,
+             chrome_frames[0] if chrome_frames else None,
+             text_frames[0] if text_frames else None, len(problems)))
     for problem in problems:
         print('  ' + problem)
     if not problems:

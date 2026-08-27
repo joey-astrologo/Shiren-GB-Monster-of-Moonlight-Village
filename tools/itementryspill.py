@@ -102,6 +102,7 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
         entry_batches = []
         regional_begins = []
         fallbacks = []
+        regional_blanks = []
         samples = []
 
         def dispatch(_ctx=None):
@@ -177,6 +178,10 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
                          region_begin, None)
         pb.hook_register(menuvwf.ITEM_REGION_BANK, region_runtime['irfaillcd'],
                          fallback, None)
+        pb.hook_register(menuvwf.ITEM_REGION_BANK, region_runtime['irdisable'],
+                         lambda _ctx=None: regional_blanks.append(frame[0])
+                         if reopen_at[0] is not None and
+                         frame[0] >= reopen_at[0] - 2 else None, None)
 
         for frame[0] in range(frames):
             action = schedule.get(frame[0])
@@ -251,6 +256,10 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
         if fallbacks:
             problems.append('page %d re-entry/page change reached fallback at %s' %
                             (target, ' '.join('f%d' % at for at in fallbacks)))
+        if regional_blanks:
+            problems.append('page %d re-entry/page change executed regional LCD-off '
+                            'write at %s' %
+                            (target, ' '.join('f%d' % at for at in regional_blanks)))
         lcd_off = [at for at, snapshot, _image in samples
                    if not snapshot['lcdc'] & 0x80]
         whites = [at for at, _snapshot, image in samples if white_frame(image)]
@@ -272,6 +281,7 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
             'post': post_complete[0],
             'regional': tuple(regional_begins),
             'fallbacks': tuple(fallbacks),
+            'regional_blanks': tuple(regional_blanks),
             'lcd_off': len(lcd_off),
             'white': len(whites),
             'problems': problems,
@@ -298,11 +308,12 @@ def run(rom, ram, png_dir=None, frames=3800):
         chrome = ('missing' if result['chrome'] is None else
                   'f%d:$%02X' % result['chrome'])
         print('itementryspill: page %d Status f%s -> Items f%s; batches %s; chrome %s; '
-              'reentry/post %s/%s; regional/fallback %d/%d; LCD-off %d, white %d' %
+              'reentry/post %s/%s; regional/branch/write %d/%d/%d; LCD-off %d, white %d' %
               (result['page'], result['status'], result['reopen'], batches,
                chrome,
                result['reentry'], result['post'], len(result['regional']),
-               len(result['fallbacks']), result['lcd_off'], result['white']))
+               len(result['fallbacks']), len(result['regional_blanks']),
+               result['lcd_off'], result['white']))
     for problem in problems:
         print('  ' + problem)
     if problems:

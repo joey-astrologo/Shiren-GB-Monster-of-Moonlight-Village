@@ -531,6 +531,7 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
         label_entries = []
         queue_uploads = []
         active_uploads = []
+        explicit_info_blanks = []
         expected_label_planes = b''.join(shop_label_tiles())
         label_vram_end = menuvwf.SHOP_LABEL_VRAM + len(expected_label_planes)
 
@@ -538,6 +539,12 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
             dispatches.append((frame[0], pb.register_file.A))
 
         pb.hook_register(4, 0x48AA, dispatch, None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_info_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B1],
+                pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
 
         def label_entry(_context=None):
             key = pb.register_file.HL
@@ -638,6 +645,9 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
         if cursor != len(expected):
             problems.append('no-cheat shop dispatch sequence %s does not contain %s' %
                             (indices, list(expected)))
+        if explicit_info_blanks:
+            problems.append('no-cheat shop route reached explicit Info LCD blanker at %s' %
+                            (explicit_info_blanks,))
         if checked != ['initial shop Floor', 'Info-return shop Floor']:
             problems.append('shop screen checks ran at %s' % checked)
         if not label_entries:

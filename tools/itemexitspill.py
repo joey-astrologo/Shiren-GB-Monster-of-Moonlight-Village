@@ -96,6 +96,7 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
         upload_starts = []
         live_uploads = []
         legacy_fallbacks = []
+        explicit_status_blanks = []
         samples = []
 
         def dispatch(_ctx=None):
@@ -161,6 +162,9 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
         pb.hook_register(statusvwf.FAR_BANK, runtime['uploadcopy'], upload_start, None)
         pb.hook_register(statusvwf.FAR_BANK, runtime['uploadlivedone'], live_done, None)
         pb.hook_register(statusvwf.FAR_BANK, runtime['statusready'], fallback, None)
+        pb.hook_register(statusvwf.FAR_BANK, runtime['statusdisable'],
+                         lambda _ctx=None: explicit_status_blanks.append(frame[0])
+                         if b_at[0] is not None else None, None)
 
         for frame[0] in range(frames):
             action = scheduled.get(frame[0])
@@ -220,6 +224,10 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
         if legacy_fallbacks:
             problems.append('page %d used the LCD-off status fallback at %s' %
                             (target, ' '.join('f%d' % at for at in legacy_fallbacks)))
+        if explicit_status_blanks:
+            problems.append('page %d executed explicit Status LCD blank at %s' %
+                            (target, ' '.join('f%d' % at
+                                              for at in explicit_status_blanks)))
         caps = tuple(cap for _at, _ly, cap in live_uploads)
         if caps != EXPECTED_CAPS:
             problems.append('page %d live upload caps are %s, expected %s' %

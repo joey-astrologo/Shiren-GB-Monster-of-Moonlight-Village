@@ -60,7 +60,9 @@ untouched drawer. build.py keeps the approved rows literal and install() marks o
 1,8,9,14,16,17,24,28,29,32,33,34,38,41,46,47,48,50,51 with descriptor bit 6. Bank 32
 reads them one byte at a time through the nested bank-31 gate at $459E. A leading zero
 cursor cell stays raw. Descriptor bit 5 additionally keeps the nonzero first cell raw for
-boxes 8 and 17: `Which?` and `Pot` are overwritten in their live flows. The synthetic
+box 8: `Which?` is overwritten in its live flow. Pot's first letter cannot remain raw:
+Status rendering legitimately repaints fixed tile `$1A`, so box 17 composes the complete
+word into owned proportional tiles. The synthetic
 forced-screen-1 cursor overwrite is not a real `Items` lifetime, so box 14 composes its
 complete word. Static headings compose from their first letter. The remaining codes accept the approved font page plus
 question mark $80 and the measured high English codes. Composite fixed-cell rows (boxes 2
@@ -88,7 +90,7 @@ same-destination redraws reuse a cap or fall back if they grow.
 PAGE FLIPS. Fresh pixels uploaded into reused tiles used to show through the old map.
 Screen-1 paging and Start-sort now drain the preceding map queue, prove the native
 screen/row/allocator/count ownership state, normalize the five marker-coupled left borders, and blank the
-five raw status cells plus five 16-cell name interiors during VBlank with the LCD on.
+five raw status cells, cursor cells, and five 16-cell name interiors during VBlank with the LCD on.
 Because those map cells are blank, each incoming tile can be copied in four synchronized
 four-byte HBlank slices without exposing partial pixels. Completed row references remain
 hidden until final row 4 publishes the entire owned body in one VBlank. The final redraw
@@ -96,13 +98,15 @@ tail copies only the four
 page-indicator cells rather than fourteen unchanged rows. Short-page rows use the native
 exact 19-zero representation. Direct Status-root -> Items entry is owned by statusvwf's
 earlier screen-1 shadow-clear hook; every rejected/unknown context retains the whole-map
-LCD-off fallback and native tile queue. The visible sequence is old -> blank status/name
-rows -> one complete new body; the cursor, right borders, header, and unrelated map cells
-remain owned throughout.
+LCD-off fallback and native tile queue. The visible sequence is old -> blank
+status/cursor/name rows -> one complete new body; a short destination page first clamps
+the selector and row to its final real item. Right borders, header, and unrelated map
+cells remain owned throughout.
 
 SCREEN-1 ACTION OVERLAY. Direct carried Items or a settled standing-item Floor page to
-screen-2 Action retains the native overlay draw but allocates its four- through six-row
-verb raster from six private four-tile slices at `$C7-$DE`. Row 0 admits those slices only
+screen-2 Action retains the native overlay draw but allocates its first six verb rows
+from six private four-tile slices at `$C7-$DE`. The unique seven-row unidentified-Pot
+picker uses the ordinary collision-safe allocator for its final `Info` row. Row 0 admits those slices only
 for the exact `0,1,2` stack, a valid carried selector or `$FF` Floor settlement proof,
 ordinary viewport and a live BG/Window scan with no private-ID reference; priced shop rows
 therefore reject structurally. Exact B-cancel arms state 7 at
@@ -112,16 +116,56 @@ covered parent cells in shadow, and restores the complete seven-column,
 state, cursor geometry, and screen state and returns directly to the screen-1 input loop.
 This
 retires every Action-map reference without exposing an empty rectangle or spending 40
-frames on an invisible Status/Items replay. Every other Action, Info, Name, shop,
-screen-20 Floor and Pot route retains its established path.
+frames on an invisible Status/Items replay. Every other Action, Name, and shop route
+retains its established path; the exact screen-20 Info and Pot `See` lifecycles are
+owned by the adjacent lifecycles below.
 
-FLOOR ACTION / INFO. The same reused-tile exposure occurred on action -> Info, Info page
-1 -> 2, and Info -> action. Exact help row 0 now starts an LCD-off transaction; its last
-row pre-stages an empty interior, bottom border, arrow and page counter before publishing
-the complete map. A settled-Info marker survives the intermediate screen-0 redraw on the
-return route; screen 20's final action row pre-stages its bottom edge and publishes. The
-controller and finalizer live before text in pool banks 39/40 and share the menu
-subsystem's full-map publisher at bank 60 far index 5.
+SCREEN-1 INFO LIFECYCLE. Selecting Info from that exact admitted Action parent pushes
+screen 4, or screen 5 for an equipment-seal page, and retains the proof across the
+`0,1,2,4/5` stack. Entry and page changes build and publish complete empty box-7 chrome
+over BG rows 3-13 and retire visible rows 14-15 before composing hidden
+proportional rows; the five interiors and pager appear together in a final VBlank. B at
+any page and A/D-pad at the final page both remove screens 4 and 2. State 8 retires only
+the five proportional Info rows and pager references while preserving box chrome and the
+Window, suppresses the disposable screen-0 LCD-off publication, publishes complete empty
+Item/Floor target chrome, then atomically reveals the exact replayed screen-1 parent.
+Rejected Info callers keep the legacy path.
+
+SCREEN-20 FLOOR / INFO. The independent Floor picker now joins the same exact regional
+lifecycle. On entry, its Action labels retire while the complete small box remains; the
+complete Info box and first row then replace it together. Page changes scan the visible
+rows for tile allocations about to be reused, retire only whole overlapping rows in one
+VBlank, upload a short incoming row through HBlank, and publish that complete row in the
+same displayed frame. At least one old or new Info row remains throughout. Return state 9
+suppresses the disposable screen-0 redraw, preserves the native 3-7-row Action height,
+publishes complete empty full-width title and Action chrome, then reveals the title and
+all Action rows together at the descriptor's actual last row.
+This covers screen 4 descriptions and screen 5 equipment-seal pages. Five-page callers
+rebuild the native footer digits, and rows 14-15 are retired so a six-row Action tail
+cannot survive below Info. The compatibility stubs remain in pool banks 39/40; the exact
+screen-1/screen-7/screen-20 lifecycle is co-located with Action ownership in bank 62.
+Rejected
+callers still reach the bank-60 full-map fallback.
+
+SCREEN-7 FLOOR / INFO. The identity-hidden ground-Pot route is stack `0,7,4`, not the
+screen-20 picker despite sharing native handler 4:$4A58. Its exact seven-row screen-4
+Info child is independently admitted. Entry first removes box 6 from the right side of
+box 5 and restores the underlying full-width Floor title, then uses the ordinary regional
+Info publisher. Exit state 11 survives the disposable screen-0 replay, builds complete
+empty box-5 plus y=1 box-6 chrome over visible BG rows 0-15, and reveals the title and all
+seven Action interiors only at the final boundary. Screen 5, shorter screen-7 pickers,
+and unknown callers remain rejected.
+
+POT ENTRY / CARRIED RETURN. Selecting `See` enters screen 12 or 13 above an exact
+carried, Items-appended Floor, alternate screen-7, or screen-20 Action parent. Exact
+state 12 keeps LCDC bit 7 set, retires only visible BG rows 0-15 while preserving
+the Window HUD, publishes complete empty compact-title and capacity-sized body chrome,
+and keeps native body/title text shadow-only until box 17's final boundary. The exact
+carried two-level B pop independently arms state 10, discards the intermediate Status redraw,
+clears Pot page markers during VBlank, and feeds the unchanged direct screen-1 entry
+gate. That gate retires the Pot map, publishes complete empty Items boxes, and only then
+reveals rows. Box 17 composes all of `Pot`; leaving its first character as raw tile
+`$1A` allowed the Status field renderer to replace it before the Pot title was visible.
 
 THE UPLOAD. Composition goes into the `$C006` queue payloads (the three 66-byte slots,
 a flat 12-tile space with 2-byte dest gaps) plus a 16-byte extension buffer for TILE 12
@@ -169,9 +213,14 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    count at `$C1AE-$C1B2`; 15 exceeds the measured 13-row stacked peak
                    and prevents propvwf's ephemeral `$C0D7/$C0D8` from corrupting them.
   * `$C1B3`        the synchronous transaction state: 1 is regional item-page pending;
-                   2/3 are pending/settled Info; 4 is Info-return pending; 5 is a
+                   2/3 are pending/settled Info or seals; 4 is fallback Info-return
+                   pending; 5 is a
                    regional-to-whole-map fallback; 6 latches declined/initial Item entry;
                    7 is the transient admitted screen-2 Action B parent-restore proof;
+                   8 is the exact screen-1 Info two-level parent replay; 9 is the exact
+                   screen-20 Info parent replay; 10 is carried-Pot `See` replay; 11 is
+                   the exact screen-7 unidentified-Pot Info parent replay; 12 is the
+                   exact carried/Floor screen-12/13 Pot entry transaction;
                    `$10/$11/$12/$13/$14`
                    are title/file, difficulty, proportional Rankings, Fay-screen and
                    native Rankings transactions. It is cleared after the corresponding
@@ -198,7 +247,16 @@ frame; the survivors of the naive pair scan were all data banks misread as code)
                    every message; only the several-frame overlap with the native blank
                    made it intermittent. `tools/potputspill.py` is the regression.
   * `$C1B4-$C1B6`  Action row count, packed retained Item/Floor record state/selector,
-                   and private-pool admission latch. The mutually exclusive Item-page
+                   and private-pool admission latch. Screen-20 Info return saves its
+                   3-7-row Action height in `$C1B4` before screen 0 overwrites `$C6BB`.
+                   Screen-1 Info retains admission one and changes it to two only after
+                   complete return chrome is published.
+                   A gameplay-bound carried Action may leave admission one after its BG
+                   has ceased to exist. The exact screen-20 `0,20,4/5` owner accepts
+                   idle or that stale-one value, then clears it before publishing any
+                   Info pixels; values two through four still identify other live
+                   lifecycles and are rejected.
+                   The mutually exclusive Item-page
                    path temporarily uses `$C1B4` as its four-slice counter, `$C1B5` as
                    the Items/Floor shape-header marker, and `$C1B6` as phases 2 (live),
                    4 (replacement header), and 3 (redraw tail). `$C1B7` marks a fully settled standing-item Floor
@@ -230,6 +288,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dotfont
 import gbasm
 import propvwf
 
@@ -292,6 +351,7 @@ ITEM_PAGE_INDEX = 0x09
 ITEM_PAGE_AT = 0x4300
 ITEM_PAGE_LIMIT = 0x4400
 ITEM_ROW_FAST_AT = 0x43F0
+ITEM_ROW_FAST_CLAMP_AT = 0x4450
 ITEM_ROW_FAST_LIMIT = 0x4480
 ITEM_RETURN_BANK = 0x3C
 ITEM_RETURN_INDEX = 0x0F
@@ -302,7 +362,7 @@ ITEM_RETURN_OLD = bytes.fromhex('f5c5e5faa3c6cb27c6966f3e00ce4d')
 # The row blitter has only six bytes left in its fixed slot.  Its one same-bank call
 # lands here, in the return helper's unused tail, to mark the final body row of an
 # Items/Floor shape change before native box 14/18 composes the replacement header.
-ITEM_SHAPE_PHASE_AT = 0x45A6
+ITEM_SHAPE_PHASE_AT = 0x45B6
 ITEM_SHAPE_PHASE_LIMIT = 0x45E0
 ITEM_TILE_FAST_BANK = 0x3C
 ITEM_TILE_FAST_AT = 0x45E0
@@ -327,15 +387,33 @@ ACTION_ALLOC_LIMIT = 0x4100
 ACTION_BLANK_BANK = 0x3E
 ACTION_BLANK_INDEX = 0x07
 ACTION_BLANK_AT = 0x405A
-ACTION_BLANK_LIMIT = 0x4400
+ACTION_BLANK_LIMIT = 0x4420
+INFO_CONTROL_INDEX = 0x09
+INFO_FINISH_INDEX = 0x0B
+INFO_POP_INDEX = 0x0D
+INFO_RETURN_INDEX = 0x0F
+INFO_LIFECYCLE_AT = 0x4420
+INFO_LIFECYCLE_LIMIT = 0x5400
+POT_FLOOR_RETURN_AT = 0x53F0
 ACTION_POP_BANK = 0x3C
 ACTION_POP_INDEX = 0x0D
 ACTION_POP_AT = 0x422E
 ACTION_POP_LIMIT = 0x4300
 ACTION_POOL_BASE = 0xC7
 ACTION_POOL_END = 0xDF
+# statusvwf bank 53 index $0B owns the exact screen-7 Floor -> Status empty-chrome
+# prepublication. Keep this ABI pair synchronized with statusvwf.STATUS_PRE_INDEX/BANK.
+STATUS_FLOOR_PRE_INDEX = 0x0B
+STATUS_FLOOR_PRE_BANK = 0x35
 ACTION_POP_HOOK = (0x04, 0x485A)
 ACTION_POP_OLD = bytes.fromhex('4ffa34c591ea34c5')
+# Screen 12/13 begin by clearing the shared shadow at these identical `ld hl,$C300`
+# instructions. Replace only that setup with the Info-return far entry; rejected callers
+# receive the same HL value, while an exact screen-20 parent saves its Action height
+# before the viewer overwrites C6BB.
+POT_SEE_12_ENTRY_HOOK = (0x04, 0x4B83)
+POT_SEE_13_ENTRY_HOOK = (0x04, 0x4BA5)
+POT_SEE_ENTRY_OLD = bytes.fromhex('2100c3')
 # Screen-1 selector $FF changes the Item list chrome between five carried rows and one
 # standing-item row. Bank 58's standard pre-text helper slot is disjoint from ending
 # credits at $4100 and gives the regional blanker room to commit the complete incoming
@@ -344,7 +422,10 @@ FLOOR_CHROME_BANK = 0x3A
 FLOOR_CHROME_INDEX = 0x07
 FLOOR_CHROME_AT = 0x405A
 FLOOR_CHROME_LIMIT = 0x4100
-FLOOR_INFO_BANK = 0x27      # pool banks 39/40: reader ends $405A, text starts at $4100
+# Banks 39/40 retain their established far entries as small compatibility stubs. The
+# controller now lives beside the Action ownership machine in bank 62, where the exact
+# screen-1 Action admission state can be validated without duplicating another protocol.
+FLOOR_INFO_BANK = 0x27
 FLOOR_INFO_INDEX = 0x05
 FLOOR_INFO_AT = 0x405A
 FLOOR_INFO_LIMIT = 0x4100
@@ -523,7 +604,7 @@ ROM_BOXES = (1, 8, 9, 14, 16, 17, 18, 24, 28, 29, 32, 33, 34,
 ROM_SOURCE_CAP = 18         # explicit terminator follows at most 18 source glyphs
 CONTEXT_STATIC_ROWS = True
 ROM_FLAG_BIT = 0x40          # descriptor bit 6; bits 0/1/2 and DTE bit 7 keep their jobs
-ROM_RAW_PREFIX_BOXES = (8, 17)
+ROM_RAW_PREFIX_BOXES = (8,)
 ROM_RAW_PREFIX_BIT = 0x20    # measured post-draw cursor overwrite of a nonzero cell
 ROM_LONG_SOURCE_BOXES = (8, 14, 18, 29, 33, 34, 47)
 ROM_LONG_SOURCE_BIT = 0x10   # source ends at $FF rather than descriptor width
@@ -1530,9 +1611,12 @@ agcollision:
 
 
 # The allocator entry replaces the in-bank packing block, returning B=base, C=cap and
-# carry on rejection.  Non-screen-2 rows execute the prior 57+11+4 policy byte-for-byte;
-# an admitted carried-/Floor-Action row instead receives $C7+4*row and can never exhaust
-# Item RAM.
+# carry on rejection. Non-screen-2 rows execute the prior 57+11+4 policy byte-for-byte;
+# the first six rows of an admitted carried-/Floor-Action receive $C7+4*row. The only
+# possible later row is the seventh `Info` verb on an unidentified ground Pot. It returns
+# to the ordinary allocator used by the one-row Floor parent; that parent occupies the
+# mid run, leaving the base run available without extending the private pool into the
+# difficulty renderer's $E0+ ownership.
 ACTION_ALLOC_SRC = """
 actionalloc:
   ld a,[$C6A3]
@@ -1556,7 +1640,7 @@ aapermit:
   jr nc,aafail
   ld a,d
   cp $06
-  jr nc,aafail
+  jr nc,aageneral
   add a,a
   add a,a
   add a,$%02X
@@ -1643,14 +1727,80 @@ titlecursor:
 ACTION_POP_SRC = """
 actionpop:
   ld c,a
+  ; Before the native one-level screen-7 pop can dispatch screen 0, let statusvwf prove
+  ; the exact B handler/stack/shape and publish complete empty Status chrome. Rejected
+  ; callers are register-transparent and continue through the unchanged classifiers.
+  ld a,$01
+  rst $10
+  db $%02X,$%02X
+  ; A ground-Pot See viewer is a one-level child of its retained screen-7 Action
+  ; parent. Give that exact stack first refusal before the generic screen-4/5 pop
+  ; classification; success has already performed the depth subtraction and arms the
+  ; same chrome-first screen-7 replay used by Info.
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+  jr nc,apordinary
+  and a
+  ret
+apordinary:
+  ld a,c
+  cp $02
+  jr nz,apnotpot
+  ; A carried Pot viewer pops screen 12/13 and its Action parent together. Hand the
+  ; exact pre-pop proof to bank 62 so the disposable Status replay can be skipped
+  ; and screen 1 can precommit its windows before restoring any Item rows.
+  ld a,[$C6A3]
+  cp $0C
+  jr z,appot
+  cp $0D
+  jr nz,apinfo
+appot:
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+  jr nc,apinfo
+  and a
+  ret
+apnotpot:
   cp $01
-  jr nz,apsub
+  jp nz,apsub
+  ; Screen-20 Info has C6DE bit 0 set, so the native pop amount is one rather than
+  ; screen 1's two. Admit its B and final-page A/D-pad handlers before testing the
+  ; separate screen-2 Action B path.
   ld a,h
+  cp $59
+  jr z,apinfoadvance
   cp $56
-  jr nz,apsub
+  jp nz,apsub
   ld a,l
+  cp $91
+  jr z,apinfotry
   cp $89
-  jr nz,apsub
+  jp nz,apsub
+  jr apactionproof
+apinfo:
+  ld a,h
+  cp $59
+  jr z,apinfoadvance
+  cp $56
+  jp nz,apsub
+  ld a,l
+  cp $91
+  jp nz,apsub
+  jr apinfotry
+apinfoadvance:
+  ld a,l
+  cp $26
+  jp nz,apsub
+apinfotry:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jr nc,apsub
+  and a
+  ret
+apactionproof:
   ld a,[$C1B3]
   and a
   jr nz,apsub
@@ -1704,7 +1854,11 @@ apsub:
   sub c
   ld [$C534],a
   ret
-""" % (ACTION_BLANK_INDEX, ACTION_BLANK_BANK)
+""" % (STATUS_FLOOR_PRE_INDEX, STATUS_FLOOR_PRE_BANK,
+         INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         ACTION_BLANK_INDEX, ACTION_BLANK_BANK,
+         INFO_POP_INDEX, ACTION_BLANK_BANK,
+         ACTION_BLANK_INDEX, ACTION_BLANK_BANK)
 
 
 # From the exact pre-pop Action B path, reconstruct box 6's 7 x (2*rows+1) covered parent
@@ -1716,6 +1870,8 @@ apsub:
 # and returns directly instead of replaying screen 0 and screen 1.
 ACTION_BLANK_SRC = """
 actionblank:
+  cp $03
+  jp z,potpop
   cp $02
   jp z,absave
   and a
@@ -1724,8 +1880,24 @@ actionblank:
   cp $07
   jr z,abstart
   cp $08
-  jp z,abowned
-  and a
+  jr z,abinfo
+  cp $09
+  jr z,abinfo
+  cp $0B
+  jr nz,abidle
+abinfo:
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jp abowned
+abidle:
+  ld a,[$C6A3]
+  sub $0C
+  cp $02
+  ret nc
+  ld a,$04
+  rst $10
+  db $%02X,$%02X
   ret
 abstart:
   ld a,[$C6A3]
@@ -2109,8 +2281,27 @@ abowned:
   ret
 abfinish:
   ld a,[$C1B3]
+  cp $0C
+  jr nz,abfinishnotpot
+  ld a,$05
+  rst $10
+  db $%02X,$%02X
+  ret
+abfinishnotpot:
   cp $07
   jp z,abowned
+  cp $09
+  jp z,abowned
+  cp $0B
+  jr nz,abfinishnot7
+  ; Screen 0 is only the native replay's disposable bridge. Do not let its completed
+  ; empty pass retire state $0B; screen 7 must build and publish the real Floor parent.
+  ld a,[$C6A3]
+  and a
+  jp z,abowned
+  ld a,$02
+  jr abfinishcall
+abfinishnot7:
   cp $08
   jr nz,abnotowned
   ld a,[$C6A3]
@@ -2128,6 +2319,11 @@ abfinish:
   ld a,[$C69D]
   cp $04
   jp nz,abowned
+  ld a,$01
+abfinishcall:
+  rst $10
+  db $%02X,$%02X
+  jp nc,abfail
   xor a
   ld [$C1B3],a
   ld [$C1B6],a
@@ -2140,6 +2336,128 @@ abfail:
   xor a
   ld [$C1B3],a
   ld [$C1B6],a
+  ret
+
+; Exact carried-Pot See B path. The native pop removes screen 12/13 and screen 2,
+; then rebuilds disposable screen 0 before screen 1. State $0A is a capability handed
+; to statusvwf: screen 0 must stay invisible, and screen 1 must retire the Pot map and
+; publish complete empty Items chrome before any row text.
+potpop:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  and a
+  jp nz,potpopbad
+  ld a,[$C6A3]
+  ld e,a
+  sub $0C
+  cp $02
+  jp nc,potpopbad
+  ; Screen 12 can retain zero or one from Action admission; screen 13 must retain
+  ; zero. Reject two-plus first, then distinguish the only nonzero case by screen.
+  ld a,[$C1B6]
+  cp $02
+  jp nc,potpopbad
+  and a
+  jr z,potpoptypeok
+  ld a,e
+  cp $0C
+  jp nz,potpopbad
+potpoptypeok:
+  ld a,[$C6A6]
+  and a
+  jp nz,potpopbad
+  ld a,[$C6DE]
+  and a
+  jp nz,potpopbad
+  ld a,[$C534]
+  cp $03
+  jr nz,potpopbad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jr nz,potpopbad
+  ld a,[hl+]
+  dec a
+  jr nz,potpopbad
+  ld a,[hl+]
+  cp $02
+  jr nz,potpopbad
+  ld a,[hl]
+  cp e
+  jr nz,potpopbad
+  ld a,[$C6AA]
+  and a
+  jr z,potpopbad
+  cp $15
+  jr nc,potpopbad
+  ld b,a
+  ; A Pot reached by paging from carried Items to the appended Floor page still has
+  ; stack 0,1,2,12/13, but selector $FF has already been repurposed by the viewer.
+  ; The settled-Floor latch is the retained proof; screen-1 entry consumes it below.
+  ld a,[$C1B7]
+  dec a
+  jr z,potpopselectorok
+  ld a,[$C6AC]
+  cp b
+  jr nc,potpopbad
+potpopselectorok:
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jr nz,potpopbad
+  ld a,[hl+]
+  and a
+  jr nz,potpopbad
+  ld a,[hl+]
+  dec a
+  jr nz,potpopbad
+  ld a,[hl+]
+  cp $03
+  jr nz,potpopbad
+  ld a,[hl]
+  cp $40
+  jr nz,potpopbad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,potpopbad
+  ldh a,[$FF42]
+  and a
+  jr nz,potpopbad
+  ldh a,[$FF43]
+  and a
+  jr nz,potpopbad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,potpopbad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,potpopbad
+  ; The appended Floor page needs the already-proven screen-1 Info replay rather than
+  ; the carried-Items state-$0A entry. Its tiny far helper packs selector $1F into the
+  ; retained record byte and returns A=$08. Carried Pot viewers keep state $0A.
+  ld a,[$C1B7]
+  dec a
+  jr nz,potpopcarried
+  call $%04X
+  jr potpoparm
+potpopcarried:
+  ld a,$0A
+potpoparm:
+  ld [$C1B3],a
+  ld hl,$C534
+  dec [hl]
+  dec [hl]
+  scf
+  jr potpopdone
+potpopbad:
+  and a
+potpopdone:
+  pop hl
+  pop de
+  pop bc
   ret
 absave:
   push bc
@@ -2166,7 +2484,11 @@ absavecell:
   pop bc
   and a
   ret
-"""
+""" % (INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         POT_FLOOR_RETURN_AT)
 
 
 # Ordinary page changes keep ``irclear``. A shape change involving selector $FF instead
@@ -2550,9 +2872,10 @@ irvalidatedrain:
   ; Items entry remains excluded by its fresh-allocation latch above.
   ld a,[$C6AA]
   and a
-  jp z,irdecline
+  jr z,irdecline
   cp $15
-  jp nc,irdecline
+  jr nc,irdecline
+  call $%04X
 irdrain:
 irshadow:
   ld de,$002D
@@ -2634,8 +2957,7 @@ irclearstore:
   xor a
   ld [hl],a
   inc hl
-  inc hl
-  ld c,$10
+  ld c,$11
 irclearcell:
   ld [hl+],a
   dec c
@@ -2782,6 +3104,7 @@ irfailwait:
   ldh a,[$FF44]
   cp $90
   jr c,irfailwait
+irdisable:
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
@@ -2791,7 +3114,16 @@ irfailed:
   xor a
   ld [$C1B6],a
   ret
-""" % (FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK, ITEM_ROW_FAST_AT)
+""" % (ITEM_ROW_FAST_CLAMP_AT, FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK,
+         ITEM_ROW_FAST_AT)
+
+
+def item_transition_labels():
+    """Return symbolic addresses for both Item-page LCD fallback controllers."""
+    return (
+        gbasm.assemble(ITEM_PAGE_SRC, ITEM_PAGE_AT)[1],
+        gbasm.assemble(ITEM_REGION_SRC, ITEM_REGION_AT)[1],
+    )
 
 
 # Keep completed incoming rows unreferenced behind the regional blank until the final
@@ -2836,15 +3168,13 @@ irfcopy:
   jr z,irfrow
   ld b,$05
 irfrow:
-  ld c,$02
+  ld c,$03
 irfleft:
   ld a,[hl+]
   ld [de],a
   inc de
   dec c
   jr nz,irfleft
-  inc hl
-  inc de
   ld c,$10
 irfname:
   ld a,[hl+]
@@ -2866,7 +3196,48 @@ irfsourceready:
 irfdestready:
   dec b
   jr nz,irfrow
+  call ircursor
   ei
+  ret
+
+; Native Left/Right advances the absolute selector by five but bounds it only against
+; the padded page count. If the old row does not exist on the destination page, clamp
+; this exact same-screen redraw to the final real item and keep its row in lockstep.
+; A enters with the already-validated real item count.
+irclamp:
+  ld b,a
+  ld a,[$C6AC]
+  cp $FF
+  ret z
+  cp b
+  ret c
+  dec b
+  ld a,b
+  ld [$C6AC],a
+irclamprow:
+  cp $05
+  jr c,irclampset
+  sub $05
+  jr irclamprow
+irclampset:
+  ld [$C6A5],a
+  ret
+
+; The fast body publication precedes native 4:$4E2B's shadow cursor write. Publish the
+; known screen-1 cursor directly while this helper still owns the same safe VRAM phase;
+; the native writer immediately brings shadow into agreement afterward.
+ircursor:
+  ld hl,$9882
+  ld bc,$0040
+  ld a,[$C6A5]
+  and a
+  jr z,ircursorset
+ircursorrow:
+  add hl,bc
+  dec a
+  jr nz,ircursorrow
+ircursorset:
+  ld [hl],$81
   ret
 """ % ITEM_SHAPE_PHASE_AT
 
@@ -2916,7 +3287,20 @@ ispshape:
 ITEM_RETURN_SRC = """
 itemservice:
   and a
-  jp z,$%04X
+  jr nz,itemreturn
+  ; Give an admitted Info row a chance to retire only the row whose tile slice is
+  ; about to be repainted. Reject ordinary Item paging locally so its proven fast path
+  ; does not pay for another cross-bank call.
+  ld a,[$C1B3]
+  cp $02
+  jr nz,itemservicefast
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+  ret c
+itemservicefast:
+  xor a
+  jp $%04X
 itemreturn:
   push af
   push bc
@@ -3060,7 +3444,7 @@ irtranges:
   db $00,$12,$00,$12,$00,$12,$0D,$0F,$00,$12,$00,$12,$00,$12,$00,$12
   db $00,$12,$00,$12,$00,$12,$00,$12,$00,$0A,$0D,$0F,$00,$12,$00,$12
   db $00,$12,$00,$12,$06,$10
-""" % ITEM_TILE_FAST_AT
+""" % (INFO_CONTROL_INDEX, ACTION_BLANK_BANK, ITEM_TILE_FAST_AT)
 
 
 # Once the exact Item transaction has blanked its five owned rows, none of the newly
@@ -3295,18 +3679,19 @@ ppdestok:
 """
 
 
-# The Floor item action picker and its two-page Info box reuse VWF tiles and the visible
-# map while their replacement is still being drawn.  The exact Wood Arrow route proves
-# three mixed-text transitions: action -> Info, Info page -> page, and Info -> action.
+# The Floor item action picker and its Info box reuse VWF tiles and the visible map while
+# their replacement is still being drawn. The exact Wood Arrow and five-page Fusion Pot
+# routes prove three mixed-text transitions: action -> Info, Info page -> page, and Info -> action.
 # The Gitan route separately proves that a shorter three-choice action box also reaches
 # the final publication boundary after its one-page description closes.
-# Keep the LCD dark across those synchronous redraws.  A settled Info screen is marked
-# with state 3 so its intermediate screen-0 redraw can begin the return transaction; the
-# following screen-20 action row completes it.  State 1 remains the item-page transaction.
+# This source is retained as the exact byte-level fallback template. The regional
+# extension gets first refusal for proven screen-1, screen-7, and screen-20 ownership; rejected
+# callers still use the LCD-off transaction below. State 1 remains the item-page
+# transaction.
 #
 # The controller and finalizer occupy the standard pre-text helper slots in pool banks
 # 39/40. The final full-map copy is the shared bank-60 publisher.
-FLOOR_INFO_SRC = """
+FLOOR_INFO_LEGACY_SRC = """
 floorinfo:
   and a
   jr z,fiblank
@@ -3353,6 +3738,7 @@ fiwait:
   ldh a,[$FF44]
   cp $90
   jr c,fiwait
+fidisable:
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
@@ -3365,7 +3751,10 @@ fiborder:
   ret nz
   ld a,[$C1B3]
   cp $04
+  jr z,fiborderowned
+  cp $09
   ret nz
+fiborderowned:
   ; Action boxes are not all four rows high. Equipment has four choices, while
   ; Gitan has three. Finish on the descriptor's last row instead of assuming D=3;
   ; otherwise the one-page Gitan Info return leaves state 4 and the LCD disabled.
@@ -3415,7 +3804,7 @@ fihelpcheck:
          ITEM_REGION_INDEX, ITEM_REGION_BANK)
 
 
-FLOOR_INFO_FINISH_SRC = """
+FLOOR_INFO_FINISH_LEGACY_SRC = """
 floorinfofinish:
   cp $02
   jr z,fiaction
@@ -3520,6 +3909,2483 @@ fipublish:
   db $%02X,$%02X
   ret
 """ % (ITEM_PUBLISH_INDEX, ITEM_PUBLISH_BANK)
+
+
+# Banks 39/40 keep their historical far-call ABI, but the implementation is co-located
+# with the admitted Action state in bank 62.  Keep the legacy controller's cheap reject
+# path in bank 39: ordinary screen-1 Item rows must not pay for a second far call merely
+# because the Info extension exists.  The three admitted candidates alone cross banks;
+# the bank-62 controller then proves ownership or falls through to this byte-for-byte
+# LCD-off fallback.
+FLOOR_INFO_SRC = """
+floorinfo:
+  and a
+  jr z,fistubblank
+  dec a
+  jr z,fistubborder
+  jr fistubempty
+fistubblank:
+  ld a,[$C1B1]
+  cp $03
+  jr z,fistubcallzero
+  and a
+  ret nz
+  ld a,[$C1B3]
+  cp $03
+  ret nz
+  ld a,[$C0D9]
+  cp $20
+  ret nz
+  ld a,[$C0DA]
+  cp $C3
+  ret nz
+  ld a,d
+  and a
+  ret nz
+  jr fistubcallzero
+fistubborder:
+  ld a,[$C1B1]
+  cp $03
+  jr z,fistubcallone
+  cp $02
+  ret nz
+  ld a,[$C1B3]
+  cp $04
+  jr z,fistubborderowned
+  cp $09
+  ret nz
+fistubborderowned:
+  ld a,[$C69C]
+  dec a
+  cp d
+  ret nz
+  jr fistubcallone
+fistubempty:
+  ld a,[$C0E7]
+  and a
+  jr nz,fistubemptyknown
+  ld a,$03
+  rst $10
+  db $%02X,$%02X
+fistubemptyknown:
+  ld a,[$C1B1]
+  cp $03
+  ret nz
+  ld a,$02
+  jr fistubcall
+fistubcallzero:
+  xor a
+  jr fistubcall
+fistubcallone:
+  ld a,$01
+fistubcall:
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (ITEM_REGION_INDEX, ITEM_REGION_BANK,
+         INFO_CONTROL_INDEX, ACTION_BLANK_BANK)
+
+
+FLOOR_INFO_FINISH_SRC = """
+floorinfofinish:
+  rst $10
+  db $%02X,$%02X
+  ret
+""" % (INFO_FINISH_INDEX, ACTION_BLANK_BANK)
+
+
+# Inject the exact regional attempt ahead of the established Info LCD-off fallback.
+# Mode three comes from the proportional renderer immediately before a row's tile upload;
+# screen 20 uses it to retire and replace one row at a time. Every rejected caller stays
+# on the fallback.
+_INFO_CONTROL_SRC = FLOOR_INFO_LEGACY_SRC.replace(
+    """floorinfo:
+  and a
+""",
+    """floorinfo:
+  cp $03
+  jp z,infopreupload
+  and a
+""", 1)
+
+_INFO_CONTROL_SRC = _INFO_CONTROL_SRC.replace(
+    """fihelpblank:
+  ld a,[$C0D9]
+""",
+    """fihelpblank:
+  call infotry
+  ret c
+  ld a,[$C0D9]
+""", 1)
+
+# Screen 1 reveals each completed proportional row after its empty Info chrome. Screen 20
+# instead preserves old rows and publishes each replacement after its tile allocation is
+# safe. The final row still uses the existing all-rows-plus-pager publisher, so the native
+# footer remains atomic. Rejected callers continue through the legacy finalizer.
+_INFO_CONTROL_SRC = _INFO_CONTROL_SRC.replace(
+    """fihelpborder:
+  call fihelpcheck
+""",
+    """fihelpborder:
+  call infopublishrow
+  ret c
+  call fihelpcheck
+""", 1)
+
+_INFO_FINISH_SRC = FLOOR_INFO_FINISH_LEGACY_SRC.replace(
+    """fihelppublish:
+  ld a,$03
+  jr fipublish
+""",
+    """fihelppublish:
+  call infopublish
+  ret c
+  ; Rejected legacy callers still publish the entire shadow while the LCD is off.
+  ; Restore the native pager rasters that translated text can borrow, and erase the
+  ; two visible rows below Info where a six-row Pot action box otherwise survives.
+  call infopagerpixels
+  ld hl,$C4C0
+  ld b,$02
+filegacyrow:
+  ld c,$14
+  xor a
+filegacytail:
+  ld [hl+],a
+  dec c
+  jr nz,filegacytail
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,filegacynocarry
+  inc h
+filegacynocarry:
+  dec b
+  jr nz,filegacyrow
+  ld a,$03
+  jr fipublish
+    """, 1)
+
+# During an exact screen-20 replay, the final Action row is the only point at which the
+# title and every picker row are complete in shadow. Give the co-located lifecycle first
+# refusal there; rejected callers resume the byte-for-byte legacy finalizer below.
+_INFO_FINISH_SRC = _INFO_FINISH_SRC.replace(
+    """floorinfofinish:
+""",
+    """floorinfofinish:
+  push af
+  ld a,$02
+  call inforeturn
+  jr nc,fireturnlegacy
+  pop af
+  ret
+fireturnlegacy:
+  pop af
+""", 1)
+
+
+_INFO_DIGIT_TABLE = '\n'.join(
+    '  db ' + ','.join('$%02X' % value for value in
+                       dotfont.load_approved().glyphs[digit])
+    for digit in '123456789')
+
+
+INFO_LIFECYCLE_SRC = _INFO_CONTROL_SRC + _INFO_FINISH_SRC + """
+; Carry means the current screen-4 description or screen-5 seal page belongs to the
+; admitted screen-1 Item/Floor Action overlay, the exact screen-20 Floor picker, or the
+; separately proven screen-7 unidentified-Pot picker. A returns the parent screen ID.
+; This predicate is shared by entry, paging, publication, and all forms of exit.
+infoowned:
+  ld a,[$C6A3]
+  cp $04
+  jr z,infoscreen
+  cp $05
+  jp nz,infofail
+infoscreen:
+  ld b,a
+  ld a,[$C534]
+  cp $03
+  jr z,infoitems
+  cp $02
+  jp nz,infofail
+  ; Screen 7 and Status -> Floor screen 20 both push only the Info/seal child and retain
+  ; selector/context $FF/$01. They share a native drawer but not box geometry or replay
+  ; ownership, so split them by the actual parent stack entry.
+  ld a,[$C535]
+  and a
+  jp nz,infofail
+  ld a,[$C536]
+  cp $14
+  jr z,info20
+  cp $07
+  jp nz,infofail
+  ; The alternate screen-7 route is specifically the seven-row unidentified-Pot Action
+  ; picker leading to ordinary Info screen 4. Keep screen 5 and shorter box-6 callers
+  ; outside this new ownership epoch.
+  ld a,b
+  cp $04
+  jp nz,infofail
+  ld a,[$C537]
+  cp b
+  jp nz,infofail
+  ld a,[$C1B6]
+  and a
+  jp nz,infofail
+  ld a,[$C6DE]
+  dec a
+  jp nz,infofail
+  ld a,[$C6AC]
+  inc a
+  jp nz,infofail
+  ld a,[$C6BB]
+  cp $07
+  jp nz,infofail
+  ld c,$07
+  jr infopages
+info20:
+  ld a,[$C537]
+  cp b
+  jp nz,infofail
+  ; A carried screen-2 Action which exits directly to gameplay can leave its private-pool
+  ; admission byte at one. Screen 20 has already replaced that BG map and an exact
+  ; 0,20,4/5 stack cannot own a live Item-page transaction. Accept only idle/stale-one;
+  ; infotry clears the stale proof before any screen-20 Info pixels are published.
+  ld a,[$C1B6]
+  cp $02
+  jp nc,infofail
+  ld a,[$C6DE]
+  dec a
+  jp nz,infofail
+  ld a,[$C6AC]
+  inc a
+  jp nz,infofail
+  ld a,[$C6BB]
+  cp $03
+  jp c,infofail
+  cp $08
+  jp nc,infofail
+  ld c,$14
+  jr infopages
+infoitems:
+  ld a,[$C1B6]
+  dec a
+  jp nz,infofail
+  ld a,[$C535]
+  and a
+  jp nz,infofail
+  ld a,[$C536]
+  dec a
+  jp nz,infofail
+  ld a,[$C537]
+  cp $02
+  jp nz,infofail
+  ld a,[$C538]
+  cp b
+  jp nz,infofail
+  ld a,[$C6DE]
+  and a
+  jp nz,infofail
+  ld c,$01
+  ld a,[$C6AC]
+  cp $FF
+  jr nz,infoheld
+  ld a,[$C1B7]
+  dec a
+  jp nz,infofail
+  jr infopages
+infoheld:
+  ld b,a
+  inc b
+  ld a,[$C6AA]
+  cp b
+  jp c,infofail
+infopages:
+  ; The native footer owns one tile each for current and total page. Keep this exact
+  ; regional path to the representable one-digit producer domain.
+  ld a,[$C6BD]
+  and a
+  jp z,infofail
+  cp $0A
+  jp nc,infofail
+infohardware:
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,infofail
+  ldh a,[$FF42]
+  and a
+  jp nz,infofail
+  ldh a,[$FF43]
+  and a
+  jp nz,infofail
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,infofail
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,infofail
+  ld a,c
+  scf
+  ret
+infofail:
+  and a
+  ret
+
+; Row zero arrives after the native box drawer has written only the current portion of
+; box 7. Build the entire empty 20x11 shape in shadow. Screen 1 retains its established
+; complete-empty publication; screen 20 leaves the outgoing Action/Info page visible and
+; lets infopreupload replace only the row whose pixels are about to be recycled.
+infotry:
+  push bc
+  push de
+  push hl
+  call infoowned
+  jr nc,infotrybad
+  ld e,a
+  ld a,d
+  and a
+  jr nz,infotrybad
+  ld a,[$C1B3]
+  and a
+  jr z,infotryinitial
+  cp $03
+  jr nz,infotrybad
+  xor a
+  jr infotrystate
+infotryinitial:
+  ld a,$01
+infotrystate:
+  ; $C1B5 is otherwise unused by the independent screen-20 child. Record whether row
+  ; zero is replacing its Action parent (one) or another Info page (zero); screen-1
+  ; retains its packed selector there.
+  ld c,a
+  ld a,e
+  cp $14
+  jr nz,infotryflagged
+  xor a
+  ld [$C1B6],a
+  ld a,c
+  ld [$C1B5],a
+infotryflagged:
+  ld a,[$C0D9]
+  cp $80
+  jr nz,infotrybad
+  ld a,[$C0DA]
+  cp $C3
+  jr nz,infotrybad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jr nz,infotrybad
+  ld a,[hl+]
+  cp $03
+  jr nz,infotrybad
+  ld a,[hl+]
+  cp $05
+  jr nz,infotrybad
+  ld a,[hl+]
+  cp $12
+  jr nz,infotrybad
+  ld a,[hl]
+  and a
+  jr nz,infotrybad
+  ld a,$02
+  ld [$C1B3],a
+infotrydrain:
+  ld a,[$C11A]
+  and a
+  jr z,infotryready
+  push de
+  call $06F7
+  pop de
+  jr infotrydrain
+infotryready:
+  ld a,e
+  cp $07
+  call z,info7header
+  call infobox
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+infotrybad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; The renderer calls mode three after a proportional row is composed but before its tile
+; upload starts. For the independent screen-20 Info child, retire every whole visible row
+; whose references overlap the incoming allocation. On initial Action -> Info entry,
+; retire only the Action labels, then replace its still-complete box with complete Info
+; chrome plus row zero after those pixels are ready. The title and Window remain live.
+infopreupload:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $02
+  jp nz,infopreuploadbad
+  call infoowned
+  jp nc,infopreuploadbad
+  cp $14
+  jp nz,infopreuploadbad
+  ld a,[$C1B1]
+  cp $03
+  jp nz,infopreuploadbad
+  ld a,[$C69D]
+  cp $12
+  jp nz,infopreuploadbad
+  ; Convert the five exact shadow destinations C380/C3C0/C400/C440/C480 to row 0-4.
+  ld a,[$C0DA]
+  cp $C3
+  jr z,infopreuploadc3
+  cp $C4
+  jp nz,infopreuploadbad
+  ld a,[$C0D9]
+  and a
+  jr z,infopreuploadrow2
+  cp $40
+  jr z,infopreuploadrow3
+  cp $80
+  jp nz,infopreuploadbad
+  ld c,$04
+  jr infopreuploadrow
+infopreuploadc3:
+  ld a,[$C0D9]
+  cp $80
+  jr z,infopreuploadrow0
+  cp $C0
+  jp nz,infopreuploadbad
+  ld c,$01
+  jr infopreuploadrow
+infopreuploadrow0:
+  ld c,$00
+  ld a,[$C1B5]
+  dec a
+  jr nz,infopreuploadrow
+  ; Retire only the old Action labels before their allocator slots are repainted. Keep
+  ; the Action chrome visible until row-zero pixels are complete; the following helper
+  ; can then publish complete Info chrome and row zero together.
+  call infoactionblank
+  jp infopreuploadok
+infopreuploadrow2:
+  ld c,$02
+  jr infopreuploadrow
+infopreuploadrow3:
+  ld c,$03
+infopreuploadrow:
+  ; A new row can receive a differently packed slice and overlap more than its own old
+  ; destination. Scan all five visible interiors and retire exactly the references in
+  ; the tile interval about to be repainted. Each access waits out LCD mode 3; this is
+  ; the same safety rule as the fast Item uploader, but it preserves every unaffected
+  ; outgoing row instead of blanking the whole page.
+  ld a,[$C0DB]
+  ld d,a
+  ld a,[$C0D3]
+  add a,d
+  ld e,a
+  xor a
+  ld [$C0DD],a
+  ld hl,$9881
+  ld c,$05
+infopreuploadscanrow:
+  xor a
+  ld [$C1B4],a
+  ld b,$12
+infopreuploadscan:
+  call infovramwait
+  ld a,[hl]
+  cp d
+  jr c,infopreuploadnext
+  cp e
+  jr nc,infopreuploadnext
+  ld a,$01
+  ld [$C1B4],a
+infopreuploadnext:
+  inc hl
+  dec b
+  jr nz,infopreuploadscan
+  ld a,[$C1B4]
+  and a
+  jr z,infopreuploadadvance
+  ; Convert the descending row counter 5..1 to mask bits 1..16.
+  ld a,$20
+  ld b,c
+infopreuploadmaskbit:
+  rrca
+  dec b
+  jr nz,infopreuploadmaskbit
+  ld b,a
+  ld a,[$C0DD]
+  or b
+  ld [$C0DD],a
+infopreuploadadvance:
+  ld a,l
+  add a,$2E
+  ld l,a
+  jr nc,infopreuploadnextrow
+  inc h
+infopreuploadnextrow:
+  dec c
+  jr nz,infopreuploadscanrow
+  ld a,[$C0DD]
+  and a
+  jr z,infopreuploadok
+  ; Publish every selected retirement as whole rows in one VBlank. Scanning during the
+  ; visible period is read-only; this atomic write avoids the torn half-rows produced by
+  ; modifying cells across multiple HBlanks.
+  call infovblank
+  ld hl,$9881
+  ld d,$01
+  ld c,$05
+infopreuploadblankrows:
+  ld a,[$C0DD]
+  and d
+  jr z,infopreuploadskipblank
+  xor a
+  ld b,$12
+infopreuploadblankcell:
+  ld [hl+],a
+  dec b
+  jr nz,infopreuploadblankcell
+  ld a,l
+  add a,$2E
+  ld l,a
+  jr nc,infopreuploadblanknext
+  inc h
+  jr infopreuploadblanknext
+infopreuploadskipblank:
+  ld a,l
+  add a,$40
+  ld l,a
+  jr nc,infopreuploadblanknext
+  inc h
+infopreuploadblanknext:
+  sla d
+  dec c
+  jr nz,infopreuploadblankrows
+  ei
+infopreuploadok:
+  call infotilefast
+  jr nc,infopreuploadslow
+  ld a,[$C1B5]
+  dec a
+  jr nz,infopreuploadfastdone
+  call infoentrychrome
+  xor a
+  ld [$C1B4],a
+infopreuploadfastdone:
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+infopreuploadbad:
+infopreuploadslow:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; The exact screen-20 row is now unreferenced wherever its allocation overlaps the
+; outgoing page. Upload its one-pass tile raster through the same four-byte HBlank
+; slices used by fast Item paging. Truly wide two-pass rows return carry clear and keep
+; the native queue; their references have already been retired safely.
+infotilefast:
+  ld a,[$C11A]
+  and a
+  jp nz,infotilefastbad
+  ld a,[$C0D3]
+  and a
+  jp z,infotilefastbad
+  cp $0E
+  jp nc,infotilefastbad
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,infotilefastbad
+  di
+  ld a,[$C0DB]
+  ld l,a
+  ld h,$00
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  add hl,hl
+  ld a,[$C0DB]
+  bit 7,a
+  ld a,h
+  jr nz,infotilefastsigned
+  add a,$90
+  jr infotilefastdest
+infotilefastsigned:
+  add a,$80
+infotilefastdest:
+  ld h,a
+  xor a
+  ld [$C0DD],a
+infotilefasttile:
+  ld a,[$C0D3]
+  ld b,a
+  ld a,[$C0DD]
+  cp b
+  jr z,infotilefastdone
+  add a,a
+  ld e,a
+  ld d,$00
+  push hl
+  ld hl,infotilefastsources
+  add hl,de
+  ld a,[hl+]
+  ld d,[hl]
+  ld e,a
+  pop hl
+  ld a,$04
+  ld [$C1B4],a
+infotilefastchunk:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,infotilefastcopyfour
+infotilefastmode3:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr nz,infotilefastmode3
+infotilefasthblank:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr z,infotilefasthblank
+infotilefastcopyfour:
+  ld b,$04
+infotilefastcopy:
+  ld a,[de]
+  ld [hl+],a
+  inc de
+  dec b
+  jr nz,infotilefastcopy
+  ld a,[$C1B4]
+  dec a
+  ld [$C1B4],a
+  jr nz,infotilefastchunk
+  ld a,[$C0DD]
+  inc a
+  ld [$C0DD],a
+  jr infotilefasttile
+infotilefastdone:
+  ld a,$FF
+  ld [$C1B4],a
+  scf
+  ei
+  ret
+infotilefastbad:
+  and a
+  ret
+infotilefastsources:
+  db $08,$C0,$18,$C0,$28,$C0,$38,$C0
+  db $4A,$C0,$5A,$C0,$6A,$C0,$7A,$C0
+  db $8C,$C0,$9C,$C0,$AC,$C0,$BC,$C0
+  db $2C,$C1
+
+infovramwait:
+  ldh a,[$FF41]
+  and $03
+  cp $03
+  jr z,infovramwait
+  ret
+
+; Screen 7 uses box 6 at y=1 over the right edge of its full-width box-5 title. Before
+; Info reuses the generic Action tiles, remove that overlay from the two rows above box
+; 7 and restore the complete underlying title chrome. Rows 3-15 are replaced by infobox.
+info7header:
+  ld hl,$C32D
+  xor a
+  ld b,$06
+info7headermiddle:
+  ld [hl+],a
+  dec b
+  jr nz,info7headermiddle
+  ld [hl],$BF
+  ld hl,$C34D
+  ld a,$BD
+  ld b,$06
+info7headerbottom:
+  ld [hl+],a
+  dec b
+  jr nz,info7headerbottom
+  ld [hl],$BB
+  call infovblank
+  ld hl,$C32D
+  ld de,$982D
+  ld b,$07
+  call infocopycells
+  ld hl,$C34D
+  ld de,$984D
+  ld b,$07
+  call infocopycells
+  ei
+  ret
+
+; Clear only the five-cell labels in the outgoing screen-20 Action picker. Its box and
+; the full-width item title stay visible while row-zero pixels upload. The seventh Pot
+; choice lies behind the hardware Window but is harmless to retire with the other rows.
+infoactionblank:
+  call infovblank
+  ld hl,$988E
+  ld a,[$C6BB]
+  ld c,a
+infoactionblankrow:
+  ld b,$05
+infoactionblankcell:
+  xor a
+  ld [hl+],a
+  dec b
+  jr nz,infoactionblankcell
+  ld a,l
+  add a,$3B
+  ld l,a
+  jr nc,infoactionblanknext
+  inc h
+infoactionblanknext:
+  dec c
+  jr nz,infoactionblankrow
+  ei
+  ret
+
+; Atomically replace the screen-20 Action footprint with complete Info chrome and row 0.
+; Only the right seven columns need clearing: every other middle cell was already empty
+; on the Floor parent. The two visible rows below Info are cleared over the same seven
+; columns for the six-/seven-row Pot picker.
+infoentrychrome:
+  call infovblank
+  ld hl,$C360
+  ld de,$9860
+  ld b,$14
+  call infocopycells
+  ld hl,$9880
+  ld de,$000D
+  ld c,$09
+infoentrymiddle:
+  ld [hl],$BE
+  add hl,de
+  xor a
+  ld b,$06
+infoentryclear:
+  ld [hl+],a
+  dec b
+  jr nz,infoentryclear
+  ld [hl],$BF
+  add hl,de
+  dec c
+  jr nz,infoentrymiddle
+  ld hl,$C4A0
+  ld de,$99A0
+  ld b,$14
+  call infocopycells
+  ld hl,$99CD
+  ld de,$0019
+  ld c,$02
+infoentrytailrow:
+  xor a
+  ld b,$07
+infoentrytail:
+  ld [hl+],a
+  dec b
+  jr nz,infoentrytail
+  add hl,de
+  dec c
+  jr nz,infoentrytailrow
+  ; Row zero's planes are already complete (or its native queue has just drained).
+  ; Publish its exact contiguous references with the chrome so no displayed frame owns
+  ; a large empty Info body.
+  ld hl,$9881
+  ld a,[$C0DB]
+  ld b,a
+  ld a,[$C0D3]
+  ld c,a
+  ld a,b
+infoentryrowrefs:
+  ld [hl+],a
+  inc a
+  dec c
+  jr nz,infoentryrowrefs
+  ld a,[$C0D3]
+  ld c,a
+  ld a,$12
+  sub c
+  ld c,a
+  jr z,infoentryrowdone
+  xor a
+infoentryrowempty:
+  ld [hl+],a
+  dec c
+  jr nz,infoentryrowempty
+infoentryrowdone:
+  xor a
+  ld [$C1B5],a
+infoentrychromedone:
+  ei
+  ret
+
+; The final row has already staged the native pager into shadow. Wait for every glyph
+; upload, then reveal all five 18-cell interiors plus the two arrow and three counter
+; cells together. No full-map copy is safe inside one enabled-LCD VBlank.
+infopublish:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $02
+  jr nz,infopublishbad
+  call infoowned
+  jr nc,infopublishbad
+  ld a,d
+  cp $04
+  jr nz,infopublishbad
+  ld a,$03
+  ld [$C1B3],a
+infopublishdrain:
+  ld a,[$C11A]
+  and a
+  jr z,infopublishready
+  call $06F7
+  jr infopublishdrain
+infopublishready:
+  call infovblank
+  ; Status VWF may have repainted native low digit tiles $04-$0A. Restore just the two
+  ; footer digits while the Info body is still hidden, then publish their references in
+  ; the same VBlank as the completed proportional rows.
+  call infopagerpixels
+  ld hl,$C381
+  ld de,$9881
+  ld b,$05
+infobodyrow:
+  ld c,$12
+infobodycell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,infobodycell
+  ld a,l
+  add a,$2E
+  ld l,a
+  jr nc,infobodysource
+  inc h
+infobodysource:
+  ld a,e
+  add a,$2E
+  ld e,a
+  jr nc,infobodydest
+  inc d
+infobodydest:
+  dec b
+  jr nz,infobodyrow
+  ld hl,$C4A9
+  ld de,$99A9
+  ld b,$02
+  call infocopycells
+  ld hl,$C4B0
+  ld de,$99B0
+  ld b,$03
+  call infocopycells
+  ; A screen-1 Info redraw can span the input engine's initial $14-frame hold delay.
+  ; By the time the completed page is published the physical direction has already
+  ; been released, but $FF83/$FF87 can still retain its synthetic repeat source/event.
+  ; Retire that consumed direction with the page so one tap cannot redraw every page.
+  xor a
+  ldh [$FF83],a
+  ldh [$FF87],a
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+infopublishbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; Rows zero through three arrive here only after their proportional glyph uploads have
+; been queued. Drain and expose the complete 18-cell interior. Screen 1 already owns its
+; empty Info box; initial screen 20 publishes chrome plus row zero together, while later
+; screen-20 rows use same-frame safe LCD slots after their fast upload. Row four remains
+; hidden until infopublish can reveal it with the native arrow and page counter.
+infopublishrow:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $02
+  jr nz,infopublishrowbad
+  call infoowned
+  jr nc,infopublishrowbad
+  ld a,d
+  cp $04
+  jr nc,infopublishrowbad
+  ld c,a
+infopublishrowdrain:
+  ld a,[$C11A]
+  and a
+  jr z,infopublishrowready
+  call $06F7
+  jr infopublishrowdrain
+infopublishrowready:
+  ; A wide initial screen-20 row retained the small Action chrome while using the native
+  ; tile queue. Now that the queue is empty, replace it with complete Info chrome and
+  ; the finished first row in the same VBlank.
+  push bc
+  call infoowned
+  jr nc,infopublishrownotinitial
+  cp $14
+  jr nz,infopublishrownotinitial
+  ld a,[$C1B5]
+  dec a
+  jr nz,infopublishrownotinitial
+  pop bc
+  call infoentrychrome
+  jr infopublishrowdone
+infopublishrownotinitial:
+  pop bc
+infopublishrowaddress:
+  ld a,c
+  rrca
+  rrca
+  ld c,a
+  add a,$81
+  ld l,a
+  ld a,$C3
+  adc a,$00
+  ld h,a
+  ld a,c
+  add a,$81
+  ld e,a
+  ld a,$98
+  adc a,$00
+  ld d,a
+  ld a,[$C1B4]
+  inc a
+  jr nz,infopublishrowvblank
+  ; The pre-upload helper already completed every tile plane. Publish the row through
+  ; safe LCD-access slots in the current displayed frame instead of waiting through an
+  ; otherwise empty VBlank.
+  ld b,$12
+infopublishrowfast:
+  call infovramwait
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,infopublishrowfast
+  xor a
+  ld [$C1B4],a
+  jr infopublishrowdone
+infopublishrowvblank:
+  call infovblank
+  ld b,$12
+  call infocopycells
+infopublishrowdone:
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+infopublishrowbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; A ground-Pot See viewer retains screen 7 or screen 20 beneath screen 12/13. This is
+; deliberately not the carried-Pot state-$0A path: its stack depth and pop amount are
+; both one smaller. Screen 7 has a fixed seven-row parent; screen 20 uses the row count
+; captured at viewer entry before C6BB was repurposed.
+groundseepop:
+  push bc
+  push de
+  push hl
+  ld a,c
+  dec a
+  jp nz,groundseepopbad
+  ld a,[$C1B3]
+  and a
+  jp nz,groundseepopbad
+  ld a,[$C1B6]
+  and a
+  jp nz,groundseepopbad
+  ld a,[$C6A3]
+  ld e,a
+  cp $0C
+  jr z,groundseescreen
+  cp $0D
+  jp nz,groundseepopbad
+groundseescreen:
+  ld a,[$C534]
+  cp $02
+  jp nz,groundseepopbad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,groundseepopbad
+  ld a,[hl+]
+  ld b,a
+  cp $07
+  jr z,groundseeparent
+  cp $14
+  jp nz,groundseepopbad
+groundseeparent:
+  ld a,[hl]
+  cp e
+  jp nz,groundseepopbad
+  ld a,[$C6A6]
+  and a
+  jp nz,groundseepopbad
+  ld a,[$C6DE]
+  dec a
+  jp nz,groundseepopbad
+  ld a,[$C6AC]
+  inc a
+  jp nz,groundseepopbad
+  ld a,[$C6AA]
+  cp $06
+  jp nc,groundseepopbad
+  ld a,[$C6BB]
+  and a
+  jp z,groundseepopbad
+  cp $08
+  jp nc,groundseepopbad
+  ld a,[$C1B1]
+  cp $04
+  jp nz,groundseepopbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,groundseepopbad
+  ld a,[hl+]
+  and a
+  jp nz,groundseepopbad
+  ld a,[hl+]
+  dec a
+  jp nz,groundseepopbad
+  ld a,[hl+]
+  cp $03
+  jp nz,groundseepopbad
+  ld a,[hl]
+  cp $40
+  jp nz,groundseepopbad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,groundseepopbad
+  ldh a,[$FF42]
+  and a
+  jp nz,groundseepopbad
+  ldh a,[$FF43]
+  and a
+  jp nz,groundseepopbad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,groundseepopbad
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,groundseepopbad
+  ld a,b
+  cp $07
+  jr z,groundseearm7
+  ld a,[$C1B8]
+  cp $03
+  jp c,groundseepopbad
+  cp $08
+  jp nc,groundseepopbad
+  ld [$C1B4],a
+  xor a
+  ld [$C1B5],a
+  ld a,$09
+  jp infopoparm
+groundseearm7:
+  ld a,$07
+  ld [$C1B4],a
+  xor a
+  ld [$C1B5],a
+  ld a,$0B
+  jp infopoparm
+groundseepopbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; Called only from the generic pop hook with HL equal to screen 4/5's A/D-pad handler
+; $5926 or B handler $5691. Keep the completed Info/seal page visible across the native
+; disposable screen-0 replay, arm the state-8 replay guard, and perform the native depth
+; subtraction. The first proven screen-1 row retires those references immediately before
+; the parent allocator can reuse them. Carry tells the caller not to subtract twice; it
+; is deliberately cleared again before the native replay continues.
+infopop:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $03
+  jr nz,infopopbad
+  ld a,[$C6A3]
+  ld e,a
+  call infoowned
+  jr nc,infopopbad
+  cp $14
+  jr z,infopopfloor
+  cp $07
+  jr z,infopop7
+  ; Remember whether this carried-item child was the ordinary description (4) or the
+  ; equipment-seal screen (5). Only the latter can hand its one-screen return to the
+  ; proven fast Item-page machinery; all ordinary Info callers keep the exact state-8
+  ; completion contract.
+  ld a,e
+  ld [$C1B4],a
+  ld a,$08
+  jr infopoparm
+infopopfloor:
+  ; Screen 0's disposable Status replay overwrites C6BB. Preserve the exact
+  ; standing-item Action height for construction of the empty return picker.
+  ld a,[$C6BB]
+  ld [$C1B4],a
+  ld a,$09
+  jr infopoparm
+infopop7:
+  ; Screen 7 has the same one-level pop depth as screen 20 but reconstructs box 6 at
+  ; y=1. Preserve its proven seven-row height under an independent replay state.
+  ld a,[$C6BB]
+  ld [$C1B4],a
+  ld a,$0B
+infopoparm:
+  ld [$C1B3],a
+  ld a,[$C1B3]
+  cp $09
+  ld a,$01
+  jr z,infopopdepth
+  ld a,[$C1B3]
+  cp $0B
+  ld a,$01
+  jr z,infopopdepth
+  inc a
+infopopdepth:
+  ld b,a
+  ld a,[$C534]
+  sub b
+  ld [$C534],a
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+infopopbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; Mode zero runs at the first screen-1 Item/Floor row of an exact state-8 replay and
+; commits complete empty target chrome. Mode one publishes the completed title, page
+; marker, and Item/Floor rows at the final header boundary.
+inforeturn:
+  push af
+  ld a,[$C6A3]
+  sub $0C
+  cp $02
+  jr nc,potseeentryskip
+potseeentryscreen:
+  ld a,[$C69A]
+  cp $0D
+  jr nz,potseeentryskip
+  ld a,[$C69B]
+  dec a
+  and $FD
+  jr nz,potseeentryskip
+potseeentrycall:
+  pop af
+  jp potseeentry
+potseeentryskip:
+  pop af
+  jr inforeturndispatch
+potseeentry:
+  push af
+  push bc
+  push de
+  ld a,[$C6A3]
+  ld e,a
+  ld a,[$C1B3]
+  and a
+  jr nz,potseeentrydone
+  ld a,[$C1B6]
+  and a
+  jr nz,potseeentrydone
+  ld a,[$C534]
+  cp $02
+  jr nz,potseeentrydone
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jr nz,potseeentrydone
+  ld a,[hl+]
+  cp $14
+  jr nz,potseeentrydone
+  ld a,[hl]
+  cp e
+  jr nz,potseeentrydone
+  ld a,[$C6BB]
+  cp $03
+  jr c,potseeentrydone
+  cp $08
+  jr nc,potseeentrydone
+  ld b,a
+  ld a,[$C69B]
+  cp $03
+  jr nz,potseeentrydone
+  ld a,[$C69C]
+  cp b
+  jr nz,potseeentrydone
+  ld a,b
+  ld [$C1B8],a
+potseeentrydone:
+  ld hl,$C300
+  pop de
+  pop bc
+  pop af
+  ret
+inforeturndispatch:
+  cp $04
+  jp z,potentrybegin
+  cp $05
+  jp z,potentrypublish
+  cp $03
+  jp z,groundseepop
+  cp $02
+  jr nz,inforeturnmode
+  ld a,[$C1B3]
+  cp $0B
+  jp z,inforeturn7publish
+  jp inforeturn20publish
+inforeturnmode:
+  and a
+  jp nz,inforeturnpublish
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $09
+  jr z,inforeturn20start
+  cp $0B
+  jp z,inforeturn7start
+  cp $08
+  jr nz,inforeturnitembad
+  ld a,[$C1B6]
+  dec a
+  jr nz,inforeturnitembad
+  ld a,[$C6A3]
+  dec a
+  jr nz,inforeturnitembad
+  ld a,[$C534]
+  dec a
+  jr nz,inforeturnitembad
+  ld a,[$C535]
+  and a
+  jr nz,inforeturnitembad
+  ld a,[$C536]
+  dec a
+  jr nz,inforeturnitembad
+  ld a,[$C1B1]
+  dec a
+  jr nz,inforeturnitembad
+  ld a,[$C0D9]
+  cp $80
+  jr nz,inforeturnitembad
+  ld a,[$C0DA]
+  cp $C3
+  jr nz,inforeturnitembad
+  call infoallblank
+  call inforeturnchrome
+  ; A carried screen-5 seal page can hand the completed empty parent directly to the
+  ; ordinary screen-1 regional transaction. Its private tile uploader makes the replay
+  ; as fast as paging, and its final-row publisher exposes all body rows atomically once
+  ; their pixels are stable. Screen 4 retains state 8 and its exact final publisher.
+  ld a,[$C1B4]
+  cp $05
+  jr nz,inforeturnitemarmed
+  ld a,$01
+  ld [$C1B3],a
+inforeturnitemarmed:
+  ld a,$02
+  ld [$C1B6],a
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+inforeturnitembad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+inforeturn20start:
+  ld a,[$C534]
+  dec a
+  jr nz,inforeturnbad
+  ld a,[$C535]
+  and a
+  jr nz,inforeturnbad
+  ld a,[$C536]
+  cp $14
+  jr nz,inforeturnbad
+  ld a,[$C6A3]
+  and a
+  jr z,inforeturn20owned
+  cp $14
+  jr nz,inforeturnbad
+  ld a,[$C1B6]
+  cp $02
+  jr z,inforeturn20owned
+  and a
+  jr nz,inforeturnbad
+  ld a,[$C1B1]
+  ; The first screen-20 header row reaches the controller in phase 1. Phase 4 is
+  ; the later far-entry boundary, after incomplete chrome could already be exposed.
+  cp $01
+  jr nz,inforeturnbad
+  ld a,[$C0D9]
+  cp $20
+  jr nz,inforeturnbad
+  ld a,[$C0DA]
+  cp $C3
+  jr nz,inforeturnbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  and a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  dec a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  cp $12
+  jr nz,inforeturnbad
+  ld a,[hl]
+  cp $20
+  jr nz,inforeturnbad
+  call info20chrome
+  ld a,$02
+  ld [$C1B6],a
+inforeturn20owned:
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+inforeturnbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+inforeturn7start:
+  ld a,[$C534]
+  dec a
+  jr nz,inforeturnbad
+  ld a,[$C535]
+  and a
+  jr nz,inforeturnbad
+  ld a,[$C536]
+  cp $07
+  jr nz,inforeturnbad
+  ld a,[$C6A3]
+  and a
+  jr z,inforeturn7owned
+  cp $07
+  jr nz,inforeturnbad
+  ld a,[$C1B6]
+  and a
+  jr z,inforeturn7begin
+  cp $02
+  jr nz,inforeturnbad
+  jr inforeturn7owned
+inforeturn7begin:
+  ld a,[$C1B1]
+  cp $01
+  jr nz,inforeturnbad
+  ld a,[$C0D9]
+  cp $20
+  jr nz,inforeturnbad
+  ld a,[$C0DA]
+  cp $C3
+  jr nz,inforeturnbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  and a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  dec a
+  jr nz,inforeturnbad
+  ld a,[hl+]
+  cp $12
+  jr nz,inforeturnbad
+  ld a,[hl]
+  cp $20
+  jr nz,inforeturnbad
+  call info7chrome
+  ld a,$02
+  ld [$C1B6],a
+inforeturn7owned:
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+inforeturnpublish:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $08
+  jr nz,inforeturnbad
+  ld a,[$C1B6]
+  cp $02
+  jr nz,inforeturnbad
+inforeturndrain:
+  ld a,[$C11A]
+  and a
+  jr z,inforeturnready
+  call $06F7
+  jr inforeturndrain
+inforeturnready:
+  call infovblank
+  ld hl,$C321
+  ld de,$9821
+  ld b,$04
+  call infocopycells
+  ld a,[$C6AC]
+  cp $FF
+  jr z,inforeturnfloor
+  ld hl,$C36F
+  ld de,$986F
+  ld b,$04
+  call infocopycells
+  ld hl,$C380
+  ld de,$9880
+  ld b,$05
+inforeturnitemrow:
+  push bc
+  ld b,$13
+  call infocopycells
+  ld a,l
+  add a,$2D
+  ld l,a
+  jr nc,inforeturnitemsrc
+  inc h
+inforeturnitemsrc:
+  ld a,e
+  add a,$2D
+  ld e,a
+  jr nc,inforeturnitemdest
+  inc d
+inforeturnitemdest:
+  pop bc
+  dec b
+  jr nz,inforeturnitemrow
+  jr inforeturnpublished
+inforeturnfloor:
+  ld hl,$C380
+  ld de,$9880
+  ld b,$13
+  call infocopycells
+inforeturnpublished:
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+
+; Mode two runs from the last row of the rebuilt screen-20 Action picker. The empty
+; parent chrome is already visible, so reveal only the completed Floor title and the
+; five-cell Action interiors together. Every other cell remains locked.
+inforeturn20publish:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $09
+  jp nz,inforeturnbad
+  ld a,[$C1B6]
+  cp $02
+  jp nz,inforeturnbad
+  ld a,[$C6A3]
+  cp $14
+  jp nz,inforeturnbad
+  ld a,[$C1B1]
+  cp $02
+  jp nz,inforeturnbad
+  ld hl,$C69A
+  ld a,[hl+]
+  cp $0D
+  jp nz,inforeturnbad
+  ld a,[hl+]
+  cp $03
+  jp nz,inforeturnbad
+  ld a,[$C6BB]
+  ld c,a
+  ld a,[hl+]
+  cp c
+  jp nz,inforeturnbad
+  ld a,[hl+]
+  cp $05
+  jp nz,inforeturnbad
+  ld a,[hl]
+  cp $02
+  jp nz,inforeturnbad
+  ld a,c
+  dec a
+  cp d
+  jp nz,inforeturnbad
+inforeturn20drain:
+  ; Empty parent chrome has already been visible for several frames.  Release the
+  ; native title/row upload tail now; it restores box 39's edge before revealing
+  ; the first label.  Publishing here would race that tail's transient Floor-page
+  ; indicator and expose text against the wrong top edge.
+  xor a
+  ld [$C1B3],a
+  ld [$C1B4],a
+  ld [$C1B6],a
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+
+; Mode two at screen 7's last box-6 row reveals only the completed title and seven
+; Action interiors. info7chrome already published every border and blank interior.
+inforeturn7publish:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $0B
+  jp nz,inforeturnbad
+  ld a,[$C1B6]
+  cp $02
+  jp nz,inforeturnbad
+  ld a,[$C6A3]
+  cp $07
+  jp nz,inforeturnbad
+  ld a,[$C1B1]
+  cp $02
+  jp nz,inforeturnbad
+  ld hl,$C69A
+  ld a,[hl+]
+  cp $0D
+  jp nz,inforeturnbad
+  ld a,[hl+]
+  dec a
+  jp nz,inforeturnbad
+  ld a,[hl+]
+  cp $07
+  jp nz,inforeturnbad
+  ld a,[$C1B4]
+  cp $07
+  jp nz,inforeturnbad
+  ld a,[hl+]
+  cp $05
+  jp nz,inforeturnbad
+  ld a,[hl]
+  cp $02
+  jp nz,inforeturnbad
+  ld a,d
+  cp $06
+  jp nz,inforeturnbad
+inforeturn7drain:
+  ld a,[$C11A]
+  and a
+  jr z,inforeturn7ready
+  call $06F7
+  jr inforeturn7drain
+inforeturn7ready:
+  call infovblank
+  ld hl,$C321
+  ld de,$9821
+  ld b,$12
+  call infocopycells
+  ld hl,$C34E
+  ld de,$984E
+  ld c,$07
+inforeturn7row:
+  ld b,$05
+  call infocopycells
+  ld a,l
+  add a,$3B
+  ld l,a
+  jr nc,inforeturn7src
+  inc h
+inforeturn7src:
+  ld a,e
+  add a,$3B
+  ld e,a
+  jr nc,inforeturn7dst
+  inc d
+inforeturn7dst:
+  dec c
+  jr nz,inforeturn7row
+  xor a
+  ld [$C1B3],a
+  ld [$C1B4],a
+  ld [$C1B5],a
+  ld [$C1B6],a
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+
+; The first proportional row of a screen-12/13 Pot viewer arrives while its Action
+; parent is still visible.  The native renderer composes the wide body before the
+; compact title and used to disable the LCD until both were finished.  Prove one of the
+; three measured parents -- Items/appended Floor (0,1,2), unidentified Floor (0,7), or
+; storage Floor (0,20) -- retire its map while its tiles are still stable, and install
+; complete empty Pot chrome.  Later row attempts retain state $0C and skip the legacy
+; LCD-off site; their map references remain shadow-only until the title's existing final
+; boundary calls potentrypublish.
+potentrybegin:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $0C
+  jp z,potentryactive
+  and a
+  jp nz,potentrybad
+  ld a,[$C6A3]
+  ld e,a
+  sub $0C
+  cp $02
+  jp nc,potentrybad
+  ld a,[$C1B6]
+  cp $02
+  jp nc,potentrybad
+  ld a,[$C534]
+  cp $03
+  jr z,potentrystack3
+  cp $02
+  jp nz,potentrybad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,potentrybad
+  ld a,[hl+]
+  cp $07
+  jr z,potentrystacklast
+  cp $14
+  jp nz,potentrybad
+  jr potentrystacklast
+potentrystack3:
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,potentrybad
+  ld a,[hl+]
+  dec a
+  jp nz,potentrybad
+  ld a,[hl+]
+  cp $02
+  jp nz,potentrybad
+potentrystacklast:
+  ld a,[hl]
+  cp e
+  jp nz,potentrybad
+  ld a,[$C6A6]
+  and a
+  jp nz,potentrybad
+  ld a,[$C6DE]
+  and $7E
+  jp nz,potentrybad
+  ld a,[$C6DE]
+  rlca
+  and $01
+  ld d,a
+  ld a,e
+  and $01
+  cp d
+  jp nz,potentrybad
+potentrycontextok:
+  ld a,[$C6AA]
+  and a
+  jp z,potentrybad
+  cp $15
+  jp nc,potentrybad
+  ld a,[$C6BB]
+  and a
+  jp z,potentrybad
+  cp $06
+  jp nc,potentrybad
+  ld b,a
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,potentrybad
+  ld a,[hl+]
+  cp $03
+  jp nz,potentrybad
+  ld a,[hl+]
+  cp b
+  jp nz,potentrybad
+  ld a,[hl+]
+  cp $12
+  jp nz,potentrybad
+  ld a,[hl]
+  cp $02
+  jp nz,potentrybad
+  ld a,[$C1B1]
+  dec a
+  jp nz,potentrybad
+  ld a,[$C0D5]
+  dec a
+  jp nz,potentrybad
+  ld a,[$C0D9]
+  cp $80
+  jp nz,potentrybad
+  ld a,[$C0DA]
+  cp $C3
+  jp nz,potentrybad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,potentrybad
+  ldh a,[$FF42]
+  and a
+  jp nz,potentrybad
+  ldh a,[$FF43]
+  and a
+  jp nz,potentrybad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,potentrybad
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,potentrybad
+  ld a,$0C
+  ld [$C1B3],a
+  ld a,e
+  cp $0D
+  jr nz,potentryblank
+  xor a
+  ld [$C1B6],a
+potentryblank:
+  call potentrychrome
+potentryactive:
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+potentrybad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; Blank only the sixteen visible BG rows owned by Items/Floor plus their Action overlay,
+; four rows per VBlank.  With every old dynamic reference gone, publish static title/body
+; borders in one further VBlank.  The Window status strip remains untouched throughout.
+potentrychrome:
+  ld hl,$9800
+  ld b,$10
+potentryclearbatch:
+  call infovblank
+  ld d,$04
+potentryclearrow:
+  ld c,$14
+  xor a
+potentryclearcell:
+  ld [hl+],a
+  dec c
+  jr nz,potentryclearcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,potentryclearnext
+  inc h
+potentryclearnext:
+  dec b
+  jr z,potentrychromeready
+  dec d
+  jr nz,potentryclearrow
+  jr potentryclearbatch
+potentrychromeready:
+  call infovblank
+  ld hl,$9800
+  ld [hl],$B8
+  inc hl
+  ld b,$03
+  ld a,$BC
+potentrytitletop:
+  ld [hl+],a
+  dec b
+  jr nz,potentrytitletop
+  ld [hl],$B9
+  ld hl,$9820
+  ld [hl],$BE
+  ld hl,$9824
+  ld [hl],$BF
+  ld hl,$9840
+  ld [hl],$BA
+  inc hl
+  ld b,$03
+  ld a,$BD
+potentrytitlebottom:
+  ld [hl+],a
+  dec b
+  jr nz,potentrytitlebottom
+  ld [hl],$BB
+  ld hl,$9860
+  ld [hl],$B8
+  inc hl
+  ld b,$12
+  ld a,$BC
+potentrybodytop:
+  ld [hl+],a
+  dec b
+  jr nz,potentrybodytop
+  ld [hl],$B9
+  ld hl,$9880
+  ld a,[$C6BB]
+  ld b,a
+potentrybodymiddle:
+  ld [hl],$BE
+  ld a,l
+  add a,$13
+  ld l,a
+  jr nc,potentrybodyright
+  inc h
+potentrybodyright:
+  ld [hl],$BF
+  ld a,l
+  add a,$0D
+  ld l,a
+  jr nc,potentrybodynext
+  inc h
+potentrybodynext:
+  dec b
+  jr nz,potentrybodymiddle
+  ld [hl],$BA
+  inc hl
+  ld b,$12
+  ld a,$BD
+potentrybodybottom:
+  ld [hl+],a
+  dec b
+  jr nz,potentrybodybottom
+  ld [hl],$BB
+  ei
+  ret
+
+; Box 17 is the native all-content completion boundary.  Once its title pixels and all
+; prior body pixels have drained, reveal the finished shadow top-to-bottom in batches of
+; at most three rows.  The already-visible Pot chrome therefore always precedes text.
+potentrypublish:
+  push bc
+  push de
+  push hl
+  ld a,[$C1B3]
+  cp $0C
+  jr nz,potentrypublishbad
+  ld a,[$C6A3]
+  sub $0C
+  cp $02
+  jr nc,potentrypublishbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jr nz,potentrypublishbad
+  ld a,[hl+]
+  and a
+  jr nz,potentrypublishbad
+  ld a,[hl+]
+  dec a
+  jr nz,potentrypublishbad
+  ld a,[hl+]
+  cp $03
+  jr nz,potentrypublishbad
+  ld a,[hl]
+  cp $40
+  jr nz,potentrypublishbad
+potentrypublishdrain:
+  ld a,[$C11A]
+  and a
+  jr z,potentrypublishready
+  call $06F7
+  jr potentrypublishdrain
+potentrypublishready:
+  ld hl,$C300
+  ld de,$9800
+  ld a,[$C6BB]
+  add a,$05
+  ld c,a
+potentrypublishbatch:
+  call infovblank
+  ld b,$03
+potentrypublishrow:
+  push bc
+  ld b,$01
+  call infocopyrows
+  pop bc
+  dec c
+  jr z,potentrypublishdone
+  dec b
+  jr nz,potentrypublishrow
+  jr potentrypublishbatch
+potentrypublishdone:
+  xor a
+  ld [$C1B3],a
+  ld a,[$C6A3]
+  cp $0D
+  jr nz,potentrypublished
+  xor a
+  ld [$C1B6],a
+potentrypublished:
+  ei
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+potentrypublishbad:
+  pop hl
+  pop de
+  pop bc
+  and a
+  ret
+
+; Build the complete empty screen-4 box in shadow.
+infobox:
+  ; A six-/seven-row picker can extend two rows below Info's bottom border. This also
+  ; occurs on the Items-derived screen-1 Floor route: its seventh Info row is mapped on
+  ; row 14 and its bottom border is on row 15. Clear both rows before any Info raster can
+  ; reuse those Action tiles, then publish them with the last chrome batch.
+  ld hl,$C4C0
+  ld b,$02
+infoboxtailrow:
+  ld c,$14
+  xor a
+infoboxtailcell:
+  ld [hl+],a
+  dec c
+  jr nz,infoboxtailcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,infoboxtailnext
+  inc h
+infoboxtailnext:
+  dec b
+  jr nz,infoboxtailrow
+infoboxbody:
+  ld hl,$C360
+  ld [hl],$B8
+  inc hl
+  ld b,$12
+  ld a,$BC
+infoboxtop:
+  ld [hl+],a
+  dec b
+  jr nz,infoboxtop
+  ld [hl],$B9
+  ld hl,$C380
+  ld d,$09
+infoboxmiddle:
+  ld [hl],$BE
+  inc hl
+  ld b,$12
+  xor a
+infoboxempty:
+  ld [hl+],a
+  dec b
+  jr nz,infoboxempty
+  ld [hl],$BF
+  ld a,l
+  add a,$0D
+  ld l,a
+  jr nc,infoboxnext
+  inc h
+infoboxnext:
+  dec d
+  jr nz,infoboxmiddle
+  ld [hl],$BA
+  inc hl
+  ld b,$12
+  ld a,$BD
+infoboxbottom:
+  ld [hl+],a
+  dec b
+  jr nz,infoboxbottom
+  ld [hl],$BB
+  ; The independent screen-20 lifecycle publishes this shadow selectively from the
+  ; pre-upload hook. Screen 1 keeps its already-reviewed complete-empty transaction.
+  call infoowned
+  jr nc,infoboxpublish
+  cp $14
+  jr z,infoboxdone
+infoboxpublish:
+  ld hl,$C360
+  ld de,$9860
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$03
+  call infocopyrows
+  ld b,$02
+  call infocopyrows
+infoboxdone:
+  ei
+  ret
+
+; Retire only the five proportional Info rows before the parent allocator may repaint
+; their tiles. Preserve both headers and all box chrome; normalize the native arrow and
+; counter cells back to the bottom border so the visible intermediate is an empty Info
+; window rather than a blank screen. The hardware Window at WY=$80 is untouched.
+infoallblank:
+  call infovblank
+  ld hl,$9881
+  ld d,$05
+infoallrow:
+  ld c,$12
+  xor a
+infoallcell:
+  ld [hl+],a
+  dec c
+  jr nz,infoallcell
+  ld a,l
+  add a,$2E
+  ld l,a
+  jr nc,infoallnext
+  inc h
+infoallnext:
+  dec d
+  jr nz,infoallrow
+  ld hl,$99A9
+  ld b,$02
+  ld a,$BD
+infoallarrow:
+  ld [hl+],a
+  dec b
+  jr nz,infoallarrow
+  ld hl,$99B0
+  ld b,$03
+infoallcounter:
+  ld [hl+],a
+  dec b
+  jr nz,infoallcounter
+  ei
+  ret
+
+; The native replay cleared shadow before screen 1 began. Construct either the complete
+; five-row Items chrome or the real one-row selector-$FF Floor chrome, then commit rows
+; 0-15 in four VBlanks before proportional composition resumes.
+inforeturnchrome:
+  ld hl,$C300
+  ld d,$10
+inforeturnclearrow:
+  ld b,$14
+  xor a
+inforeturnclearcell:
+  ld [hl+],a
+  dec b
+  jr nz,inforeturnclearcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,inforeturnclearnext
+  inc h
+inforeturnclearnext:
+  dec d
+  jr nz,inforeturnclearrow
+  ; Header box 14/18: x=0, y=0, one row, width four.
+  ld hl,$C300
+  ld c,$04
+  call infochrometop
+  ld hl,$C320
+  ld c,$04
+  call infochromemiddle
+  ld hl,$C340
+  ld c,$04
+  call infochromebottom
+  ; Body box 4: x=0, y=3, width eighteen and one or five text rows.
+  ld hl,$C360
+  ld c,$12
+  call infochrometop
+  ld hl,$C380
+  ld a,[$C6AC]
+  cp $FF
+  jr z,inforeturnfloorchrome
+  ld d,$09
+inforeturnmiddleloop:
+  ld c,$12
+  call infochromemiddle
+  ld a,l
+  add a,$0D
+  ld l,a
+  jr nc,inforeturnmiddlenext
+  inc h
+inforeturnmiddlenext:
+  dec d
+  jr nz,inforeturnmiddleloop
+  ld c,$12
+  call infochromebottom
+  jr inforeturnchromecopy
+inforeturnfloorchrome:
+  ld c,$12
+  call infochromemiddle
+  ld a,l
+  add a,$0D
+  ld l,a
+  jr nc,inforeturnfloorbottom
+  inc h
+inforeturnfloorbottom:
+  ld c,$12
+  call infochromebottom
+inforeturnchromecopy:
+  ld hl,$C300
+  ld de,$9800
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  ei
+  ret
+
+; Construct the exact empty screen-7 parent: full-width box-5 title plus seven-row box 6
+; at y=1. This geometry is intentionally separate from screen 20's y=3 box 39 even
+; though both dispatcher IDs share native handler 4:$4A58.
+info7chrome:
+  ld hl,$C300
+  ld d,$12
+info7clearrow:
+  ld b,$14
+  xor a
+info7clearcell:
+  ld [hl+],a
+  dec b
+  jr nz,info7clearcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,info7clearnext
+  inc h
+info7clearnext:
+  dec d
+  jr nz,info7clearrow
+  ; Box 5: x=0, y=0, one row, width eighteen.
+  ld hl,$C300
+  ld c,$12
+  call infochrometop
+  ld hl,$C320
+  ld c,$12
+  call infochromemiddle
+  ld hl,$C340
+  ld c,$12
+  call infochromebottom
+  ; Box 6: x=13, y=1, seven rows, width five.
+  ld hl,$C32D
+  ld c,$05
+  call infochrometop
+  ld hl,$C34D
+  ld d,$0D
+info7middle:
+  ld c,$05
+  call infochromemiddle
+  ld a,l
+  add a,$1A
+  ld l,a
+  jr nc,info7middlenext
+  inc h
+info7middlenext:
+  dec d
+  jr nz,info7middle
+  ld c,$05
+  call infochromebottom
+  ld hl,$C300
+  ld de,$9800
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+info7chromedone:
+  ei
+  ret
+
+; Construct the exact empty screen-20 Floor parent: its full-width item title plus the
+; right-side 3-7-row Action picker. Rows 16-17 are shadow-complete for the seven-row
+; identity-hidden Pot even though the hardware Window covers them at WY=$80. Only the
+; sixteen visible BG rows are committed.
+info20chrome:
+  ld hl,$C300
+  ld d,$12
+info20clearrow:
+  ld b,$14
+  xor a
+info20clearcell:
+  ld [hl+],a
+  dec b
+  jr nz,info20clearcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,info20clearnext
+  inc h
+info20clearnext:
+  dec d
+  jr nz,info20clearrow
+  ; Box 5: x=0, y=0, one row, width eighteen.
+  ld hl,$C300
+  ld c,$12
+  call infochrometop
+  ld hl,$C320
+  ld c,$12
+  call infochromemiddle
+  ld hl,$C340
+  ld c,$12
+  call infochromebottom
+  ; Box 39: x=13, y=3, width five and C6BB text rows.
+  ld a,[$C1B4]
+  ld e,a
+  ld hl,$C36D
+  ld c,$05
+  call infochrometop
+  ld a,e
+  add a,a
+  dec a
+  ld d,a
+  ld hl,$C38D
+info20middle:
+  ld c,$05
+  call infochromemiddle
+  ld a,l
+  ; infochromemiddle leaves HL on the right border at column 19. Advance 26
+  ; bytes to the next row's column 13 (a complete 32-byte tilemap stride).
+  add a,$1A
+  ld l,a
+  jr nc,info20middlenext
+  inc h
+info20middlenext:
+  dec d
+  jr nz,info20middle
+  ld c,$05
+  call infochromebottom
+  ld hl,$C300
+  ld de,$9800
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+  call infovblank
+  ld b,$04
+  call infocopyrows
+info20chromedone:
+  ei
+  ret
+
+infochrometop:
+  ld [hl],$B8
+  inc hl
+  ld a,$BC
+  call infochromefill
+  ld [hl],$B9
+  ret
+infochromemiddle:
+  ld [hl],$BE
+  inc hl
+  xor a
+  call infochromefill
+  ld [hl],$BF
+  ret
+infochromebottom:
+  ld [hl],$BA
+  inc hl
+  ld a,$BD
+  call infochromefill
+  ld [hl],$BB
+  ret
+infochromefill:
+  ld [hl+],a
+  dec c
+  jr nz,infochromefill
+  ret
+
+; Wait for a complete VBlank while allowing native interrupts between batches. Preserve
+; all copy registers across the interrupt handler and close the late-VBlank race after DI.
+infovblank:
+  push bc
+  push de
+  push hl
+  ei
+infovisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,infovisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,infowait
+infolate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,infolate
+infowait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,infowait
+  pop hl
+  pop de
+  pop bc
+  ret
+
+infocopyrows:
+  ld c,$14
+infocopyrowcell:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec c
+  jr nz,infocopyrowcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,infocopysource
+  inc h
+infocopysource:
+  ld a,e
+  add a,$0C
+  ld e,a
+  jr nc,infocopydest
+  inc d
+infocopydest:
+  dec b
+  jr nz,infocopyrows
+  ret
+
+infocopycells:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,infocopycells
+  ret
+
+infopagerpixels:
+  ld a,[$C6BD]
+  cp $02
+  ret c
+  cp $0A
+  ret nc
+  inc a
+  call infodigit
+  ld a,[$C6BC]
+  add a,$02
+  call infodigit
+  ret
+
+; A is the native tile code ($02-$0A) for digits 1-9. The approved font is 1bpp, so
+; duplicate each row into both Game Boy bitplanes at that tile's signed $9000 address.
+infodigit:
+  ld c,a
+  sub $02
+  add a,a
+  add a,a
+  add a,a
+  ld e,a
+  ld d,$00
+  ld hl,infodigits
+  add hl,de
+  ld a,c
+  swap a
+  ld e,a
+  ld d,$90
+  ld b,$08
+infodigitrow:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  ld [de],a
+  inc de
+  dec b
+  jr nz,infodigitrow
+  ret
+
+infodigits:
+""" + _INFO_DIGIT_TABLE + "\n"
+
+
+# Same-bank leaf called from the screen-12/13 pop proof. Keeping it at a fixed address
+# avoids consuming a far-table slot: bank 62's last slot ends at $400F and the shared
+# text-pool reader begins at $4010.
+POT_FLOOR_RETURN_SRC = """
+potfloorreturn:
+  ld a,[$C1B5]
+  or $1F
+  ld [$C1B5],a
+  ld a,$04
+  ld [$C1B4],a
+  ld a,$08
+  ret
+"""
+
+
+def info_lifecycle_labels():
+    """Assemble the installed Info helper and return its stable symbolic addresses.
+
+    Runtime fixtures hook ``fidisable`` rather than sampling LCDC once per frame.  Keep
+    that address derived from the same source the installer emits so adding a helper
+    cannot silently move the blanker away from the audit.
+    """
+    return gbasm.assemble(INFO_LIFECYCLE_SRC, INFO_LIFECYCLE_AT)[1]
 
 
 # Title/file screens are composites, not independent boxes: the parent title remains
@@ -6801,6 +9667,8 @@ def install(buf, notes=None, font=None):
                            ('FLOOR_CHROME_SRC', FLOOR_CHROME_SRC),
                            ('FLOOR_INFO_SRC', FLOOR_INFO_SRC),
                            ('FLOOR_INFO_FINISH_SRC', FLOOR_INFO_FINISH_SRC),
+                           ('INFO_LIFECYCLE_SRC', INFO_LIFECYCLE_SRC),
+                           ('POT_FLOOR_RETURN_SRC', POT_FLOOR_RETURN_SRC),
                            ('START_TRANSITION_SRC', START_TRANSITION_SRC),
                            ('START_FINISH_SRC', START_FINISH_SRC)):
             if '$C0D7' in blob or '$C0D8' in blob:
@@ -6831,6 +9699,10 @@ def install(buf, notes=None, font=None):
             ACTION_POP_SRC, ACTION_POP_AT)
         action_blank_code, action_blank_labels = gbasm.assemble(
             ACTION_BLANK_SRC, ACTION_BLANK_AT)
+        info_lifecycle_code, info_lifecycle_labels = gbasm.assemble(
+            INFO_LIFECYCLE_SRC, INFO_LIFECYCLE_AT)
+        pot_floor_return_code, _pot_floor_return_labels = gbasm.assemble(
+            POT_FLOOR_RETURN_SRC, POT_FLOOR_RETURN_AT)
         floor_chrome_code, floor_chrome_labels = gbasm.assemble(
             FLOOR_CHROME_SRC, FLOOR_CHROME_AT)
         action_helpers = (
@@ -6865,6 +9737,51 @@ def install(buf, notes=None, font=None):
             buf[helper_off:helper_off + len(helper_code)] = helper_code
             buf[helper_ix] = helper_entry & 0xFF
             buf[helper_ix + 1] = helper_entry >> 8
+
+        if INFO_LIFECYCLE_AT + len(info_lifecycle_code) > INFO_LIFECYCLE_LIMIT:
+            raise SystemExit('menuvwf: Item/Floor Info lifecycle needs %d bytes, only '
+                             '%d available' %
+                             (len(info_lifecycle_code),
+                              INFO_LIFECYCLE_LIMIT - INFO_LIFECYCLE_AT))
+        info_lifecycle_off = _off(ACTION_BLANK_BANK, INFO_LIFECYCLE_AT)
+        if any(value != 0xFF for value in
+               buf[info_lifecycle_off:
+                   info_lifecycle_off + len(info_lifecycle_code)]):
+            raise SystemExit('menuvwf: bank %d Item/Floor Info lifecycle at $%04X is '
+                             'not free' %
+                             (ACTION_BLANK_BANK, INFO_LIFECYCLE_AT))
+        if INFO_LIFECYCLE_AT + len(info_lifecycle_code) > POT_FLOOR_RETURN_AT:
+            raise SystemExit('menuvwf: Item/Floor Info lifecycle overlaps the fixed '
+                             'Pot/Floor return leaf at $%04X' % POT_FLOOR_RETURN_AT)
+        if POT_FLOOR_RETURN_AT + len(pot_floor_return_code) > INFO_LIFECYCLE_LIMIT:
+            raise SystemExit('menuvwf: Pot/Floor return leaf needs %d bytes, only %d '
+                             'available' %
+                             (len(pot_floor_return_code),
+                              INFO_LIFECYCLE_LIMIT - POT_FLOOR_RETURN_AT))
+        pot_floor_return_off = _off(ACTION_BLANK_BANK, POT_FLOOR_RETURN_AT)
+        if any(value != 0xFF for value in
+               buf[pot_floor_return_off:
+                   pot_floor_return_off + len(pot_floor_return_code)]):
+            raise SystemExit('menuvwf: bank %d Pot/Floor return leaf at $%04X is not '
+                             'free' %
+                             (ACTION_BLANK_BANK, POT_FLOOR_RETURN_AT))
+        buf[info_lifecycle_off:
+            info_lifecycle_off + len(info_lifecycle_code)] = info_lifecycle_code
+        buf[pot_floor_return_off:
+            pot_floor_return_off + len(pot_floor_return_code)] = pot_floor_return_code
+        info_entries = (
+            (INFO_CONTROL_INDEX, info_lifecycle_labels['floorinfo']),
+            (INFO_FINISH_INDEX, info_lifecycle_labels['floorinfofinish']),
+            (INFO_POP_INDEX, info_lifecycle_labels['infopop']),
+            (INFO_RETURN_INDEX, info_lifecycle_labels['inforeturn']),
+        )
+        for info_index, info_entry in info_entries:
+            info_ix = _off(ACTION_BLANK_BANK, 0x4000) + info_index - 1
+            if bytes(buf[info_ix:info_ix + 2]) != b'\xff\xff':
+                raise SystemExit('menuvwf: Info far index $%02X in bank %d is already '
+                                 'used' % (info_index, ACTION_BLANK_BANK))
+            buf[info_ix] = info_entry & 0xFF
+            buf[info_ix + 1] = info_entry >> 8
 
         title_cursor_ix = (_off(ACTION_ALLOC_BANK, 0x4000) +
                            TITLE_CURSOR_INDEX - 1)
@@ -6907,6 +9824,15 @@ def install(buf, notes=None, font=None):
         buf[pop_hook:pop_hook + len(ACTION_POP_OLD)] = bytes(
             (0xD7, ACTION_POP_INDEX, ACTION_POP_BANK,
              0x38, 0x19, 0x00, 0x00, 0x00))
+
+        for see_hook in (POT_SEE_12_ENTRY_HOOK, POT_SEE_13_ENTRY_HOOK):
+            see_off = _off(*see_hook)
+            if bytes(buf[see_off:see_off + len(POT_SEE_ENTRY_OLD)]) != \
+                    POT_SEE_ENTRY_OLD:
+                raise SystemExit('menuvwf: Pot viewer shadow setup at 4:$%04X changed'
+                                 % see_hook[1])
+            buf[see_off:see_off + len(POT_SEE_ENTRY_OLD)] = bytes(
+                (0xD7, INFO_RETURN_INDEX, ACTION_BLANK_BANK))
 
         if ITEM_REGION_AT + len(item_region_code) > ACTION_POP_AT:
             raise SystemExit('menuvwf: item regional controller overlaps Action pop gate '
@@ -7226,9 +10152,11 @@ def install(buf, notes=None, font=None):
                     raise SystemExit('menuvwf: ROM box %d row %d has no terminator '
                                      'within the %d-glyph source contract'
                                      % (box, row, ROM_SOURCE_CAP))
-                # Keep cursor cells independently writable. Boxes 8/17 have no leading
-                # zero, but real flows replace their first letter after the drawer
-                # returns, so bit 5 preserves it. Box 14's apparent overwrite exists
+                # Keep cursor cells independently writable. Box 8 has no leading zero,
+                # but its real flow replaces the first letter after the drawer returns,
+                # so bit 5 preserves it. Box 17 deliberately composes all of `Pot`:
+                # Status rendering can repaint fixed tile $1A before this screen opens.
+                # Box 14's apparent overwrite exists
                 # only in a synthetic forced-dispatch context; ordinary Items must
                 # compose from its `I` or the word visibly splits fixed/VWF spacing.
                 prefix = int(data[0] == 0 or box in ROM_RAW_PREFIX_BOXES)
@@ -7394,7 +10322,7 @@ def install(buf, notes=None, font=None):
                          'title transaction')
             notes.append('menuvwf: %d+%d+%d-byte item-page regional/fallback/publisher '
                          'helpers in bank %d; screen-1 paging/Start-sort is old -> normal '
-                         'left borders + blank status/name cells -> '
+                         'left borders + blank status/cursor/name cells -> '
                          'one complete body with LCD on; %d-byte body, %d-byte tile, and '
                          '%d-byte redraw-tail and %d-byte early-indicator helpers remove '
                          'redundant waits and settle the page/dot together'
@@ -7403,7 +10331,8 @@ def install(buf, notes=None, font=None):
                             len(item_row_fast_code), len(item_tile_fast_code),
                             len(item_return_code), len(item_indicator_code)))
             notes.append('menuvwf: carried-/settled-Floor screen-2 Action uses six private four-tile '
-                         '$C7-$DE slices after a %d-byte live-layer gate; B-cancel uses '
+                         '$C7-$DE slices after a %d-byte live-layer gate; the unique '
+                         'seventh Info row uses the collision-safe ordinary base run; B-cancel uses '
                          '%d-byte pop proof plus a %d-byte box-6 parent/machine-state '
                          'restorer and returns to screen-1 input without redundant replay'
                          % (len(action_gate_code), len(action_pop_code),
@@ -7413,12 +10342,18 @@ def install(buf, notes=None, font=None):
                          'before text publication' %
                          (len(floor_chrome_code), FLOOR_CHROME_BANK,
                           FLOOR_CHROME_AT))
-            notes.append('menuvwf: %d+%d-byte Floor/Info transaction at '
-                         '%d:$%04X + %d:$%04X; action/page transitions publish one '
-                         'complete shadow map'
+            notes.append('menuvwf: %d+%d-byte Floor/Info ABI stubs at '
+                         '%d:$%04X + %d:$%04X dispatch a %d-byte exact '
+                         'screen-1/screen-7/screen-20 '
+                         'Info/seal regional lifecycle at %d:$%04X; exact carried, '
+                         'Items-appended Floor, screen-7, and screen-20 Pot `See` '
+                         'entries plus their admitted returns use the same regional arena and rejected '
+                         'callers retain the LCD-off full-map fallback'
                          % (len(floor_info_code), len(floor_finish_code),
                             FLOOR_INFO_BANK, FLOOR_INFO_AT,
-                            FLOOR_INFO_FINISH_BANK, FLOOR_INFO_FINISH_AT))
+                            FLOOR_INFO_FINISH_BANK, FLOOR_INFO_FINISH_AT,
+                            len(info_lifecycle_code), ACTION_BLANK_BANK,
+                            INFO_LIFECYCLE_AT))
             notes.append('menuvwf: %d+%d-byte title/file transition at '
                          '%d:$%04X + %d:$%04X; layered title, Log, difficulty and '
                          'Rank/Pass redraws publish one complete shadow map'
