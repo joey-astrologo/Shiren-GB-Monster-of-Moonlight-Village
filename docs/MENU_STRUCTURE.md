@@ -36,8 +36,10 @@ The whole-LCD caller census is behavior-neutral and intentionally does not hide 
 debt. The real unidentified-Pot Floor route is alternate parent screen 7, not screen 20;
 its Info and ground-Pot See returns now have their own zero-blank regional lifecycles and
 exact instruction-level regression gates. Their matching Pot `See` entries now have
-independent stack proofs and zero-blank chrome-first gates. Item `Name` return retains
-the next known Status-reconstruction blank.
+independent stack proofs and zero-blank chrome-first gates. The exact inventory Item
+`Name -> End -> Items` replay has an independently gated zero-blank, chrome-first owner
+covering every page and row. Its dedicated Mesen route was visually accepted on
+2026-08-27.
 
 This document answers two separate questions:
 
@@ -85,27 +87,63 @@ debug state and cannot be understood safely in isolation.
 
 ## Whole-LCD blanking audit
 
-Whole-LCD blanking is now a governed resource, separate from regional blanking. The
-repeatable audit is:
+The earlier 45/78 "writer" count was incomplete. It scanned only
+`ldh [$FF40],a`/`ld [$FF40],a`, so it missed both direct
+`ld hl,$FF40; res 7,[hl]` mutations and the native `$C110` LCDC shadow. The Japanese
+engine normally clears bit 7 in `$C110`; VBlank's generic publisher at `0:$0737` later
+copies that off value to hardware. Cataloguing only `$FF40` therefore hid the causal
+native callers which explain several apparently unpredictable blanks.
+
+The corrected build audit emits three files:
 
 ```sh
 python3 tools/lcdblankaudit.py build/base.gb build/shiren_en.gb \
-  --tsv build/lcd_blank_audit.tsv
+  --tsv build/lcd_blank_audit.tsv \
+  --item-menu-tsv build/lcd_blank_item_paths.tsv \
+  --start-menu-tsv build/lcd_blank_start_paths.tsv
 ```
 
-It finds every `ldh [$FF40],a` and `ld [$FF40],a`, compares the matching Japanese and
-English ROMs, and emits the complete writer catalogue. A writer is not automatically a
-blanker: many native sites publish a cached LCDC value, and some English sites explicitly
-set bit 7. Therefore the audit records both provenance and the locally provable effect.
-Runtime route fixtures separately establish which variable-value writers actually clear
-the bit. Adding an explicit English `res 7,a`/known-off write without adding its owner,
-route, and policy to the manifest fails the build.
+`lcd_blank_audit.tsv` is the instruction census. The other two files deliberately split
+the player-facing callers into the Item/Status and Start systems. A shared physical
+instruction appears once per distinct route, because testing one caller does not approve
+the others. Versioned snapshots live in
+[`LCD_BLANKING_AUDIT.tsv`](LCD_BLANKING_AUDIT.tsv),
+[`LCD_BLANKING_ITEM_PATHS.tsv`](LCD_BLANKING_ITEM_PATHS.tsv), and
+[`LCD_BLANKING_START_PATHS.tsv`](LCD_BLANKING_START_PATHS.tsv); the build copies are the
+freshly verified equivalents.
 
-The 2026-08-26 base/current census is 45/78 LCDC writers. Thirty-three writers are
-translation-added: ten explicitly clear bit 7, two explicitly set it, and 21 write a
-value whose effect is not locally provable. The 45 base-address writers remain in the
-generated catalogue as `native-observe`; they are not removal candidates merely because
-they write LCDC.
+The corrected 2026-08-27 base/current census is 116/153 display mutators: 79/112 target
+hardware LCDC and 37/41 target the `$C110` shadow. Thirty-seven are translation-added;
+ten explicitly request LCD-off. A fresh `../mgbdis` disassembly of base ROM MD5
+`754398219a3ab38394cdac543d8deb47` confirmed all literal `$FF40` and `$C110` references
+and the native shadow routines at `2:$463C`, `2:$4702`, and `4:$4154`. Focused exhaustive
+runtime traces then hooked all 153 candidates. The full 61-fixture battery used the
+smaller causal set and produced 3,687 off-valued events. No variable direct LCDC writer
+outside the catalogues below opened a menu blank in the focused runs.
+
+The runtime recorder is opt-in for any fixture:
+
+```sh
+SHIREN_LCD_TRACE=build/lcd_trace.jsonl \
+  SHIREN_LCD_TRACE_ALL=1 \
+  python3 tools/potputspill.py build/shiren_en.gb
+```
+
+The trace records the producer, target, prior and incoming LCDC values, dispatcher stack,
+transaction bytes, active bank, and fixture arguments. `0:$0737` is recorded as the
+publisher but never treated as the route owner.
+
+The path status vocabulary is strict:
+
+- `remaining`: an observed same-menu transition still turns the whole LCD off;
+- `review`: an observed menu-to-menu atomic blank which has not been visually accepted
+  as permanent;
+- `keep`: a boot, independent-screen, or gameplay replacement boundary where whole-LCD
+  blanking is intentional;
+- `dormant`: an executable safety fallback remains, but every admitted caller requires
+  zero executions; and
+- `coverage-gap`: the player edge is known, but no exact button-driven trace has yet
+  identified its causal producer.
 
 The ten explicit translation-owned whole-LCD sites are:
 
@@ -114,95 +152,77 @@ The ten explicit translation-owned whole-LCD sites are:
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — independent composite screen |
 | `41:$40E1` | `menuvwf.starttransition`: title/file complete shadow-map replacement | `review` — complete-screen menu transaction |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `review` — complete-screen menu transaction |
-| `44:$4066` | `rankvwf.nativerestore`: complete native menu-font reload, then restore caller LCDC | `keep` — tile-data lifetime boundary |
-| `46:$42B5` | `rankvwf.screenrestore`: Rankings result/native-font restoration | `keep` — independent result screen |
-| `53:$42C6` | `statusvwf.statusentry`: Name -> disposable Status -> Items reconstruction plus other unknown LCD-on returns; exact screen-7 Floor -> Status is gated away | `replace-menu` |
+| `44:$4066` | `name6.namerestore`: caller `4:$4B04` for Start naming and `4:$4B22` for unidentified-item naming | `mixed` — keep the independent Start keyboard; replace the Item caller |
+| `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `keep` — tile-data lifetime boundary |
+| `53:$43A6` | `statusvwf.statusentry`: rejected Status reconstruction, observed after Pot `Put` | `replace-menu` |
 | `59:$406F` | `normalending.install`: Normal-ending full-screen art installation | `keep` — new scene |
-| `60:$4222` | `menuvwf.itemregion`: as-yet-unreached rejected regional Item-row transaction | `replace-menu` |
-| `60:$4338` | `menuvwf.itempage`: rejected Pot viewer or Item page/sort transaction fallback | `replace-menu` |
+| `60:$4222` | `menuvwf.itemregion`: rejected Item-row transaction, observed on the injected equipment Status-to-Items route | `replace-menu` |
+| `60:$4338` | `menuvwf.itempage`: rejected Item/Pot transaction, observed on the Pot `Put` selector | `replace-menu` |
 | `62:$4476` | `menuvwf.infolifecycle`: legacy Item/Floor Info or seal fallback | `replace-menu` |
 
-`keep` does not authorize the site for arbitrary callers; it records that the named
-complete-screen or tile-reload route currently owns it. `review` requires a later visual
-and policy decision. `replace-menu` is the removal worklist: expected same-menu callers
-must acquire a regional lifecycle and must never execute the site. `mixed` is reserved
-for a physical instruction serving both an intentional complete-screen caller and a
-rejected same-menu fallback; no currently manifested site remains in that class. The
-resulting policy distribution is four `keep`, two `review`, and four `replace-menu`.
+`keep` applies only to the named caller. The clearest example is `44:$4066`: the Start
+keyboard is an independent screen and may keep the atomic native-font reload, while the
+Item/Floor Name caller is same-menu debt.
 
-The removal worklist is connected to route-level gates rather than relying only on
-sampled white frames:
+### Item/Status LCD-off catalogue
 
-| Blanker | Current direct route gate |
-|---|---|
-| `53:$42C6` | `unidentifiednamespill.py` hooks `statusdisable` and requires exactly one known execution on Name -> Status -> Items; direct Items exit, admitted Info/Pot replays, and screen-7 Floor -> Status require zero |
-| `60:$4222` | paging, sorting, entry, Floor paging, and Pot fixtures hook exact `irdisable` and require zero. `irfaillcd` is only the preceding decision branch and is not itself proof of an LCD write |
-| `60:$4338` | `itempagespill.py` requires zero exact `pbdisable` executions for paging/sort; `potreturnspill.py`, `potseespill.py`, `groundpotreturnspill.py`, and `unidentifiedflooractionspill.py` require zero on every admitted carried, screen-7, screen-20, and Items-appended Floor Pot entry/return |
-| `62:$4476` | all admitted Item/Floor/Info/seal fixtures hook exact `fidisable` and require zero, including `unidentifiedpotspill.py` on screen-7 Info entry and return |
+The generated Item table currently has 15 caller rows: seven observed same-menu rows,
+one unresolved shop grouping, four dormant fallback rows, and three intentional
+replacement boundaries.
 
-This table is the control plane for the remaining menu work. Playtesting is still needed
-to judge the appearance of regional transitions and to discover unmodelled navigation
-histories, but it is no longer the primary mechanism for detecting a known whole-LCD
-fallback.
-
-### Caller census recovered with `mgbdis` and exact runtime hooks
-
-The sibling `../mgbdis` checkout reduced the four menu candidates to finite native
-call-site families. The central bank-32 row renderer invokes the bank-39 Info stub from
-three sites: mode 0 before the first row, mode 1 after a completed final row/border, and
-mode 2 for the empty/fallback completion. Every observed screen-4/5 producer passes
-through those sites. The same renderer invokes the Item-page controller from mode 0
-before a row, mode 1 after its final row/border, and mode 2 for empty/fallback completion;
-the separate Item-region controller is reached at the final-row handoff and internally
-from its regional transaction. The screen-0 builder has one translated Status-entry
-hook. Static call sites bound the search; exact instruction hooks then established which
-runtime histories actually clear LCDC bit 7.
-
-That combination corrected two misleading conclusions. First, reaching `irfaillcd` does
-not mean site `60:$4222` executed: Pot entry can reach that decision while the LCD is
-already off, then skip the exact write. Second, site `60:$4338` is not solely an Item
-paging fallback. It also served native replacement of Items/Floor with Pot viewer screen
-12 or 13. The regional owner now bypasses it only for the exact measured stacks
-`0,1,2,12/13`, `0,7,12/13`, and `0,20,12/13`; every rejected or unknown caller retains
-the original `$4338` fallback.
-
-The genuinely unidentified ground-Pot route also resolved to dispatcher stack `0,7,4`,
-not `0,20,4`. Screens 7 and 20 share the handler at `4:$4A58`, but the branch at
-`4:$4A79-$4A86` selects box 6 for screen 7 rather than box 39 for screen 20. The regional
-implementation therefore treats `0,7,4` as an independent owner: entry restores box 5
-under the outgoing box-6 overlay, and return keeps state `$0B` armed through native
-`4 -> 0 -> 7` replay before rebuilding the exact box-5/box-6 parent. The fixture requires
-zero `fidisable` executions and exact returned BG and Window maps and pixels.
-
-### Finite whole-LCD menu test matrix
-
-This is the player-facing matrix derived from the ten-site census. It is intentionally
-finite: every row either proves a translation-owned explicit blank must not execute or
-records an exact intentional/known execution. Regional blanking may remain visible for a
-full redraw; only whole-LCD disable counts in the last column.
-
-| Player path | Exact owner exercised | Expected whole-LCD result |
+| Player path | Causal off producer(s) | Status and evidence |
 |---|---|---|
-| Status -> Items, Items pages 1-4 -> Status, Left/Right across all populated/empty shapes, and Start sort | Status/Item entry, exit, `itemregion`, `itempage` | zero |
-| Carried ordinary/hidden item -> Action -> Info; carried sealed weapon/shield -> seals; B/final-page exit | `infolifecycle`, disposable Status replay | zero |
-| While standing on an item, page from Items to the one-row screen-1 Floor page -> Action -> Info -> return | `infolifecycle`, screen-1 parent replay | zero |
-| Status -> Floor screen 20 -> Wood Arrow/Fusion Pot/Gitan/Scroll/Storage Pot/sealed equipment -> Info or seals -> return | `infolifecycle`, screen-20 parent replay | zero |
-| Stand on an unidentified Pot -> Status -> Floor -> seven-row `Take/See/Push/Toss/Swap/Name/Info` -> Info -> return | independent screen-7 `infolifecycle` | zero; exact `4 -> 0 -> 7` regional replay |
-| Carried Pot, Items-appended Floor Pot, alternate screen-7 Pot, or screen-20 Floor Pot -> `See` -> screen 12/13 contents viewer | exact Pot-entry transaction in `infolifecycle` | zero; regional clear retains HUD and complete empty Pot chrome precedes title/body text |
-| Screen 12/13 contents viewer -> B -> Items | Pot replay plus direct Items entry | zero on return; boxes must precede rows |
-| Alternate screen-7 ground-Pot contents viewer -> B -> Floor/Action | independent screen-7 replay | zero on return; complete box-5/box-6 chrome must precede all seven labels |
-| Screen-20 Floor Pot contents viewer -> B -> Floor/Action | independent screen-20 replay | zero on return; complete box-5/box-39 chrome must precede the title and all Action labels |
-| Alternate screen-7 Floor/Action -> B -> Status | exact pre-pop screen-7 owner plus `statusentry` | zero; empty Status chrome completes before any Status text, Window retained |
-| Screen-20 Floor/Action -> B -> dungeon field | native menu teardown | intentional destination; outside the same-menu regional pass |
-| Items -> item Action -> `Name`, enter `Stun`, choose `End`, return through Items | `statusentry` Name reconstruction | exactly one known blank after Name; next regional-removal target |
-| Start/title file composite, Rankings, Fay's Puzzle, native font restoration, ending | their separately manifested sites | outside the same-menu removal pass; keep/review per audit table |
+| Dungeon field -> Status | shadow `4:$4154` | `keep`; independent field-to-menu replacement |
+| Status -> Items with injected cursed/plated/fused rows | `60:$4222` | `remaining`; exact `irdisable` hit in `equipmentmarkerspill.py`; ordinary Status -> Items stays zero |
+| Carried unidentified item -> Action -> Name | `44:$4066` | `remaining`; observed across pages 1-4 and rows 1-5; the already-fixed Name return is zero |
+| Status -> alternate unidentified Floor/Action | shadow `2:$463C` | `remaining`; observed in `unidentifiednamespill.py`, while admitted ordinary Floor/Info routes stay zero |
+| Unidentified Floor item -> Action -> Name | `44:$4066`, then shadow `4:$4154` | `remaining`; both blank intervals occur before the keyboard settles |
+| Carried Pot Action -> `Put` selector, screen 11 | `60:$4338` | `remaining`; exact `pbdisable` hit |
+| Commit `Put` -> Pot Action/Items replay | shadow `2:$463C`, then shadow `4:$4154` | `remaining`; destination is still the menu, so this is not final teardown |
+| Back out after `Put` -> Status | `53:$43A6` | `remaining`; exact `statusdisable` hit at stack `0,1` |
+| Unknown rejected child -> Status | `53:$43A6` | `dormant`; known Info/Pot/Name/Floor returns require zero, but fallback code remains |
+| Unknown rejected page/sort/shape transaction | `60:$4222` | `dormant`; admitted paging, sort, and Floor paths require zero |
+| Unknown rejected Item/Pot replacement | `60:$4338` | `dormant`; admitted paging and `See` paths require zero |
+| Unknown rejected Info/seal/Pot lifecycle | `62:$4476` | `dormant`; no exact hit in the complete traced fixture battery |
+| Shop Status/Floor/action group | shadow `2:$463C`, shadow `4:$4154` | `review`; observed, but the current fixture drives several inputs and must be split one edge at a time before assigning keep/removal |
+| Action whose destination is gameplay/field message | shadow `2:$463C`, shadow `4:$4154` | `keep`; replacement path, including the pre-Floor history in `floorinfospill.py --fusion-kit-history` |
+| B from Status -> dungeon field | shadow `2:$463C` | `keep`; intentional final menu teardown |
 
-The remaining known same-menu debt at `53:$42C6` is the reproducible
-Name-to-Items reconstruction. Alternate screen-7 Floor-to-Status is now independently
-owned before the native pop and never reaches the blanker. Site `60:$4222` currently has no
-observed exact execution; its fixture contract is zero until a real caller proves a
-different policy. A rejected Pot entry retaining `$4338` is not evidence that any admitted
-entry, paging transition, or B return used the same behavior.
+Normal Items paging, Start sorting, page indicators, Status -> ordinary Items, Items ->
+Status, admitted Info/seal pages, every admitted Pot `See` entry/return, screen-7 and
+screen-20 Info returns, and `Name -> End -> Items` all produced zero causal off hits.
+Those are regression coverage, not remaining blank rows.
+
+### Start-menu LCD-off catalogue
+
+The generated Start table has 17 caller rows. It names each visual path separately even
+though most composites share `41:$40E1`.
+
+| Player path | Causal off producer(s) | Status and evidence |
+|---|---|---|
+| Boot/logo/title presentation -> Start | `29:$411A`; shadows `31:$49B1`, `31:$4AE8`, `31:$4D59`, `31:$4899`, `4:$65F4` | `keep`; pre-interactive hardware/title initialization |
+| Adventure -> saved-log summary/log changes | `41:$40E1` | `review`; observed screen 23 composite |
+| Select Adventure log -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
+| New Log -> selector | `41:$40E1` | `review`; observed screen 22 |
+| New Log -> difficulty/explanation | `41:$40E1` | `review`; observed screen 25 |
+| New Log -> personal-name keyboard | `44:$4066` | `keep`; independent screen-8/native-font replacement |
+| Confirm New Log name -> village | shadow `2:$463C` | `keep`; replacement boundary |
+| Copy Log summaries/confirmation | `41:$40E1` | `review`; observed screens 23 and 24 |
+| Erase Log summary/confirmation | `41:$40E1` | `review`; observed screens 23 and 24 |
+| Rename -> alternate selector | `41:$40E1` | `review`; observed screen 26 |
+| Rename -> personal-name keyboard | `44:$4066` | `keep`; same static screen-8 caller as New Log, but an isolated Rename-entry trace is still missing |
+| Return from file/Rank child -> Start root | `46:$42B5` | `keep`; complete native-font restoration observed beyond Rankings too |
+| Rank/Pass root and Pass selector | `41:$40E1` | `review`; observed screens 30 and 32 |
+| Rank category -> Rankings display | `43:$40B6`, `46:$42B5` | `review`; completed map publication plus native-font restoration on screen 33 |
+| Fay's Puzzle -> task composite | `38:$408F` | `keep`; independent composite screen |
+| Fay task -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
+| Replay -> saved-log summary | `41:$40E1` | `review`; focused exhaustive trace observed screen 23; choosing the log produced no additional LCD-off producer before replay handoff |
+
+The normal ending site `59:$406F` belongs to neither menu system and remains in the
+instruction census as an intentional new-scene blank. Native `2:$4702` and the remaining
+shadow producers likewise stay in the complete TSV; none opened a traced Item or Start
+menu interval. This separation prevents non-menu boot, scene, and ending loaders from
+inflating the menu worklist while ensuring they are not silently forgotten.
 
 ## The display model: there is no general menu z-buffer
 
@@ -224,7 +244,7 @@ BG cell refers to it if a visible Window cell still does.
 | Menu upload scheduler | `$C006`, selector `$C11A` | Drain it before changing map ownership; do not bypass it with long LY busy-waits |
 | VWF row scratch | `$C0CC-$C0DD` | Translation-owned while the menu renderer is active |
 | VWF row records | `$C163-$C1B2` | Five-byte keyed records plus proportional metadata; ownership is per rendered row |
-| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; checkpoint 4 adds `$08/$09/$0A/$0B` for screen-1 Info or Items-derived Floor-Pot return, screen-20 Info, carried-Pot return, and screen-7 Info replay |
+| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; checkpoint 4 adds `$08/$09/$0A/$0B` for screen-1 Info or Items-derived Floor-Pot return, screen-20 Info, carried-Pot return, and screen-7 Info replay; `$0D` owns the exact Name-to-Items handoff |
 | Shared Action/Item transition state | `$C1B4-$C1B6` | Held-Action row count and packed Item state; screen-1 Info return records child screen 4/5 in `$C1B4`, while screen-20 and screen-7 returns preserve their Action heights there. During exact Item paging `$C1B4` is instead the four-slice tile-copy counter, `$C1B5` marks an Items/Floor header change after the final body row, and `$C1B6` is the page phase (`2` body, `4` replacement header, `3` redraw tail). Screen 1 retains admitted Info/seal value `1`, then uses `2` only after complete empty return chrome is published. An exact Items-to-Status pop retires phase `3` because the initial Items build has no same-screen redraw-tail call; no later Floor child may inherit that dead transaction. An exact screen-20 child accepts idle `0` or stale carried-Action value `1` and clears it before publication; screen 7 uses `2` only after its independent empty parent chrome publishes. The lifecycles are mutually exclusive |
 | Standing-item Floor settlement | `$C1B7` | One only after screen 1 selector `$FF` has completed; authorizes its exact live Status pop, then clears |
 | Held-Action / Pot-viewer snapshot | `$C1B8-$C1BE` | Seven exact cells saved before box 6 overwrites a carried Item page marker; in the mutually exclusive screen-20 Pot-viewer lifetime, `$C1B8` instead preserves the parent box-39 row count before screen 12/13 reuses `$C6BB` |
@@ -1108,6 +1128,53 @@ Status-owned tile in the outgoing Floor/Window layers, complete chrome before te
 prompt Status input by immediately reopening Items. A separate direct no-`See` probe
 produces the same owner and zero-blank result. Screen 20 is deliberately excluded: its
 native B destination remains the dungeon field and retains its native teardown.
+Manual Mesen validation on 2026-08-27 confirmed both screen-7 return paths render in the
+required order and remain promptly responsive.
+
+#### Inventory Item `Name -> End -> Items` return
+
+This return is its own tile epoch rather than an Item/Info variant. Fresh `mgbdis`
+output identifies the screen-9 Name finalizer at bank 4 `$6026`, the dispatcher at
+`4:$48AA`, the screen-1 shadow-clear hook at `4:$4951`, and the Status boundary at
+`4:$4FDD`. Choosing `End` performs the native dispatcher sequence `9 -> 0 -> 1 -> 0`:
+the first screen 0 and screen 1 are reconstruction steps, while the final screen 0 is
+the ordinary later Items-to-Status exit driven by the fixture. The outgoing keyboard
+may reference almost the entire native menu font, so repainting tile planes before its
+map is retired is unsafe.
+
+The regional owner splits admission around the native replay. At the disposable
+screen-0 boundary it requires stack `0,1`, current/replay screens `0/1`, a valid
+one-through-twenty-item count and selector, the exact Status descriptor
+`(0,10,2,18,4)`, standard LCD-on viewport and Window, idle queue, inventory context
+`$C6DE=0`, and one through five retained Item row records packed in `$C1B5`.
+Only that complete proof arms state `$0D` and suppresses the Status painter. At the
+screen-1 hook, a second proof requires the native replay to have advanced to screens
+`1/2` while every retained count, selector, descriptor, viewport, and transaction value
+still agrees. A mismatch on either side falls back instead of inheriting regional
+ownership.
+
+An admitted screen-1 entry keeps the bottom Window and every tile plane locked while it
+retires visible BG rows 0-15 in four complete-VBlank batches. It then commits the complete
+empty Items header and list-box chrome and converts `$0D` to the established state `$01`;
+only afterward may the ordinary completed-row renderer expose item text. The visible
+contract is therefore `complete keyboard -> regional retirement -> complete empty Items
+boxes -> completed Item rows`, with no transient Status and no whole-LCD blank.
+
+`tools/unidentifiednamespill.py` drives the real Name keyboard and finalizer, then creates
+its inventory layouts through the native bank-6 inventory builder rather than the Lua
+item injector. Its matrix covers `(items,page,row,retained rows)` values
+`(1,1,1,1)`, `(7,2,2,2)`, `(13,3,3,3)`, `(19,4,4,4)`, and `(20,4,5,5)`—all four pages,
+all five target rows, and every valid retained-record count. Each case requires the exact
+`0,1,0` post-End dispatch suffix, one pre/post admission pair, state `$0D` through four
+VBlank batches, unchanged Window/hidden BG/tile planes, complete chrome before text, and
+zero `statusdisable`, LCD-off, or uniform frames.
+
+Manual Mesen validation on 2026-08-27 used a dedicated ROM/SRAM basename and the supplied
+unidentified-Willow-Staff fixture. It accepted the complete keyboard-to-Items transition:
+no whole-LCD blank or transient Status text, retained bottom HUD, complete empty Items
+boxes before list text, restored item/cursor, and prompt post-return input. The accepted
+ROM MD5 is `31bb9fa4c6e92c69a938bfe3f057f635`. This freezes the exact inventory Name
+return; unknown screen-9 or LCD-on Status contexts remain outside its ownership proof.
 
 #### Items-appended Floor Pot `See` entry and return
 
@@ -1333,6 +1400,7 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | `$0A` | exact carried-Pot `See` two-level replay: disposable Status suppressed, direct Items entry pending |
 | `$0B` | exact screen-7 unidentified-Pot Info or admitted ground-Pot See replay: disposable screen 0 suppressed, complete box-5/y=1 box-6 parent and final title/Action publication pending |
 | `$0C` | exact carried, Items-appended Floor, screen-7, or screen-20 Pot screen-12/13 entry: old parent/Action region retired, empty Pot chrome live, native title/body text held in shadow until the box-17 completion boundary |
+| `$0D` | exact inventory Name finalizer handoff: disposable Status suppressed, keyboard retirement and empty Items chrome pending at screen-1 entry; converts to `$01` only after chrome completes |
 | `$10` | title/file composite transaction |
 | `$11` | difficulty composite transaction |
 | `$12` | proportional Rankings map-swap transaction |
@@ -1358,7 +1426,8 @@ Screen-1 Left/Right and Start-sort redraws use the narrow regional transaction b
 Exact direct Status-to-Items entry and Items-to-Status pops use the two broader directions
 described afterward. Exact screen-1, screen-7, and screen-20 Info/seal pages use the
 checkpoint-4 lifecycle above, and exact carried screen-12/13 Pot return hands off to
-direct Items entry. Exact admitted Pot entries share the state-`$0C` chrome-first
+direct Items entry. Exact inventory Name return uses state `$0D` across its disposable
+Status/screen-1 handoff. Exact admitted Pot entries share the state-`$0C` chrome-first
 publisher while retaining stack-specific admission and return ownership.
 Unexpected nonempty Item fallback, rejected Pot viewers, and unknown LCD-on Status or
 Info reconstructions still disable LCDC bit 7 before pixels are reused, build the
@@ -1678,8 +1747,9 @@ direct predecessor is:
 | `WY/WX` | `$80,$07` | persistent two-row status Window at the bottom |
 
 Only that complete predicate selects the live exit. Any unknown LCD-on Status return uses
-the retained LCD-off fallback. In particular, Name-to-Items stack reconstruction is not
-silently admitted; after it settles, a later direct Items B pop can qualify normally.
+the retained LCD-off fallback. Name-to-Items is not silently admitted by this exit gate:
+it has the separate two-half state-`$0D` proof below, and after it settles a later direct
+Items B pop can qualify normally.
 Every admitted pop clears `$C1B6` as well as `$C1B7`: phase 3 can remain after the
 initial Items build because that path has no same-screen redraw-tail call, but it owns
 nothing after Items has been popped. The `$FF` branch still requires the Floor latch;
@@ -1707,8 +1777,8 @@ than LY `$99`, zero LCD-off frames, and zero all-white frames. At every sampled 
 visible BG cell resolves to either its outgoing Item raster or final Status raster and
 never regresses; the enabled Window map and all of its referenced planes remain exact.
 All four routes settle to the same visible Status raster. The unidentified-item Name
-fixture separately proves one conservative Name reconstruction followed by one live
-direct Items exit.
+fixture separately proves one regional Name reconstruction followed by one live direct
+Items exit.
 
 `tools/floorpagespill.py` independently covers the fifth-page form. Its Status-entry
 snapshot requires selector `$FF`, latch `$01`, the exact `0,0,1` stale stack and standard
@@ -1748,9 +1818,10 @@ as part of the checkpoint-3 freeze at `34a20ec`.
   Rankings borrow planes across several boxes. Their current atomic controller remains.
 - **Map, Quit, Replay, and gameplay verbs:** these are replacement paths. Preserve their
   native blank/transition unless a separate visual defect is demonstrated.
-- **Name entry:** it replaces the menu and restores native tile planes on return. Its
-  `9 -> 0 -> 1` replay is a separate ownership epoch and now has one catalogued
-  translation-owned blank; do not inherit the Item/Info mask when removing it.
+- **Unknown Name entry/return contexts:** the exact inventory route is admitted only by
+  the separate state-`$0D` proof below. Any other screen-9 caller or malformed replay
+  retains the catalogued Status LCD-off fallback; shared screen IDs do not authorize the
+  inventory mask.
 - **Forced context-dependent screens:** a forced screen can draw plausible garbage or
   run through invalid state. It cannot authorize a blanking mask.
 
@@ -1758,16 +1829,12 @@ as part of the checkpoint-3 freeze at `34a20ec`.
 
 1. Visually inspect and either freeze or revise the exact checkpoint-4 paths listed
    above. Do not broaden its admission predicate during freeze corrections.
-2. Regionalize the remaining exact `statusdisable` caller, Item
-   `Name -> End -> Items`. Preserve Name's independent tile epoch until complete Items
-   chrome owns the visible region. The independently proven screen-7 `Floor -> Status`
-   owner is complete and must remain in its zero-blank fixture.
-3. Extend the direct Window reference-set audits used by `itemexitspill.py` and
+2. Extend the direct Window reference-set audits used by `itemexitspill.py` and
    `itementryspill.py` to any future
    route that keeps the hardware Window enabled.
-4. Trace any future regionalization of alternate Pot-content and priced-shop
+3. Trace any future regionalization of alternate Pot-content and priced-shop
    lifecycles as independent ownership epochs before choosing checkpoint 5.
-5. Capture complete dispatcher logs for New Log, Copy Log, Erase Log, Rename, Rank, Replay,
+4. Capture complete dispatcher logs for New Log, Copy Log, Erase Log, Rename, Rank, Replay,
    and every staged action verb. Replace every `outline`/`inferred` edge before using it as
    an implementation boundary.
 

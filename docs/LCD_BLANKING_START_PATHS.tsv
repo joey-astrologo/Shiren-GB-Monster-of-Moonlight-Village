@@ -1,0 +1,18 @@
+system	key	route	stack	sites	origin	status	fixture	evidence
+start	boot-title-presentation	Boot/logo/title presentation -> Start root	pre-menu	29:$411A + shadow 31:$49B1 + shadow 31:$4AE8 + shadow 31:$4D59 + shadow 31:$4899 + shadow 4:$65F4	base	keep	titlecardspill.py, titlelogospill.py	pre-interactive display initialization, not a menu blanking target
+start	adventure-log-summary	Adventure -> saved-log summary and log changes	15,23	41:$40E1	translation	review	mainmenuspill.py, copylogspill.py, savesummaryspill.py	observed title/file composite replacement
+start	adventure-to-gameplay	Select Adventure log -> gameplay	15,23,21	shadow 2:$463C + shadow 4:$4154	base	keep	all save-backed menu fixtures	replacement boundary
+start	new-log-selector	New Log -> log selector	15,22	41:$40E1	translation	review	mainmenuspill.py, nameflowspill.py	observed screen 22
+start	new-log-difficulty	New Log -> difficulty and explanation composite	15,22,25	41:$40E1	translation	review	mainmenuspill.py, nameflowspill.py	observed screen 25
+start	new-log-name	New Log -> personal-name keyboard	15,22,25,8	44:$4066	translation	keep	nameflowspill.py, newgamesmoke.py	caller 4:$4B04
+start	new-log-to-gameplay	Confirm New Log name -> village/gameplay	15,22,25,8	shadow 2:$463C	base	keep	newgamesmoke.py	replacement boundary
+start	copy-log	Copy Log -> source/destination summaries and confirmation	15,23 and 15,23,24	41:$40E1	translation	review	copylogspill.py	observed screens 23 and 24
+start	erase-log	Erase Log -> log summary and confirmation	15,23 and 15,23,24	41:$40E1	translation	review	copylogspill.py, startspill.py	observed screens 23 and 24
+start	rename-log-selector	Rename -> alternate log-selector wrapper	15,23,26	41:$40E1	translation	review	nameflowspill.py	observed screen 26
+start	rename-log-name	Rename -> personal-name keyboard	screen 8 variant	44:$4066	translation	keep	no isolated Rename entry fixture	static caller 4:$4B04 is shared with New Log; exact Rename visual route remains a coverage gap
+start	return-to-start-root	Return from file/Rank children -> Start root/native font	15	46:$42B5	translation	keep	nameflowspill.py, copylogspill.py, rankspill.py	observed beyond Rankings; physical owner is rankvwf.nativerestore
+start	rank-pass	Rank/Pass -> root/category/Pass log composites	15,30 and 15,30,32	41:$40E1	translation	review	mainmenuspill.py, awardspill.py	observed screens 30 and 32
+start	rankings-display	Rank category -> completed Rankings display/native-font restore	15,30[,31],33	43:$40B6 + 46:$42B5	translation	review	rankspill.py, orochisymbolspill.py, deathrankspill.py	both publication and restoration execute on screen 33
+start	fay-entry	Fay's Puzzle -> task composite	15 -> 17	38:$408F	translation	keep	faypathspill.py	observed at the screen-15 boundary
+start	fay-to-gameplay	Fay's Puzzle task -> gameplay	15,17	shadow 2:$463C + shadow 4:$4154	base	keep	faypathspill.py	replacement boundary
+start	replay-log-summary	Replay -> saved-log summary before replay begins	15,23	41:$40E1	translation	review	focused exhaustive gbrun trace, 2026-08-27	observed screen 23; selecting the log produced no additional LCD-off producer before the replay handoff

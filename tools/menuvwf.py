@@ -167,6 +167,13 @@ gate. That gate retires the Pot map, publishes complete empty Items boxes, and o
 reveals rows. Box 17 composes all of `Pot`; leaving its first character as raw tile
 `$1A` allowed the Status field renderer to replace it before the Pot title was visible.
 
+INVENTORY NAME RETURN. The screen-9 Name finalizer natively replays screens `0,1,0`.
+Status VWF admits the exact pre-screen-1 and post-screen-1 states as transaction 13,
+suppresses only the disposable Status painter, regionally retires the keyboard over four
+complete VBlanks, and publishes empty Items chrome before this renderer may expose any
+row. One- through four-page and row-one through row-five fixtures prove the retained row
+record count; unknown Name or Status callers retain the LCD-off fallback.
+
 THE UPLOAD. Composition goes into the `$C006` queue payloads (the three 66-byte slots,
 a flat 12-tile space with 2-byte dest gaps) plus a 16-byte extension buffer for TILE 12
 — the queue physically cannot hold a 13th tile, which is what capped the POC at 16

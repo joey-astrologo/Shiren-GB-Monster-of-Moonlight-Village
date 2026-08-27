@@ -1,79 +1,154 @@
-bank	address	encoding	effect	origin	owner	policy	route
-0	$0737	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-13	$77D2	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-13	$7842	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-16	$6F7D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-17	$4C51	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-18	$6447	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-19	$6DF5	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-19	$7D35	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-20	$5057	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-21	$4591	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-21	$7AE9	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-21	$7D87	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-22	$4477	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-22	$4B9C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-22	$4D66	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-23	$662C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-23	$76EE	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-24	$43E8	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-24	$514C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-24	$5382	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-24	$60AE	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$4A14	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$4D8D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$4EF4	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$4F3F	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$533A	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$566D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$56DA	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$5BCC	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$5FB0	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$784F	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$7A62	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$7C1E	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-25	$7D64	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$4483	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$508C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$50B6	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$5277	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$558C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$55D5	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-26	$5A73	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-27	$5963	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-27	$6DA8	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-27	$6E59	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-29	$40EC	ldh	immediate-off-$11	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-30	$4601	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-30	$761B	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-32	$527B	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$5902	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$6002	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$65FB	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$686B	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$6CD2	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-32	$6D42	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-38	$408F	ldh	explicit-off	translation	structvwf.feirestore	keep	Fay's Puzzle composite entry and native fixed-tile reload
-41	$40C8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-41	$40E1	ldh	explicit-off	translation	menuvwf.starttransition	review	title/file composite shadow-map replacement
-43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	review	completed Rankings whole-map publication
-43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-44	$4066	ldh	explicit-off	translation	rankvwf.nativerestore	keep	complete native menu-font reload with caller LCDC restoration
-44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-46	$42B5	ldh	explicit-off	translation	rankvwf.screenrestore	keep	Rankings result/native-font restoration
-53	$42C6	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	Name -> disposable Status -> Items and other unknown LCD-on returns; exact screen-7 Floor -> Status is gated away
-53	$42CF	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-53	$4B46	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-53	$4C26	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-53	$689F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-53	$6B0F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-58	$79AD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-58	$79B1	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-59	$406F	ldh	explicit-off	translation	normalending.install	keep	Normal-ending full-screen art installation
-59	$40B3	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-60	$4082	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-60	$4222	ldh	explicit-off	translation	menuvwf.itemregion	replace-menu	unreached rejected regional Item-row transaction to whole-map fallback
-60	$4338	ldh	explicit-off	translation	menuvwf.itempage	replace-menu	rejected Pot viewer or Item page/sort transaction fallback
-62	$4476	ldh	explicit-off	translation	menuvwf.infolifecycle	replace-menu	legacy Item/Floor Info or seal whole-map fallback
+target	bank	address	encoding	effect	origin	owner	policy	route
+LCDC	0	$0737	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	2	$4120	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	2	$46D6	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	2	$478D	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	4	$41F6	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	4	$6652	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	4	$72C9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	4	$7C36	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	10	$405C	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	10	$4181	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	13	$77D2	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	13	$7842	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	16	$6F7D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	17	$4C51	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	18	$6447	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	19	$6DF5	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	19	$7D35	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	20	$5057	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	21	$4591	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	21	$7AE9	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	21	$7D87	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	22	$4477	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	22	$4B9C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	22	$4D66	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	23	$662C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	23	$76EE	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	24	$43E8	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	24	$514C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	24	$5382	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	24	$60AE	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$4A14	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$4D8D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$4EF4	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$4F3F	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$533A	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$566D	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$56DA	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$5BCC	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$5FB0	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$784F	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$7A62	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$7C1E	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	25	$7D64	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$4483	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$508C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$50B6	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$5277	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$558C	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$55D5	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	26	$5A73	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	27	$5963	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	27	$6DA8	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	27	$6E59	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$4054	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$407F	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$40EC	ldh	immediate-off-$11	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$411A	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$418A	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$41E9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$4238	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$42BB	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$42FB	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$435B	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$4372	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$438A	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$43D0	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$4402	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$441B	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	29	$4432	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	30	$4601	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	30	$761B	ldh	variable	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$48E6	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$499E	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$49F7	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$4AD5	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$4B2E	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$4DD9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$7674	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$795D	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$7DA9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	31	$7EF4	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC	32	$527B	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$5902	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$6002	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$65FB	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$686B	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$6CD2	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	32	$6D42	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	38	$408F	ldh	explicit-off	translation	structvwf.feirestore	keep	Fay's Puzzle composite entry and native fixed-tile reload
+LCDC	41	$40C8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	41	$40E1	ldh	explicit-off	translation	menuvwf.starttransition	review	title/file composite shadow-map replacement
+LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	review	completed Rankings whole-map publication
+LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	shared complete native menu-font reload: 4:$4B04 Start naming and 4:$4B22 unidentified-item naming
+LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	46	$42B5	ldh	explicit-off	translation	rankvwf.nativerestore	keep	Rankings result/native-font restoration
+LCDC	53	$43A6	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction; observed after the Pot Put return and retained for unknown callers
+LCDC	53	$43AF	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$4D16	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$4DF6	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$6A6F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$6CDF	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	58	$79AD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	58	$79B1	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	59	$406F	ldh	explicit-off	translation	normalending.install	keep	Normal-ending full-screen art installation
+LCDC	59	$40B3	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	60	$4082	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	60	$4222	ldh	explicit-off	translation	menuvwf.itemregion	replace-menu	rejected regional Item-row transaction; observed on the synthetic equipment Status-to-Items route
+LCDC	60	$4338	ldh	explicit-off	translation	menuvwf.itempage	replace-menu	rejected Item/Pot transaction; observed on Action -> Pot Put selector
+LCDC	62	$4476	ldh	explicit-off	translation	menuvwf.infolifecycle	replace-menu	legacy Item/Floor Info or seal whole-map fallback
+LCDC-shadow	0	$0180	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$40A2	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$4125	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$463C	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$46DB	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$4702	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	2	$4792	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$4154	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$41FB	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$65F4	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$6657	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$7262	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$72CE	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$7BA9	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	4	$7C3B	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	10	$4031	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	10	$4061	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	10	$4157	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	10	$4186	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4899	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$48EB	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$49A3	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$49B1	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$49FC	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4ADA	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4AE8	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4B33	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4D59	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$4DDE	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7612	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7679	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7915	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7962	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7D4C	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7DAE	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7E99	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	31	$7EF9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
+LCDC-shadow	41	$40C5	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC-shadow	43	$4083	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC-shadow	43	$40C2	ld	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC-shadow	46	$429B	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition

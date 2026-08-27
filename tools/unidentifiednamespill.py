@@ -4,8 +4,10 @@
 Log 3 in ``saves/shiren_log3_unidentified_naming.srm`` starts directly above an
 unidentified Willow Staff.  The route opens Menu -> Floor, selects Name from the
 six-action item box, and compares the resulting keyboard with fresh New Log name
-entry.  It then takes the staff, names it ``Stun`` from the last inventory page,
-returns to Items, and backs out to status.  That full lifetime is intentionally
+entry. It then takes the staff, names it ``Stun`` from Items, regionally returns to
+complete empty Items chrome before any list text, and backs out to Status. A generated
+native-inventory matrix repeats that return with one through four pages and target rows
+one through five. That full lifetime is intentionally
 different from ``nameflowspill.py``: the dungeon Floor/action VWF can borrow almost
 every raw tile used by the keyboard, while the complete native font restore can in
 turn overwrite every low-page private status tile.
@@ -13,6 +15,8 @@ turn overwrite every low-page private status tile.
     python3 tools/unidentifiednamespill.py build/shiren_en.gb
     python3 tools/unidentifiednamespill.py build/shiren_en.gb \
         --png build/unidentified_name.png
+    python3 tools/unidentifiednamespill.py build/shiren_en.gb \
+        --png-dir build/name_return_frames
 """
 import argparse
 import os
@@ -27,6 +31,7 @@ sys.path.insert(0, HERE)
 from gbrun import PRESS_FRAMES, _import_pyboy                  # noqa: E402
 import gbasm                                                   # noqa: E402
 import menuspill                                               # noqa: E402
+import menuvwf                                                 # noqa: E402
 import statusvwf                                               # noqa: E402
 from latinfont import EN_CODES                                 # noqa: E402
 
@@ -36,6 +41,8 @@ FLOOR_ENTRY = (4, 0x4B20)
 DISPATCH = (4, 0x48AA)
 SHADOW = 0xC300
 SHADOW_BYTES = 32 * 18
+INVENTORY = 0xA3B0
+OBJECTS = 0xA406
 
 # Fresh cart -> Adventure -> New Game -> Easy -> name entry.
 FRESH = {
@@ -53,27 +60,54 @@ WILLOW_STAFF_NAME = {
     4260: 'a',
 }
 
-# Supplied Log 3 -> Floor/Take -> Items/last row -> Name -> type ``Stun`` -> End
-# (Start is the native shortcut which selects the on-screen End action) -> Items ->
-# status.  Direct row/column positioning only avoids hundreds of d-pad frames; every
-# character and End still enters through the game's real A-button picker/finalizer.
-STUN_ROUNDTRIP = {
-    60: 'start', 120: 'start', 180: 'start', 240: 'start',
-    300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
-    3000: 'b', 3400: 'down', 3600: 'a', 3900: 'a',
-    4300: 'b', 4500: 'a', 4700: 'left',
-    4900: 'down', 4980: 'down', 5060: 'down', 5200: 'a',
-    5500: 'down', 5580: 'down', 5660: 'down', 5800: 'a',
-    6100: 'a', 6220: 'a', 6340: 'a', 6460: 'a',
-    6600: ('start', 5), 6700: ('a', 5), 7000: ('b', 5),
-}
-STUN_CURSOR = {
-    6100: (4, 3),       # S
-    6220: (5, 6),       # t
-    6340: (5, 7),       # u
-    6460: (3, 10),      # n
-}
+# Supplied Log 3 -> Floor/Take -> Items -> Name -> type ``Stun`` -> End (Start is the
+# native shortcut which selects the on-screen End action) -> Items -> status.  The
+# generated timing also drives synthetic one- through four-page layouts below; every
+# page, row, character and End still enters through the game's real input handlers.
+def stun_roundtrip(item_count=9, target_slot=8):
+    if not 1 <= item_count <= 20 or not 0 <= target_slot < item_count:
+        raise ValueError('invalid inventory Name matrix case')
+    script = {
+        60: 'start', 120: 'start', 180: 'start', 240: 'start',
+        300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+        3000: 'b', 3400: 'down', 3600: 'a', 3900: 'a',
+        4300: 'b', 4500: 'a',
+    }
+    page = target_slot // 5
+    row = target_slot % 5
+    last_page_at = None
+    for index in range(page):
+        at = 4700 + 120 * index
+        script[at] = 'right'
+        last_page_at = at
+    row_at = 4900 if last_page_at is None else last_page_at + 200
+    for index in range(row):
+        script[row_at + 80 * index] = 'down'
+    action_at = row_at + 80 * row + 140
+    script[action_at] = 'a'
+    for index in range(3):
+        script[action_at + 300 + 80 * index] = 'down'
+    name_at = action_at + 600
+    script[name_at] = 'a'
+    type_at = name_at + 300
+    cursor = {
+        type_at: (4, 3),             # S
+        type_at + 120: (5, 6),       # t
+        type_at + 240: (5, 7),       # u
+        type_at + 360: (3, 10),      # n
+    }
+    for at in cursor:
+        script[at] = 'a'
+    end_at = type_at + 500
+    script[end_at] = ('start', 5)
+    script[end_at + 100] = ('a', 5)
+    script[end_at + 400] = ('b', 5)
+    return script, cursor, end_at + 800
+
+
+STUN_ROUNDTRIP, STUN_CURSOR, STUN_FRAMES = stun_roundtrip()
 STUN = bytes(EN_CODES[ch] for ch in 'Stun')
+NAME_MATRIX = ((1, 0), (7, 6), (13, 12), (19, 18), (20, 19))
 
 STATUS_TILES = tuple(sorted(
     {tile for base, cap in statusvwf.PRIVATE_RUNS.values()
@@ -93,8 +127,35 @@ def visible_keyboard(shadow):
                  for row in KEYBOARD_ROWS for col in range(20))
 
 
+def expected_item_chrome():
+    """Visible BG rows 0..15 after the shared Items-entry regional clear."""
+    bg = bytearray(16 * 32)
+
+    def box(x, y, width, bottom):
+        bg[y * 32 + x:y * 32 + x + width + 2] = \
+            bytes((0xB8,)) + bytes((0xBC,)) * width + bytes((0xB9,))
+        for row in range(y + 1, bottom):
+            bg[row * 32 + x] = 0xBE
+            bg[row * 32 + x + width + 1] = 0xBF
+        bg[bottom * 32 + x:bottom * 32 + x + width + 2] = \
+            bytes((0xBA,)) + bytes((0xBD,)) * width + bytes((0xBB,))
+
+    box(0, 0, 4, 2)
+    box(0, 3, 18, 13)
+    return bytes(bg)
+
+
+EXPECTED_ITEM_CHROME = expected_item_chrome()
+ITEM_SHAPE = (0, 3, 5, 18, 0x02)
+
+
+def white_frame(image):
+    return len(set(image.convert('RGB').getdata())) == 1
+
+
 def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
-             cursor_overrides=None, status_runtime=None, checkpoint=None):
+             cursor_overrides=None, status_runtime=None, checkpoint=None,
+             inventory_case=None, transition_png_dir=None):
     with tempfile.TemporaryDirectory(prefix='unidentifiednamespill-') as tmp:
         work = os.path.join(tmp, 'name.gb')
         shutil.copyfile(rom_path, work)
@@ -106,12 +167,51 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         fresh_entries = []
         floor_entries = []
         dispatches = []
+        dispatch_states = []
         end_calls = []
         status_draws = []
         status_uploads = []
         status_fallbacks = []
+        status_fallback_states = []
         status_explicit_blanks = []
+        item_entries = []
+        item_entry_blanks = []
+        item_entry_batches = []
+        item_entry_done = []
+        status_name_accepts = []
+        item_name_gates = []
+        item_rows = []
+        transition_samples = []
+        inventory_builds = []
+        inventory_injected = [inventory_case is None]
         checkpoints = {}
+
+        def machine_state():
+            depth = pb.memory[0xC534]
+            return {
+                'frame': frame[0],
+                'lcdc': pb.memory[0xFF40],
+                'ly': pb.memory[0xFF44],
+                'depth': depth,
+                'stack': tuple(pb.memory[0xC535 + index]
+                               for index in range(depth + 1)),
+                'txn': tuple(pb.memory[0xC1B3 + index] for index in range(5)),
+                'context': tuple(pb.memory[address] for address in
+                                 (0xC6A3, 0xC6A6, 0xC6AA, 0xC6AC,
+                                  0xC6BB, 0xC6DE, 0xC11A,
+                                  0xC6F3, 0xC6F5, 0xC6F6, 0xC6F7)),
+                'shape': tuple(pb.memory[0xC69A + index] for index in range(5)),
+            }
+
+        def display_state():
+            return {
+                'frame': frame[0],
+                'lcdc': pb.memory[0xFF40],
+                'ly': pb.memory[0xFF44],
+                'bg': bytes(pb.memory[0x9800:0x9C00]),
+                'window': bytes(pb.memory[0x9C00:0xA000]),
+                'tiles': bytes(pb.memory[0x8800:0x9800]),
+            }
 
         def fresh_entry(_context=None):
             fresh_entries.append((frame[0], pb.memory[0xFF40]))
@@ -121,11 +221,52 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
+            state = machine_state()
+            state['screen'] = pb.register_file.A
+            dispatch_states.append(state)
 
         pb.hook_register(FRESH_ENTRY[0], FRESH_ENTRY[1], fresh_entry, None)
         pb.hook_register(FLOOR_ENTRY[0], FLOOR_ENTRY[1], floor_entry, None)
         pb.hook_register(DISPATCH[0], DISPATCH[1], dispatch, None)
         pb.hook_register(4, 0x6026, lambda _context=None: end_calls.append(frame[0]), None)
+        def inventory_build(_context=None):
+            indices = []
+            for slot in range(20):
+                index = pb.memory[INVENTORY + slot]
+                if index == 0xFF:
+                    break
+                indices.append(index)
+            if inventory_case is not None and not inventory_injected[0]:
+                item_count, target_slot = inventory_case
+                target = next((index for index in indices
+                               if pb.memory[OBJECTS + 8 * index] == 0x78), None)
+                if target is not None:
+                    templates = [index for index in indices if index != target]
+                    free = [index for index in range(128)
+                            if index not in indices and
+                            pb.memory[OBJECTS + 8 * index] == 0xFF]
+                    fillers = list(templates[:item_count - 1])
+                    while len(fillers) < item_count - 1 and free and templates:
+                        new = free.pop(0)
+                        source = templates[len(fillers) % len(templates)]
+                        for offset in range(8):
+                            pb.memory[OBJECTS + 8 * new + offset] = \
+                                pb.memory[OBJECTS + 8 * source + offset]
+                        fillers.append(new)
+                    if len(fillers) == item_count - 1:
+                        layout = fillers[:target_slot] + [target] + fillers[target_slot:]
+                        for slot in range(20):
+                            pb.memory[INVENTORY + slot] = \
+                                layout[slot] if slot < item_count else 0xFF
+                        indices = layout
+                        inventory_injected[0] = True
+            inventory_builds.append((
+                frame[0], tuple(indices),
+                tuple(bytes(pb.memory[OBJECTS + 8 * index:
+                                      OBJECTS + 8 * index + 8])
+                      for index in indices)))
+
+        pb.hook_register(6, 0x4B29, inventory_build, None)
         if status_runtime is not None:
             pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusdraw'],
                              lambda _context=None: status_draws.append(
@@ -135,8 +276,10 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
                                  (frame[0], pb.memory[0xFF44],
                                   pb.memory[statusvwf.S_CAP])), None)
             pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusready'],
-                             lambda _context=None: status_fallbacks.append(
-                                 (frame[0], pb.memory[0xFF40], pb.memory[0xFF44])), None)
+                             lambda _context=None: (
+                                 status_fallbacks.append(
+                                     (frame[0], pb.memory[0xFF40], pb.memory[0xFF44])),
+                                 status_fallback_states.append(machine_state())), None)
             pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusdisable'],
                              lambda _context=None: status_explicit_blanks.append(
                                  (frame[0], pb.memory[0xFF40], pb.memory[0xFF44],
@@ -144,6 +287,29 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
                                   pb.memory[0xC1B6],
                                   tuple(pb.memory[0xC535 + index]
                                         for index in range(pb.memory[0xC534] + 1)))), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementry'],
+                             lambda _context=None: item_entries.append(machine_state()), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementryblank'],
+                             lambda _context=None: item_entry_blanks.append(
+                                 (machine_state(), display_state())), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementrybatchdone'],
+                             lambda _context=None: item_entry_batches.append(
+                                 (frame[0], pb.memory[0xFF44], pb.memory[0xC1B3])), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementryblankdone'],
+                             lambda _context=None: item_entry_done.append(
+                                 (machine_state(), display_state())), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['statusnameaccepted'],
+                             lambda _context=None: status_name_accepts.append(
+                                 machine_state()), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementryname'],
+                             lambda _context=None: item_name_gates.append(
+                                 machine_state()), None)
+            profile = menuspill.renderer_profile(rom_path)
+            pb.hook_register(menuvwf.FAR_BANK, profile['entry'],
+                             lambda _context=None: item_rows.append(
+                                 (frame[0], pb.register_file.D,
+                                  tuple(pb.memory[0xC69A + index]
+                                        for index in range(5)))), None)
         for frame[0] in range(frames):
             if cursor_overrides and frame[0] in cursor_overrides:
                 pb.memory[0xC6F5], pb.memory[0xC6F0] = cursor_overrides[frame[0]]
@@ -152,6 +318,12 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
                 button, duration = action if isinstance(action, tuple) else (action, PRESS_FRAMES)
                 pb.button(button, duration)
             pb.tick()
+            if end_calls:
+                transition_samples.append((frame[0], pb.memory[0xFF40],
+                                           white_frame(pb.screen.image)))
+                if transition_png_dir and frame[0] <= end_calls[0] + 50:
+                    pb.screen.image.save(os.path.join(
+                        transition_png_dir, 'name_return_f%04d.png' % frame[0]))
             if checkpoint is not None and frame[0] == checkpoint:
                 checkpoints[checkpoint] = {
                     tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
@@ -174,11 +346,23 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             'fresh_entries': fresh_entries,
             'floor_entries': floor_entries,
             'dispatches': dispatches,
+            'dispatch_states': dispatch_states,
             'end_calls': end_calls,
             'status_draws': status_draws,
             'status_uploads': status_uploads,
             'status_fallbacks': status_fallbacks,
+            'status_fallback_states': status_fallback_states,
             'status_explicit_blanks': status_explicit_blanks,
+            'item_entries': item_entries,
+            'item_entry_blanks': item_entry_blanks,
+            'item_entry_batches': item_entry_batches,
+            'item_entry_done': item_entry_done,
+            'status_name_accepts': status_name_accepts,
+            'item_name_gates': item_name_gates,
+            'item_rows': item_rows,
+            'transition_samples': transition_samples,
+            'inventory_builds': inventory_builds,
+            'inventory_injected': inventory_injected[0],
             'checkpoints': checkpoints,
             'status_tiles': {
                 tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
@@ -193,18 +377,130 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         return result
 
 
+def name_return_problems(run, label, expected_record_count=None):
+    """Validate the exact Name -> disposable Status -> Items -> Status lifetime."""
+    problems = []
+    if len(run['end_calls']) != 1:
+        problems.append('%s reached End %d times, expected once' %
+                        (label, len(run['end_calls'])))
+        return problems
+    end_at = run['end_calls'][0]
+    after = lambda entries, frame_of: [entry for entry in entries
+                                       if frame_of(entry) >= end_at]
+
+    screens = [screen for frame, screen in run['dispatches'] if frame >= end_at]
+    if screens[:3] != [0, 1, 0]:
+        problems.append('%s post-End dispatches are %s, expected 0,1,0' %
+                        (label, screens[:3]))
+
+    accepts = after(run['status_name_accepts'], lambda entry: entry['frame'])
+    gates = after(run['item_name_gates'], lambda entry: entry['frame'])
+    if len(accepts) != 1:
+        problems.append('%s admitted %d Name status handoffs, expected one' %
+                        (label, len(accepts)))
+    if len(gates) != 1:
+        problems.append('%s reached %d Name Item-entry gates, expected one' %
+                        (label, len(gates)))
+    if accepts and accepts[0]['txn'][0] != 0:
+        problems.append('%s pre-handoff transaction is $%02X, expected idle' %
+                        (label, accepts[0]['txn'][0]))
+    if gates and gates[0]['txn'][0] != 0x0D:
+        problems.append('%s Item-entry transaction is $%02X, expected $0D' %
+                        (label, gates[0]['txn'][0]))
+    if expected_record_count is not None:
+        expected_packed = expected_record_count << 5
+        for phase, entries in (('pre-handoff', accepts), ('Item-entry', gates)):
+            if entries and entries[0]['txn'][2] != expected_packed:
+                problems.append('%s %s retained-row pack is $%02X, expected $%02X' %
+                                (label, phase, entries[0]['txn'][2], expected_packed))
+
+    blanks = after(run['status_explicit_blanks'], lambda entry: entry[0])
+    if blanks:
+        problems.append('%s executed Status LCD-off at %s' %
+                        (label, ' '.join('f%d' % entry[0] for entry in blanks)))
+
+    entries = after(run['item_entry_blanks'], lambda entry: entry[0]['frame'])
+    done = after(run['item_entry_done'], lambda entry: entry[0]['frame'])
+    batches = after(run['item_entry_batches'], lambda entry: entry[0])
+    if len(entries) != 1 or len(done) != 1:
+        problems.append('%s began/completed %d/%d regional Item entries, expected 1/1' %
+                        (label, len(entries), len(done)))
+    else:
+        origin_machine, origin = entries[0]
+        done_machine, complete = done[0]
+        if origin_machine['txn'][0] != 0x0D or done_machine['txn'][0] != 0x0D:
+            problems.append('%s regional entry lost state $0D (%s -> %s)' %
+                            (label, origin_machine['txn'][0], done_machine['txn'][0]))
+        if not origin['lcdc'] & 0x80 or not complete['lcdc'] & 0x80:
+            problems.append('%s regional entry disabled the LCD' % label)
+        if not 0x90 <= complete['ly'] <= 0x99:
+            problems.append('%s chrome completed outside VBlank at LY=$%02X' %
+                            (label, complete['ly']))
+        visible = {row * 32 + col for row in range(16) for col in range(20)}
+        wrong = next((offset for offset in visible
+                      if complete['bg'][offset] != EXPECTED_ITEM_CHROME[offset]), None)
+        changed = next((offset for offset in range(0x400)
+                        if offset not in visible and
+                        origin['bg'][offset] != complete['bg'][offset]), None)
+        if wrong is not None:
+            problems.append('%s empty Items chrome differs at BG +$%03X' %
+                            (label, wrong))
+        if changed is not None:
+            problems.append('%s changed locked BG +$%03X' % (label, changed))
+        if complete['window'] != origin['window']:
+            problems.append('%s changed the persistent Window map' % label)
+        if complete['tiles'] != origin['tiles']:
+            problems.append('%s repainted tile planes before empty chrome completed' %
+                            label)
+        rows = [entry for entry in run['item_rows']
+                if entry[0] >= end_at and entry[2] == ITEM_SHAPE and 0 <= entry[1] < 5]
+        if not rows:
+            problems.append('%s never rendered its returned Items rows' % label)
+        elif rows[0][0] < done_machine['frame']:
+            problems.append('%s rendered Item text at f%d before chrome completed f%d' %
+                            (label, rows[0][0], done_machine['frame']))
+
+    if len(batches) != 4:
+        problems.append('%s used %d regional batches, expected four' %
+                        (label, len(batches)))
+    else:
+        late = next((entry for entry in batches if not 0x90 <= entry[1] <= 0x99), None)
+        if late:
+            problems.append('%s regional batch f%d ended at LY=$%02X' %
+                            (label, late[0], late[1]))
+        states = tuple(entry[2] for entry in batches)
+        if states != (0x0D,) * 4:
+            problems.append('%s regional batch states are %s, expected four $0D' %
+                            (label, states))
+
+    lcd_off = [frame for frame, lcdc, _white in run['transition_samples']
+               if frame >= end_at and not lcdc & 0x80]
+    whites = [frame for frame, _lcdc, white in run['transition_samples']
+              if frame >= end_at and white]
+    if lcd_off:
+        problems.append('%s produced LCD-off frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in lcd_off[:12])))
+    if whites:
+        problems.append('%s produced uniform frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in whites[:12])))
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('rom')
     parser.add_argument('--ram', default=os.path.join(
         ROOT, 'saves/shiren_log3_unidentified_naming.srm'))
     parser.add_argument('--png')
+    parser.add_argument('--png-dir')
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('unidentifiednamespill: missing %s' % path)
 
     PyBoy = _import_pyboy()
+    if args.png_dir:
+        os.makedirs(args.png_dir, exist_ok=True)
     fresh = snapshot(PyBoy, args.rom, FRESH, 1900)
     routed = snapshot(PyBoy, args.rom, WILLOW_STAFF_NAME, 4700,
                       args.ram, args.png)
@@ -213,9 +509,10 @@ def main():
     _status_code, status_labels = gbasm.assemble(
         statusvwf._source(widths), statusvwf.CODE_AT)
     roundtrip = snapshot(
-        PyBoy, args.rom, STUN_ROUNDTRIP, 7400, args.ram,
+        PyBoy, args.rom, STUN_ROUNDTRIP, STUN_FRAMES, args.ram,
         cursor_overrides=STUN_CURSOR,
-        status_runtime=status_labels, checkpoint=4400)
+        status_runtime=status_labels, checkpoint=4400,
+        transition_png_dir=args.png_dir)
     problems = []
 
     if len(fresh['fresh_entries']) != 1:
@@ -252,9 +549,6 @@ def main():
     if roundtrip['name'][:len(STUN) + 1] != STUN + b'\xFF':
         problems.append('inventory rename stored %s, expected Stun + terminator' %
                         roundtrip['name'].hex(' '))
-    if len(roundtrip['end_calls']) != 1:
-        problems.append('inventory rename reached End %d times, expected once' %
-                        len(roundtrip['end_calls']))
     screens = [screen for _frame, screen in roundtrip['dispatches']]
     try:
         name_at = screens.index(9)
@@ -264,32 +558,15 @@ def main():
     except ValueError:
         problems.append('inventory rename never dispatched name screen 9')
 
-    after_name_draws = [entry for entry in roundtrip['status_draws'] if entry[0] > 5800]
-    if len(after_name_draws) != 2:
-        problems.append('rename return ran status painter %d times, expected twice' %
-                        len(after_name_draws))
-    elif not (not (after_name_draws[0][1] & 0x80) and
-              (after_name_draws[1][1] & 0x80)):
-        problems.append('post-Name status painters are %s, expected LCD-off reconstruction '
-                        'then LCD-on direct Items pop' % (after_name_draws,))
-    after_name_fallbacks = [entry for entry in roundtrip['status_fallbacks']
-                            if entry[0] > 5800]
-    if len(after_name_fallbacks) != 1:
-        problems.append('rename return used conservative status fallback %d times, '
-                        'expected once for Name -> Items reconstruction' %
-                        len(after_name_fallbacks))
-    after_name_blanks = [entry for entry in roundtrip['status_explicit_blanks']
-                         if entry[0] > 5800]
-    # The carried-Pot entry classifier adds a bounded check to the shared menu-row
-    # completion path, moving this still-intentional legacy Name blank two scanlines
-    # earlier without changing its screen/state/stack ownership.
-    expected_name_blanks = ((0xE7, 0x96, 0, 0, 1, (0, 1)),)
-    name_blank_states = tuple(entry[1:] for entry in after_name_blanks)
-    if name_blank_states != expected_name_blanks:
-        problems.append('rename-return LCD-on Status blank states are %s, expected %s' %
-                        (name_blank_states, expected_name_blanks))
+    problems.extend(name_return_problems(roundtrip, 'inventory rename', 4))
+    end_at = roundtrip['end_calls'][0] if roundtrip['end_calls'] else STUN_FRAMES
+    after_name_draws = [entry for entry in roundtrip['status_draws']
+                        if entry[0] >= end_at]
+    if len(after_name_draws) != 1 or not after_name_draws[0][1] & 0x80:
+        problems.append('post-Name status painters are %s, expected only the final '
+                        'LCD-on Items -> Status draw' % (after_name_draws,))
     after_name_uploads = [entry for entry in roundtrip['status_uploads']
-                          if entry[0] > 5800]
+                          if entry[0] >= end_at]
     expected_caps = (6, 7, 5, 2, 4, 4, 4, 4, 4)
     if tuple(cap for _frame, _ly, cap in after_name_uploads) != expected_caps:
         problems.append('direct renamed-Items exit upload caps are %s, expected %s' %
@@ -313,13 +590,35 @@ def main():
     problems.extend('rename return: ' + problem
                     for problem in roundtrip['status_problems'])
 
+    matrix_results = []
+    for item_count, target_slot in NAME_MATRIX:
+        script, cursor, frames = stun_roundtrip(item_count, target_slot)
+        case = snapshot(
+            PyBoy, args.rom, script, frames, args.ram,
+            cursor_overrides=cursor, status_runtime=status_labels,
+            inventory_case=(item_count, target_slot))
+        page = target_slot // 5 + 1
+        row = target_slot % 5
+        label = '%d-item page-%d row-%d Name' % (item_count, page, row + 1)
+        if not case['inventory_injected']:
+            problems.append('%s fixture was not injected' % label)
+        if case['name'][:len(STUN) + 1] != STUN + b'\xFF':
+            problems.append('%s stored %s, expected Stun + terminator' %
+                            (label, case['name'].hex(' ')))
+        record_count = min(5, item_count - 5 * (target_slot // 5))
+        problems.extend(name_return_problems(case, label, record_count))
+        problems.extend('%s: %s' % (label, problem)
+                        for problem in case['status_problems'])
+        matrix_results.append((item_count, page, row + 1, record_count))
+
     for problem in problems:
         print('  ' + problem)
     floor_entry = routed['floor_entries'][0] if routed['floor_entries'] else None
     print('unidentifiednamespill: Willow Staff Floor -> Name + inventory Stun -> '
-          'Items -> status; entry=%s; %d keyboard / %d status tile plane(s); '
+          'Items -> status; Name matrix %s; entry=%s; %d keyboard / %d status tile plane(s); '
           '%d problem(s)' %
-          (floor_entry, len(all_tiles), len(STATUS_TILES), len(problems)))
+          (' '.join('%di/p%d/r%d/%drec' % result for result in matrix_results),
+           floor_entry, len(all_tiles), len(STATUS_TILES), len(problems)))
     raise SystemExit(1 if problems else 0)
 
 

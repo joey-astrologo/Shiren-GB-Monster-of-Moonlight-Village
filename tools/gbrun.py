@@ -17,10 +17,107 @@ first DTE hook attempt wrong, because bank 11's menu labels turned out to be cop
 Buttons: --press a,start,down:120 presses at the given frame (default 60 apart).
 """
 import argparse
+import json
 import os
 import sys
 
 import codec
+import lcdblankaudit
+
+
+LCD_TRACE_ENV = 'SHIREN_LCD_TRACE'
+LCD_TRACE_ALL_ENV = 'SHIREN_LCD_TRACE_ALL'
+
+
+def _install_lcd_trace(pb, rom):
+    """Install an opt-in instruction-level LCD-off recorder on a new PyBoy instance.
+
+    Every runtime fixture obtains PyBoy through :func:`_import_pyboy`, so this gives the
+    audit one observation point without weakening or duplicating the fixtures.  It is
+    inert unless SHIREN_LCD_TRACE names a JSONL output file.
+    """
+    output = os.environ.get(LCD_TRACE_ENV)
+    if not output:
+        return
+    directory = os.path.dirname(os.path.abspath(output))
+    os.makedirs(directory, exist_ok=True)
+    sites = lcdblankaudit.display_mutators(rom)
+    if not os.environ.get(LCD_TRACE_ALL_ENV):
+        # The causal set contains every locally provable direct blank, every shadow
+        # producer which can request a later blank, and the one native VBlank publisher
+        # which applies that request.  Hooking all 153 enable/scroll/configuration sites
+        # makes long smoke tests prohibitively slow; SHIREN_LCD_TRACE_ALL remains
+        # available for a focused exhaustive run.
+        sites = [site for site in sites
+                 if ((site['target'] == 'LCDC-shadow' and
+                      site['effect'] != 'explicit-on') or
+                     (site['target'] == 'LCDC' and
+                      (lcdblankaudit._is_locally_off(site['effect']) or
+                       (site['bank'], site['address']) == (0, 0x0737))))]
+
+    def stack_ids():
+        depth = pb.memory[0xC534]
+        if depth > 9:
+            return []
+        return [pb.memory[0xC535 + index] for index in range(depth + 1)]
+
+    def make(site):
+        def callback(_context):
+            target_address = 0xFF40 if site['target'] == 'LCDC' else 0xC110
+            before = pb.memory[target_address]
+            if site['encoding'] == 'res-[hl]':
+                incoming = before & 0x7F
+            elif site['encoding'] == 'set-[hl]':
+                incoming = before | 0x80
+            else:
+                incoming = pb.register_file.A
+            if incoming & 0x80:
+                return
+            sp = pb.register_file.SP
+            returns = []
+            for offset in range(0, 12, 2):
+                lo = pb.memory[(sp + offset) & 0xFFFF]
+                hi = pb.memory[(sp + offset + 1) & 0xFFFF]
+                returns.append(lo | (hi << 8))
+            record = {
+                'fixture': os.path.basename(sys.argv[0]),
+                'argv': sys.argv[1:],
+                'rom': os.path.basename(rom),
+                'frame': pb.frame_count,
+                'site': '%d:$%04X' % (site['bank'], site['address']),
+                'target': site['target'],
+                'encoding': site['encoding'],
+                'effect': site['effect'],
+                'before': before,
+                'incoming': incoming,
+                'transition': bool(before & 0x80),
+                'lcdc': pb.memory[0xFF40],
+                'lcdc_shadow': pb.memory[0xC110],
+                'rom_bank': pb.memory[0x4000],
+                'screen': pb.memory[0xC6A3],
+                'depth': pb.memory[0xC534],
+                'stack': stack_ids(),
+                'state': [pb.memory[address] for address in
+                          (0xC1B1, 0xC1B2, 0xC1B3, 0xC1B4,
+                           0xC1B5, 0xC1B6, 0xC1B7)],
+                'menu': [pb.memory[address] for address in
+                         (0xC6A4, 0xC6A5, 0xC6A6, 0xC6AA,
+                          0xC6AC, 0xC6BB, 0xC6DE)],
+                'sp': sp,
+                'returns': returns,
+            }
+            with open(output, 'a', encoding='utf-8') as handle:
+                handle.write(json.dumps(record, sort_keys=True) + '\n')
+        return callback
+
+    for site in sites:
+        try:
+            pb.hook_register(site['bank'], site['address'], make(site), None)
+        except Exception:
+            # The static census deliberately includes uncertain native/data matches.
+            # A non-hookable address remains in the TSV for review and must not prevent
+            # executable sites from being observed.
+            pass
 
 
 def _import_pyboy():
@@ -38,7 +135,14 @@ def _import_pyboy():
     if mod is not None and not hasattr(mod, 'COMPILER_FLAG_NAMES'):
         del sys.modules['dis']
     import pyboy
-    return pyboy.PyBoy
+    if not os.environ.get(LCD_TRACE_ENV):
+        return pyboy.PyBoy
+
+    def TracedPyBoy(rom, *args, **kwargs):
+        pb = pyboy.PyBoy(rom, *args, **kwargs)
+        _install_lcd_trace(pb, rom)
+        return pb
+    return TracedPyBoy
 
 # Every routine seen to copy string bytes toward the screen, and what it is.
 #   (bank, cpu-addr, name, source-register)

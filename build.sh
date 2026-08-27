@@ -12,10 +12,14 @@ python3 tools/expand.py    build/_m.gb  build/_base_expanded.gb --size-code 5 >/
 python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en.gb \
         --report build/worklist.tsv --dot-font
 
-# Whole-LCD blanking is a governed resource. Catalogue every native/English LCDC writer
-# and fail if a translation-added explicit bit-7 clear has no reviewed owner/policy.
+# Whole-LCD blanking is a governed resource. Catalogue hardware LCDC mutations and the
+# native $C110 shadow producers which VBlank later publishes. Keep separate caller-level
+# worklists for the in-dungeon Item/Status system and the title Start system, and fail if
+# a translation-added explicit bit-7 clear has no reviewed owner/policy.
 python3 tools/lcdblankaudit.py build/base.gb build/shiren_en.gb \
-        --tsv build/lcd_blank_audit.tsv
+        --tsv build/lcd_blank_audit.tsv \
+        --item-menu-tsv build/lcd_blank_item_paths.tsv \
+        --start-menu-tsv build/lcd_blank_start_paths.tsv
 
 # Gameplay-data collision gate. Ending-credit code once occupied a zero-filled-looking
 # span which was actually the high-byte plane of the native tier-3 enemy EXP table.

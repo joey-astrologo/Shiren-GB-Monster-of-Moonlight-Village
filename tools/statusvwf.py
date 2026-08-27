@@ -7,10 +7,13 @@ but Items -> Status and returns from the item-name picker can reach it with the 
 enabled during the visible scan. Mesen and hardware reject unrestricted direct VRAM
 writes there, leaving one status glyph plane native and the other proportional.
 
-The exact Status-root -> Items entry is intercepted at screen 1's native shadow-clear
-boundary. It retires visible BG rows 0..15 over four complete VBlanks while preserving
-the enabled bottom Window, commits the empty header/list-box chrome, then lets the
-existing row and final-map publishers reveal only completed Item content inside it.
+The exact Status-root -> Items entry and exact inventory-Name -> disposable Status ->
+Items replay are intercepted at screen 1's native shadow-clear boundary. They retire
+visible BG rows 0..15 over four complete VBlanks while preserving the enabled bottom
+Window, commit the empty header/list-box chrome, then let the existing row and final-map
+publishers reveal only completed Item content inside it. The Name route is admitted in
+two independently checked halves around the native screen-0/screen-1 dispatch; unknown
+LCD-on returns retain the conservative LCD-off path.
 
 The exact root -> Items -> root and root -> alternate-Floor-screen-7 -> root stack pops
 are special too: all 40 private status tiles and the structured Weapon/Shield fragments
@@ -353,13 +356,15 @@ itementrygate:
   ; Exact direct Status-root -> Items stack and hardware proof.  Screen 1 paging
   ; has the same logical stack, so the four cells that are unused on Status must
   ; also be zero.  Drain the preceding Status publication before observing them.
+  ld a,[$C1B3]
+  cp $0D
+  jp z,itementryname
+  and a
+  jr nz,itementrybad
   ld a,[$C6A3]
   dec a
   jr nz,itementrybad
   ld a,[$C6A6]
-  and a
-  jr nz,itementrybad
-  ld a,[$C1B3]
   and a
   jr nz,itementrybad
   ld a,[$C534]
@@ -419,6 +424,106 @@ itementrymapcell:
   ret
 itementrybad:
   and a
+  ret
+
+itementryname:
+  ; Post-dispatch half of the exact inventory-Name handoff. The replay counter has
+  ; advanced once and screen 1 is current, but the retained Item count/selector,
+  ; Name-finalizer state, Status descriptor, and viewport must still match the
+  ; pre-dispatch proof above. Unlike direct Status -> Items, marker cells are not
+  ; consulted: the outgoing keyboard owns the whole visible BG and is retired first.
+  ld a,[$C6A3]
+  dec a
+  jp nz,itementrybad
+  ld a,[$C6A6]
+  cp $02
+  jp nz,itementrybad
+  ld a,[$C1B4]
+  and a
+  jp nz,itementrybad
+  ld a,[$C1B5]
+  ld b,a
+  and $1F
+  jp nz,itementrybad
+  ld a,b
+  and $E0
+  jp z,itementrybad
+  cp $C0
+  jp nc,itementrybad
+  ld a,[$C1B6]
+  cp $02
+  jp nc,itementrybad
+  ld a,[$C1B7]
+  and a
+  jp nz,itementrybad
+  ld a,[$C534]
+  dec a
+  jp nz,itementrybad
+  ld a,[$C535]
+  and a
+  jp nz,itementrybad
+  ld a,[$C536]
+  dec a
+  jp nz,itementrybad
+  ld a,[$C6AA]
+  and a
+  jp z,itementrybad
+  cp $15
+  jp nc,itementrybad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jp nc,itementrybad
+  ld a,[$C6BB]
+  cp $04
+  jp nz,itementrybad
+  ld a,[$C6DE]
+  and a
+  jp nz,itementrybad
+  ld a,[$C11A]
+  and a
+  jp nz,itementrybad
+  ld a,[$C6F3]
+  cp $03
+  jp nz,itementrybad
+  ld a,[$C6F5]
+  and a
+  jp nz,itementrybad
+  ld a,[$C6F7]
+  cp $02
+  jp nz,itementrybad
+  ld a,[$C69A]
+  and a
+  jp nz,itementrybad
+  ld a,[$C69B]
+  cp $0A
+  jp nz,itementrybad
+  ld a,[$C69C]
+  cp $02
+  jp nz,itementrybad
+  ld a,[$C69D]
+  cp $12
+  jp nz,itementrybad
+  ld a,[$C69E]
+  cp $04
+  jp nz,itementrybad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,itementrybad
+  ldh a,[$FF42]
+  and a
+  jp nz,itementrybad
+  ldh a,[$FF43]
+  and a
+  jp nz,itementrybad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,itementrybad
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,itementrybad
+  scf
   ret
 
 itementryblank:
@@ -606,7 +711,17 @@ statusready:
   jr z,statusreadydiscard
   cp $0A
   jr z,statusreadypot
-  jr statusreadywait
+  ; Inventory item naming returns through a disposable screen-0 build before native
+  ; screen 1 is replayed. Prove that exact Name-finalizer epoch while the complete
+  ; keyboard still owns the display, arm a private handoff, and suppress Status. Screen
+  ; 1 will retire the keyboard and publish empty Items chrome before it can repaint any
+  ; borrowed native font plane.
+  call statusnamecheck
+  jr nc,statusreadywait
+statusnameaccepted:
+  ld a,$0D
+  ld [$C1B3],a
+  jr statusreadydiscard
 statusreadypot:
   ; Normalize the proven Pot pop to the ordinary direct-entry contract while the
   ; screen-0 build is still disposable. The marker cells are the only additional
@@ -641,6 +756,112 @@ statuswaitblank:
   ldh a,[$FF44]
   cp $90
   jr c,statuswaitblank
+  ret
+
+statusnamecheck:
+  push bc
+  ld a,[$C1B3]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C1B4]
+  and a
+  jp nz,statusnamebad
+  ; C1B5 retains one through five Item-row records in its high three bits. Name does
+  ; not pass through the Action B packer, so its selector bits must still be zero.
+  ld a,[$C1B5]
+  ld b,a
+  and $1F
+  jp nz,statusnamebad
+  ld a,b
+  and $E0
+  jp z,statusnamebad
+  cp $C0
+  jp nc,statusnamebad
+  ld a,[$C1B6]
+  cp $02
+  jp nc,statusnamebad
+  ld a,[$C1B7]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C534]
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C535]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C536]
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C6A3]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C6A6]
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C6AA]
+  and a
+  jp z,statusnamebad
+  cp $15
+  jp nc,statusnamebad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jp nc,statusnamebad
+  ld a,[$C6BB]
+  cp $04
+  jp nz,statusnamebad
+  ld a,[$C6DE]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C11A]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C6F3]
+  cp $03
+  jp nz,statusnamebad
+  ld a,[$C6F5]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C6F7]
+  cp $02
+  jp nz,statusnamebad
+  ld a,[$C69A]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C69B]
+  cp $0A
+  jp nz,statusnamebad
+  ld a,[$C69C]
+  cp $02
+  jp nz,statusnamebad
+  ld a,[$C69D]
+  cp $12
+  jp nz,statusnamebad
+  ld a,[$C69E]
+  cp $04
+  jp nz,statusnamebad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,statusnamebad
+  ldh a,[$FF42]
+  and a
+  jp nz,statusnamebad
+  ldh a,[$FF43]
+  and a
+  jp nz,statusnamebad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,statusnamebad
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,statusnamebad
+  pop bc
+  scf
+  ret
+statusnamebad:
+  pop bc
+  and a
   ret
 itemexit:
   ; Common root-pop proof. C536 is the stale child slot after the native pop: screen 1
@@ -1375,6 +1596,8 @@ def install(buf, notes=None, font=None):
                      'exact screen-7 Floor exits prepublish empty Status chrome before '
                      'those same bounded uploads; '
                      'admitted Action B restores its Item/Floor parent and input state '
-                     'without replay; exact screen-1/screen-7/screen-20 Info and carried-Pot '
-                     'returns suppress only their disposable Status reconstruction; '
+                     'without replay; exact screen-1/screen-7/screen-20 Info, carried-Pot, '
+                     'and inventory-Name returns suppress only their disposable Status '
+                     'reconstruction; Name then uses the same chrome-first bounded Items '
+                     'entry; '
                      'unknown LCD-on returns retain the conservative path')
