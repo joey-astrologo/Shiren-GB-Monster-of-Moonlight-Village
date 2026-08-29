@@ -58,7 +58,8 @@ TRANSLATION_OFF = {
     (44, 0x4066): (
         'name6.namerestore',
         'complete native menu-font reload retained for Start naming and rejected '
-        'screen-9 callers; exact carried-Item and screen-20 Floor callers are regional',
+        'screen-9 callers; exact carried-Item, Items-appended screen-7 Floor, and '
+        'screen-20 Floor callers are regional',
         'mixed',
     ),
     (46, 0x42B5): (
@@ -140,6 +141,34 @@ MENU_BLANK_PATHS = (
          evidence='real End/reopen/four-delete/final-B route preserves native mode 3; '
                   'exact state $0F suppresses disposable Status, publishes chrome '
                   'before rows, and accepts immediate input'),
+    dict(system='item', key='items-floor-name-entry',
+         sites=(), origin='translation', stack='0,1,2 -> 0,1,2,9',
+         route='Items-appended Floor screen 7 Action -> Name keyboard',
+         status='regional', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact selector $FF/latch 1/box (13,1,6,5,2) route uses four BG '
+                  'retirement and eighteen native-plane batches; LCDC.7 stays set'),
+    dict(system='item', key='items-floor-name-end-return',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,1,2',
+         route='End from Items-appended Floor Name -> Floor Action reconstruction',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact real-input End trace dispatches 9,0,1,2 with mode/row 3/0 '
+                  'and executes statusdisable'),
+    dict(system='item', key='items-floor-name-empty-cancel',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,1,2',
+         route='B from initially empty Items-appended Floor Name -> Floor Action',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact real-input B trace dispatches 9,0,1,2 with mode/row 0/1 '
+                  'and executes statusdisable'),
+    dict(system='item', key='items-floor-name-erased-cancel',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,1,2',
+         route='B after erasing reopened Items-appended Floor item name -> Floor Action',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='real End/reopen/delete/final-B trace dispatches 9,0,1,2 with '
+                  'mode/row 3/1 and executes statusdisable'),
     dict(system='item', key='floor-name-entry',
          sites=(), origin='translation', stack='0,20 -> 0,20,9',
          route='Unidentified Floor item Action -> Name keyboard',

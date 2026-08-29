@@ -370,8 +370,9 @@ statuspredone:
 
 nameentry:
   ; The same screen-9 initializer serves carried and Floor items. Admit the exact
-  ; carried 0,1,2,9 and ground 0,20,9 owners independently; unknown callers retain the
-  ; established bank-44 atomic restore.
+  ; screen-1/2 0,1,2,9 owner (carried Item or Items-appended screen-7 Floor) and the
+  ; ground screen-20 0,20,9 owner independently; unknown callers retain the established
+  ; bank-44 atomic restore.
   push af
   push bc
   push de
@@ -1985,7 +1986,8 @@ def install(buf, notes=None, font=None):
                      'and inventory-Name success/initial-empty/erased-name returns '
                      'suppress only their disposable Status '
                      'reconstruction; Name then uses the same chrome-first bounded Items '
-                     'entry; exact carried-Item and screen-20 Floor Name entries retire '
+                     'entry; exact carried-Item, Items-appended screen-7 Floor, and '
+                     'screen-20 Floor Name entries retire '
                      'only BG rows 0-15 and '
                      'restores its native keyboard planes in bounded VBlank batches; '
                      'unknown LCD-on returns retain the conservative path')

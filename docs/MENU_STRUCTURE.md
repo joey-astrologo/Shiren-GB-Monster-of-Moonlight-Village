@@ -161,7 +161,7 @@ The ten explicit translation-owned whole-LCD sites are:
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — independent composite screen |
 | `41:$40E1` | `menuvwf.starttransition`: title/file complete shadow-map replacement | `review` — complete-screen menu transaction |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `review` — complete-screen menu transaction |
-| `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
+| `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items, Items-appended screen-7 Floor, and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
 | `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `keep` — tile-data lifetime boundary |
 | `53:$4560` | `statusvwf.statusentry`: rejected Status reconstruction, observed after Pot `Put` | `replace-menu` |
 | `59:$406F` | `normalending.install`: Normal-ending full-screen art installation | `keep` — new scene |
@@ -175,8 +175,8 @@ Item/Floor Name caller is same-menu debt.
 
 ### Item/Status LCD-off catalogue
 
-The generated Item table currently has 19 caller rows: seven observed same-menu rows still
-requiring replacement, four admitted regional rows, one unresolved shop grouping, four
+The generated Item table currently has 23 caller rows: ten observed same-menu rows still
+requiring replacement, five admitted regional rows, one unresolved shop grouping, four
 dormant fallback rows, and three intentional replacement boundaries.
 
 | Player path | Causal off producer(s) | Status and evidence |
@@ -186,6 +186,10 @@ dormant fallback rows, and three intentional replacement boundaries.
 | Carried unidentified item -> Action -> Name | none | `regional`; exact stack `0,1,2,9` keeps LCDC.7 set, retires visible BG rows, and selectively restores native keyboard planes; dedicated real-input SRM and `unidentifiednamespill.py` |
 | B from an empty carried-item Name keyboard -> Items | none | `regional`; exact no-Lua screen-9 cancel arms state `$0E`, suppresses disposable Status, publishes complete Items chrome before rows, and accepts immediate input |
 | B after erasing a reopened carried-item name -> Items | none | `regional`; real End/reopen/four-delete/final-B route preserves native mode 3, arms state `$0F`, publishes complete Items chrome before rows, and accepts immediate input |
+| Items-appended Floor screen 7 -> Action -> Name | none | `regional`; exact stack `0,1,2,9`, selector `$FF`, Floor latch `$01`, transaction `00 00 20 01 01`, and box `(13,1,6,5,2)` use the bounded BG/native-plane publisher with LCDC.7 set |
+| End from Items-appended Floor Name -> Floor Action | `53:$4560` | `remaining`; exact `9 -> 0 -> 1 -> 2`, native mode/row `$03/$00`, blanker stack `0,1,2`, and `statusdisable` hit |
+| B from initially empty Items-appended Floor Name -> Floor Action | `53:$4560` | `remaining`; exact `9 -> 0 -> 1 -> 2`, native mode/row `$00/$01`, blanker stack `0,1,2`, and `statusdisable` hit |
+| B after erasing a reopened Items-appended Floor item name -> Floor Action | `53:$4560` | `remaining`; exact `9 -> 0 -> 1 -> 2`, native mode/row `$03/$01`, blanker stack `0,1,2`, and `statusdisable` hit |
 | Unidentified Floor item -> Action -> Name | none | `regional`; exact stack `0,20,9`, ground context, and 3-7-row box-39 owner use the shared bounded BG/native-plane publisher; the Status -> Floor predecessor is independently LCD-live and zero-off |
 | End from screen-20 Floor Name -> Floor | `53:$4560` | `remaining`; exact `9 -> 0 -> 20`, native mode/row `$03/$00`, and `statusdisable` hit |
 | B from initially empty screen-20 Floor Name -> Floor | `53:$4560` | `remaining`; exact `9 -> 0 -> 20`, native mode/row `$00/$01`, and `statusdisable` hit |
@@ -202,7 +206,7 @@ dormant fallback rows, and three intentional replacement boundaries.
 | B from Status -> dungeon field | shadow `2:$463C` | `keep`; intentional final menu teardown |
 
 Normal Items paging, Start sorting, page indicators, Status -> ordinary Items, Status ->
-screen-20 Floor, Floor Action -> Name, Items ->
+screen-20 Floor, both Floor Action -> Name entries, Items ->
 Status, admitted Info/seal pages, every admitted Pot `See` entry/return, screen-7 and
 screen-20 Info returns, `Name -> End -> Items`, initially empty `Name -> B -> Items`,
 and named-then-erased `Name -> B -> Items` all
@@ -1147,24 +1151,30 @@ native B destination remains the dungeon field and retains its native teardown.
 Manual Mesen validation on 2026-08-27 confirmed both screen-7 return paths render in the
 required order and remain promptly responsive.
 
-#### Carried Item and screen-20 Floor `Action -> Name` entry
+#### Carried Item and both Floor `Action -> Name` entries
 
 Fresh `mgbdis` output confirms that bank 4 has two screen-specific callers of the shared
 name initializer: `4:$4B04` for Start screen 8 and `4:$4B22` for Item/Floor screen 9.
-Runtime tracing then separates the latter by its complete dispatcher stack. Start enters
-with `15,22,25,8`, Floor enters with `0,20,9`, and carried Items enters with
-`0,1,2,9`. The screen number alone is therefore not an ownership proof.
+Runtime tracing then separates the latter by its complete dispatcher stack and parent
+state. Start enters with `15,22,25,8`, screen-20 Floor enters with `0,20,9`, and both
+carried Items and the Items-appended screen-7 Floor enter with `0,1,2,9`. The latter
+pair is distinguished in regression by selector, Floor latch, retained transaction,
+and Action shape. The screen number or numeric stack alone is therefore not a complete
+ownership proof.
 
 The shared bank-4 trampoline asks `statusvwf` to classify the caller before running the
-unchanged native `$5E50` initializer. Carried admission requires stack `0,1,2,9`, current
-screen 9, the standard LCD-on signed-tile viewport, zero scroll, and the expected Window
-position. Screen-20 Floor admission is independent: stack `0,20,9`, replay counter zero,
+unchanged native `$5E50` initializer. The screen-1/2 admission requires stack
+`0,1,2,9`, current screen 9, the standard LCD-on signed-tile viewport, zero scroll, and
+the expected Window position. This admits carried Items and the Items-appended Floor;
+the latter exact trace has selector `$FF`, Floor latch `$C1B7=1`, retained transaction
+`$C1B3-$C1B7 = 00 00 20 01 01`, and screen-7 Action shape `(13,1,6,5,2)`.
+Screen-20 Floor admission is independent: stack `0,20,9`, replay counter zero,
 selector `$FF`, ground context one, idle transition/queue state, name mode two, and the
 still-live box-39 Action descriptor `(13,3,N,5,2)` with `N=3..7`. Start or any malformed
 screen-9 caller falls through to the existing bank-44 complete native-font restore at
 `44:$4066`; its conservative behavior is intentionally unchanged.
 
-Either admitted entry has two bounded phases while LCDC bit 7 remains set:
+Every admitted Item/Floor entry has two bounded phases while LCDC bit 7 remains set:
 
 1. Retire visible BG rows 0-15 in four complete four-row VBlank batches. The bottom HUD
    Window and hidden BG rows 16-17 remain byte-exact.
@@ -1184,12 +1194,13 @@ HUD/hidden rows, text before chrome, or a half-restored referenced tile is a fai
 
 Cancelling an empty carried-item Name keyboard with B is not part of this entry
 transaction. It has the separate, independently proved return transaction documented
-below. Screen-20 Floor Name return is likewise outside this entry checkpoint; shared
-screen 9 alone authorizes no return direction.
+below. Screen-20 and Items-appended Floor Name returns are likewise outside the entry
+checkpoint; shared screen 9 alone authorizes no return direction.
 
-`tools/unidentifiednamespill.py` proves both exact entries on the same gameplay-derived
-Willow Staff: screen-20 Floor uses stack `0,20,9`, and carried layouts cover the existing
-one- through four-page synthetic matrix. It requires each accepted path to use one
+`tools/unidentifiednamespill.py` proves all three Item/Floor entries on the same
+gameplay-derived Willow Staff: screen-20 Floor uses stack `0,20,9`, the Items-appended
+Floor uses the exact screen-7 state above, and carried layouts cover the existing one-
+through four-page synthetic matrix. It requires each accepted path to use one
 regional entry and zero native restores, while fresh Start naming still executes one
 native restore and zero regional entries. The earlier catalogue attribution of native
 shadow `2:$463C` to Status -> Floor was false: exact interval tracing shows that call only
@@ -1200,6 +1211,45 @@ it never writes inventory, identity, object, or menu-state memory. Regeneration 
 byte-identical to
 `tests/fixtures/saves/shiren_en_log3_carried_unidentified_naming.srm` (SHA-256
 `ece2da2b167ae51a42176304ae89d4fa2e4e8e0dbb4f70d7b1d31c12a0dfa235`).
+
+##### Items-appended Floor screen-7 Name catalogue
+
+The independent ground-item SRM also reaches the Floor page appended after its two
+carried Item pages without Lua or memory injection. The exact real-input route is
+`Status 0 -> Items 1 -> Items page 2 -> appended Floor -> Action 2 -> Name 9`.
+Immediately before Name publication, the owner state is:
+
+| Field | Exact value | Meaning |
+|---|---:|---|
+| Dispatcher stack `$C535...` | `0,1,2,9` | Status, Items, screen-7 Action, Name |
+| Current/replay `$C6A3/$C6A6` | `$09/$00` | Name current; no replay pending |
+| Item count/selector `$C6AA/$C6AC` | `$08/$FF` | Eight carried Items; appended Floor selected |
+| Transaction `$C1B3-$C1B7` | `00 00 20 01 01` | idle entry, one retained Floor row, settled-Floor latch |
+| Name box `$C69A-$C69E` | `13,1,6,5,2` | six-row screen-7 Action descriptor at y=1 |
+| Ground context `$C6DE` | `$00` | screen-7 derives from Items, unlike screen 20's `$01` |
+| Name mode/row `$C6F3/$C6F5` | `$00/$00` | initially empty keyboard state |
+
+This entry already reaches the regional `statusvwf.nameentry` owner: four BG-retirement
+batches, eighteen native-plane batches, zero calls to native restore `44:$4066`, zero
+LCD-off frames, and zero uniform frames. It therefore has its own `regional` row even
+though its numeric stack shares the screen-1/2 branch used by carried Items.
+
+The three returns are separate remaining paths. Each calls native pop `4:$5F0B`, then
+dispatches through `4:$48AA` as `9 -> 0 -> 1 -> 2`, ending on the Floor Action picker.
+Successful `End` additionally calls `4:$6026`. No `$C110` shadow producer executes in
+any of these intervals; their sole observed LCD-off producer is the translation Status
+fallback `53:$4560`, reached with stack `0,1,2`:
+
+| Return variant | Native mode/row | Causal site | Current result |
+|---|---:|---:|---|
+| `End` | `$03/$00` | `53:$4560` | `remaining`; two LCD-off/uniform frames sampled |
+| B from initially empty Name | `$00/$01` | `53:$4560` | `remaining`; two LCD-off/uniform frames sampled |
+| End, reopen Name, erase saved name, final B | `$03/$01` | `53:$4560` | `remaining`; three LCD-off/uniform frames sampled |
+
+The eventual regional return must preserve the distinct `9 -> 0 -> 1 -> 2` replay and
+restore the complete screen-7 Floor plus Action parent before Action text becomes
+visible. It must not borrow the carried `Name -> Items` transaction or the screen-20
+`Name -> Floor` transaction merely because all three use screen 9.
 
 For the screen-20 Floor-entry checkpoint, use the independent ground-item fixture and a
 unique ROM basename:

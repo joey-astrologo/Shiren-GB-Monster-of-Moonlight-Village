@@ -2,10 +2,10 @@
 """Regression for naming a floor/inventory unidentified Willow Staff.
 
 Log 3 in ``saves/shiren_log3_unidentified_naming.srm`` starts directly above an
-unidentified Willow Staff. The route proves that Status -> Floor remains LCD-live,
-opens the Floor action picker, enters Name through the regional publisher, and
-compares the resulting keyboard with fresh New Log name entry. The three still-native
-screen-20 Name returns are catalogued separately. It then takes the staff, names it
+unidentified Willow Staff. The routes prove both Status -> screen-20 Floor and
+Items -> appended screen-7 Floor histories, enter Name through the regional publisher,
+and compare the resulting keyboard with fresh New Log name entry. Each Floor parent's
+three still-native returns is catalogued separately. It then takes the staff, names it
 ``Stun`` from Items, regionally returns to
 complete empty Items chrome before any list text, and backs out to Status. A generated
 native-inventory matrix repeats that return with one through four pages and target rows
@@ -78,6 +78,33 @@ WILLOW_FLOOR_RENAME_ERASE.update({
     5000: ('a', 5),              # reopen Name at the retained Action selection
     5300: ('b', 5),              # erase A
     5420: ('b', 5),              # final empty cancel
+})
+
+# Supplied Log 3 -> Items pages 1/2 -> appended Floor screen 7 -> Action -> Name.
+# Screen 7 pushes the ordinary screen-2 Action picker, so Name has the same numeric
+# stack as a carried Item even though selector $FF and latch $C1B7=1 identify a
+# different parent owner.
+ITEMS_FLOOR_NAME = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+    3000: 'b', 3400: 'a',
+    3800: 'right', 4100: 'right',
+    4400: 'a',
+    4700: 'down', 4780: 'down', 4860: 'down', 4940: 'down',
+    5200: 'a',
+}
+
+ITEMS_FLOOR_NAME_EMPTY_CANCEL = dict(ITEMS_FLOOR_NAME)
+ITEMS_FLOOR_NAME_EMPTY_CANCEL[5500] = ('b', 5)
+
+ITEMS_FLOOR_NAME_RENAME_ERASE = dict(ITEMS_FLOOR_NAME)
+ITEMS_FLOOR_NAME_RENAME_ERASE.update({
+    5500: ('a', 5),              # type A at the initial keyboard cursor
+    5620: ('start', 5),          # select End
+    5720: ('a', 5),              # commit; replay finishes on Action screen 2
+    6000: ('a', 5),              # reopen Name at the retained Action selection
+    6300: ('b', 5),              # erase A
+    6420: ('b', 5),              # final empty cancel
 })
 
 CARRIED_NAME = {
@@ -762,7 +789,8 @@ def name_cancel_problems(run, label, expected_txn=0x0E,
 
 
 def name_entry_problems(run, label, expected_stack=(0, 1, 2, 9),
-                        expected_shape=None, expected_context=None):
+                        expected_shape=None, expected_context=None,
+                        expected_txn=None):
     """Validate an admitted Item/Floor -> Name owner before native initialization."""
     problems = []
     starts = run['regional_name_starts']
@@ -785,6 +813,9 @@ def name_entry_problems(run, label, expected_stack=(0, 1, 2, 9),
     if expected_context is not None and start_machine['context'] != expected_context:
         problems.append('%s admitted context %s, expected %s' %
                         (label, start_machine['context'], expected_context))
+    if expected_txn is not None and start_machine['txn'] != expected_txn:
+        problems.append('%s admitted transaction %s, expected %s' %
+                        (label, start_machine['txn'], expected_txn))
     if not origin['lcdc'] & 0x80 or not blank['lcdc'] & 0x80 or not font['lcdc'] & 0x80:
         problems.append('%s disabled LCD at a regional boundary' % label)
     visible_offsets = {row * 32 + col for row in range(16) for col in range(20)}
@@ -864,8 +895,9 @@ def status_floor_problems(run, label):
 
 
 def floor_name_remaining_problems(run, label, occurrence, expected_mode_row,
-                                  expected_end_calls):
-    """Keep each still-blank screen-20 Name return causal and reproducible."""
+                                  expected_end_calls, expected_screens=(9, 0, 20),
+                                  expected_blank_stack=(0, 20)):
+    """Keep each still-blank Floor Name return causal and reproducible."""
     problems = []
     name_indices = [index for index, state in enumerate(run['dispatch_states'])
                     if state['screen'] == 9]
@@ -881,9 +913,9 @@ def floor_name_remaining_problems(run, label, occurrence, expected_mode_row,
     end = min(later_names) if later_names else 1 << 30
     screens = [state['screen'] for state in run['dispatch_states']
                if start <= state['frame'] < end]
-    if screens[:3] != [9, 0, 20]:
-        problems.append('%s dispatches are %s, expected 9,0,20' %
-                        (label, screens[:3]))
+    if tuple(screens[:len(expected_screens)]) != expected_screens:
+        problems.append('%s dispatches are %s, expected %s' %
+                        (label, screens[:len(expected_screens)], expected_screens))
     cancels = [entry for entry in run['native_cancel_calls']
                if start <= entry['frame'] < end]
     if len(cancels) != 1:
@@ -901,6 +933,9 @@ def floor_name_remaining_problems(run, label, occurrence, expected_mode_row,
     if len(blanks) != 1:
         problems.append('%s reached statusdisable %d times, expected catalogued one' %
                         (label, len(blanks)))
+    elif blanks[0][6] != expected_blank_stack:
+        problems.append('%s statusdisable stack is %s, expected %s' %
+                        (label, blanks[0][6], expected_blank_stack))
     samples = [entry for entry in run['transition_samples']
                if start <= entry[0] < end]
     if not any(not lcdc & 0x80 for _frame, lcdc, _white in samples):
@@ -944,6 +979,15 @@ def main():
     floor_rename_erase = snapshot(
         PyBoy, args.rom, WILLOW_FLOOR_RENAME_ERASE, 5800, args.ram,
         status_runtime=status_labels, transition_from=4240)
+    items_floor_name = snapshot(
+        PyBoy, args.rom, ITEMS_FLOOR_NAME, 5700, args.ram,
+        status_runtime=status_labels, transition_from=5000)
+    items_floor_empty_cancel = snapshot(
+        PyBoy, args.rom, ITEMS_FLOOR_NAME_EMPTY_CANCEL, 6200, args.ram,
+        status_runtime=status_labels, transition_from=5000)
+    items_floor_rename_erase = snapshot(
+        PyBoy, args.rom, ITEMS_FLOOR_NAME_RENAME_ERASE, 7000, args.ram,
+        status_runtime=status_labels, transition_from=5000)
     roundtrip = snapshot(
         PyBoy, args.rom, STUN_ROUNDTRIP, STUN_FRAMES, args.ram,
         cursor_overrides=STUN_CURSOR,
@@ -977,6 +1021,31 @@ def main():
     problems.extend(floor_name_remaining_problems(
         floor_rename_erase, 'screen-20 named-then-erased Name B cancel', -1,
         expected_mode_row=(3, 1), expected_end_calls=0))
+    problems.extend(name_entry_problems(
+        items_floor_name, 'Items-appended screen-7 Floor Name entry',
+        expected_shape=(13, 1, 6, 5, 2),
+        expected_context=(9, 0, 8, 0xFF, 6, 0, 0, 0, 0, 19, 2),
+        expected_txn=(0, 0, 0x20, 1, 1)))
+    if (items_floor_name['native_name_restores'] or
+            len(items_floor_name['regional_name_starts']) != 1):
+        problems.append('Items-appended Floor naming used %d native / %d regional '
+                        'restores' %
+                        (len(items_floor_name['native_name_restores']),
+                         len(items_floor_name['regional_name_starts'])))
+    problems.extend(floor_name_remaining_problems(
+        items_floor_empty_cancel,
+        'Items-appended Floor initially-empty Name B cancel', 0,
+        expected_mode_row=(0, 1), expected_end_calls=0,
+        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
+    problems.extend(floor_name_remaining_problems(
+        items_floor_rename_erase, 'Items-appended Floor Name End return', 0,
+        expected_mode_row=(3, 0), expected_end_calls=1,
+        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
+    problems.extend(floor_name_remaining_problems(
+        items_floor_rename_erase,
+        'Items-appended Floor named-then-erased Name B cancel', -1,
+        expected_mode_row=(3, 1), expected_end_calls=0,
+        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
     if manual['native_name_restores']:
         problems.append('manual carried fixture used %d native restores, expected zero' %
                         len(manual['native_name_restores']))
@@ -1127,8 +1196,9 @@ def main():
     for problem in problems:
         print('  ' + problem)
     floor_entry = routed['floor_entries'][0] if routed['floor_entries'] else None
-    print('unidentifiednamespill: LCD-live Status -> Floor + regional Floor -> Name; '
-          'three screen-20 returns catalogued; inventory Stun -> Items -> status + '
+    print('unidentifiednamespill: regional screen-20 and Items-appended Floor Name '
+          'entries; three returns catalogued for each Floor parent; inventory Stun -> '
+          'Items -> status + '
           'initial-empty and named-then-erased B -> responsive Items; '
           'Name matrix %s; entry=%s; '
           '%d keyboard / %d status tile plane(s); %d problem(s)' %

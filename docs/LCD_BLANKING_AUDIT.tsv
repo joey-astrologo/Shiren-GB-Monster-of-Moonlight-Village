@@ -93,7 +93,7 @@ LCDC	41	$40E1	ldh	explicit-off	translation	menuvwf.starttransition	review	title/
 LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	review	completed Rankings whole-map publication
 LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete native menu-font reload retained for Start naming and rejected screen-9 callers; exact carried-Item and screen-20 Floor callers are regional
+LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete native menu-font reload retained for Start naming and rejected screen-9 callers; exact carried-Item, Items-appended screen-7 Floor, and screen-20 Floor callers are regional
 LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$42B5	ldh	explicit-off	translation	rankvwf.nativerestore	keep	Rankings result/native-font restoration

@@ -129,7 +129,8 @@ NAME_RESTORE_INDEX = 0x05
 NAME_RESTORE_AT = 0x405A
 NAME_RESTORE_LIMIT = 0x4100
 NAME_RESTORE_TRAMPOLINE = 0x5EFF
-# statusvwf owns the exact carried-Item and screen-20 Floor screen-9 regional entries at this far ABI. The
+# statusvwf owns the carried-Item, Items-appended screen-7 Floor, and screen-20 Floor
+# screen-9 regional entries at this far ABI. The
 # status installer asserts the emitted hook bytes so these duplicated constants cannot
 # silently drift.
 ITEM_NAME_ENTRY_BANK = 0x35
