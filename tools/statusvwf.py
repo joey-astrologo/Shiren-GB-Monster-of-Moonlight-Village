@@ -7,8 +7,9 @@ but Items -> Status and returns from the item-name picker can reach it with the 
 enabled during the visible scan. Mesen and hardware reject unrestricted direct VRAM
 writes there, leaving one status glyph plane native and the other proportional.
 
-The exact Status-root -> Items entry and exact inventory-Name -> disposable Status ->
-Items replay are intercepted at screen 1's native shadow-clear boundary. They retire
+The exact Status-root -> Items entry and exact inventory-Name success/empty-cancel ->
+disposable Status -> Items replays are intercepted at screen 1's native shadow-clear
+boundary. They retire
 visible BG rows 0..15 over four complete VBlanks while preserving the enabled bottom
 Window, commit the empty header/list-box chrome, then let the existing row and final-map
 publishers reveal only completed Item content inside it. The Name route is admitted in
@@ -51,6 +52,7 @@ FAR_INDEX = 0x05
 POPUP_INDEX = 0x07
 ITEM_ENTRY_INDEX = 0x09
 STATUS_PRE_INDEX = 0x0B
+NAME_ENTRY_INDEX = 0x0D
 CODE_AT = 0x405A
 HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
@@ -73,6 +75,21 @@ PRIVATE_RUNS = {
     'Experience value': (0x2F, 4),
 }
 WINDOW_LIVE_IDS = frozenset((0x22, 0x24, 0x2A, 0x36))
+
+# Native planes referenced by the complete screen-9 item-name field and keyboard.
+# The carried-Item transition restores these records while the outgoing BG region is
+# blank, five records per VBlank.  The complete set is exactly eighteen batches;
+# including the ROM-data decode, five complete records stay inside one DMG VBlank.
+NAME_TILE_IDS = (
+    tuple(range(0x43)) + (0x7C, 0x7E, 0x7F, 0x80, 0x88, 0x89) +
+    tuple(range(0x9E, 0xA1)) + (0xB0, 0xB2,) + tuple(range(0xB8, 0xC0)) +
+    (0xC7, 0xC8, 0xC9, 0xCA)
+)
+NAME_TILE_BATCH = 5
+NAME_TILE_BATCHES = len(NAME_TILE_IDS) // NAME_TILE_BATCH
+NAME_TILE_XOR = 0xFF
+if len(NAME_TILE_IDS) % NAME_TILE_BATCH or NAME_TILE_BATCHES != 18:
+    raise AssertionError('statusvwf: name tiles must be eighteen complete batches')
 
 # Empty screen-0 chrome for the exact screen-7 Floor -> Status handoff.  Publishing this
 # four rows per VBlank establishes every destination box before the native producer is
@@ -139,12 +156,44 @@ def _shifted_font(font):
     return bytes(out)
 
 
-def _source(widths):
+def _native_name_records(buf):
+    """Pack the exact native screen-9 tile planes from bank 13.
+
+    Tiles $00-$C3 are stored as eight one-bit rows which the native loader duplicates
+    into both bitplanes. Tiles $C4-$D2 are already stored as complete 16-byte planes.
+    """
+    out = bytearray()
+    for tile in NAME_TILE_IDS:
+        out.append(tile)
+        if tile < 0x80:
+            source = _off(13, 0x7680 + 8 * tile)
+            for value in buf[source:source + 8]:
+                out += bytes((value ^ NAME_TILE_XOR, value ^ NAME_TILE_XOR))
+        elif tile < 0xC4:
+            source = _off(13, 0x7A80 + 8 * (tile - 0x80))
+            for value in buf[source:source + 8]:
+                out += bytes((value ^ NAME_TILE_XOR, value ^ NAME_TILE_XOR))
+        elif tile <= 0xD2:
+            source = _off(13, 0x7CA0 + 16 * (tile - 0xC4))
+            out += bytes(value ^ NAME_TILE_XOR for value in buf[source:source + 16])
+        else:
+            raise AssertionError('statusvwf: unsupported name tile $%02X' % tile)
+    if len(out) != 17 * len(NAME_TILE_IDS):
+        raise AssertionError('statusvwf: native name record size drifted')
+    return bytes(out)
+
+
+def _source(widths, name_records=None):
+    if name_records is None:
+        name_records = bytes(17 * len(NAME_TILE_IDS))
+    if len(name_records) != 17 * len(NAME_TILE_IDS):
+        raise AssertionError('statusvwf: malformed native name-tile records')
     width_bytes = ','.join('$%02X' % value for value in widths)
     strength = ','.join('$%02X' % EN_CODES[ch] for ch in 'Strength')
     experience = ','.join('$%02X' % EN_CODES[ch] for ch in 'Experience')
     weapon = ','.join('$%02X' % value for value in WEAPON_TILES)
     shield = ','.join('$%02X' % value for value in SHIELD_TILES)
+    name_record_bytes = ','.join('$%02X' % value for value in name_records)
     return fr"""
 statusfloorpre:
   ; Called from the shared native popper while screen 7 and its exact Action descriptor
@@ -319,6 +368,210 @@ statuspredone:
   ei
   ret
 
+nameentry:
+  ; The same screen-9 initializer serves carried and Floor items.  Only the exact
+  ; 0,1,2,9 carried-Item stack is admitted here; Floor and unknown callers retain the
+  ; established bank-44 atomic restore until their independent transition is mapped.
+  push af
+  push bc
+  push de
+  push hl
+  call nameentrycheck
+  jr nc,nameentryfallback
+  call nameentryblank
+  call nameentryfont
+  jr nameentrydone
+nameentryfallback:
+  rst $10
+  db $05,$2C
+nameentrydone:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  ret
+
+nameentrycheck:
+  ld a,[$C534]
+  cp $03
+  jr nz,nameentrybad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jr nz,nameentrybad
+  ld a,[hl+]
+  dec a
+  jr nz,nameentrybad
+  ld a,[hl+]
+  cp $02
+  jr nz,nameentrybad
+  ld a,[hl]
+  cp $09
+  jr nz,nameentrybad
+  ld a,[$C6A3]
+  cp $09
+  jr nz,nameentrybad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,nameentrybad
+  ldh a,[$FF42]
+  and a
+  jr nz,nameentrybad
+  ldh a,[$FF43]
+  and a
+  jr nz,nameentrybad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,nameentrybad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,nameentrybad
+  scf
+  ret
+nameentrybad:
+  and a
+  ret
+
+nameentryblank:
+  ; Retire only visible BG rows 0..15.  The bottom status Window and hidden BG rows
+  ; 16..17 retain their owners.  Four complete rows fit in each VBlank.
+  ld hl,$9800
+  ld d,$04
+nameentryblankvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryblankvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryblankwait
+nameentryblanklate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryblanklate
+nameentryblankwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryblankwait
+nameentryblankbatch:
+  ld b,$04
+nameentryblankrow:
+  ld c,$14
+  xor a
+nameentryblankcell:
+  ld [hl+],a
+  dec c
+  jr nz,nameentryblankcell
+  ld a,l
+  add a,$0C
+  ld l,a
+  jr nc,nameentryblanknext
+  inc h
+nameentryblanknext:
+  dec b
+  jr nz,nameentryblankrow
+  dec d
+  jr z,nameentryblankdone
+  push de
+  push hl
+  ei
+nameentryblanknextvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryblanknextvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryblanknextwait
+nameentryblanknextlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryblanknextlate
+nameentryblanknextwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryblanknextwait
+  pop hl
+  pop de
+  jr nameentryblankbatch
+nameentryblankdone:
+  ei
+  ret
+
+nameentryfont:
+  ; Each record is one tile ID followed by its complete sixteen-byte native plane.
+  ; Restore five records per complete VBlank.  The blank BG owns no glyph references,
+  ; so no half-restored character can become visible during these eighteen batches.
+  ld hl,nametiles
+  ld a,$%02X
+nameentryfontnext:
+  push af
+  push hl
+  ei
+nameentryfontvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryfontvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryfontwait
+nameentryfontlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,nameentryfontlate
+nameentryfontwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,nameentryfontwait
+  pop hl
+  pop af
+  push af
+  ld b,$%02X
+nameentryfonttile:
+  ld a,[hl+]
+  ld c,a
+  and $0F
+  swap a
+  ld e,a
+  ld a,c
+  swap a
+  and $0F
+  bit 7,c
+  jr nz,nameentryfontsigned
+  add a,$90
+  jr nameentryfontdest
+nameentryfontsigned:
+  add a,$80
+nameentryfontdest:
+  ld d,a
+  ld c,$10
+nameentryfontbyte:
+  ld a,[hl+]
+  cpl
+  ld [de],a
+  inc de
+  dec c
+  jr nz,nameentryfontbyte
+  dec b
+  jr nz,nameentryfonttile
+  pop af
+  dec a
+  jr nz,nameentryfontnext
+  ei
+  ; The native loader's patched first instruction also reset the proportional menu
+  ; allocator.  This selective loader must preserve that side effect explicitly.
+  rst $10
+  db $09,$20
+  ; VBlank handlers may finish the outgoing Item row transaction while the eighteen
+  ; font batches run. Screen 9 owns the display now; do not leak that retired state into
+  ; the Name finalizer and its later Items replay.
+  xor a
+  ld [$C1B3],a
+nameentryfontdone:
+  ret
+
 itementry:
   ; This replaces screen 1's native `ld hl,$C300 / call $480E`.  Preserve that
   ; exact 20x18, stride-32 shadow clear after optionally retiring a direct Status
@@ -359,6 +612,8 @@ itementrygate:
   ld a,[$C1B3]
   cp $0D
   jp z,itementryname
+  cp $0E
+  jp z,itementrynamecancel
   and a
   jr nz,itementrybad
   ld a,[$C6A3]
@@ -427,6 +682,26 @@ itementrybad:
   ret
 
 itementryname:
+  ld a,[$C6F3]
+  cp $03
+  jp nz,itementrybad
+  ld a,[$C6F5]
+  and a
+  jp nz,itementrybad
+  jr itementrynamecommon
+itementrynamecancel:
+  ; The second half cannot inherit success ownership merely because screen 1 is current.
+  ; Re-prove the empty-cancel state after the native replay advanced its counter.
+  ld a,[$C6F3]
+  and a
+  jp nz,itementrybad
+  ld a,[$C6F5]
+  dec a
+  jp nz,itementrybad
+  ld a,[$C6E3]
+  cp $88
+  jp nz,itementrybad
+itementrynamecommon:
   ; Post-dispatch half of the exact inventory-Name handoff. The replay counter has
   ; advanced once and screen 1 is current, but the retained Item count/selector,
   ; Name-finalizer state, Status descriptor, and viewport must still match the
@@ -481,12 +756,6 @@ itementryname:
   and a
   jp nz,itementrybad
   ld a,[$C11A]
-  and a
-  jp nz,itementrybad
-  ld a,[$C6F3]
-  cp $03
-  jp nz,itementrybad
-  ld a,[$C6F5]
   and a
   jp nz,itementrybad
   ld a,[$C6F7]
@@ -712,14 +981,14 @@ statusready:
   cp $0A
   jr z,statusreadypot
   ; Inventory item naming returns through a disposable screen-0 build before native
-  ; screen 1 is replayed. Prove that exact Name-finalizer epoch while the complete
+  ; screen 1 is replayed. Prove the exact success or empty-cancel epoch while the complete
   ; keyboard still owns the display, arm a private handoff, and suppress Status. Screen
   ; 1 will retire the keyboard and publish empty Items chrome before it can repaint any
   ; borrowed native font plane.
   call statusnamecheck
   jr nc,statusreadywait
 statusnameaccepted:
-  ld a,$0D
+  ; statusnamecheck returns the independently proven success/cancel transaction in A.
   ld [$C1B3],a
   jr statusreadydiscard
 statusreadypot:
@@ -816,12 +1085,28 @@ statusnamecheck:
   ld a,[$C11A]
   and a
   jp nz,statusnamebad
+  ; Successful End and empty B-cancel share the native 9 -> 0 -> 1 replay but expose
+  ; different screen-9 state. Preserve that distinction in the transaction byte so
+  ; the screen-1 half must prove the matching variant independently.
   ld a,[$C6F3]
   cp $03
+  jr z,statusnamesuccess
+  and a
   jp nz,statusnamebad
+  ld a,[$C6F5]
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C6E3]
+  cp $88
+  jp nz,statusnamebad
+  ld c,$0E
+  jr statusnamemodeok
+statusnamesuccess:
   ld a,[$C6F5]
   and a
   jp nz,statusnamebad
+  ld c,$0D
+statusnamemodeok:
   ld a,[$C6F7]
   cp $02
   jp nz,statusnamebad
@@ -856,6 +1141,7 @@ statusnamecheck:
   ldh a,[$FF4B]
   cp $07
   jp nz,statusnamebad
+  ld a,c
   pop bc
   scf
   ret
@@ -1501,13 +1787,17 @@ statusempty:
   db %s
 widths:
   db %s
+nametiles:
+  db %s
 glyphs:
-""" % (EN_CODES['T'], SHIFT_STRIDE, SLOT_PLUS, SLOT_SLASH, EN_CODES['-'],
+""" % (NAME_TILE_BATCHES, NAME_TILE_BATCH,
+       EN_CODES['T'], SHIFT_STRIDE, SLOT_PLUS, SLOT_SLASH, EN_CODES['-'],
        EN_CODES['F'], EN_CODES['G'], strength, experience, weapon, shield,
        ','.join('$%02X' % EN_CODES[ch] for ch in 'Back'),
        ','.join('$%02X' % EN_CODES[ch] for ch in 'Proceed'),
        ','.join('$%02X' % EN_CODES[ch] for ch in 'Stay'),
-       ','.join('$%02X' % value for value in STATUS_EMPTY_MAP), width_bytes)
+       ','.join('$%02X' % value for value in STATUS_EMPTY_MAP), width_bytes,
+       name_record_bytes)
 
 
 def runtime_labels(font=None):
@@ -1537,7 +1827,7 @@ def install(buf, notes=None, font=None):
         raise AssertionError('statusvwf: empty Status chrome is not 20x16')
 
     widths = tuple(font.advance_code(code) for code in SLOT_CODES)
-    code, labels = gbasm.assemble(_source(widths), CODE_AT)
+    code, labels = gbasm.assemble(_source(widths, _native_name_records(buf)), CODE_AT)
     blob = code + _shifted_font(font)
     if CODE_AT + len(blob) > 0x8000:
         raise SystemExit('statusvwf: bank %d overflow (%d bytes)' %
@@ -1574,6 +1864,21 @@ def install(buf, notes=None, font=None):
                          (STATUS_PRE_INDEX, FAR_BANK))
     buf[status_pre_index] = labels['statusfloorpre'] & 0xFF
     buf[status_pre_index + 1] = labels['statusfloorpre'] >> 8
+    name_entry_index = bank + NAME_ENTRY_INDEX - 1
+    if bytes(buf[name_entry_index:name_entry_index + 2]) != b'\xFF\xFF':
+        raise SystemExit('statusvwf: far index $%02X in bank %d is occupied' %
+                         (NAME_ENTRY_INDEX, FAR_BANK))
+    buf[name_entry_index] = labels['nameentry'] & 0xFF
+    buf[name_entry_index + 1] = labels['nameentry'] >> 8
+
+    # name6 installs this call to the shared bank-4 trampoline earlier in the build.
+    # The trampoline enters NAME_ENTRY_INDEX and then executes the native $5E50
+    # initializer for both accepted and fallback paths.
+    name_hook = _off(4, 0x4B22)
+    expected_name_hook = bytes.fromhex('CD FF 5E')
+    if bytes(buf[name_hook:name_hook + 3]) != expected_name_hook:
+        raise SystemExit('statusvwf: Item Name hook at 4:$4B22 is not %s' %
+                         expected_name_hook.hex(' '))
 
     hook = _off(*HOOK)
     if bytes(buf[hook:hook + len(HOOK_OLD)]) != HOOK_OLD:
@@ -1597,7 +1902,8 @@ def install(buf, notes=None, font=None):
                      'those same bounded uploads; '
                      'admitted Action B restores its Item/Floor parent and input state '
                      'without replay; exact screen-1/screen-7/screen-20 Info, carried-Pot, '
-                     'and inventory-Name returns suppress only their disposable Status '
+                     'and inventory-Name success/empty-cancel returns suppress only their disposable Status '
                      'reconstruction; Name then uses the same chrome-first bounded Items '
-                     'entry; '
+                     'entry; exact carried-Item Name entry retires only BG rows 0-15 and '
+                     'restores its native keyboard planes in bounded VBlank batches; '
                      'unknown LCD-on returns retain the conservative path')

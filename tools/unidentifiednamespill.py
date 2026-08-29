@@ -12,6 +12,11 @@ different from ``nameflowspill.py``: the dungeon Floor/action VWF can borrow alm
 every raw tile used by the keyboard, while the complete native font restore can in
 turn overwrite every low-page private status tile.
 
+``tests/fixtures/saves/shiren_en_log3_carried_unidentified_naming.srm`` is the matching
+manual-test fixture. ``makeitemnametest.py`` produced it through the real Take action,
+without Lua or direct memory writes, and this regression also drives its shorter
+Status -> Items -> page 2 row 4 -> Name route.
+
     python3 tools/unidentifiednamespill.py build/shiren_en.gb
     python3 tools/unidentifiednamespill.py build/shiren_en.gb \
         --png build/unidentified_name.png
@@ -59,6 +64,24 @@ WILLOW_STAFF_NAME = {
     3900: 'down', 3980: 'down', 4060: 'down', 4140: 'down',
     4260: 'a',
 }
+
+CARRIED_NAME = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+    3000: 'b', 3400: 'a', 3800: 'right',
+    4000: 'down', 4080: 'down', 4160: 'down', 4380: 'a',
+    4680: 'down', 4760: 'down', 4840: 'down', 5080: 'a',
+}
+CARRIED_END_CURSOR = dict(CARRIED_NAME)
+CARRIED_END_CURSOR[5400] = ('start', 5)
+FRESH_END_CURSOR = dict(FRESH)
+FRESH_END_CURSOR[1800] = ('start', 5)
+CARRIED_EMPTY_CANCEL = dict(CARRIED_NAME)
+CARRIED_EMPTY_CANCEL[5400] = ('b', 5)
+# Prove that the returned Items handler is live, not merely visually settled.
+CARRIED_EMPTY_CANCEL[5500] = ('up', 5)
+# Then exercise the ordinary Items -> Status exit so private Status planes are checked too.
+CARRIED_EMPTY_CANCEL[5600] = ('b', 5)
 
 # Supplied Log 3 -> Floor/Take -> Items -> Name -> type ``Stun`` -> End (Start is the
 # native shortcut which selects the on-screen End action) -> Items -> status.  The
@@ -155,7 +178,7 @@ def white_frame(image):
 
 def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
              cursor_overrides=None, status_runtime=None, checkpoint=None,
-             inventory_case=None, transition_png_dir=None):
+             inventory_case=None, transition_png_dir=None, transition_from=None):
     with tempfile.TemporaryDirectory(prefix='unidentifiednamespill-') as tmp:
         work = os.path.join(tmp, 'name.gb')
         shutil.copyfile(rom_path, work)
@@ -169,6 +192,7 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         dispatches = []
         dispatch_states = []
         end_calls = []
+        native_cancel_calls = []
         status_draws = []
         status_uploads = []
         status_fallbacks = []
@@ -180,7 +204,13 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         item_entry_done = []
         status_name_accepts = []
         item_name_gates = []
+        item_name_cancel_gates = []
         item_rows = []
+        native_name_restores = []
+        regional_name_starts = []
+        regional_name_blanks = []
+        regional_name_fonts = []
+        regional_name_samples = []
         transition_samples = []
         inventory_builds = []
         inventory_injected = [inventory_case is None]
@@ -228,7 +258,11 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
         pb.hook_register(FRESH_ENTRY[0], FRESH_ENTRY[1], fresh_entry, None)
         pb.hook_register(FLOOR_ENTRY[0], FLOOR_ENTRY[1], floor_entry, None)
         pb.hook_register(DISPATCH[0], DISPATCH[1], dispatch, None)
+        pb.hook_register(44, 0x4066, lambda _context=None:
+                         native_name_restores.append(machine_state()), None)
         pb.hook_register(4, 0x6026, lambda _context=None: end_calls.append(frame[0]), None)
+        pb.hook_register(4, 0x5F0B, lambda _context=None:
+                         native_cancel_calls.append(machine_state()), None)
         def inventory_build(_context=None):
             indices = []
             for slot in range(20):
@@ -304,6 +338,18 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementryname'],
                              lambda _context=None: item_name_gates.append(
                                  machine_state()), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['itementrynamecancel'],
+                             lambda _context=None: item_name_cancel_gates.append(
+                                 machine_state()), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['nameentry'],
+                             lambda _context=None: regional_name_starts.append(
+                                 (machine_state(), display_state())), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['nameentryblankdone'],
+                             lambda _context=None: regional_name_blanks.append(
+                                 (machine_state(), display_state())), None)
+            pb.hook_register(statusvwf.FAR_BANK, status_runtime['nameentryfontdone'],
+                             lambda _context=None: regional_name_fonts.append(
+                                 (machine_state(), display_state())), None)
             profile = menuspill.renderer_profile(rom_path)
             pb.hook_register(menuvwf.FAR_BANK, profile['entry'],
                              lambda _context=None: item_rows.append(
@@ -318,12 +364,27 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
                 button, duration = action if isinstance(action, tuple) else (action, PRESS_FRAMES)
                 pb.button(button, duration)
             pb.tick()
-            if end_calls:
+            if regional_name_starts and (not regional_name_fonts or
+                                         frame[0] <= regional_name_fonts[-1][0]['frame'] + 80):
+                bg = bytes(pb.memory[0x9800:0x9C00])
+                visible = bytes(bg[row * 32 + col]
+                                for row in range(16) for col in range(20))
+                regional_name_samples.append((
+                    frame[0], pb.memory[0xFF40], white_frame(pb.screen.image), visible))
+                if transition_png_dir:
+                    pb.screen.image.save(os.path.join(
+                        transition_png_dir, 'name_entry_f%04d.png' % frame[0]))
+            if end_calls or (transition_from is not None and frame[0] >= transition_from):
                 transition_samples.append((frame[0], pb.memory[0xFF40],
                                            white_frame(pb.screen.image)))
-                if transition_png_dir and frame[0] <= end_calls[0] + 50:
-                    pb.screen.image.save(os.path.join(
-                        transition_png_dir, 'name_return_f%04d.png' % frame[0]))
+                if transition_png_dir:
+                    if end_calls and frame[0] <= end_calls[0] + 50:
+                        pb.screen.image.save(os.path.join(
+                            transition_png_dir, 'name_return_f%04d.png' % frame[0]))
+                    elif (not end_calls and transition_from is not None and
+                          frame[0] <= transition_from + 80):
+                        pb.screen.image.save(os.path.join(
+                            transition_png_dir, 'name_cancel_f%04d.png' % frame[0]))
             if checkpoint is not None and frame[0] == checkpoint:
                 checkpoints[checkpoint] = {
                     tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
@@ -332,11 +393,15 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
 
         shadow = bytes(pb.memory[SHADOW:SHADOW + SHADOW_BYTES])
         keyboard = visible_keyboard(shadow)
-        tile_ids = set(keyboard)
+        bg = bytes(pb.memory[0x9800:0x9C00])
+        visible_bg_keyboard = visible_keyboard(bg)
+        tile_ids = set(keyboard) | set(visible_bg_keyboard)
         result = {
             'image': pb.screen.image.copy(),
             'shadow': shadow,
             'keyboard': keyboard,
+            'bg': bg,
+            'visible_bg_keyboard': visible_bg_keyboard,
             'tiles': {tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
                       for tile in tile_ids},
             'row': pb.memory[0xC6F5],
@@ -348,6 +413,7 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             'dispatches': dispatches,
             'dispatch_states': dispatch_states,
             'end_calls': end_calls,
+            'native_cancel_calls': native_cancel_calls,
             'status_draws': status_draws,
             'status_uploads': status_uploads,
             'status_fallbacks': status_fallbacks,
@@ -359,7 +425,13 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             'item_entry_done': item_entry_done,
             'status_name_accepts': status_name_accepts,
             'item_name_gates': item_name_gates,
+            'item_name_cancel_gates': item_name_cancel_gates,
             'item_rows': item_rows,
+            'native_name_restores': native_name_restores,
+            'regional_name_starts': regional_name_starts,
+            'regional_name_blanks': regional_name_blanks,
+            'regional_name_fonts': regional_name_fonts,
+            'regional_name_samples': regional_name_samples,
             'transition_samples': transition_samples,
             'inventory_builds': inventory_builds,
             'inventory_injected': inventory_injected[0],
@@ -370,6 +442,7 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             },
             'status_problems': menuspill.status_fragment_problems(pb),
             'name': bytes(pb.memory[0xC6E3:0xC6E3 + 7]),
+            'selector': pb.memory[0xC6AC],
         }
         if png:
             result['image'].save(png)
@@ -486,15 +559,212 @@ def name_return_problems(run, label, expected_record_count=None):
     return problems
 
 
+def name_cancel_problems(run, label):
+    """Validate empty carried Name -> disposable Status -> Items cancellation."""
+    problems = []
+    screens = [screen for _frame, screen in run['dispatches']]
+    try:
+        name_at = screens.index(9)
+    except ValueError:
+        problems.append('%s never dispatched Name screen 9' % label)
+        return problems
+    if screens[name_at:name_at + 3] != [9, 0, 1]:
+        problems.append('%s dispatches are %s, expected 9,0,1' %
+                        (label, screens[name_at:name_at + 3]))
+    if run['end_calls']:
+        problems.append('%s entered the End finalizer during B cancel' % label)
+    if len(run['native_cancel_calls']) != 1:
+        problems.append('%s reached native $5F0B cancel %d times, expected once' %
+                        (label, len(run['native_cancel_calls'])))
+    if run['name'] != b'\x88' * 7:
+        problems.append('%s name buffer is %s, expected empty $88 cells' %
+                        (label, run['name'].hex(' ')))
+
+    accepts = [entry for entry in run['status_name_accepts']
+               if entry['frame'] >= run['dispatch_states'][name_at]['frame']]
+    gates = [entry for entry in run['item_name_cancel_gates']
+             if entry['frame'] >= run['dispatch_states'][name_at]['frame']]
+    success_gates = [entry for entry in run['item_name_gates']
+                     if entry['frame'] >= run['dispatch_states'][name_at]['frame']]
+    if len(accepts) != 1:
+        problems.append('%s admitted %d Status handoffs, expected one' %
+                        (label, len(accepts)))
+    if len(gates) != 1:
+        problems.append('%s reached %d cancel Item gates, expected one' %
+                        (label, len(gates)))
+    if success_gates:
+        problems.append('%s reached the success Item gate during cancel' % label)
+    if accepts:
+        if accepts[0]['txn'][0] != 0:
+            problems.append('%s pre-handoff transaction is $%02X, expected idle' %
+                            (label, accepts[0]['txn'][0]))
+        if accepts[0]['context'][7:9] != (0, 1):
+            problems.append('%s pre-handoff Name mode/row is %s, expected 0/1' %
+                            (label, accepts[0]['context'][7:9]))
+    if gates:
+        if gates[0]['txn'][0] != 0x0E:
+            problems.append('%s cancel Item transaction is $%02X, expected $0E' %
+                            (label, gates[0]['txn'][0]))
+        if gates[0]['context'][7:9] != (0, 1):
+            problems.append('%s Item-gate Name mode/row is %s, expected 0/1' %
+                            (label, gates[0]['context'][7:9]))
+
+    if run['status_explicit_blanks']:
+        problems.append('%s executed Status LCD-off at %s' %
+                        (label, ' '.join('f%d' % entry[0]
+                                         for entry in run['status_explicit_blanks'])))
+    boundary = accepts[0]['frame'] if accepts else 0
+    item_gate_at = gates[0]['frame'] if gates else 1 << 30
+    status_draws = [entry for entry in run['status_draws']
+                    if boundary <= entry[0] <= item_gate_at]
+    if status_draws:
+        problems.append('%s rendered disposable Status at %s' %
+                        (label, status_draws))
+
+    entries = [entry for entry in run['item_entry_blanks']
+               if entry[0]['frame'] >= boundary]
+    done = [entry for entry in run['item_entry_done']
+            if entry[0]['frame'] >= boundary]
+    batches = [entry for entry in run['item_entry_batches'] if entry[0] >= boundary]
+    if len(entries) != 1 or len(done) != 1:
+        problems.append('%s began/completed %d/%d regional Item entries, expected 1/1' %
+                        (label, len(entries), len(done)))
+    else:
+        origin_machine, origin = entries[0]
+        done_machine, complete = done[0]
+        if origin_machine['txn'][0] != 0x0E or done_machine['txn'][0] != 0x0E:
+            problems.append('%s regional entry lost state $0E (%s -> %s)' %
+                            (label, origin_machine['txn'][0], done_machine['txn'][0]))
+        if not origin['lcdc'] & 0x80 or not complete['lcdc'] & 0x80:
+            problems.append('%s disabled the LCD during regional entry' % label)
+        if not 0x90 <= complete['ly'] <= 0x99:
+            problems.append('%s chrome completed outside VBlank at LY=$%02X' %
+                            (label, complete['ly']))
+        visible = {row * 32 + col for row in range(16) for col in range(20)}
+        wrong = next((offset for offset in visible
+                      if complete['bg'][offset] != EXPECTED_ITEM_CHROME[offset]), None)
+        changed = next((offset for offset in range(0x400)
+                        if offset not in visible and
+                        origin['bg'][offset] != complete['bg'][offset]), None)
+        if wrong is not None:
+            problems.append('%s empty Items chrome differs at BG +$%03X' %
+                            (label, wrong))
+        if changed is not None:
+            problems.append('%s changed locked BG +$%03X' % (label, changed))
+        if complete['window'] != origin['window']:
+            problems.append('%s changed the persistent Window map' % label)
+        if complete['tiles'] != origin['tiles']:
+            problems.append('%s repainted tile planes before chrome completed' % label)
+        rows = [entry for entry in run['item_rows']
+                if entry[0] >= boundary and entry[2] == ITEM_SHAPE and 0 <= entry[1] < 5]
+        if not rows:
+            problems.append('%s never rendered returned Items rows' % label)
+        elif rows[0][0] < done_machine['frame']:
+            problems.append('%s rendered Item text at f%d before chrome completed f%d' %
+                            (label, rows[0][0], done_machine['frame']))
+
+    if len(batches) != 4:
+        problems.append('%s used %d regional batches, expected four' %
+                        (label, len(batches)))
+    else:
+        states = tuple(entry[2] for entry in batches)
+        if states != (0x0E,) * 4:
+            problems.append('%s regional batch states are %s, expected four $0E' %
+                            (label, states))
+        late = next((entry for entry in batches if not 0x90 <= entry[1] <= 0x99), None)
+        if late:
+            problems.append('%s regional batch f%d ended at LY=$%02X' %
+                            (label, late[0], late[1]))
+
+    lcd_off = [frame for frame, lcdc, _white in run['transition_samples']
+               if not lcdc & 0x80]
+    whites = [frame for frame, _lcdc, white in run['transition_samples'] if white]
+    if lcd_off:
+        problems.append('%s produced LCD-off frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in lcd_off[:12])))
+    if whites:
+        problems.append('%s produced uniform frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in whites[:12])))
+    if run['selector'] != 7:
+        problems.append('%s post-return Up left selector %d, expected 7' %
+                        (label, run['selector']))
+    return problems
+
+
+def name_entry_problems(run, label):
+    """Validate carried Items -> Name ownership before the keyboard initializer runs."""
+    problems = []
+    starts = run['regional_name_starts']
+    blanks = run['regional_name_blanks']
+    fonts = run['regional_name_fonts']
+    if (len(starts), len(blanks), len(fonts)) != (1, 1, 1):
+        problems.append('%s regional start/blank/font counts are %d/%d/%d' %
+                        (label, len(starts), len(blanks), len(fonts)))
+        return problems
+    start_machine, origin = starts[0]
+    blank_machine, blank = blanks[0]
+    font_machine, font = fonts[0]
+    if start_machine['depth'] != 3 or start_machine['stack'] != (0, 1, 2, 9):
+        problems.append('%s admitted stack %s, expected 0,1,2,9' %
+                        (label, start_machine['stack']))
+    if not origin['lcdc'] & 0x80 or not blank['lcdc'] & 0x80 or not font['lcdc'] & 0x80:
+        problems.append('%s disabled LCD at a regional boundary' % label)
+    visible_offsets = {row * 32 + col for row in range(16) for col in range(20)}
+    dirty = next((offset for offset in visible_offsets if blank['bg'][offset]), None)
+    locked = next((offset for offset in range(0x400)
+                   if offset not in visible_offsets and
+                   origin['bg'][offset] != blank['bg'][offset]), None)
+    if dirty is not None:
+        problems.append('%s blank boundary retains BG +$%03X=$%02X' %
+                        (label, dirty, blank['bg'][dirty]))
+    if locked is not None:
+        problems.append('%s changed locked BG +$%03X while retiring Items' %
+                        (label, locked))
+    if blank['window'] != origin['window'] or font['window'] != origin['window']:
+        problems.append('%s changed the persistent status Window' % label)
+    if font['bg'] != blank['bg']:
+        changed = next(offset for offset in range(0x400)
+                       if font['bg'][offset] != blank['bg'][offset])
+        problems.append('%s exposed BG +$%03X during native font batches' %
+                        (label, changed))
+    if font_machine['txn'][0] != 0:
+        problems.append('%s left transaction $%02X after retiring the Item owner' %
+                        (label, font_machine['txn'][0]))
+    samples = [entry for entry in run['regional_name_samples']
+               if start_machine['frame'] <= entry[0] <= font_machine['frame'] + 80]
+    lcd_off = [frame for frame, lcdc, _white, _visible in samples if not lcdc & 0x80]
+    whites = [frame for frame, _lcdc, white, _visible in samples if white]
+    if lcd_off:
+        problems.append('%s produced LCD-off frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in lcd_off[:12])))
+    if whites:
+        problems.append('%s produced uniform full-screen frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in whites[:12])))
+    after_blank = [entry for entry in samples if entry[0] >= blank_machine['frame']]
+    borders = set(range(0xB8, 0xC0))
+    border_at = next((frame for frame, _lcdc, _white, visible in after_blank
+                      if any(tile in borders for tile in visible)), None)
+    text_at = next((frame for frame, _lcdc, _white, visible in after_blank
+                    if any(tile and tile not in borders for tile in visible)), None)
+    if border_at is None or text_at is None:
+        problems.append('%s never published complete Name chrome/text' % label)
+    elif text_at < border_at:
+        problems.append('%s exposed text at f%d before chrome at f%d' %
+                        (label, text_at, border_at))
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('rom')
     parser.add_argument('--ram', default=os.path.join(
         ROOT, 'saves/shiren_log3_unidentified_naming.srm'))
+    parser.add_argument('--manual-ram', default=os.path.join(
+        ROOT, 'tests/fixtures/saves/shiren_en_log3_carried_unidentified_naming.srm'))
     parser.add_argument('--png')
     parser.add_argument('--png-dir')
     args = parser.parse_args()
-    for path in (args.rom, args.ram):
+    for path in (args.rom, args.ram, args.manual_ram):
         if not os.path.exists(path):
             raise SystemExit('unidentifiednamespill: missing %s' % path)
 
@@ -513,18 +783,62 @@ def main():
         cursor_overrides=STUN_CURSOR,
         status_runtime=status_labels, checkpoint=4400,
         transition_png_dir=args.png_dir)
+    manual = snapshot(
+        PyBoy, args.rom, CARRIED_NAME, 5600, args.manual_ram,
+        status_runtime=status_labels)
+    manual_end_cursor = snapshot(
+        PyBoy, args.rom, CARRIED_END_CURSOR, 5500, args.manual_ram,
+        status_runtime=status_labels)
+    fresh_end_cursor = snapshot(PyBoy, args.rom, FRESH_END_CURSOR, 1900)
+    empty_cancel = snapshot(
+        PyBoy, args.rom, CARRIED_EMPTY_CANCEL, 5750, args.manual_ram,
+        status_runtime=status_labels, transition_png_dir=args.png_dir,
+        transition_from=5380)
     problems = []
+
+    problems.extend(name_entry_problems(manual, 'manual carried fixture entry'))
+    if manual['native_name_restores']:
+        problems.append('manual carried fixture used %d native restores, expected zero' %
+                        len(manual['native_name_restores']))
+    if not manual['dispatches'] or manual['dispatches'][-1][1] != 9:
+        problems.append('manual carried fixture did not settle on Name screen 9')
+    if manual['keyboard'] != fresh['keyboard']:
+        problems.append('manual carried fixture keyboard differs from fresh Start naming')
+    if manual_end_cursor['visible_bg_keyboard'] != fresh_end_cursor['visible_bg_keyboard']:
+        problems.append('manual End cursor BG map differs from fresh Start naming')
+    end_tiles = set(manual_end_cursor['visible_bg_keyboard'])
+    if not set((0xC7, 0xC8, 0xC9)).issubset(end_tiles):
+        problems.append('manual End cursor did not expose native $C7-$C9 underline')
+    end_plane_diffs = [tile for tile in sorted(end_tiles)
+                       if manual_end_cursor['tiles'].get(tile) !=
+                       fresh_end_cursor['tiles'].get(tile)]
+    if end_plane_diffs:
+        problems.append('manual End cursor planes differ from fresh for %s' %
+                        ' '.join('$%02X' % tile for tile in end_plane_diffs))
+    if manual_end_cursor['native_name_restores']:
+        problems.append('manual End cursor used native restore after regional entry')
+    problems.extend(name_cancel_problems(empty_cancel, 'manual empty-Name B cancel'))
+    problems.extend('empty-Name B cancel: ' + problem
+                    for problem in empty_cancel['status_problems'])
 
     if len(fresh['fresh_entries']) != 1:
         problems.append('fresh route reached fresh name entry %d times, expected once' %
                         len(fresh['fresh_entries']))
     if fresh['floor_entries']:
         problems.append('fresh route unexpectedly reached Floor name entry')
+    if len(fresh['native_name_restores']) != 1 or fresh['regional_name_starts']:
+        problems.append('fresh Start naming used %d native / %d regional restores' %
+                        (len(fresh['native_name_restores']),
+                         len(fresh['regional_name_starts'])))
     if len(routed['floor_entries']) != 1:
         problems.append('Willow Staff route reached Floor name entry %d times, expected once' %
                         len(routed['floor_entries']))
     if routed['fresh_entries']:
         problems.append('Willow Staff route unexpectedly reached fresh name entry')
+    if len(routed['native_name_restores']) != 1 or routed['regional_name_starts']:
+        problems.append('Floor naming used %d native / %d regional restores' %
+                        (len(routed['native_name_restores']),
+                         len(routed['regional_name_starts'])))
     if not any(screen == 20 for _frame, screen in routed['dispatches']):
         problems.append('Willow Staff route never dispatched Floor screen 20')
     if (routed['row'], routed['col']) != (fresh['row'], fresh['col']):
@@ -559,6 +873,11 @@ def main():
         problems.append('inventory rename never dispatched name screen 9')
 
     problems.extend(name_return_problems(roundtrip, 'inventory rename', 4))
+    problems.extend(name_entry_problems(roundtrip, 'inventory rename entry'))
+    if roundtrip['native_name_restores']:
+        problems.append('Floor Take + inventory route used %d native restores, expected '
+                        'none before carried naming' %
+                        len(roundtrip['native_name_restores']))
     end_at = roundtrip['end_calls'][0] if roundtrip['end_calls'] else STUN_FRAMES
     after_name_draws = [entry for entry in roundtrip['status_draws']
                         if entry[0] >= end_at]
@@ -607,6 +926,10 @@ def main():
                             (label, case['name'].hex(' ')))
         record_count = min(5, item_count - 5 * (target_slot // 5))
         problems.extend(name_return_problems(case, label, record_count))
+        problems.extend(name_entry_problems(case, label + ' entry'))
+        if case['native_name_restores']:
+            problems.append('%s used %d native restores before carried naming, expected '
+                            'none' % (label, len(case['native_name_restores'])))
         problems.extend('%s: %s' % (label, problem)
                         for problem in case['status_problems'])
         matrix_results.append((item_count, page, row + 1, record_count))
@@ -615,8 +938,8 @@ def main():
         print('  ' + problem)
     floor_entry = routed['floor_entries'][0] if routed['floor_entries'] else None
     print('unidentifiednamespill: Willow Staff Floor -> Name + inventory Stun -> '
-          'Items -> status; Name matrix %s; entry=%s; %d keyboard / %d status tile plane(s); '
-          '%d problem(s)' %
+          'Items -> status + empty-Name B -> responsive Items; Name matrix %s; entry=%s; '
+          '%d keyboard / %d status tile plane(s); %d problem(s)' %
           (' '.join('%di/p%d/r%d/%drec' % result for result in matrix_results),
            floor_entry, len(all_tiles), len(STATUS_TILES), len(problems)))
     raise SystemExit(1 if problems else 0)

@@ -93,16 +93,16 @@ LCDC	41	$40E1	ldh	explicit-off	translation	menuvwf.starttransition	review	title/
 LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	review	completed Rankings whole-map publication
 LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	shared complete native menu-font reload: 4:$4B04 Start naming and 4:$4B22 unidentified-item naming
+LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete native menu-font reload retained for Start naming and rejected Floor-name callers; the exact carried-Item caller is admitted regionally
 LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$42B5	ldh	explicit-off	translation	rankvwf.nativerestore	keep	Rankings result/native-font restoration
-LCDC	53	$43A6	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction; observed after the Pot Put return and retained for unknown callers
-LCDC	53	$43AF	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$4D16	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$4DF6	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$6A6F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$6CDF	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$44CD	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction; observed after the Pot Put return and retained for unknown callers
+LCDC	53	$44D6	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$544E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$552E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$71A7	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$7417	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79AD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79B1	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	59	$406F	ldh	explicit-off	translation	normalending.install	keep	Normal-ending full-screen art installation

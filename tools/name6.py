@@ -129,6 +129,11 @@ NAME_RESTORE_INDEX = 0x05
 NAME_RESTORE_AT = 0x405A
 NAME_RESTORE_LIMIT = 0x4100
 NAME_RESTORE_TRAMPOLINE = 0x5EFF
+# statusvwf owns the exact carried-Item screen-9 regional entry at this far ABI. The
+# status installer asserts the emitted hook bytes so these duplicated constants cannot
+# silently drift.
+ITEM_NAME_ENTRY_BANK = 0x35
+ITEM_NAME_ENTRY_INDEX = 0x0D
 
 DEFAULT_LIT = 0x6EC1        # the shared literal, inside `4:$6EA2`'s own routine
 
@@ -366,10 +371,10 @@ def install(buf, notes=None):
     notes.append('name6: new-game template (%d bytes) + copier -> bank %d $%04X, far index $%02X'
                  % (NEW_RECORD, FAR_BANK, FAR_ORG, len(far) and FAR_INDEX))
 
-    # Restore the complete native font before either name-entry path.  Calling the ROM's
-    # own loader is both smaller and stronger than embedding the four tiles once known to
-    # collide: Floor -> Name proved that the live dungeon-menu VWF can borrow essentially
-    # any raw keyboard code.
+    # Restore the complete native font before the independent Start-menu name entry.
+    # The screen-9 Item/Floor caller is redirected below to statusvwf: exact carried Items
+    # use its LCD-on regional/VBlank path, while Floor and rejected callers come back to
+    # this conservative atomic loader through the bank-44 far entry.
     restore_src = _name_restore_src()
     restore, restore_labels = gbasm.assemble(restore_src, NAME_RESTORE_AT)
     if NAME_RESTORE_AT + len(restore) > NAME_RESTORE_LIMIT:
@@ -507,8 +512,8 @@ def install(buf, notes=None):
 
     # The shorter one-cell selector above freed ten bytes at $5EFD-$5F06. Keep the
     # selector's normal fallthrough by jumping directly to its register pops, and use the
-    # remaining bytes as a local far-call trampoline. Both New Log and Rename call the
-    # same initializer, so both must restore the native tiles before it runs.
+    # remaining bytes as a local far-call trampoline. New Log and Rename share the first
+    # caller and continue to restore the complete native set atomically.
     freed_at = selector_at + len(new_selector)
     freed_len = len(old_selector) - len(new_selector)
     if (freed_at, freed_len) != (0x5EFD, 10):
@@ -518,7 +523,7 @@ def install(buf, notes=None):
     selector_skip, _ = gbasm.assemble('jr $5F07', freed_at)
     trampoline, _ = gbasm.assemble(
         'rst $10\ndb $%02X,$%02X\njp $5E50' %
-        (NAME_RESTORE_INDEX, NAME_RESTORE_BANK), NAME_RESTORE_TRAMPOLINE)
+        (ITEM_NAME_ENTRY_INDEX, ITEM_NAME_ENTRY_BANK), NAME_RESTORE_TRAMPOLINE)
     bridge = selector_skip + trampoline
     if len(bridge) > freed_len:
         raise AssertionError('name6: name-entry restore trampoline is too large')
@@ -526,8 +531,9 @@ def install(buf, notes=None):
     for caller in (0x4B04, 0x4B22):
         p.imm16(4, caller, 0xCD, 0x5E50, NAME_RESTORE_TRAMPOLINE,
                 'a name-entry initializer/restore call')
-    notes.append('name6: New Log and Rename restore native name-screen tiles before '
-                 'initializing the field')
+    notes.append('name6: New Log and Rename retain the atomic native name-screen restore; '
+                 'Item/Floor screen 9 dispatches through statusvwf for caller-specific '
+                 'regional admission')
 
     # THE BOX INDEX IS DUPLICATED, and the width nibble alone does not move it. `4:$4B02`
     # builds the player-name screen as `call $5E6E` (which sets the width) followed by a
@@ -658,7 +664,7 @@ def selftest():
     selector_skip, _ = gbasm.assemble('jr $5F07', 0x5EFD)
     trampoline, _ = gbasm.assemble(
         'rst $10\ndb $%02X,$%02X\njp $5E50' %
-        (NAME_RESTORE_INDEX, NAME_RESTORE_BANK), NAME_RESTORE_TRAMPOLINE)
+        (ITEM_NAME_ENTRY_INDEX, ITEM_NAME_ENTRY_BANK), NAME_RESTORE_TRAMPOLINE)
     assert len(selector_skip + trampoline) <= 10
     code, labels = gbasm.assemble(
         _DEFAULT_SRC % (BUF_NEW, ','.join('$%02X' % b for b in b'\x01' * 7)), 0x6EA2)

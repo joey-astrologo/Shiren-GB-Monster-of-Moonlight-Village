@@ -57,8 +57,8 @@ TRANSLATION_OFF = {
     ),
     (44, 0x4066): (
         'name6.namerestore',
-        'shared complete native menu-font reload: 4:$4B04 Start naming and '
-        '4:$4B22 unidentified-item naming',
+        'complete native menu-font reload retained for Start naming and rejected '
+        'Floor-name callers; the exact carried-Item caller is admitted regionally',
         'mixed',
     ),
     (46, 0x42B5): (
@@ -66,7 +66,7 @@ TRANSLATION_OFF = {
         'Rankings result/native-font restoration',
         'keep',
     ),
-    (53, 0x43A6): (
+    (53, 0x44CD): (
         'statusvwf.statusentry',
         'rejected LCD-on Status reconstruction; observed after the Pot Put return and '
         'retained for unknown callers',
@@ -119,10 +119,19 @@ MENU_BLANK_PATHS = (
          status='remaining', fixture='equipmentmarkerspill.py',
          evidence='observed exact irdisable execution; ordinary Status -> Items is zero'),
     dict(system='item', key='item-name-entry',
-         sites=(('LCDC', 44, 0x4066),), origin='translation', stack='0,1,2,9',
+         sites=(), origin='translation', stack='0,1,2,9',
          route='Carried unidentified item Action -> Name keyboard',
-         status='remaining', fixture='unidentifiednamespill.py',
-         evidence='observed on pages 1-4 and rows 1-5; Name return is already zero'),
+         status='regional', fixture='unidentifiednamespill.py + '
+                 'shiren_en_log3_carried_unidentified_naming.srm',
+         evidence='exact stack admitted to four-row BG retirement plus selective '
+                  'native-plane restore; LCDC.7 stays set and Name return is zero'),
+    dict(system='item', key='item-name-empty-cancel',
+         sites=(), origin='translation', stack='0,1',
+         route='B from an empty carried-item Name keyboard -> Items reconstruction',
+         status='regional', fixture='unidentifiednamespill.py + '
+                 'shiren_en_log3_carried_unidentified_naming.srm',
+         evidence='exact no-Lua screen-9 cancel arms state $0E, suppresses disposable '
+                  'Status, publishes chrome before rows, and accepts immediate input'),
     dict(system='item', key='status-to-unidentified-floor',
          sites=(('shadow', 2, 0x463C),), origin='base', stack='0 -> 0,20',
          route='Status -> alternate unidentified Floor/Action screen',
@@ -146,14 +155,15 @@ MENU_BLANK_PATHS = (
          fixture='potputspill.py',
          evidence='returns to the menu, so this is not the final gameplay teardown'),
     dict(system='item', key='pot-put-items-to-status',
-         sites=(('LCDC', 53, 0x43A6),), origin='translation', stack='0,1',
+         sites=(('LCDC', 53, 0x44CD),), origin='translation', stack='0,1',
          route='Back out after Put -> Status reconstruction', status='remaining',
          fixture='potputspill.py', evidence='observed exact statusdisable execution'),
     dict(system='item', key='unknown-status-fallback',
-         sites=(('LCDC', 53, 0x43A6),), origin='translation', stack='unknown -> 0',
+         sites=(('LCDC', 53, 0x44CD),), origin='translation', stack='unknown -> 0',
          route='Any other rejected LCD-on child -> Status reconstruction',
          status='dormant', fixture='all admitted Item/Info/Pot/Name/Floor returns',
-         evidence='fallback remains in ROM; known admitted returns require zero'),
+         evidence='fallback remains in ROM; all other admitted success/return routes '
+                  'require zero; empty Name cancel is separately admitted'),
     dict(system='item', key='unknown-item-region-fallback',
          sites=(('LCDC', 60, 0x4222),), origin='translation', stack='unknown -> 1',
          route='Any other rejected Item page/sort/shape regional transaction',
@@ -404,7 +414,10 @@ def write_menu_tsv(path, rows):
             cooked = dict(row)
             cooked['sites'] = ' + '.join(
                 ('shadow ' if target == 'shadow' else '') + '%d:$%04X' % (bank, address)
-                for target, bank, address in row['sites']) or 'unresolved'
+                for target, bank, address in row['sites'])
+            if not cooked['sites']:
+                cooked['sites'] = ('none (regional)' if row['status'] == 'regional'
+                                   else 'unresolved')
             writer.writerow(cooked)
 
 
@@ -423,7 +436,7 @@ def validate_menu_paths(rows):
         if key in keys:
             problems.append('duplicate menu path key %s/%s' % key)
         keys.add(key)
-        if not path['sites'] and path['status'] != 'coverage-gap':
+        if not path['sites'] and path['status'] not in ('coverage-gap', 'regional'):
             problems.append('%s/%s has no LCD-off site' % key)
         for target, bank, address in path['sites']:
             target_name = 'LCDC-shadow' if target == 'shadow' else target
