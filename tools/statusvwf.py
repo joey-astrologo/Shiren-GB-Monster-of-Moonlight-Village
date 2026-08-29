@@ -7,9 +7,9 @@ but Items -> Status and returns from the item-name picker can reach it with the 
 enabled during the visible scan. Mesen and hardware reject unrestricted direct VRAM
 writes there, leaving one status glyph plane native and the other proportional.
 
-The exact Status-root -> Items entry and exact inventory-Name success/empty-cancel ->
-disposable Status -> Items replays are intercepted at screen 1's native shadow-clear
-boundary. They retire
+The exact Status-root -> Items entry and exact inventory-Name success,
+initial-empty-cancel, and erased-name-cancel disposable Status -> Items replays are
+intercepted at screen 1's native shadow-clear boundary. They retire
 visible BG rows 0..15 over four complete VBlanks while preserving the enabled bottom
 Window, commit the empty header/list-box chrome, then let the existing row and final-map
 publishers reveal only completed Item content inside it. The Name route is admitted in
@@ -369,9 +369,9 @@ statuspredone:
   ret
 
 nameentry:
-  ; The same screen-9 initializer serves carried and Floor items.  Only the exact
-  ; 0,1,2,9 carried-Item stack is admitted here; Floor and unknown callers retain the
-  ; established bank-44 atomic restore until their independent transition is mapped.
+  ; The same screen-9 initializer serves carried and Floor items. Admit the exact
+  ; carried 0,1,2,9 and ground 0,20,9 owners independently; unknown callers retain the
+  ; established bank-44 atomic restore.
   push af
   push bc
   push de
@@ -394,39 +394,101 @@ nameentrydone:
 nameentrycheck:
   ld a,[$C534]
   cp $03
-  jr nz,nameentrybad
+  jr z,nameentrycarried
+  cp $02
+  jp nz,nameentrybad
+  ; Exact Status-root -> screen-20 Floor -> Name stack. Screen 20's Action descriptor
+  ; is still live even though screen 9 has become current.
   ld hl,$C535
   ld a,[hl+]
   and a
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   ld a,[hl+]
-  dec a
-  jr nz,nameentrybad
-  ld a,[hl+]
-  cp $02
-  jr nz,nameentrybad
+  cp $14
+  jp nz,nameentrybad
   ld a,[hl]
   cp $09
-  jr nz,nameentrybad
+  jp nz,nameentrybad
+  ld a,[$C6A6]
+  and a
+  jp nz,nameentrybad
+  ld hl,$C1B3
+  ld b,$05
+nameentryflooridle:
+  ld a,[hl+]
+  and a
+  jp nz,nameentrybad
+  dec b
+  jr nz,nameentryflooridle
+  ld a,[$C6AC]
+  inc a
+  jp nz,nameentrybad
+  ld a,[$C6DE]
+  dec a
+  jp nz,nameentrybad
+  ld a,[$C6BB]
+  cp $03
+  jp c,nameentrybad
+  cp $08
+  jp nc,nameentrybad
+  ld b,a
+  ld hl,$C69A
+  ld a,[hl+]
+  cp $0D
+  jp nz,nameentrybad
+  ld a,[hl+]
+  cp $03
+  jp nz,nameentrybad
+  ld a,[hl+]
+  cp b
+  jp nz,nameentrybad
+  ld a,[hl+]
+  cp $05
+  jp nz,nameentrybad
+  ld a,[hl]
+  cp $02
+  jp nz,nameentrybad
+  ld a,[$C6F7]
+  cp $02
+  jp nz,nameentrybad
+  jr nameentrycommon
+nameentrycarried:
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,nameentrybad
+  ld a,[hl+]
+  dec a
+  jp nz,nameentrybad
+  ld a,[hl+]
+  cp $02
+  jp nz,nameentrybad
+  ld a,[hl]
+  cp $09
+  jp nz,nameentrybad
+nameentrycommon:
   ld a,[$C6A3]
   cp $09
-  jr nz,nameentrybad
+  jp nz,nameentrybad
+  ld a,[$C11A]
+  and a
+  jp nz,nameentrybad
   ldh a,[$FF40]
   and $F8
   cp $E0
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   ldh a,[$FF42]
   and a
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   ldh a,[$FF43]
   and a
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   ldh a,[$FF4A]
   cp $80
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   ldh a,[$FF4B]
   cp $07
-  jr nz,nameentrybad
+  jp nz,nameentrybad
   scf
   ret
 nameentrybad:
@@ -614,6 +676,8 @@ itementrygate:
   jp z,itementryname
   cp $0E
   jp z,itementrynamecancel
+  cp $0F
+  jp z,itementrynameerasedcancel
   and a
   jr nz,itementrybad
   ld a,[$C6A3]
@@ -695,6 +759,14 @@ itementrynamecancel:
   ld a,[$C6F3]
   and a
   jp nz,itementrybad
+  jr itementrynamecancelrow
+itementrynameerasedcancel:
+  ; Reopening a successfully named Item and erasing its complete name preserves
+  ; native mode 3.  Keep it disjoint from both End and the initially empty cancel.
+  ld a,[$C6F3]
+  cp $03
+  jp nz,itementrybad
+itementrynamecancelrow:
   ld a,[$C6F5]
   dec a
   jp nz,itementrybad
@@ -981,7 +1053,7 @@ statusready:
   cp $0A
   jr z,statusreadypot
   ; Inventory item naming returns through a disposable screen-0 build before native
-  ; screen 1 is replayed. Prove the exact success or empty-cancel epoch while the complete
+  ; screen 1 is replayed. Prove the exact success or either cancel epoch while the complete
   ; keyboard still owns the display, arm a private handoff, and suppress Status. Screen
   ; 1 will retire the keyboard and publish empty Items chrome before it can repaint any
   ; borrowed native font plane.
@@ -1085,12 +1157,12 @@ statusnamecheck:
   ld a,[$C11A]
   and a
   jp nz,statusnamebad
-  ; Successful End and empty B-cancel share the native 9 -> 0 -> 1 replay but expose
-  ; different screen-9 state. Preserve that distinction in the transaction byte so
-  ; the screen-1 half must prove the matching variant independently.
+  ; Successful End, initially empty B-cancel, and named-then-erased B-cancel share
+  ; the native 9 -> 0 -> 1 replay but expose different screen-9 state. Preserve that
+  ; distinction in the transaction byte so screen 1 proves its matching variant.
   ld a,[$C6F3]
   cp $03
-  jr z,statusnamesuccess
+  jr z,statusnamemode3
   and a
   jp nz,statusnamebad
   ld a,[$C6F5]
@@ -1101,10 +1173,18 @@ statusnamecheck:
   jp nz,statusnamebad
   ld c,$0E
   jr statusnamemodeok
-statusnamesuccess:
+statusnamemode3:
   ld a,[$C6F5]
   and a
+  jr z,statusnamesuccess
+  dec a
   jp nz,statusnamebad
+  ld a,[$C6E3]
+  cp $88
+  jp nz,statusnamebad
+  ld c,$0F
+  jr statusnamemodeok
+statusnamesuccess:
   ld c,$0D
 statusnamemodeok:
   ld a,[$C6F7]
@@ -1902,8 +1982,10 @@ def install(buf, notes=None, font=None):
                      'those same bounded uploads; '
                      'admitted Action B restores its Item/Floor parent and input state '
                      'without replay; exact screen-1/screen-7/screen-20 Info, carried-Pot, '
-                     'and inventory-Name success/empty-cancel returns suppress only their disposable Status '
+                     'and inventory-Name success/initial-empty/erased-name returns '
+                     'suppress only their disposable Status '
                      'reconstruction; Name then uses the same chrome-first bounded Items '
-                     'entry; exact carried-Item Name entry retires only BG rows 0-15 and '
+                     'entry; exact carried-Item and screen-20 Floor Name entries retire '
+                     'only BG rows 0-15 and '
                      'restores its native keyboard planes in bounded VBlank batches; '
                      'unknown LCD-on returns retain the conservative path')

@@ -58,7 +58,7 @@ TRANSLATION_OFF = {
     (44, 0x4066): (
         'name6.namerestore',
         'complete native menu-font reload retained for Start naming and rejected '
-        'Floor-name callers; the exact carried-Item caller is admitted regionally',
+        'screen-9 callers; exact carried-Item and screen-20 Floor callers are regional',
         'mixed',
     ),
     (46, 0x42B5): (
@@ -66,7 +66,7 @@ TRANSLATION_OFF = {
         'Rankings result/native-font restoration',
         'keep',
     ),
-    (53, 0x44CD): (
+    (53, 0x4560): (
         'statusvwf.statusentry',
         'rejected LCD-on Status reconstruction; observed after the Pot Put return and '
         'retained for unknown callers',
@@ -132,18 +132,43 @@ MENU_BLANK_PATHS = (
                  'shiren_en_log3_carried_unidentified_naming.srm',
          evidence='exact no-Lua screen-9 cancel arms state $0E, suppresses disposable '
                   'Status, publishes chrome before rows, and accepts immediate input'),
-    dict(system='item', key='status-to-unidentified-floor',
-         sites=(('shadow', 2, 0x463C),), origin='base', stack='0 -> 0,20',
-         route='Status -> alternate unidentified Floor/Action screen',
-         status='remaining', fixture='unidentifiednamespill.py',
-         evidence='observed before the Floor Name selection; ordinary admitted Floor '
-                  'Info fixtures do not execute it'),
+    dict(system='item', key='item-name-erased-cancel',
+         sites=(), origin='translation', stack='0,1',
+         route='B after erasing a reopened carried-item name -> Items reconstruction',
+         status='regional', fixture='unidentifiednamespill.py + '
+                 'shiren_en_log3_carried_unidentified_naming.srm',
+         evidence='real End/reopen/four-delete/final-B route preserves native mode 3; '
+                  'exact state $0F suppresses disposable Status, publishes chrome '
+                  'before rows, and accepts immediate input'),
     dict(system='item', key='floor-name-entry',
-         sites=(('LCDC', 44, 0x4066), ('shadow', 4, 0x4154)),
-         origin='mixed', stack='0,20 -> 0,20,9',
+         sites=(), origin='translation', stack='0,20 -> 0,20,9',
          route='Unidentified Floor item Action -> Name keyboard',
-         status='remaining', fixture='unidentifiednamespill.py',
-         evidence='translation native-font blank followed by native screen setup'),
+         status='regional', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact stack/ground/box-39 owner uses four BG retirement and eighteen '
+                  'native-plane batches; Status -> Floor predecessor is independently '
+                  'zero-off and LCD-live'),
+    dict(system='item', key='floor-name-end-return',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,20',
+         route='End from a screen-20 Floor item Name keyboard -> Floor reconstruction',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact real-input End trace dispatches 9,0,20 with mode/row 3/0 and '
+                  'executes statusdisable'),
+    dict(system='item', key='floor-name-empty-cancel',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,20',
+         route='B from an initially empty screen-20 Floor Name keyboard -> Floor',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='exact real-input B trace dispatches 9,0,20 with mode/row 0/1 and '
+                  'executes statusdisable'),
+    dict(system='item', key='floor-name-erased-cancel',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,20',
+         route='B after erasing a reopened screen-20 Floor item name -> Floor',
+         status='remaining', fixture='unidentifiednamespill.py + '
+                 'shiren_log3_unidentified_naming.srm',
+         evidence='real End/reopen/delete/final-B trace dispatches 9,0,20 with mode/row '
+                  '3/1 and executes statusdisable'),
     dict(system='item', key='pot-put-selector',
          sites=(('LCDC', 60, 0x4338),), origin='translation', stack='0,1,2,11',
          route='Carried Pot Action -> Put item selector', status='remaining',
@@ -155,15 +180,15 @@ MENU_BLANK_PATHS = (
          fixture='potputspill.py',
          evidence='returns to the menu, so this is not the final gameplay teardown'),
     dict(system='item', key='pot-put-items-to-status',
-         sites=(('LCDC', 53, 0x44CD),), origin='translation', stack='0,1',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='0,1',
          route='Back out after Put -> Status reconstruction', status='remaining',
          fixture='potputspill.py', evidence='observed exact statusdisable execution'),
     dict(system='item', key='unknown-status-fallback',
-         sites=(('LCDC', 53, 0x44CD),), origin='translation', stack='unknown -> 0',
+         sites=(('LCDC', 53, 0x4560),), origin='translation', stack='unknown -> 0',
          route='Any other rejected LCD-on child -> Status reconstruction',
          status='dormant', fixture='all admitted Item/Info/Pot/Name/Floor returns',
          evidence='fallback remains in ROM; all other admitted success/return routes '
-                  'require zero; empty Name cancel is separately admitted'),
+                  'require zero; both Name-cancel histories are separately admitted'),
     dict(system='item', key='unknown-item-region-fallback',
          sites=(('LCDC', 60, 0x4222),), origin='translation', stack='unknown -> 1',
          route='Any other rejected Item page/sort/shape regional transaction',

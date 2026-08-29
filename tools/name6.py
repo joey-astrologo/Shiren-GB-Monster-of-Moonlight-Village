@@ -129,7 +129,7 @@ NAME_RESTORE_INDEX = 0x05
 NAME_RESTORE_AT = 0x405A
 NAME_RESTORE_LIMIT = 0x4100
 NAME_RESTORE_TRAMPOLINE = 0x5EFF
-# statusvwf owns the exact carried-Item screen-9 regional entry at this far ABI. The
+# statusvwf owns the exact carried-Item and screen-20 Floor screen-9 regional entries at this far ABI. The
 # status installer asserts the emitted hook bytes so these duplicated constants cannot
 # silently drift.
 ITEM_NAME_ENTRY_BANK = 0x35
@@ -372,9 +372,9 @@ def install(buf, notes=None):
                  % (NEW_RECORD, FAR_BANK, FAR_ORG, len(far) and FAR_INDEX))
 
     # Restore the complete native font before the independent Start-menu name entry.
-    # The screen-9 Item/Floor caller is redirected below to statusvwf: exact carried Items
-    # use its LCD-on regional/VBlank path, while Floor and rejected callers come back to
-    # this conservative atomic loader through the bank-44 far entry.
+    # The screen-9 Item/Floor caller is redirected below to statusvwf: exact carried
+    # Items and screen-20 Floor use its LCD-on regional/VBlank path, while rejected
+    # callers come back to this conservative atomic loader through the bank-44 far entry.
     restore_src = _name_restore_src()
     restore, restore_labels = gbasm.assemble(restore_src, NAME_RESTORE_AT)
     if NAME_RESTORE_AT + len(restore) > NAME_RESTORE_LIMIT:

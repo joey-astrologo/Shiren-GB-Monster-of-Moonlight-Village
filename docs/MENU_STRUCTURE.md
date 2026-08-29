@@ -161,9 +161,9 @@ The ten explicit translation-owned whole-LCD sites are:
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — independent composite screen |
 | `41:$40E1` | `menuvwf.starttransition`: title/file complete shadow-map replacement | `review` — complete-screen menu transaction |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `review` — complete-screen menu transaction |
-| `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected Floor-name callers; exact carried Items is admitted before this fallback | `mixed` — keep the independent Start keyboard and Floor fallback; carried Items is regional |
+| `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
 | `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `keep` — tile-data lifetime boundary |
-| `53:$44CD` | `statusvwf.statusentry`: rejected Status reconstruction, observed after Pot `Put` | `replace-menu` |
+| `53:$4560` | `statusvwf.statusentry`: rejected Status reconstruction, observed after Pot `Put` | `replace-menu` |
 | `59:$406F` | `normalending.install`: Normal-ending full-screen art installation | `keep` — new scene |
 | `60:$4222` | `menuvwf.itemregion`: rejected Item-row transaction, observed on the injected equipment Status-to-Items route | `replace-menu` |
 | `60:$4338` | `menuvwf.itempage`: rejected Item/Pot transaction, observed on the Pot `Put` selector | `replace-menu` |
@@ -175,8 +175,8 @@ Item/Floor Name caller is same-menu debt.
 
 ### Item/Status LCD-off catalogue
 
-The generated Item table currently has 16 caller rows: six observed same-menu rows still
-requiring replacement, two admitted regional rows, one unresolved shop grouping, four
+The generated Item table currently has 19 caller rows: seven observed same-menu rows still
+requiring replacement, four admitted regional rows, one unresolved shop grouping, four
 dormant fallback rows, and three intentional replacement boundaries.
 
 | Player path | Causal off producer(s) | Status and evidence |
@@ -185,12 +185,15 @@ dormant fallback rows, and three intentional replacement boundaries.
 | Status -> Items with injected cursed/plated/fused rows | `60:$4222` | `remaining`; exact `irdisable` hit in `equipmentmarkerspill.py`; ordinary Status -> Items stays zero |
 | Carried unidentified item -> Action -> Name | none | `regional`; exact stack `0,1,2,9` keeps LCDC.7 set, retires visible BG rows, and selectively restores native keyboard planes; dedicated real-input SRM and `unidentifiednamespill.py` |
 | B from an empty carried-item Name keyboard -> Items | none | `regional`; exact no-Lua screen-9 cancel arms state `$0E`, suppresses disposable Status, publishes complete Items chrome before rows, and accepts immediate input |
-| Status -> alternate unidentified Floor/Action | shadow `2:$463C` | `remaining`; observed in `unidentifiednamespill.py`, while admitted ordinary Floor/Info routes stay zero |
-| Unidentified Floor item -> Action -> Name | `44:$4066`, then shadow `4:$4154` | `remaining`; both blank intervals occur before the keyboard settles |
+| B after erasing a reopened carried-item name -> Items | none | `regional`; real End/reopen/four-delete/final-B route preserves native mode 3, arms state `$0F`, publishes complete Items chrome before rows, and accepts immediate input |
+| Unidentified Floor item -> Action -> Name | none | `regional`; exact stack `0,20,9`, ground context, and 3-7-row box-39 owner use the shared bounded BG/native-plane publisher; the Status -> Floor predecessor is independently LCD-live and zero-off |
+| End from screen-20 Floor Name -> Floor | `53:$4560` | `remaining`; exact `9 -> 0 -> 20`, native mode/row `$03/$00`, and `statusdisable` hit |
+| B from initially empty screen-20 Floor Name -> Floor | `53:$4560` | `remaining`; exact `9 -> 0 -> 20`, native mode/row `$00/$01`, and `statusdisable` hit |
+| B after erasing a reopened screen-20 Floor item name -> Floor | `53:$4560` | `remaining`; exact `9 -> 0 -> 20`, native mode/row `$03/$01`, and `statusdisable` hit |
 | Carried Pot Action -> `Put` selector, screen 11 | `60:$4338` | `remaining`; exact `pbdisable` hit |
 | Commit `Put` -> Pot Action/Items replay | shadow `2:$463C`, then shadow `4:$4154` | `remaining`; destination is still the menu, so this is not final teardown |
-| Back out after `Put` -> Status | `53:$44CD` | `remaining`; exact `statusdisable` hit at stack `0,1` |
-| Unknown rejected child -> Status | `53:$44CD` | `dormant`; all other admitted Info/Pot/Name/Floor success/return routes require zero, but fallback code remains |
+| Back out after `Put` -> Status | `53:$4560` | `remaining`; exact `statusdisable` hit at stack `0,1` |
+| Unknown rejected child -> Status | `53:$4560` | `dormant`; all other admitted Info/Pot/Name/Floor success/return routes require zero, but fallback code remains |
 | Unknown rejected page/sort/shape transaction | `60:$4222` | `dormant`; admitted paging, sort, and Floor paths require zero |
 | Unknown rejected Item/Pot replacement | `60:$4338` | `dormant`; admitted paging and `See` paths require zero |
 | Unknown rejected Info/seal/Pot lifecycle | `62:$4476` | `dormant`; no exact hit in the complete traced fixture battery |
@@ -198,9 +201,11 @@ dormant fallback rows, and three intentional replacement boundaries.
 | Action whose destination is gameplay/field message | shadow `2:$463C`, shadow `4:$4154` | `keep`; replacement path, including the pre-Floor history in `floorinfospill.py --fusion-kit-history` |
 | B from Status -> dungeon field | shadow `2:$463C` | `keep`; intentional final menu teardown |
 
-Normal Items paging, Start sorting, page indicators, Status -> ordinary Items, Items ->
+Normal Items paging, Start sorting, page indicators, Status -> ordinary Items, Status ->
+screen-20 Floor, Floor Action -> Name, Items ->
 Status, admitted Info/seal pages, every admitted Pot `See` entry/return, screen-7 and
-screen-20 Info returns, `Name -> End -> Items`, and empty `Name -> B -> Items` all
+screen-20 Info returns, `Name -> End -> Items`, initially empty `Name -> B -> Items`,
+and named-then-erased `Name -> B -> Items` all
 produced zero causal off hits.
 Those are regression coverage, not remaining blank rows.
 
@@ -255,7 +260,7 @@ BG cell refers to it if a visible Window cell still does.
 | Menu upload scheduler | `$C006`, selector `$C11A` | Drain it before changing map ownership; do not bypass it with long LY busy-waits |
 | VWF row scratch | `$C0CC-$C0DD` | Translation-owned while the menu renderer is active |
 | VWF row records | `$C163-$C1B2` | Five-byte keyed records plus proportional metadata; ownership is per rendered row |
-| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; checkpoint 4 adds `$08/$09/$0A/$0B` for screen-1 Info or Items-derived Floor-Pot return, screen-20 Info, carried-Pot return, and screen-7 Info replay; `$0D` owns the exact Name-to-Items handoff |
+| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; checkpoint 4 adds `$08/$09/$0A/$0B` for screen-1 Info or Items-derived Floor-Pot return, screen-20 Info, carried-Pot return, and screen-7 Info replay; `$0D/$0E/$0F` own the exact successful, initially empty-cancel, and named-then-erased Name-to-Items handoffs |
 | Shared Action/Item transition state | `$C1B4-$C1B6` | Held-Action row count and packed Item state; screen-1 Info return records child screen 4/5 in `$C1B4`, while screen-20 and screen-7 returns preserve their Action heights there. During exact Item paging `$C1B4` is instead the four-slice tile-copy counter, `$C1B5` marks an Items/Floor header change after the final body row, and `$C1B6` is the page phase (`2` body, `4` replacement header, `3` redraw tail). Screen 1 retains admitted Info/seal value `1`, then uses `2` only after complete empty return chrome is published. An exact Items-to-Status pop retires phase `3` because the initial Items build has no same-screen redraw-tail call; no later Floor child may inherit that dead transaction. An exact screen-20 child accepts idle `0` or stale carried-Action value `1` and clears it before publication; screen 7 uses `2` only after its independent empty parent chrome publishes. The lifecycles are mutually exclusive |
 | Standing-item Floor settlement | `$C1B7` | One only after screen 1 selector `$FF` has completed; authorizes its exact live Status pop, then clears |
 | Held-Action / Pot-viewer snapshot | `$C1B8-$C1BE` | Seven exact cells saved before box 6 overwrites a carried Item page marker; in the mutually exclusive screen-20 Pot-viewer lifetime, `$C1B8` instead preserves the parent box-39 row count before screen 12/13 reuses `$C6BB` |
@@ -1142,7 +1147,7 @@ native B destination remains the dungeon field and retains its native teardown.
 Manual Mesen validation on 2026-08-27 confirmed both screen-7 return paths render in the
 required order and remain promptly responsive.
 
-#### Carried Item `Action -> Name` entry
+#### Carried Item and screen-20 Floor `Action -> Name` entry
 
 Fresh `mgbdis` output confirms that bank 4 has two screen-specific callers of the shared
 name initializer: `4:$4B04` for Start screen 8 and `4:$4B22` for Item/Floor screen 9.
@@ -1151,12 +1156,15 @@ with `15,22,25,8`, Floor enters with `0,20,9`, and carried Items enters with
 `0,1,2,9`. The screen number alone is therefore not an ownership proof.
 
 The shared bank-4 trampoline asks `statusvwf` to classify the caller before running the
-unchanged native `$5E50` initializer. Only stack `0,1,2,9`, current screen 9, the standard
-LCD-on signed-tile viewport, zero scroll, and the expected Window position are admitted.
-Start, Floor, or any malformed caller falls through to the existing bank-44 complete
-native-font restore at `44:$4066`; their behavior is intentionally unchanged.
+unchanged native `$5E50` initializer. Carried admission requires stack `0,1,2,9`, current
+screen 9, the standard LCD-on signed-tile viewport, zero scroll, and the expected Window
+position. Screen-20 Floor admission is independent: stack `0,20,9`, replay counter zero,
+selector `$FF`, ground context one, idle transition/queue state, name mode two, and the
+still-live box-39 Action descriptor `(13,3,N,5,2)` with `N=3..7`. Start or any malformed
+screen-9 caller falls through to the existing bank-44 complete native-font restore at
+`44:$4066`; its conservative behavior is intentionally unchanged.
 
-An admitted carried entry has two bounded phases while LCDC bit 7 remains set:
+Either admitted entry has two bounded phases while LCDC bit 7 remains set:
 
 1. Retire visible BG rows 0-15 in four complete four-row VBlank batches. The bottom HUD
    Window and hidden BG rows 16-17 remain byte-exact.
@@ -1170,23 +1178,55 @@ An admitted carried entry has two bounded phases while LCDC bit 7 remains set:
    the final batch, matching the side effect of the native loader.
 
 The unchanged screen-9 initializer then publishes the keyboard. The permitted visible
-sequence is `complete Items/Action -> regionally empty upper BG with HUD retained ->
-complete Name chrome and text`. A disabled LCD, a uniform whole-screen frame, changed
+sequence is `complete Items or Floor/Action -> regionally empty upper BG with HUD
+retained -> complete Name chrome and text`. A disabled LCD, a uniform whole-screen frame, changed
 HUD/hidden rows, text before chrome, or a half-restored referenced tile is a failure.
 
 Cancelling an empty carried-item Name keyboard with B is not part of this entry
 transaction. It has the separate, independently proved return transaction documented
-below; shared screen 9 alone authorizes neither direction.
+below. Screen-20 Floor Name return is likewise outside this entry checkpoint; shared
+screen 9 alone authorizes no return direction.
 
-`tools/unidentifiednamespill.py` proves the exact entry on a gameplay-derived carried
-Willow Staff and across its existing one- through four-page synthetic layout matrix. It
-also proves that fresh Start and Floor naming each execute one native restore and zero
-regional entries. `tools/makeitemnametest.py` creates the manual SRM by pressing real
+`tools/unidentifiednamespill.py` proves both exact entries on the same gameplay-derived
+Willow Staff: screen-20 Floor uses stack `0,20,9`, and carried layouts cover the existing
+one- through four-page synthetic matrix. It requires each accepted path to use one
+regional entry and zero native restores, while fresh Start naming still executes one
+native restore and zero regional entries. The earlier catalogue attribution of native
+shadow `2:$463C` to Status -> Floor was false: exact interval tracing shows that call only
+at the earlier title-to-gameplay boundary; Status dispatch `0` to Floor dispatch `20`
+has no `$C110` producer, LCD-off frame, or uniform frame. `tools/makeitemnametest.py` creates the manual SRM by pressing real
 buttons to take the staff, saving cartridge RAM normally, and cold-booting the result;
 it never writes inventory, identity, object, or menu-state memory. Regeneration must be
 byte-identical to
 `tests/fixtures/saves/shiren_en_log3_carried_unidentified_naming.srm` (SHA-256
 `ece2da2b167ae51a42176304ae89d4fa2e4e8e0dbb4f70d7b1d31c12a0dfa235`).
+
+For the screen-20 Floor-entry checkpoint, use the independent ground-item fixture and a
+unique ROM basename:
+
+```sh
+TEST_TAG=shiren_floor_name_entry_20260829
+TEST_DIR="$PWD/build/manual-tests/$TEST_TAG"
+MESEN_SAVES="$HOME/Library/Application Support/MesenCE/Saves"
+mkdir -p "$TEST_DIR" "$MESEN_SAVES"
+cp build/shiren_en.gb "$TEST_DIR/$TEST_TAG.gb"
+cp tests/fixtures/saves/shiren_log3_unidentified_naming.srm \
+  "$MESEN_SAVES/$TEST_TAG.srm"
+md5 "$TEST_DIR/$TEST_TAG.gb"
+shasum -a 256 "$MESEN_SAVES/$TEST_TAG.srm"
+open -na "/Applications/Mesen.app" --args "$TEST_DIR/$TEST_TAG.gb"
+```
+
+The expected ROM MD5 is `add4b7e0260b78bd770fa700f14f4c88`; expected SRAM SHA-256
+is `21c38b8eb212f9cf5e0ae7987530e9ff2e7943f7e89c2fb501710693e0a2d5e8`.
+Load Adventure log 3. In the dungeon press B, move Down once from `Items` to `Floor`,
+and press A. Status -> Floor must remain LCD-live. In the six-row Action picker move
+Down four times from `Take` to `Name` and press A. The Floor/Action map may retire
+regionally while the bottom HUD remains visible; the whole LCD must never blank. The
+complete keyboard, name field, cursor, punctuation, and `End` underline must settle
+before normal input. Stop this checkpoint once the keyboard is complete: empty B,
+successful End, and named-then-erased returns to screen 20 are separately catalogued
+remaining transitions and may still blank in this build.
 
 For an isolated Mesen visual review, close any running instance first and run from the
 repository root:
@@ -1205,7 +1245,7 @@ open -na "/Applications/Mesen.app" --args "$TEST_DIR/$TEST_TAG.gb"
 ```
 
 For this empty-cancel checkpoint candidate the ROM MD5 is
-`a8c23666d223ce928050183bcbb36d31`; the SRAM SHA-256 remains
+`add4b7e0260b78bd770fa700f14f4c88`; the SRAM SHA-256 remains
 `ece2da2b167ae51a42176304ae89d4fa2e4e8e0dbb4f70d7b1d31c12a0dfa235`.
 
 Press Start through the opening screens, choose `Adventure`, choose the third log, and
@@ -1229,7 +1269,7 @@ calls the `$6026` End routine. Both outcomes dispatch `9 -> 0 -> 1`, but their r
 Name state differs: successful End carries `(mode,row)=($03,$00)`, whereas empty cancel
 carries `($00,$01)` and retains `$88` in the first name cell. The previous success-only
 proof rejected that second state, so the shared Status fallback reached its whole-LCD
-clear at `53:$44CD`.
+clear at `53:$4560`.
 
 The cancel return now uses private transaction state `$0E`; successful End continues to
 use `$0D`. At the disposable screen-0 boundary, the `$0E` proof requires the exact
@@ -1249,6 +1289,62 @@ requires the native `$5F0B` call and `9 -> 0 -> 1` dispatch, four `$0E` batches,
 Status drawing/LCD-off/uniform frames, chrome before rows, an immediate Up selection,
 and a subsequent clean Items-to-Status exit. The successful `$0D` matrix and End
 underline planes run in the same regression, keeping the two variants independent.
+
+#### Inventory Item erased-name `Name -> B -> Items` return
+
+This is not the initially empty cancel above. The player first names the carried Item
+through `End`, reopens `Name`, presses B until the saved text is empty, and presses B
+once more to exit. Fresh `mgbdis` output for ROM MD5
+`add4b7e0260b78bd770fa700f14f4c88` places the unchanged native pop at bank 4 `$5F0B`,
+the `End` finalizer at `$6026`, and the screen dispatcher at `$48AA`. A real-input trace
+proves two complete screen-9 lifetimes: the successful first lifetime reaches `$5F0B`
+with `(mode,row)=($03,$00)`, while the erased-name cancellation reaches it with
+`($03,$01)`. The latter still dispatches `9 -> 0 -> 1`; it is neither successful End nor
+the initially empty `($00,$01)` cancellation.
+
+Private transaction `$0F` preserves that distinction. The disposable screen-0 half
+requires mode/row `$03/$01`, an empty `$88` first name cell, exact stack `0,1`, retained
+one-through-five Item rows, valid count/selector, the Status descriptor, idle queue, and
+the standard LCD-on viewport and Window. Screen 1 independently rechecks `$0F`, the
+advanced replay counter, mode/row, empty cell, retained Items state, descriptor, and
+hardware state. Only then does it share the established four-VBlank keyboard retirement
+and chrome-first Items publisher. `$0D`, `$0E`, and `$0F` cannot authorize one another.
+
+`tools/unidentifiednamespill.py` types `Stun` through four real keyboard selections,
+confirms `End`, reopens the same Action menu, erases all four characters with four real B
+presses, and exits with a fifth B. It requires the second native `$5F0B` state to be
+`$03/$01`, exact transaction `$0F` on both replay halves and all four batches, no
+Status painter, LCD-off, or uniform frame, complete chrome before rows, immediate Up
+input, and a subsequent clean Items-to-Status exit. The initially empty `$0E` route runs
+separately in the same regression.
+
+For the isolated visual review, close Mesen and run from the repository root:
+
+```sh
+TEST_TAG=shiren_item_name_erased_cancel_20260829
+TEST_DIR="$PWD/build/manual-tests/$TEST_TAG"
+MESEN_SAVES="$HOME/Library/Application Support/MesenCE/Saves"
+mkdir -p "$TEST_DIR" "$MESEN_SAVES"
+cp build/shiren_en.gb "$TEST_DIR/$TEST_TAG.gb"
+cp tests/fixtures/saves/shiren_en_log3_carried_unidentified_naming.srm \
+  "$MESEN_SAVES/$TEST_TAG.srm"
+md5 "$TEST_DIR/$TEST_TAG.gb"
+shasum -a 256 "$MESEN_SAVES/$TEST_TAG.srm"
+open -na "/Applications/Mesen.app" --args "$TEST_DIR/$TEST_TAG.gb"
+```
+
+The expected ROM MD5 is `add4b7e0260b78bd770fa700f14f4c88`; expected SRAM
+SHA-256 is
+`ece2da2b167ae51a42176304ae89d4fa2e4e8e0dbb4f70d7b1d31c12a0dfa235`.
+Load Adventure log 3, press B, choose `Items`, press Right to page 2, move Down three
+rows to the unidentified Willow Staff, press A, move Down three rows to `Name`, and
+press A. Press A once on the initial `A` keyboard cell, press Start to select `End`, and
+press A to confirm. After Items has returned, press A on the same staff, move Down three
+rows to `Name`, and press A. Press B once to erase `A`, then B once more to exit. The
+keyboard may retire regionally, complete empty Items boxes must precede their rows and
+cursor, the bottom HUD must remain visible, and the whole LCD must never blank. Press Up
+or Down immediately after settlement to confirm that Items input is live. Restore the
+fixture with the second `cp` command before repeating from the exact baseline.
 
 #### Inventory Item `Name -> End -> Items` return
 
@@ -1520,6 +1616,8 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | `$0B` | exact screen-7 unidentified-Pot Info or admitted ground-Pot See replay: disposable screen 0 suppressed, complete box-5/y=1 box-6 parent and final title/Action publication pending |
 | `$0C` | exact carried, Items-appended Floor, screen-7, or screen-20 Pot screen-12/13 entry: old parent/Action region retired, empty Pot chrome live, native title/body text held in shadow until the box-17 completion boundary |
 | `$0D` | exact inventory Name finalizer handoff: disposable Status suppressed, keyboard retirement and empty Items chrome pending at screen-1 entry; converts to `$01` only after chrome completes |
+| `$0E` | exact initially empty inventory Name B-cancel handoff: native mode/row `$00/$01`, empty first cell, and both replay halves independently proved before sharing the Name-to-Items publisher |
+| `$0F` | exact named-then-erased inventory Name B-cancel handoff: native mode/row `$03/$01`, empty first cell, and both replay halves independently proved before sharing the Name-to-Items publisher |
 | `$10` | title/file composite transaction |
 | `$11` | difficulty composite transaction |
 | `$12` | proportional Rankings map-swap transaction |
@@ -1545,8 +1643,9 @@ Screen-1 Left/Right and Start-sort redraws use the narrow regional transaction b
 Exact direct Status-to-Items entry and Items-to-Status pops use the two broader directions
 described afterward. Exact screen-1, screen-7, and screen-20 Info/seal pages use the
 checkpoint-4 lifecycle above, and exact carried screen-12/13 Pot return hands off to
-direct Items entry. Exact inventory Name return uses state `$0D` across its disposable
-Status/screen-1 handoff. Exact admitted Pot entries share the state-`$0C` chrome-first
+direct Items entry. Exact inventory Name success, initially empty cancel, and
+named-then-erased cancel use states `$0D`, `$0E`, and `$0F` respectively across their
+disposable Status/screen-1 handoffs. Exact admitted Pot entries share the state-`$0C` chrome-first
 publisher while retaining stack-specific admission and return ownership.
 Unexpected nonempty Item fallback, rejected Pot viewers, and unknown LCD-on Status or
 Info reconstructions still disable LCDC bit 7 before pixels are reused, build the
