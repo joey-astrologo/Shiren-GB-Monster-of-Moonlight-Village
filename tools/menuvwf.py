@@ -412,6 +412,8 @@ ACTION_POOL_END = 0xDF
 # prepublication. Keep this ABI pair synchronized with statusvwf.STATUS_PRE_INDEX/BANK.
 STATUS_FLOOR_PRE_INDEX = 0x0B
 STATUS_FLOOR_PRE_BANK = 0x35
+POT_PUT_ENTRY_INDEX = 0x0F
+POT_PUT_ENTRY_BANK = 0x35
 ACTION_POP_HOOK = (0x04, 0x485A)
 ACTION_POP_OLD = bytes.fromhex('4ffa34c591ea34c5')
 # Screen 12/13 begin by clearing the shared shadow at these identical `ld hl,$C300`
@@ -1883,6 +1885,17 @@ actionblank:
   jp z,absave
   and a
   jp nz,abfinish
+  ; Screen 11's Put selector reaches this existing mode-zero first refusal before
+  ; the legacy item-page controller can disable the LCD. Bank 53 owns its exact
+  ; chrome-first regional transaction; every rejected caller resumes unchanged.
+  ld a,[$C6A3]
+  cp $0B
+  jr nz,abzero
+  rst $10
+  db $%02X,$%02X
+  ret c
+abzero:
+  xor a
   ld a,[$C1B3]
   cp $07
   jr z,abstart
@@ -2491,7 +2504,8 @@ absavecell:
   pop bc
   and a
   ret
-""" % (INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+""" % (POT_PUT_ENTRY_INDEX, POT_PUT_ENTRY_BANK,
+         INFO_RETURN_INDEX, ACTION_BLANK_BANK,
          INFO_RETURN_INDEX, ACTION_BLANK_BANK,
          INFO_RETURN_INDEX, ACTION_BLANK_BANK,
          INFO_RETURN_INDEX, ACTION_BLANK_BANK,
@@ -2878,9 +2892,8 @@ irvalidatedrain:
   ; gates above and the native item-count bound below are the ownership proof. Initial
   ; Items entry remains excluded by its fresh-allocation latch above.
   ld a,[$C6AA]
-  and a
-  jr z,irdecline
-  cp $15
+  dec a
+  cp $14
   jr nc,irdecline
   call $%04X
 irdrain:
@@ -2942,12 +2955,11 @@ irfloorshape:
   ret c
 irclearnormal:
   ld b,$05
+  ld a,$BE
+  jr irclearstore
 irclearrow:
   ; The standing-item Floor page has one row.  Its outgoing carried-item rows 1-4
   ; must be zeroed with their contents instead of retaining four empty left borders.
-  ld a,b
-  cp $05
-  jr z,irclearborder
   ld a,[$C6AC]
   inc a
   jr z,irclearstore
@@ -2959,8 +2971,7 @@ irclearrow:
 irclearborder:
   ld a,$BE
 irclearstore:
-  ld [hl],a
-  inc hl
+  ld [hl+],a
   xor a
   ld [hl],a
   inc hl
@@ -3103,6 +3114,11 @@ irfixedempty:
 irnotzero:
   pop hl
   pop bc
+  ; Give the shared exact-caller gate first refusal. The full cursed-equipment proof
+  ; lives in bank 53 because this controller ends exactly at the following Action gate.
+  rst $10
+  db $%02X,$%02X
+  ret c
 irfaillcd:
   ldh a,[$FF40]
   bit 7,a
@@ -3122,7 +3138,7 @@ irfailed:
   ld [$C1B6],a
   ret
 """ % (ITEM_ROW_FAST_CLAMP_AT, FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK,
-         ITEM_ROW_FAST_AT)
+         ITEM_ROW_FAST_AT, POT_PUT_ENTRY_INDEX, POT_PUT_ENTRY_BANK)
 
 
 def item_transition_labels():
@@ -3210,8 +3226,10 @@ irfdestready:
 ; Native Left/Right advances the absolute selector by five but bounds it only against
 ; the padded page count. If the old row does not exist on the destination page, clamp
 ; this exact same-screen redraw to the final real item and keep its row in lockstep.
-; A enters with the already-validated real item count.
+; The space-constrained caller validates (count - 1), so restore the real count before
+; comparing the absolute selector.
 irclamp:
+  inc a
   ld b,a
   ld a,[$C6AC]
   cp $FF

@@ -23,6 +23,7 @@ from gbrun import _import_pyboy, PRESS_FRAMES                    # noqa: E402
 from latinfont import EN_CODES                                   # noqa: E402
 import menuspill                                                  # noqa: E402
 import menuvwf                                                    # noqa: E402
+import statusvwf                                                  # noqa: E402
 
 INVENTORY = 0xA3B0
 OBJECTS = 0xA406
@@ -59,6 +60,17 @@ def run(rom, state, png=None, frames=500):
     status = {'injected': False, 'rewritten': set(), 'pending': None}
     keys = {}
     drawn = {}
+    regional_blanks = []
+    gate_entries = []
+
+    def regional_blank(_ctx=None):
+        source = pb.memory[0xC0CC] | (pb.memory[0xC0CD] << 8)
+        regional_blanks.append((
+            pb.register_file.D,
+            tuple(pb.memory[address] for address in range(0xC69A, 0xC69F)),
+            tuple(pb.memory[0xC1B1 + index] for index in range(7)),
+            source,
+            tuple(pb.memory[source + index] for index in range(20))))
 
     def inject_cursed(_ctx=None):
         if status['injected']:
@@ -120,6 +132,16 @@ def run(rom, state, png=None, frames=500):
     pb.hook_register(6, 0x4B29, inject_cursed, None)
     pb.hook_register(menuvwf.FAR_BANK, profile['entry'], far_entry, None)
     pb.hook_register(31, 0x4118, restore_staging, None)
+    _page_labels, region_labels = menuvwf.item_transition_labels()
+    pb.hook_register(menuvwf.ITEM_REGION_BANK, region_labels['irdisable'],
+                     regional_blank, None)
+    status_labels = statusvwf.runtime_labels()
+    pb.hook_register(statusvwf.FAR_BANK, status_labels['potputentry'],
+                     lambda _ctx=None: gate_entries.append((
+                         pb.register_file.A, pb.register_file.D,
+                         tuple(pb.memory[0xC534 + index] for index in range(4)),
+                         tuple(pb.memory[0xC6A3 + index] for index in range(8)),
+                         tuple(pb.memory[0xC1B1 + index] for index in range(7)))), None)
     for frame in range(frames):
         if frame == 60:
             pb.button('b', PRESS_FRAMES)
@@ -132,6 +154,9 @@ def run(rom, state, png=None, frames=500):
         problems.append('canonical cursed Nagamaki was not injected')
     if status['rewritten'] != {'plated', 'fused'} or status['pending'] is not None:
         problems.append('plated/fused synthetic rows were not both drawn and restored')
+    if regional_blanks:
+        problems.append('whole-LCD Item fallback executed: %s; shared-gate entries %s' %
+                        (regional_blanks, gate_entries))
     for kind in ('plated', 'fused', 'cursed'):
         if kind not in keys:
             problems.append('%s equipment row never reached the renderer' % kind)

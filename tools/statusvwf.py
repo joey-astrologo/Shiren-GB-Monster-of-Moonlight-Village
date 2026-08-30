@@ -53,6 +53,7 @@ POPUP_INDEX = 0x07
 ITEM_ENTRY_INDEX = 0x09
 STATUS_PRE_INDEX = 0x0B
 NAME_ENTRY_INDEX = 0x0D
+POT_PUT_INDEX = 0x0F
 CODE_AT = 0x405A
 HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
@@ -449,6 +450,10 @@ nameentryflooridle:
   ld a,[hl]
   cp $02
   jp nz,nameentrybad
+  ; Screen 0's disposable reconstruction overwrites C6BB. Preserve the proven
+  ; screen-20 Action height for the regional Name return before entering screen 9.
+  ld a,b
+  ld [$C1B4],a
   ld a,[$C6F7]
   cp $02
   jp nz,nameentrybad
@@ -467,6 +472,24 @@ nameentrycarried:
   ld a,[hl]
   cp $09
   jp nz,nameentrybad
+  ; The Items-appended Floor page shares the carried 0,1,2,9 stack, but selector
+  ; $FF and its settlement latch give it a distinct parent. Preserve box 6's
+  ; exact height; ordinary carried Items keep C1B4 at zero.
+  ld a,[$C6AC]
+  inc a
+  jr nz,nameentrycommon
+  ld a,[$C1B7]
+  dec a
+  jp nz,nameentrybad
+  ld a,[$C6DE]
+  and a
+  jp nz,nameentrybad
+  ld a,[$C6BB]
+  cp $03
+  jp c,nameentrybad
+  cp $08
+  jp nc,nameentrybad
+  ld [$C1B4],a
 nameentrycommon:
   ld a,[$C6A3]
   cp $09
@@ -643,9 +666,24 @@ itementry:
   push bc
   push de
   push hl
+  ; State $15 is the exact Name -> 0 -> 1 -> 2 replay for the Items-appended
+  ; Floor parent. Screen 1 is disposable, but it must retire the keyboard before
+  ; repainting any borrowed native planes. The shared blanker installs the final
+  ; Floor/Action chrome instead of the ordinary five-row Items chrome; screen 1
+  ; remains shadow-only until screen 2 composes its labels.
+  ld a,[$C1B3]
+  cp $15
+  jr z,itementryfloorname
   call itementrygate
   jr nc,itementryclear
   call itementryblank
+  ld a,$01
+  ld [$C1B3],a
+  jr itementryclear
+itementryfloorname:
+  call itementryfloorblank
+  ; From here the rebuilt selector-$FF screen 1 is an ordinary regional page.
+  ; Its completed one-row body is published before native screen 2 reopens Action.
   ld a,$01
   ld [$C1B3],a
 itementryclear:
@@ -1009,6 +1047,46 @@ itementrytopcell:
   ld [hl],a
   ret
 
+; Complete empty parent for an Items-appended standing-item Floor page. Keep the
+; ordinary Items-entry retirement instruction-exact: it already finishes at the edge
+; of its fourth VBlank. This independent path reuses Name's four-batch clear, then
+; commits the Floor perimeters in a fifth complete VBlank before screen 1 may render.
+itementryfloorblank:
+  call nameentryblank
+  call statusreadywait
+  di
+  call itementryfloorchrome
+  ei
+  ret
+
+; The four keyboard-retirement batches have already made every interior zero. Draw
+; both perimeters in the last complete VBlank. Native screen 1 then reveals its
+; completed one-row content before screen 2 reopens the Action overlay normally.
+itementryfloorchrome:
+  ; Box 18: x=0, y=0, one text row, width four.
+  ld hl,$9800
+  ld c,$04
+  call itementrytop
+  ld hl,$9820
+  ld [hl],$BE
+  ld hl,$9825
+  ld [hl],$BF
+  ld hl,$9840
+  ld c,$04
+  call itementrybottom
+  ; Box 4 in its selector-$FF one-row form: x=0, y=3, width eighteen.
+  ld hl,$9860
+  ld c,$12
+  call itementrytop
+  ld hl,$9880
+  ld [hl],$BE
+  ld hl,$9893
+  ld [hl],$BF
+  ld hl,$98A0
+  ld c,$12
+  call itementrybottom
+  ret
+
 statusentry:
   ; Preserve the exact native Path shadow copier this hook replaces.
   rst $08
@@ -1053,6 +1131,11 @@ statusready:
   jr z,statusreadydiscard
   cp $0A
   jr z,statusreadypot
+  ; Put commit natively rebuilds a disposable screen 0 before replaying screen 1.
+  ; Its retained Item allocator/selector epoch differs from the screen-12/13 Pot
+  ; viewer, so prove it here and then reuse the same direct-entry normalization.
+  call statusputcheck
+  jr c,statusreadypot
   ; Inventory item naming returns through a disposable screen-0 build before native
   ; screen 1 is replayed. Prove the exact success or either cancel epoch while the complete
   ; keyboard still owns the display, arm a private handoff, and suppress Status. Screen
@@ -1105,6 +1188,20 @@ statusnamecheck:
   ld a,[$C1B3]
   and a
   jp nz,statusnamebad
+  ; Classify the retained parent before applying its scratch contract. Screen 20
+  ; and the Items-appended screen-2 Action preserve their exact Action height in
+  ; C1B4; ordinary carried Items require it to remain zero.
+  ld a,[$C534]
+  cp $02
+  jp z,statusnamefloor7
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C536]
+  cp $14
+  jp z,statusnamefloor20
+  dec a
+  jp nz,statusnamebad
+statusnamecarried:
   ld a,[$C1B4]
   and a
   jp nz,statusnamebad
@@ -1125,20 +1222,8 @@ statusnamecheck:
   ld a,[$C1B7]
   and a
   jp nz,statusnamebad
-  ld a,[$C534]
-  dec a
-  jp nz,statusnamebad
   ld a,[$C535]
   and a
-  jp nz,statusnamebad
-  ld a,[$C536]
-  dec a
-  jp nz,statusnamebad
-  ld a,[$C6A3]
-  and a
-  jp nz,statusnamebad
-  ld a,[$C6A6]
-  dec a
   jp nz,statusnamebad
   ld a,[$C6AA]
   and a
@@ -1155,12 +1240,92 @@ statusnamecheck:
   ld a,[$C6DE]
   and a
   jp nz,statusnamebad
+  ld c,$00
+  jp statusnamecommon
+
+statusnamefloor20:
+  ; Exact 9 -> 0 -> 20 replay. State 9 suppresses Status and hands the saved
+  ; box-39 height to menuvwf's established chrome-first screen-20 return owner.
+  ld a,[$C535]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C1B4]
+  cp $03
+  jp c,statusnamebad
+  cp $08
+  jp nc,statusnamebad
+  ld hl,$C1B5
+  ld b,$03
+statusnamefloor20idle:
+  ld a,[hl+]
+  and a
+  jp nz,statusnamebad
+  dec b
+  jr nz,statusnamefloor20idle
+  ld a,[$C6AC]
+  inc a
+  jp nz,statusnamebad
+  ld a,[$C6DE]
+  dec a
+  jp nz,statusnamebad
+  ld c,$09
+  jp statusnamecommon
+
+statusnamefloor7:
+  ; Exact 9 -> 0 -> 1 -> 2 replay. State $15 keeps screen 1 shadow-only while
+  ; its entry retires the keyboard and installs complete empty Floor/Action chrome.
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,statusnamebad
+  ld a,[hl+]
+  dec a
+  jp nz,statusnamebad
+  ld a,[hl]
+  cp $02
+  jp nz,statusnamebad
+  ld a,[$C1B4]
+  cp $03
+  jp c,statusnamebad
+  cp $08
+  jp nc,statusnamebad
+  ld a,[$C1B5]
+  ld b,a
+  and $1F
+  jp nz,statusnamebad
+  ld a,b
+  and $E0
+  jp z,statusnamebad
+  cp $C0
+  jp nc,statusnamebad
+  ld a,[$C1B6]
+  cp $02
+  jp nc,statusnamebad
+  ld a,[$C1B7]
+  dec a
+  jp nz,statusnamebad
+  ld a,[$C6AC]
+  inc a
+  jp nz,statusnamebad
+  ld a,[$C6DE]
+  and a
+  jp nz,statusnamebad
+  ld c,$15
+
+statusnamecommon:
+  ld a,[$C6A3]
+  and a
+  jp nz,statusnamebad
+  ld a,[$C6A6]
+  dec a
+  jp nz,statusnamebad
   ld a,[$C11A]
   and a
   jp nz,statusnamebad
   ; Successful End, initially empty B-cancel, and named-then-erased B-cancel share
-  ; the native 9 -> 0 -> 1 replay but expose different screen-9 state. Preserve that
-  ; distinction in the transaction byte so screen 1 proves its matching variant.
+  ; the same native finalizer but expose different screen-9 state. Carried Items
+  ; preserve that distinction in $0D/$0E/$0F; either Floor parent has one visual
+  ; transaction and therefore retains its fixed family capability in C.
   ld a,[$C6F3]
   cp $03
   jr z,statusnamemode3
@@ -1172,6 +1337,9 @@ statusnamecheck:
   ld a,[$C6E3]
   cp $88
   jp nz,statusnamebad
+  ld a,c
+  and a
+  jr nz,statusnamemodeok
   ld c,$0E
   jr statusnamemodeok
 statusnamemode3:
@@ -1183,9 +1351,15 @@ statusnamemode3:
   ld a,[$C6E3]
   cp $88
   jp nz,statusnamebad
+  ld a,c
+  and a
+  jr nz,statusnamemodeok
   ld c,$0F
   jr statusnamemodeok
 statusnamesuccess:
+  ld a,c
+  and a
+  jr nz,statusnamemodeok
   ld c,$0D
 statusnamemodeok:
   ld a,[$C6F7]
@@ -1227,6 +1401,318 @@ statusnamemodeok:
   scf
   ret
 statusnamebad:
+  pop bc
+  and a
+  ret
+
+statusputcheck:
+  ld a,[$C1B1]
+  cp $04
+  jp nz,statusputbad
+  ld a,[$C1B2]
+  cp $0C
+  jp nz,statusputbad
+  ld a,[$C1B3]
+  and a
+  jp nz,statusputbad
+  ld a,[$C1B4]
+  and a
+  jp nz,statusputbad
+  ld a,[$C1B5]
+  cp $80
+  jp nz,statusputbad
+  ld a,[$C1B6]
+  and a
+  jp nz,statusputbad
+  ld a,[$C1B7]
+  and a
+  jp nz,statusputbad
+  ld a,[$C534]
+  dec a
+  jp nz,statusputbad
+  ld a,[$C535]
+  and a
+  jp nz,statusputbad
+  ld a,[$C536]
+  dec a
+  jp nz,statusputbad
+  ld a,[$C6A3]
+  and a
+  jp nz,statusputbad
+  ld a,[$C6A6]
+  dec a
+  jp nz,statusputbad
+  ld a,[$C6AA]
+  and a
+  jp z,statusputbad
+  cp $15
+  jp nc,statusputbad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jp nc,statusputbad
+  ld a,[$C6BB]
+  cp $04
+  jp nz,statusputbad
+  ld a,[$C6DE]
+  and a
+  jp nz,statusputbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,statusputbad
+  ld a,[hl+]
+  cp $0A
+  jp nz,statusputbad
+  ld a,[hl+]
+  cp $02
+  jp nz,statusputbad
+  ld a,[hl+]
+  cp $12
+  jp nz,statusputbad
+  ld a,[hl]
+  cp $04
+  jp nz,statusputbad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,statusputbad
+  ldh a,[$FF42]
+  and a
+  jp nz,statusputbad
+  ldh a,[$FF43]
+  and a
+  jp nz,statusputbad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,statusputbad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,statusputbad
+  scf
+  ret
+statusputbad:
+  and a
+  ret
+
+; First refusal from menuvwf's existing item-page fallback boundary. Screen 11 is
+; the carried-Pot Put selector: it has the ordinary five-row Item geometry but sits
+; above screen 2, so screen-1's page gate cannot own it. Retire the complete visible
+; Action parent, publish empty Items chrome, and keep every incoming row shadow-only
+; until the native completed-map boundary. State $16 covers repeated row attempts.
+potputentry:
+  ; itemregion reaches this gate with the first rejected staging code still in A.
+  cp $2F
+  jp z,equipmentfixed
+  push af
+  push bc
+  push de
+  push hl
+  cp $0B
+  jp nz,potputbad
+  ld a,[$C6A3]
+  cp $0B
+  jp nz,potputbad
+  ld a,[$C1B3]
+  cp $16
+  jp z,potputowned
+  and a
+  jp nz,potputbad
+  ld a,[$C534]
+  cp $03
+  jp nz,potputbad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,potputbad
+  ld a,[hl+]
+  dec a
+  jp nz,potputbad
+  ld a,[hl+]
+  cp $02
+  jp nz,potputbad
+  ld a,[hl]
+  cp $0B
+  jp nz,potputbad
+  ld a,[$C6A6]
+  and a
+  jp nz,potputbad
+  ld a,[$C6AA]
+  and a
+  jp z,potputbad
+  cp $15
+  jp nc,potputbad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jp nc,potputbad
+  ld a,[$C6DE]
+  and a
+  jp nz,potputbad
+  ld a,[$C1B1]
+  dec a
+  jp nz,potputbad
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,potputbad
+  ld a,[hl+]
+  cp $03
+  jp nz,potputbad
+  ld a,[hl+]
+  cp $05
+  jp nz,potputbad
+  ld a,[hl+]
+  cp $12
+  jp nz,potputbad
+  ld a,[hl]
+  cp $02
+  jp nz,potputbad
+  ld a,[$C0D9]
+  cp $80
+  jp nz,potputbad
+  ld a,[$C0DA]
+  cp $C3
+  jp nz,potputbad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jp nz,potputbad
+  ldh a,[$FF42]
+  and a
+  jp nz,potputbad
+  ldh a,[$FF43]
+  and a
+  jp nz,potputbad
+  ldh a,[$FF4A]
+  cp $80
+  jp nz,potputbad
+  ldh a,[$FF4B]
+  cp $07
+  jp nz,potputbad
+  call itementryblank
+  ld a,$16
+  ld [$C1B3],a
+potputowned:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  scf
+  ret
+potputbad:
+  pop hl
+  pop de
+  pop bc
+  pop af
+  and a
+  ret
+
+; The cursed-equipment producer appends its canonical two-code `ki` fragment after
+; row two's proportional item name has already been composed and published.  The
+; generic renderer reports that auxiliary fixed fragment as a fallback, but it does not
+; invalidate the completed visible row.  Admit only the fully observed equipment epoch;
+; every other nonempty fixed fragment keeps itemregion's conservative LCD-off fallback.
+equipmentfixed:
+  push bc
+  push de
+  push hl
+  ld a,[$C6A3]
+  dec a
+  jp nz,equipmentbad
+  ld a,[$C534]
+  dec a
+  jp nz,equipmentbad
+  ld a,[$C535]
+  and a
+  jp nz,equipmentbad
+  ld a,[$C536]
+  dec a
+  jp nz,equipmentbad
+  ld hl,$C1B1
+  ld a,[hl+]
+  dec a
+  jp nz,equipmentbad
+  ld a,[hl+]
+  cp $02
+  jp nz,equipmentbad
+  ld a,[hl+]
+  dec a
+  jp nz,equipmentbad
+  ld b,$04
+equipmentidle:
+  ld a,[hl+]
+  and a
+  jp nz,equipmentbad
+  dec b
+  jr nz,equipmentidle
+  ld hl,$C69A
+  ld a,[hl+]
+  and a
+  jp nz,equipmentbad
+  ld a,[hl+]
+  cp $03
+  jp nz,equipmentbad
+  ld a,[hl+]
+  cp $05
+  jp nz,equipmentbad
+  ld a,[hl+]
+  cp $12
+  jp nz,equipmentbad
+  ld a,[hl]
+  cp $02
+  jp nz,equipmentbad
+  ld a,d
+  cp $02
+  jp nz,equipmentbad
+  ld a,[$C6A4]
+  cp $02
+  jp nz,equipmentbad
+  ld a,[$C6A5]
+  and a
+  jp nz,equipmentbad
+  ld a,[$C6A6]
+  and a
+  jp nz,equipmentbad
+  ld a,[$C6AA]
+  cp $03
+  jp nz,equipmentbad
+  ld a,[$C6AC]
+  and a
+  jp nz,equipmentbad
+  ld a,[$C6BB]
+  cp $05
+  jp nz,equipmentbad
+  ld a,[$C6DE]
+  and a
+  jp nz,equipmentbad
+  ld a,[$C0CC]
+  cp $3A
+  jp nz,equipmentbad
+  ld a,[$C0CD]
+  cp $C6
+  jp nz,equipmentbad
+  ld hl,$C63A
+  ld a,[hl+]
+  cp $2F
+  jp nz,equipmentbad
+  ld a,[hl+]
+  cp $2D
+  jp nz,equipmentbad
+  ld a,[hl]
+  inc a
+  jp nz,equipmentbad
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,equipmentbad
+  pop hl
+  pop de
+  pop bc
+  scf
+  ret
+equipmentbad:
+  pop hl
+  pop de
   pop bc
   and a
   ret
@@ -1951,6 +2437,12 @@ def install(buf, notes=None, font=None):
                          (NAME_ENTRY_INDEX, FAR_BANK))
     buf[name_entry_index] = labels['nameentry'] & 0xFF
     buf[name_entry_index + 1] = labels['nameentry'] >> 8
+    pot_put_index = bank + POT_PUT_INDEX - 1
+    if bytes(buf[pot_put_index:pot_put_index + 2]) != b'\xFF\xFF':
+        raise SystemExit('statusvwf: far index $%02X in bank %d is occupied' %
+                         (POT_PUT_INDEX, FAR_BANK))
+    buf[pot_put_index] = labels['potputentry'] & 0xFF
+    buf[pot_put_index + 1] = labels['potputentry'] >> 8
 
     # name6 installs this call to the shared bank-4 trampoline earlier in the build.
     # The trampoline enters NAME_ENTRY_INDEX and then executes the native $5E50

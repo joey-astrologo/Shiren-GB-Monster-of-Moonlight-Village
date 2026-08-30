@@ -894,10 +894,9 @@ def status_floor_problems(run, label):
     return problems
 
 
-def floor_name_remaining_problems(run, label, occurrence, expected_mode_row,
-                                  expected_end_calls, expected_screens=(9, 0, 20),
-                                  expected_blank_stack=(0, 20)):
-    """Keep each still-blank Floor Name return causal and reproducible."""
+def floor_name_return_problems(run, label, occurrence, expected_mode_row,
+                               expected_end_calls, expected_screens=(9, 0, 20)):
+    """Prove each Floor Name return is regional and remains input-path exact."""
     problems = []
     name_indices = [index for index, state in enumerate(run['dispatch_states'])
                     if state['screen'] == 9]
@@ -930,17 +929,19 @@ def floor_name_remaining_problems(run, label, occurrence, expected_mode_row,
                         (label, len(ends), expected_end_calls))
     blanks = [entry for entry in run['status_explicit_blanks']
               if start <= entry[0] < end]
-    if len(blanks) != 1:
-        problems.append('%s reached statusdisable %d times, expected catalogued one' %
+    if blanks:
+        problems.append('%s reached statusdisable %d times, expected zero' %
                         (label, len(blanks)))
-    elif blanks[0][6] != expected_blank_stack:
-        problems.append('%s statusdisable stack is %s, expected %s' %
-                        (label, blanks[0][6], expected_blank_stack))
     samples = [entry for entry in run['transition_samples']
                if start <= entry[0] < end]
-    if not any(not lcdc & 0x80 for _frame, lcdc, _white in samples):
-        problems.append('%s no longer samples LCD-off; update its remaining audit row' %
-                        label)
+    lcd_off = [frame for frame, lcdc, _white in samples if not lcdc & 0x80]
+    whites = [frame for frame, _lcdc, white in samples if white]
+    if lcd_off:
+        problems.append('%s produced LCD-off frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in lcd_off[:12])))
+    if whites:
+        problems.append('%s produced uniform frames at %s' %
+                        (label, ' '.join('f%d' % frame for frame in whites[:12])))
     return problems
 
 
@@ -1012,13 +1013,13 @@ def main():
 
     problems.extend(name_entry_problems(manual, 'manual carried fixture entry'))
     problems.extend(status_floor_problems(status_floor, 'Status -> screen-20 Floor'))
-    problems.extend(floor_name_remaining_problems(
+    problems.extend(floor_name_return_problems(
         floor_empty_cancel, 'screen-20 initially-empty Name B cancel', 0,
         expected_mode_row=(0, 1), expected_end_calls=0))
-    problems.extend(floor_name_remaining_problems(
+    problems.extend(floor_name_return_problems(
         floor_rename_erase, 'screen-20 Name End return', 0,
         expected_mode_row=(3, 0), expected_end_calls=1))
-    problems.extend(floor_name_remaining_problems(
+    problems.extend(floor_name_return_problems(
         floor_rename_erase, 'screen-20 named-then-erased Name B cancel', -1,
         expected_mode_row=(3, 1), expected_end_calls=0))
     problems.extend(name_entry_problems(
@@ -1032,20 +1033,20 @@ def main():
                         'restores' %
                         (len(items_floor_name['native_name_restores']),
                          len(items_floor_name['regional_name_starts'])))
-    problems.extend(floor_name_remaining_problems(
+    problems.extend(floor_name_return_problems(
         items_floor_empty_cancel,
         'Items-appended Floor initially-empty Name B cancel', 0,
         expected_mode_row=(0, 1), expected_end_calls=0,
-        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
-    problems.extend(floor_name_remaining_problems(
+        expected_screens=(9, 0, 1, 2)))
+    problems.extend(floor_name_return_problems(
         items_floor_rename_erase, 'Items-appended Floor Name End return', 0,
         expected_mode_row=(3, 0), expected_end_calls=1,
-        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
-    problems.extend(floor_name_remaining_problems(
+        expected_screens=(9, 0, 1, 2)))
+    problems.extend(floor_name_return_problems(
         items_floor_rename_erase,
         'Items-appended Floor named-then-erased Name B cancel', -1,
         expected_mode_row=(3, 1), expected_end_calls=0,
-        expected_screens=(9, 0, 1, 2), expected_blank_stack=(0, 1, 2)))
+        expected_screens=(9, 0, 1, 2)))
     if manual['native_name_restores']:
         problems.append('manual carried fixture used %d native restores, expected zero' %
                         len(manual['native_name_restores']))
