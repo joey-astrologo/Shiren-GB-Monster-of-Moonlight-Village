@@ -348,6 +348,10 @@ CONFIRM_LIMIT = 0x4100
 ITEM_PUBLISH_BANK = 0x3C
 ITEM_PUBLISH_INDEX = 0x05
 ITEM_PUBLISH_AT = 0x405A
+# The publisher itself ends at $4085.  Its remaining eleven-byte reservation holds a
+# same-bank row-finalizer shim: the fast Item/Floor blitter must give the already-
+# validated shop-price suffix its ordinary far copy before it publishes the row.
+ITEM_ROW_FINISH_AT = 0x4085
 ITEM_PUBLISH_LIMIT = 0x4090
 ITEM_REGION_BANK = 0x3C
 ITEM_REGION_INDEX = 0x07
@@ -384,8 +388,9 @@ ITEM_INDICATOR_LIMIT = 0x4700
 # Bank 60's remaining regional-controller gap holds the exact generic-pop call-site gate.
 ACTION_GATE_BANK = 0x25
 ACTION_GATE_INDEX = 0x05
+NESTED_INFO_INDEX = 0x07
 ACTION_GATE_AT = 0x405A
-ACTION_GATE_LIMIT = 0x4120
+ACTION_GATE_LIMIT = 0x42A0
 ACTION_ALLOC_BANK = 0x3D
 ACTION_ALLOC_INDEX = 0x07
 TITLE_CURSOR_INDEX = 0x09
@@ -394,14 +399,14 @@ ACTION_ALLOC_LIMIT = 0x4100
 ACTION_BLANK_BANK = 0x3E
 ACTION_BLANK_INDEX = 0x07
 ACTION_BLANK_AT = 0x405A
-ACTION_BLANK_LIMIT = 0x4420
+ACTION_BLANK_LIMIT = 0x4430
 INFO_CONTROL_INDEX = 0x09
 INFO_FINISH_INDEX = 0x0B
 INFO_POP_INDEX = 0x0D
 INFO_RETURN_INDEX = 0x0F
-INFO_LIFECYCLE_AT = 0x4420
-INFO_LIFECYCLE_LIMIT = 0x5400
-POT_FLOOR_RETURN_AT = 0x53F0
+INFO_LIFECYCLE_AT = 0x4430
+INFO_LIFECYCLE_LIMIT = 0x5490
+POT_FLOOR_RETURN_AT = 0x5480
 ACTION_POP_BANK = 0x3C
 ACTION_POP_INDEX = 0x0D
 ACTION_POP_AT = 0x422E
@@ -1519,30 +1524,115 @@ actiongate:
   ld [$C1B6],a
   ld a,[$C1B3]
   and a
-  jr nz,agdone
+  jp nz,agdone
   ld a,[$C6A3]
   cp $02
-  jr nz,agdone
+  jp z,agscreen2
+  cp $10
+  jp z,agscreen16
+  cp $14
+  jp nz,agdone
+  ; Direct Status -> Floor keeps screen 20 active while its Action box is drawn.  Its
+  ; stack is 0,20 (not the carried/appended 0,1,2 stack), and the selected standing
+  ; item is represented by selector $FF.  Give this exact parent the same temporary
+  ; Floor scan; shop price cells select discontiguous mode two below.
   ld a,[$C534]
-  cp $02
-  jr nz,agdone
+  dec a
+  jp nz,agdone
   ld a,[$C535]
   and a
-  jr nz,agdone
+  jp nz,agdone
+  ld a,[$C536]
+  cp $14
+  jp nz,agdone
+  ld a,[$C6DE]
+  dec a
+  jp nz,agdone
+  ld a,[$C6AC]
+  inc a
+  jp nz,agdone
+  ; Mode four reserves only the top Action verb.  The direct Floor map already holds
+  ; several invisible $CB-$D5 references, so attempting to reserve all rows would
+  ; either reject this safe route or repaint those cells.  Only `Take` remains visible
+  ; behind Info; lower verbs are covered by the incoming body.
+  ld a,$04
+  ld [$C1B6],a
+  jp agcontextdone
+agscreen16:
+  ; mgbdis shows screens 2 and 16 alias the same native Action drawer at 4:$4987.
+  ; Screen 16 is the contained-item picker retained beneath Info.  Reserve only its
+  ; exposed first verb row, using the same collision-scanned one-row mode as direct
+  ; Floor; otherwise the first Info row repaints those planes into the visible verb.
+  ld a,[$C534]
+  cp $04
+  jr z,ag16carried
+  cp $03
+  jp nz,agdone
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,agdone
+  ld a,[hl+]
+  cp $07
+  jr z,ag16parent
+  cp $14
+  jp nz,agdone
+  jr ag16parent
+ag16carried:
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,agdone
+  ld a,[hl+]
+  dec a
+  jp nz,agdone
+  ld a,[hl+]
+  cp $02
+  jp nz,agdone
+ag16parent:
+  ld a,[hl+]
+  ld e,a
+  sub $0C
+  cp $02
+  jp nc,agdone
+  ld a,[hl]
+  cp $10
+  jp nz,agdone
+  ld a,[$C6DE]
+  and $7E
+  jp nz,agdone
+  ld a,[$C6DE]
+  rlca
+  and $01
+  ld d,a
+  ld a,e
+  and $01
+  cp d
+  jp nz,agdone
+  ld a,$04
+  ld [$C1B6],a
+  jp agcontextdone
+agscreen2:
+  ld a,[$C534]
+  cp $02
+  jp nz,agdone
+  ld a,[$C535]
+  and a
+  jp nz,agdone
   ld a,[$C536]
   cp $01
-  jr nz,agdone
+  jp nz,agdone
   ld a,[$C537]
   cp $02
-  jr nz,agdone
+  jp nz,agdone
   ld a,[$C6DE]
   and a
-  jr nz,agdone
+  jp nz,agdone
   ld a,[$C6AA]
   and a
-  jr z,agdone
+  jp z,agdone
   cp $15
-  jr nc,agdone
+  jp nc,agdone
   ld b,a
   ld a,[$C6AC]
   cp b
@@ -1550,40 +1640,60 @@ actiongate:
   ; The settled standing-item Floor page uses selector $FF. It is a real screen-1
   ; parent, but only its explicit settlement latch may broaden the held-item gate.
   inc a
-  jr nz,agdone
+  jp nz,agdone
   ld a,[$C1B7]
   dec a
-  jr nz,agdone
+  jp nz,agdone
+  ; Mark a settled standing-Floor candidate while scanning its live maps. A real shop
+  ; price collision at $D0-$D2 converts this temporary mode three to the discontiguous
+  ; mode two; an ordinary Floor page with no collision becomes mode one afterward.
+  ld a,$03
+  ld [$C1B6],a
 agselectorok:
+agcontextdone:
   ldh a,[$FF40]
   and $F8
   cp $E0
-  jr nz,agdone
+  jp nz,agdone
   ldh a,[$FF42]
   and a
-  jr nz,agdone
+  jp nz,agdone
   ldh a,[$FF43]
   and a
-  jr nz,agdone
+  jp nz,agdone
   ldh a,[$FF4A]
   cp $80
-  jr nz,agdone
+  jp nz,agdone
   ldh a,[$FF4B]
   cp $07
-  jr nz,agdone
+  jp nz,agdone
+agscanbegin:
   ld hl,$9800
   ld b,$10
   call agscan
-  jr c,agdone
+  jp c,agdone
   ld hl,$9C00
   ld b,$02
   call agscan
-  jr c,agdone
+  jp c,agdone
   ; Row 0 runs before box 6 publication, so the Item page marker is still intact in
   ; shadow. Preserve its exact seven-cell right edge for the B-pop parent restore.
   ld a,$02
   rst $10
   db $%02X,$%02X
+  ld a,[$C1B6]
+  cp $04
+  jr z,agdone
+  cp $02
+  jr nz,agnormal
+  ; The discontiguous shop layout has room for at most five Action rows.
+  ld a,[$C69C]
+  cp $06
+  jp c,agdone
+  xor a
+  ld [$C1B6],a
+  jp agdone
+agnormal:
   ld a,$01
   ld [$C1B6],a
 agdone:
@@ -1595,6 +1705,7 @@ agscan:
   ld c,$14
 agcell:
   ld a,[hl+]
+  ld d,a
   cp $%02X
   jr c,agsafe
   cp $%02X
@@ -1613,8 +1724,137 @@ agnocarry:
   and a
   ret
 agcollision:
+  ld a,[$C1B6]
+  cp $04
+  jr z,agdirect
+  cp $02
+  jr z,agprice
+  cp $03
+  jr nz,agreject
+agprice:
+  ld a,d
+  cp $D0
+  jr c,agreject
+  cp $D3
+  jr nc,agreject
+  ld a,$02
+  ld [$C1B6],a
+  jr agsafe
+agdirect:
+  ld a,d
+  cp $CB
+  jr nc,agsafe
+  jr agreject
+agreject:
+  xor a
+  ld [$C1B6],a
   scf
   ret
+
+; A contained item keeps both the Pot viewer and its small Action picker on the native
+; stack.  Prove the exact carried/appended 0,1,2,12/13,16,4/5 or ground
+; 0,7/20,12/13,16,4/5 shape and all of Info's one-digit/hardware constraints outside
+; bank 62's full lifecycle slot. Carry returns ownership and A the retained Pot screen;
+; every rejected caller remains on the original LCD-off path.
+nestedinfoowned:
+  push de
+  push hl
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jr nz,nestedinfobad
+  ld a,[hl+]
+  dec a
+  jr z,nestedinfocarried
+  inc a
+  cp $07
+  jr z,nestedinfoparent
+  cp $14
+  jr nz,nestedinfobad
+  jr nestedinfoparent
+nestedinfocarried:
+  ld a,[hl+]
+  cp $02
+  jr nz,nestedinfobad
+nestedinfoparent:
+  ld a,[hl+]
+  ld c,a
+  sub $0C
+  cp $02
+  jr nc,nestedinfobad
+  ld a,[hl+]
+  cp $10
+  jr nz,nestedinfobad
+  ld a,[hl]
+  cp b
+  jr nz,nestedinfobad
+  ld a,[$C1B6]
+  ; Screen-16's exact one-row private allocation retains mode four while its Info
+  ; child is live.  The stack/context proof above still distinguishes it completely.
+  and $FB
+  jr nz,nestedinfobad
+  ld a,[$C6A6]
+  and a
+  jr nz,nestedinfobad
+  ld a,[$C6DE]
+  and $7E
+  jr nz,nestedinfobad
+  ld a,[$C6DE]
+  rlca
+  and $01
+  ld d,a
+  ld a,c
+  and $01
+  cp d
+  jr nz,nestedinfobad
+  jr nestedinfocontext
+nestedinfobad:
+  pop hl
+  pop de
+  and a
+  ret
+nestedinfocontext:
+  ld a,[$C6AA]
+  and a
+  jr z,nestedinfobad
+  cp $15
+  jr nc,nestedinfobad
+  ld b,a
+  ld a,[$C6AC]
+  cp b
+  jr nc,nestedinfobad
+  ld a,[$C6BB]
+  and a
+  jr z,nestedinfobad
+  cp $08
+  jr nc,nestedinfobad
+  ld a,[$C6BD]
+  and a
+  jr z,nestedinfobad
+  cp $0A
+  jr nc,nestedinfobad
+  ldh a,[$FF40]
+  and $F8
+  cp $E0
+  jr nz,nestedinfobad
+  ldh a,[$FF42]
+  and a
+  jr nz,nestedinfobad
+  ldh a,[$FF43]
+  and a
+  jr nz,nestedinfobad
+  ldh a,[$FF4A]
+  cp $80
+  jr nz,nestedinfobad
+  ldh a,[$FF4B]
+  cp $07
+  jr nz,nestedinfobad
+  ld a,c
+  pop hl
+  pop de
+  scf
+  ret
+
 """ % (ACTION_BLANK_INDEX, ACTION_BLANK_BANK,
          ACTION_POOL_BASE, ACTION_POOL_END)
 
@@ -1628,9 +1868,9 @@ agcollision:
 # difficulty renderer's $E0+ ownership.
 ACTION_ALLOC_SRC = """
 actionalloc:
-  ld a,[$C6A3]
-  cp $02
-  jr nz,aageneral
+  ; Row zero's gate performs the complete screen/stack proof for both screen 2 and
+  ; direct-Floor screen 20.  Shape $0D plus its retained nonzero mode is sufficient
+  ; here; every rejected row-zero call has already cleared C1B6.
   ld a,[$C69A]
   cp $0D
   jr nz,aageneral
@@ -1644,6 +1884,12 @@ aapermit:
   ld a,[$C1B6]
   and a
   jr z,aageneral
+  cp $04
+  jr nz,aamultirow
+  ld a,d
+  and a
+  jr nz,aageneral
+aamultirow:
   ld a,c
   cp $05
   jr nc,aafail
@@ -1652,6 +1898,15 @@ aapermit:
   jr nc,aageneral
   add a,a
   add a,a
+  ld b,a
+  ld a,[$C1B6]
+  cp $02
+  ld a,b
+  jr nz,aanormalbase
+  cp $08
+  jr c,aanormalbase
+  add a,$04
+aanormalbase:
   add a,$%02X
   ld b,a
   jr aaok
@@ -1772,12 +2027,18 @@ appot:
   and a
   ret
 apnotpot:
-  cp $01
+  dec a
   jp nz,apsub
   ; Screen-20 Info has C6DE bit 0 set, so the native pop amount is one rather than
   ; screen 1's two. Admit its B and final-page A/D-pad handlers before testing the
   ; separate screen-2 Action B path.
   ld a,h
+  ; Screen 5's automatic final-A handler also leaves HL on the page counter for this
+  ; one-level Floor parent.  The former C6BC exception existed only in the two-level
+  ; carried branch below, which sent natural dropped sealed equipment to the explicit
+  ; LCD-off fallback even though infoowned had admitted every published row.
+  cp $C6
+  jr z,apinfo
   cp $59
   jr z,apinfoadvance
   cp $56
@@ -1790,10 +2051,20 @@ apnotpot:
   jr apactionproof
 apinfo:
   ld a,h
+  ; Screen 5's final-A/four-page handler keeps HL on the native page counter rather
+  ; than preserving its own $59xx entry address. The exact screen/stack/shape proof in
+  ; infopop still distinguishes it from unrelated callers which happen to use C6BC.
+  cp $C6
+  jr nz,apinfohandler
+  ld a,l
+  cp $BC
+  jr z,apinfotry
+apinfohandler:
+  ld a,h
   cp $59
   jr z,apinfoadvance
   cp $56
-  jp nz,apsub
+  jr nz,apsub
   ld a,l
   cp $91
   jp nz,apsub
@@ -1801,7 +2072,7 @@ apinfo:
 apinfoadvance:
   ld a,l
   cp $26
-  jp nz,apsub
+  jr nz,apsub
 apinfotry:
   xor a
   rst $10
@@ -1815,7 +2086,8 @@ apactionproof:
   jr nz,apsub
   ld a,[$C1B6]
   dec a
-  jr nz,apsub
+  cp $02
+  jr nc,apsub
   ld a,[$C6A3]
   cp $02
   jr nz,apsub
@@ -1825,7 +2097,7 @@ apactionproof:
   ld a,[$C6BB]
   cp $04
   jr c,apsub
-  cp $07
+  cp $08
   jr nc,apsub
   ld [$C1B4],a
   ld a,[$C6AC]
@@ -1904,6 +2176,8 @@ abzero:
   cp $09
   jr z,abinfo
   cp $0B
+  jr z,abinfo
+  cp $17
   jr nz,abidle
 abinfo:
   xor a
@@ -1950,11 +2224,12 @@ abstack:
   jp nz,abfail
   ld a,[$C1B6]
   dec a
-  jp nz,abfail
+  cp $02
+  jp nc,abfail
   ld a,[$C1B4]
   cp $04
   jp c,abfail
-  cp $07
+  cp $08
   jp nc,abfail
   ld a,[$C1B5]
   and $1F
@@ -2312,6 +2587,8 @@ abfinishnotpot:
   jp z,abowned
   cp $09
   jp z,abowned
+  cp $17
+  jr z,abowned
   cp $0B
   jr nz,abfinishnot7
   ; Screen 0 is only the native replay's disposable bridge. Do not let its completed
@@ -3264,7 +3541,18 @@ ircursorrow:
 ircursorset:
   ld [hl],$81
   ret
-""" % ITEM_SHAPE_PHASE_AT
+""" % ITEM_ROW_FINISH_AT
+
+
+# ITEM_ROW_FAST_SRC is byte-tight.  Keep the optional shop suffix copy in the eleven
+# free bytes after the map publisher, then tail-call the established shape finalizer.
+# ``copyprice`` returns immediately for every ordinary row because $C0E7 is zero.
+ITEM_ROW_FINISH_SRC = """
+itemrowfinish:
+  rst $10
+  db $%02X,$%02X
+  jp $%04X
+""" % (SHOP_COPY_INDEX, SHOP_SUFFIX_BANK, ITEM_SHAPE_PHASE_AT)
 
 
 # Native screen 1 draws the five-/one-row body before it draws the Items/Floor header.
@@ -3950,6 +4238,36 @@ floorinfo:
   jr z,fistubborder
   jr fistubempty
 fistubblank:
+  ; State $17 owns the disposable native replay after contained-Pot Info. Retire the
+  ; outgoing Info references before the replay can reuse their tile pixels; retaining
+  ; that map produced mixed Info/Pot/Items glyphs even though LCDC stayed enabled.
+  ld a,[$C1B3]
+  cp $17
+  jr nz,fistubnotnested
+  ; The native pop replays screen 0 -> 1 -> 2 -> Pot. Screen 0 retires the outgoing
+  ; Info map. Intermediate screens 1/2 are native replay only. The restored Pot page
+  ; must then hand state $17 to potentrybegin so its row publish can finish ownership;
+  ; otherwise $17 leaks through Floor -> field and the next Status entry stays LCD-off.
+  ld a,[$C6A3]
+  and a
+  jr z,fistubnestedzero
+  sub $0C
+  cp $02
+  ret nc
+  ; Enter the existing return dispatcher in mode four. INFO_CONTROL mode four is the
+  ; earlier empty-chrome publisher; replaying it here would repaint chrome once per
+  ; text row without ever consuming state $17.
+  ld a,$04
+  rst $10
+  db $%02X,$%02X
+  ret
+fistubnestedzero:
+  ld a,[$C1B6]
+  and $FB
+  ret nz
+  ld a,$04
+  jr fistubcall
+fistubnotnested:
   ld a,[$C1B1]
   cp $03
   jr z,fistubcallzero
@@ -4007,7 +4325,8 @@ fistubcall:
   rst $10
   db $%02X,$%02X
   ret
-""" % (ITEM_REGION_INDEX, ITEM_REGION_BANK,
+""" % (INFO_RETURN_INDEX, ACTION_BLANK_BANK,
+         ITEM_REGION_INDEX, ITEM_REGION_BANK,
          INFO_CONTROL_INDEX, ACTION_BLANK_BANK)
 
 
@@ -4028,6 +4347,8 @@ _INFO_CONTROL_SRC = FLOOR_INFO_LEGACY_SRC.replace(
   and a
 """,
     """floorinfo:
+  cp $04
+  jp z,potreturnearly
   cp $03
   jp z,infopreupload
   and a
@@ -4131,7 +4452,13 @@ infoscreen:
   cp $03
   jr z,infoitems
   cp $02
-  jp nz,infofail
+  jr z,infoshallow
+  ; A contained item has the deeper 0,1,2,Pot,Action,Info stack. Bank 37 owns the exact
+  ; proof so this otherwise-full lifecycle slot can share the normal Info publisher.
+  rst $10
+  db $07,$25
+  ret
+infoshallow:
   ; Screen 7 and Status -> Floor screen 20 both push only the Info/seal child and retain
   ; selector/context $FF/$01. They share a native drawer but not box geometry or replay
   ; ownership, so split them by the actual parent stack entry.
@@ -4165,7 +4492,7 @@ infoscreen:
   cp $07
   jp nz,infofail
   ld c,$07
-  jr infopages
+  jp infopages
 info20:
   ld a,[$C537]
   cp b
@@ -4175,7 +4502,7 @@ info20:
   ; 0,20,4/5 stack cannot own a live Item-page transaction. Accept only idle/stale-one;
   ; infotry clears the stale proof before any screen-20 Info pixels are published.
   ld a,[$C1B6]
-  cp $02
+  cp $05
   jp nc,infofail
   ld a,[$C6DE]
   dec a
@@ -4189,11 +4516,15 @@ info20:
   cp $08
   jp nc,infofail
   ld c,$14
-  jr infopages
+  jp infopages
 infoitems:
   ld a,[$C1B6]
-  dec a
-  jp nz,infofail
+  and a
+  jp z,infofail
+  cp $03
+  jp nc,infofail
+  jr infoitemsadmitted
+infoitemsadmitted:
   ld a,[$C535]
   and a
   jp nz,infofail
@@ -5065,6 +5396,10 @@ infopop:
   ld e,a
   call infoowned
   jr nc,infopopbad
+  cp $0C
+  jr z,infopopnested
+  cp $0D
+  jr z,infopopnested
   cp $14
   jr z,infopopfloor
   cp $07
@@ -5090,6 +5425,17 @@ infopop7:
   ld a,[$C6BB]
   ld [$C1B4],a
   ld a,$0B
+  jr infopoparm
+infopopnested:
+  ; Native replay overwrites the live Pot selector and records the returning child in
+  ; C6A6. Preserve both, plus the retained Pot screen, until potentrybegin proves the
+  ; reconstructed stack and publishes the replacement chrome.
+  ld [$C1B4],a
+  ld a,[$C6AC]
+  ld [$C1B5],a
+  ld a,e
+  ld [$C1B8],a
+  ld a,$17
 infopoparm:
   ld [$C1B3],a
   ld a,[$C1B3]
@@ -5151,7 +5497,10 @@ potseeentry:
   and a
   jr nz,potseeentrydone
   ld a,[$C1B6]
-  and a
+  ; Direct screen-20 can retain its exact phase-four header marker until this first
+  ; screen-13 dispatch. Treat zero/four alike while the stack proof below still
+  ; requires parent 20, and preserve the parent height before potentrybegin clears it.
+  and $FB
   jr nz,potseeentrydone
   ld a,[$C534]
   cp $02
@@ -5213,8 +5562,10 @@ inforeturnmode:
   cp $08
   jr nz,inforeturnitembad
   ld a,[$C1B6]
-  dec a
-  jr nz,inforeturnitembad
+  and a
+  jr z,inforeturnitembad
+  cp $03
+  jr nc,inforeturnitembad
   ld a,[$C6A3]
   dec a
   jr nz,inforeturnitembad
@@ -5593,23 +5944,48 @@ inforeturn7dst:
 ; complete empty Pot chrome.  Later row attempts retain state $0C and skip the legacy
 ; LCD-off site; their map references remain shadow-only until the title's existing final
 ; boundary calls potentrypublish.
+; State $17 reaches this helper before native replay starts. Publish empty Pot chrome
+; immediately, then mark the one-shot retirement in C1B6 until potentrybegin consumes it.
+potreturnearly:
+  call potentrychrome
+potreturnchromedone:
+  ld a,$01
+  ld [$C1B6],a
+  scf
+  ret
+
 potentrybegin:
   push bc
   push de
   push hl
+  ld c,$00
   ld a,[$C1B3]
   cp $0C
   jp z,potentryactive
+  cp $17
+  jr z,potentryreplay
   and a
   jp nz,potentrybad
+  jr potentryscreen
+potentryreplay:
+  inc c
+potentryscreen:
   ld a,[$C6A3]
   ld e,a
   sub $0C
   cp $02
   jp nc,potentrybad
   ld a,[$C1B6]
+  cp $04
+  jr nz,potentryphase
+  ld a,e
+  cp $0D
+  jp nz,potentrybad
+  jr potentryphaseok
+potentryphase:
   cp $02
   jp nc,potentrybad
+potentryphaseok:
   ld a,[$C534]
   cp $03
   jr z,potentrystack3
@@ -5640,9 +6016,23 @@ potentrystacklast:
   ld a,[hl]
   cp e
   jp nz,potentrybad
+  ld a,c
+  and a
+  jr z,potentryinitialchild
+  ld a,[$C1B4]
+  cp e
+  jp nz,potentrybad
+  ld a,[$C6A6]
+  ld d,a
+  ld a,[$C1B8]
+  cp d
+  jp nz,potentrybad
+  jr potentrychildok
+potentryinitialchild:
   ld a,[$C6A6]
   and a
   jp nz,potentrybad
+potentrychildok:
   ld a,[$C6DE]
   and $7E
   jp nz,potentrybad
@@ -5710,8 +6100,25 @@ potentrycontextok:
   ldh a,[$FF4B]
   cp $07
   jp nz,potentrybad
+  ld a,c
+  and a
+  jr z,potentryarm
+  ld a,[$C1B5]
+  ld [$C6AC],a
+  xor a
+  ld [$C1B4],a
+  ld [$C1B5],a
+  ld [$C1B8],a
+potentryarm:
   ld a,$0C
   ld [$C1B3],a
+  ld a,c
+  and a
+  jr z,potentryinitialblank
+  xor a
+  ld [$C1B6],a
+  jr potentryactive
+potentryinitialblank:
   ld a,e
   cp $0D
   jr nz,potentryblank
@@ -7557,8 +7964,10 @@ scangood:
 
 copyprice:
   ld a,[$C0E7]
-  and a
-  ret z
+  ; A value of one is the regional short-page empty-row marker, not a shop suffix.
+  ; Treating it as a one-cell price copied stale staging data into the final empty row.
+  cp $02
+  ret c
   push bc
   push de
   push hl
@@ -9680,6 +10089,7 @@ def install(buf, notes=None, font=None):
         for name, blob in (('ITEM_PAGE_SRC', ITEM_PAGE_SRC),
                            ('ITEM_REGION_SRC', ITEM_REGION_SRC),
                            ('ITEM_ROW_FAST_SRC', ITEM_ROW_FAST_SRC),
+                           ('ITEM_ROW_FINISH_SRC', ITEM_ROW_FINISH_SRC),
                            ('ITEM_RETURN_SRC', ITEM_RETURN_SRC),
                            ('ITEM_SHAPE_PHASE_SRC', ITEM_SHAPE_PHASE_SRC),
                            ('ITEM_TILE_FAST_SRC', ITEM_TILE_FAST_SRC),
@@ -9708,6 +10118,8 @@ def install(buf, notes=None, font=None):
             ITEM_PAGE_SRC, ITEM_PAGE_AT)
         item_row_fast_code, item_row_fast_labels = gbasm.assemble(
             ITEM_ROW_FAST_SRC, ITEM_ROW_FAST_AT)
+        item_row_finish_code, _item_row_finish_labels = gbasm.assemble(
+            ITEM_ROW_FINISH_SRC, ITEM_ROW_FINISH_AT)
         item_return_code, item_return_labels = gbasm.assemble(
             ITEM_RETURN_SRC, ITEM_RETURN_AT)
         item_shape_phase_code, item_shape_phase_labels = gbasm.assemble(
@@ -9762,6 +10174,17 @@ def install(buf, notes=None, font=None):
             buf[helper_off:helper_off + len(helper_code)] = helper_code
             buf[helper_ix] = helper_entry & 0xFF
             buf[helper_ix + 1] = helper_entry >> 8
+
+        # The contained-Pot Info predicate is co-located with the bank-37 Action gate,
+        # so the blob is written only once above and receives a second far-table entry.
+        nested_info_ix = (_off(ACTION_GATE_BANK, 0x4000) +
+                          NESTED_INFO_INDEX - 1)
+        if bytes(buf[nested_info_ix:nested_info_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (NESTED_INFO_INDEX, ACTION_GATE_BANK))
+        nested_info_entry = action_gate_labels['nestedinfoowned']
+        buf[nested_info_ix] = nested_info_entry & 0xFF
+        buf[nested_info_ix + 1] = nested_info_entry >> 8
 
         if INFO_LIFECYCLE_AT + len(info_lifecycle_code) > INFO_LIFECYCLE_LIMIT:
             raise SystemExit('menuvwf: Item/Floor Info lifecycle needs %d bytes, only '
@@ -9875,6 +10298,20 @@ def install(buf, notes=None, font=None):
                              (ITEM_REGION_BANK, ITEM_ROW_FAST_AT))
         buf[item_row_fast_at:item_row_fast_at + len(item_row_fast_code)] = \
             item_row_fast_code
+        if ITEM_ROW_FINISH_AT + len(item_row_finish_code) > ITEM_PUBLISH_LIMIT:
+            raise SystemExit('menuvwf: Item row-finalizer shim needs %d bytes, only %d '
+                             'available' %
+                             (len(item_row_finish_code),
+                              ITEM_PUBLISH_LIMIT - ITEM_ROW_FINISH_AT))
+        item_row_finish_at = _off(ITEM_REGION_BANK, ITEM_ROW_FINISH_AT)
+        if any(value != 0xFF for value in
+               buf[item_row_finish_at:
+                   item_row_finish_at + len(item_row_finish_code)]):
+            raise SystemExit('menuvwf: bank %d Item row-finalizer region at $%04X is '
+                             'not free' %
+                             (ITEM_REGION_BANK, ITEM_ROW_FINISH_AT))
+        buf[item_row_finish_at:
+            item_row_finish_at + len(item_row_finish_code)] = item_row_finish_code
         if ITEM_RETURN_AT + len(item_return_code) > ITEM_SHAPE_PHASE_AT:
             raise SystemExit('menuvwf: Item redraw-tail helper overlaps shape-phase '
                              'helper at bank %d:$%04X' %

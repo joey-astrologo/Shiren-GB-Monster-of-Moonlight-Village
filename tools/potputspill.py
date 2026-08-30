@@ -61,7 +61,7 @@ ACTION_SHAPE = (13, 1, 5, 5, 0x02)
 # players reported.
 SCRIPT = {
     60: 'start', 120: 'start', 180: 'start', 240: 'start',
-    300: 'a', 360: 'down', 420: 'a', 500: 'a',        # Adventure -> Log 2
+    700: 'a', 1000: 'down', 1200: 'a', 1500: 'a',    # Adventure -> Log 2
     2200: 'b', 2280: 'down', 2360: 'a', 2460: 'a',    # Menu -> Floor -> Take
     2700: 'a', 2800: 'a', 2900: 'a',                  # dismiss pickup + description
     3000: 'b', 3120: 'a',                             # Menu -> Items
@@ -121,7 +121,6 @@ def run(rom, ram, png=None):
 
         frame = [0]
         schedule = dict(SCRIPT)
-        blankers = [[]]                # sites that cleared LCDC bit 7 in this interval
         cancelled = []                 # our publications inside somebody else's blank
         publications = []
         row_calls = []
@@ -173,30 +172,22 @@ def run(rom, ram, png=None):
 
         def lcdc_write(bank, addr):
             def callback(_context=None):
-                if not pb.register_file.A & 0x80:
-                    blankers[0].append((bank, addr))
-                    return
-                if (bank, addr) != (menuvwf.ITEM_PUBLISH_BANK, lcd_on_at):
-                    blankers[0] = []
-                    return
-                publications.append((frame[0], pb.memory[STATE], tuple(blankers[0])))
-                # A transaction that opened its own interval always cleared bit 7 from
-                # its own code, which lives in the pool banks; the native VBlank LCDC
-                # refresh at 0:$0737 rewrites the same OFF value under it, so the LAST
-                # writer is not the owner.  A blank nothing of ours contributed to is a
-                # native reload we are cancelling mid-flight.
-                if (frame[0] >= GAMEPLAY and blankers[0]
-                        and not any(bank >= 0x20 for bank, _at in blankers[0])):
-                    cancelled.append((frame[0], blankers[0][0], pb.memory[STATE],
+                state = pb.memory[STATE]
+                publications.append((frame[0], state, ()))
+                # This callback runs immediately before publishmap re-enables LCDC.7.
+                # A translation-owned whole-map interval always has a live transaction
+                # state; LCD-off with state zero is therefore the native field/font
+                # restore which this helper must never expose halfway through.
+                if (frame[0] >= GAMEPLAY and not pb.memory[0xFF40] & 0x80 and
+                        state == 0):
+                    cancelled.append((frame[0], (0xFF, 0xFF40), pb.memory[STATE],
                                       pb.memory[0xFF43], pb.memory[0xFF42]))
-                blankers[0] = []
             return callback
 
-        for bank, addr in lcdc_sites(rom):
-            try:
-                pb.hook_register(bank, addr, lcdc_write(bank, addr), None)
-            except Exception:                    # a site may not exist in every build
-                pass
+        # Hook only the publication being audited. Debugger hooks at every native LCDC
+        # writer make PyBoy yield through fades/loaders and alter the route timing.
+        pb.hook_register(menuvwf.ITEM_PUBLISH_BANK, lcd_on_at,
+                         lcdc_write(menuvwf.ITEM_PUBLISH_BANK, lcd_on_at), None)
         pb.hook_register(4, 0x48AA, dispatch, None)
         pb.hook_register(menuvwf.FAR_BANK, profile['entry'], item_row, None)
 

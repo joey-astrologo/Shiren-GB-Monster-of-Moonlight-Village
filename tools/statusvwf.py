@@ -396,32 +396,56 @@ nameentrydone:
 nameentrycheck:
   ld a,[$C534]
   cp $03
-  jr z,nameentrycarried
+  jp z,nameentrycarried
   cp $02
   jp nz,nameentrybad
-  ; Exact Status-root -> screen-20 Floor -> Name stack. Screen 20's Action descriptor
-  ; is still live even though screen 9 has become current.
+  ; Exact Status-root -> screen-20/direct-screen-7 Floor -> Name stack. The retained
+  ; Action descriptor is still live even though screen 9 has become current.
   ld hl,$C535
   ld a,[hl+]
   and a
   jp nz,nameentrybad
   ld a,[hl+]
+  ld c,a
   cp $14
+  jr z,nameentryfloorparent
+  cp $07
   jp nz,nameentrybad
+nameentryfloorparent:
   ld a,[hl]
   cp $09
   jp nz,nameentrybad
   ld a,[$C6A6]
   and a
   jp nz,nameentrybad
-  ld hl,$C1B3
-  ld b,$05
-nameentryflooridle:
-  ld a,[hl+]
+  ; A completed direct Floor Name/Info return can leave its validated Action height
+  ; in C1B4. That byte belongs to the retired epoch, not to the current admission.
+  ; Require the owner and remaining scratch to be idle, then overwrite C1B4 with the
+  ; freshly validated current height below.
+  ld a,[$C1B3]
   and a
   jp nz,nameentrybad
-  dec b
-  jr nz,nameentryflooridle
+  ld a,[$C1B6]
+  and a
+  jr z,nameentryflooridle
+  cp $04
+  jp nz,nameentrybad
+  ; Direct-Floor Action mode four snapshots the otherwise-unused page-edge byte as
+  ; $20 before drawing its first verb.  The six-row Willow Staff therefore reaches
+  ; Name with the exact pair C1B5/C1B6=$20/$04; requiring C1B5 to be globally zero
+  ; admitted the seven-row screen-7 Pot but rejected this ordinary screen-20 parent.
+  ld a,[$C1B5]
+  cp $20
+  jp nz,nameentrybad
+  jr nameentryflooractionok
+nameentryflooridle:
+  ld a,[$C1B5]
+  and a
+  jp nz,nameentrybad
+nameentryflooractionok:
+  ld a,[$C1B7]
+  and a
+  jp nz,nameentrybad
   ld a,[$C6AC]
   inc a
   jp nz,nameentrybad
@@ -434,13 +458,28 @@ nameentryflooridle:
   cp $08
   jp nc,nameentrybad
   ld b,a
+  ld a,c
+  cp $07
+  jr nz,nameentryfloorshape
+  ld a,b
+  cp $07
+  jp nz,nameentrybad
+nameentryfloorshape:
   ld hl,$C69A
   ld a,[hl+]
   cp $0D
   jp nz,nameentrybad
+  ld a,c
+  cp $07
   ld a,[hl+]
+  jr nz,nameentryfloor20y
+  dec a
+  jr z,nameentryflooryok
+  jp nameentrybad
+nameentryfloor20y:
   cp $03
   jp nz,nameentrybad
+nameentryflooryok:
   ld a,[hl+]
   cp b
   jp nz,nameentrybad
@@ -454,6 +493,11 @@ nameentryflooridle:
   ; screen-20 Action height for the regional Name return before entering screen 9.
   ld a,b
   ld [$C1B4],a
+  ; Direct-Floor Action mode four protects only its visible top verb.  Name replaces
+  ; that overlay completely, so this successful admission closes the old epoch.
+  xor a
+  ld [$C1B5],a
+  ld [$C1B6],a
   ld a,[$C6F7]
   cp $02
   jp nz,nameentrybad
@@ -477,7 +521,15 @@ nameentrycarried:
   ; exact height; ordinary carried Items keep C1B4 at zero.
   ld a,[$C6AC]
   inc a
-  jr nz,nameentrycommon
+  jr z,nameentrycarriedfloor
+  ; A completed Info return deliberately leaves its child-screen identity in C1B4
+  ; while the rebuilt Items page remains live. Name starts a new ownership epoch;
+  ; normalize that stale identity before its later Status handoff classifies this as
+  ; an ordinary carried-item return. C1B5/C1B6 retain the real Item row records.
+  xor a
+  ld [$C1B4],a
+  jr nameentrycommon
+nameentrycarriedfloor:
   ld a,[$C1B7]
   dec a
   jp nz,nameentrybad
@@ -494,9 +546,13 @@ nameentrycommon:
   ld a,[$C6A3]
   cp $09
   jp nz,nameentrybad
+nameentrydrain:
   ld a,[$C11A]
   and a
-  jp nz,nameentrybad
+  jr z,nameentryhardware
+  call $06F7
+  jr nameentrydrain
+nameentryhardware:
   ldh a,[$FF40]
   and $F8
   cp $E0
@@ -1129,6 +1185,10 @@ statusready:
   ; directly; its box-6 geometry is rebuilt by the independent state-$0B lifecycle.
   cp $0B
   jr z,statusreadydiscard
+  ; Contained-Pot Info owns the following 0/1/2 replay and retains its finished page
+  ; until screen 12/13 installs complete Pot chrome.
+  cp $17
+  jr z,statusreadydiscard
   cp $0A
   jr z,statusreadypot
   ; Put commit natively rebuilds a disposable screen 0 before replaying screen 1.
@@ -1199,6 +1259,8 @@ statusnamecheck:
   ld a,[$C536]
   cp $14
   jp z,statusnamefloor20
+  cp $07
+  jr z,statusnamedirect7
   dec a
   jp nz,statusnamebad
 statusnamecarried:
@@ -1243,9 +1305,19 @@ statusnamecarried:
   ld c,$00
   jp statusnamecommon
 
+statusnamedirect7:
+  ; The unique seven-row unidentified-Pot picker returns directly through 9 -> 0 -> 7.
+  ; State $0B reuses the proven screen-7 chrome-first publisher used by Info.
+  ld a,[$C1B4]
+  cp $07
+  jp nz,statusnamebad
+  ld c,$0B
+  jr statusnamefloordirect
 statusnamefloor20:
   ; Exact 9 -> 0 -> 20 replay. State 9 suppresses Status and hands the saved
   ; box-39 height to menuvwf's established chrome-first screen-20 return owner.
+  ld c,$09
+statusnamefloordirect:
   ld a,[$C535]
   and a
   jp nz,statusnamebad
@@ -1268,7 +1340,6 @@ statusnamefloor20idle:
   ld a,[$C6DE]
   dec a
   jp nz,statusnamebad
-  ld c,$09
   jp statusnamecommon
 
 statusnamefloor7:

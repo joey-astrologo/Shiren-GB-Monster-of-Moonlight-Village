@@ -20,8 +20,8 @@ with ``--fusion`` to cover a standing Fusion Pot while the Lua kit is carried.
 
 ``--fusion-kit-history`` additionally opens the spawned carried Pot's Action menu and
 returns to gameplay before entering Status -> Floor -> Info on the standing Wood Arrow.
-That history guards the stale private-Action admission state which originally restored
-the full-screen blank despite the visible Floor picker being complete.
+That history guards the non-idle regional header/admission state which originally
+restored the full-screen blank despite the visible Floor picker being complete.
 """
 import argparse
 import os
@@ -390,14 +390,14 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, trace=False, fusion=False
     if fusion_kit_history:
         first_attempt = next((event for event in info_attempts
                               if event[0] >= transitions[0][1]), None)
-        if first_attempt is None or first_attempt[2] != 1:
-            problems.append('Lua-history route did not reach Floor Info with stale '
-                            'Action admission one')
+        if first_attempt is None or first_attempt[2] != 4:
+            problems.append('Lua-history route did not reach Floor Info with the '
+                            'expected pending-header state four')
         first_box = next((event for event in lifecycle
                           if event[0] >= transitions[0][1] and
                           event[1] == 'infoboxdone'), None)
         if first_box is None or first_box[4] != 0:
-            problems.append('Lua-history route did not retire stale Action admission '
+            problems.append('Lua-history route did not retire pending header/admission '
                             'before Info publication')
 
     if fusion:

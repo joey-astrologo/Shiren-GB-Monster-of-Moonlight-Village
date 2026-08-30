@@ -26,6 +26,7 @@ import argparse
 import csv
 import os
 
+import menuvwf
 import statusvwf
 
 
@@ -33,6 +34,7 @@ BANK_SIZE = 0x4000
 # Path rows name the instruction which actually writes LCDC, four bytes after the
 # statusdisable entry's read/bit-clear prologue.
 STATUS_DISABLE_AT = statusvwf.runtime_labels()['statusdisable'] + 4
+INFO_DISABLE_AT = menuvwf.info_lifecycle_labels()['fidisable'] + 4
 
 
 # (bank, write address): (owner, route/purpose, current policy)
@@ -74,8 +76,8 @@ TRANSLATION_OFF = {
     ),
     (53, STATUS_DISABLE_AT): (
         'statusvwf.statusentry',
-        'rejected LCD-on Status reconstruction retained for unknown callers; the '
-        'new 2026-08-30 manual route variants still need causal attribution',
+        'rejected LCD-on Status reconstruction retained for unknown callers; every '
+        'catalogued Item/Floor return has a narrower regional owner',
         'replace-menu',
     ),
     (59, 0x406F): (
@@ -95,7 +97,7 @@ TRANSLATION_OFF = {
         'selector is admitted regionally',
         'replace-menu',
     ),
-    (62, 0x4476): (
+    (62, INFO_DISABLE_AT): (
         'menuvwf.infolifecycle',
         'legacy Item/Floor Info or seal whole-map fallback',
         'replace-menu',
@@ -127,24 +129,33 @@ MENU_BLANK_PATHS = (
          evidence='exact auxiliary cursed-equipment fragment is distinguished from a '
                   'failed row; three plane-exact rows and zero irdisable executions'),
     dict(system='item', key='sealed-item-info-final-return',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation', stack='0,1,2,5 -> 0,1',
          route='Items case-3/6 sealed equipment -> Info final-page A -> Items',
-         status='remaining', fixture='manual cases 03_floor_names and 06_equipment',
-         evidence='2026-08-30 visual pass observed a whole-LCD blank only when paging '
-                  'through the final Info/seal page; ordinary B return remains distinct'),
+         status='regional', fixture='iteminfospill.py held-seal-final-a + manual '
+                 'cases 03_floor_names and 06_equipment',
+         evidence='native final-A handler $C6BC and ordinary B are independently '
+                  'admitted; exact empty parent chrome precedes rows, with zero '
+                  'LCD-off/uniform frames and immediate post-return input; manually '
+                  'accepted 2026-08-30 recheck 1'),
     dict(system='item', key='floor-sealed-info-final-return',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation',
+         stack='0,20,5 -> 0,20; 0,1,2,5 -> 0,1',
          route='Dropped case-3 sealed equipment Floor -> Info final-page A -> Floor',
-         status='remaining', fixture='manual case 03_floor_names',
-         evidence='2026-08-30 visual pass observed a whole-LCD blank after placing either '
-                  'sealed item on the floor and completing Info'),
+         status='regional', fixture='iteminfospill.py real-sealed-direct/appended + '
+                 'manual case 04_carried_name',
+         evidence='no-Lua fixture performs the real Drop onto an empty dungeon tile; '
+                  'the one-level screen-20 and two-level appended-Floor $C6BC final-A '
+                  'handlers both complete their exact parent lifecycle with zero '
+                  'explicit fallback/LCD-off/uniform frames and prompt input; manually '
+                  'accepted 2026-08-30 rechecks 2-3 including field exit and Status reopen'),
     dict(system='item', key='item-name-entry',
          sites=(), origin='translation', stack='0,1,2,9',
-         route='Carried unidentified item Action -> Name keyboard',
+         route='Carried unidentified item Action -> Name keyboard, including Info-first history',
          status='regional', fixture='unidentifiednamespill.py + '
                  'shiren_en_log3_carried_unidentified_naming.srm',
-         evidence='exact stack admitted to four-row BG retirement plus selective '
-                  'native-plane restore; LCDC.7 stays set and Name return is zero'),
+         evidence='direct and Info-then-Name B/End histories drain the pending queue, '
+                  'retire keyboard/status fragments, and publish complete Items chrome '
+                  'before rows; LCDC.7 stays set'),
     dict(system='item', key='item-name-empty-cancel',
          sites=(), origin='translation', stack='0,1',
          route='B from an empty carried-item Name keyboard -> Items reconstruction',
@@ -189,11 +200,13 @@ MENU_BLANK_PATHS = (
          evidence='real End/reopen/delete/final-B 9,0,1,2 mode/row 3/1 replay has '
                   'zero Status fallback, LCD-off, or uniform frames'),
     dict(system='item', key='items-floor-post-name-action-cancel',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation', stack='0,1,2,9 -> 0,1,2 -> 0,1',
          route='Items-appended unidentified-Pot Floor Name return -> dismiss Action',
-         status='remaining', fixture='manual case 09_unidentified_pot',
-         evidence='Name itself returns to the retained Action picker, but the following '
-                  'B dismissal produces a whole-LCD blank in this exact history'),
+         status='regional', fixture='unidentifiedpotnamespill.py + manual case '
+                 '09_unidentified_pot',
+         evidence='post-Name seven-row Action B consumes the retained Floor owner, '
+                  'restores screen 1 directly, and produces zero Status fallback, '
+                  'LCD-off, or uniform frames'),
     dict(system='item', key='floor-name-entry',
          sites=(), origin='translation', stack='0,20 -> 0,20,9',
          route='Screen-20 unidentified Willow Staff Floor Action -> Name keyboard',
@@ -201,40 +214,48 @@ MENU_BLANK_PATHS = (
                  'shiren_log3_unidentified_naming.srm',
          evidence='exact stack/ground/box-39 owner uses four BG retirement and eighteen '
                   'native-plane batches; Status -> Floor predecessor is independently '
-                  'zero-off and LCD-live'),
+                  'zero-off and LCD-live; direct and Info-first histories manually '
+                  'accepted 2026-08-30 recheck 6'),
     dict(system='item', key='floor-name-end-return',
          sites=(), origin='translation', stack='0,20',
          route='End from a screen-20 Floor item Name keyboard -> Floor reconstruction',
          status='regional', fixture='unidentifiednamespill.py + '
                  'shiren_log3_unidentified_naming.srm',
          evidence='exact real-input 9,0,20 mode/row 3/0 replay reuses the proven '
-                  'screen-20 Info return owner and stays LCD-live'),
+                  'screen-20 Info return owner and stays LCD-live; manually accepted '
+                  '2026-08-30 recheck 6'),
     dict(system='item', key='floor-name-empty-cancel',
          sites=(), origin='translation', stack='0,20',
          route='B from an initially empty screen-20 Floor Name keyboard -> Floor',
          status='regional', fixture='unidentifiednamespill.py + '
                  'shiren_log3_unidentified_naming.srm',
          evidence='exact real-input 9,0,20 mode/row 0/1 replay publishes complete '
-                  'screen-20 Floor/Action chrome with zero LCD-off or uniform frames'),
+                  'screen-20 Floor/Action chrome with zero LCD-off or uniform frames; '
+                  'manually accepted 2026-08-30 recheck 6'),
     dict(system='item', key='floor-name-erased-cancel',
          sites=(), origin='translation', stack='0,20',
          route='B after erasing a reopened screen-20 Floor item name -> Floor',
          status='regional', fixture='unidentifiednamespill.py + '
                  'shiren_log3_unidentified_naming.srm',
          evidence='real End/reopen/delete/final-B 9,0,20 mode/row 3/1 replay has zero '
-                  'Status fallback, LCD-off, or uniform frames'),
+                  'Status fallback, LCD-off, or uniform frames; manually accepted '
+                  '2026-08-30 recheck 6'),
     dict(system='item', key='floor-unidentified-pot-name-entry',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation', stack='0,7 -> 0,7,9',
          route='Direct unidentified-Pot Floor Action -> Name keyboard',
-         status='remaining', fixture='manual case 09_unidentified_pot',
-         evidence='2026-08-30 visual pass observed a whole-LCD blank entering Name from '
-                  'the unique seven-row unidentified-Pot Action parent'),
+         status='regional', fixture='unidentifiedpotnamespill.py + manual case '
+                 '09_unidentified_pot',
+         evidence='exact screen-7 seven-row owner uses the bounded BG retirement and '
+                  'native keyboard-plane publisher; zero native Name restore, '
+                  'LCD-off, or uniform frames'),
     dict(system='item', key='floor-unidentified-pot-name-return',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation', stack='0,7,9 -> 0,7',
          route='Direct unidentified-Pot Name End/B -> Floor Action reconstruction',
-         status='remaining', fixture='manual case 09_unidentified_pot',
-         evidence='both End and B returns blank the LCD; outgoing Name text also remains '
-                  'visible out of order before the Floor/Action parent settles'),
+         status='regional', fixture='unidentifiedpotnamespill.py + manual case '
+                 '09_unidentified_pot',
+         evidence='End and initial-empty B are independently driven; keyboard retirement '
+                  'precedes complete screen-7 Floor/Action chrome and rows, with zero '
+                  'LCD-off/uniform frames'),
     dict(system='item', key='pot-put-selector',
          sites=(), origin='translation', stack='0,1,2,11',
          route='Carried Pot Action -> Put item selector', status='regional',
@@ -263,23 +284,30 @@ MENU_BLANK_PATHS = (
          fixture='potputspill.py', evidence='ordinary Items-to-Status owner remains '
                  'LCD-live; later Status-to-field teardown is independently kept'),
     dict(system='item', key='pot-content-item-info-entry',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation',
+         stack='0,1,2 or 0,7/20 -> 12/13,16,4/5',
          route='Pot contents item Action -> Info from carried/direct-Floor/appended-Floor parents',
-         status='remaining', fixture='manual case 05_pot_put',
-         evidence='2026-08-30 visual pass observed a whole-LCD blank before contained-item '
-                  'Info in each reported Pot parent context'),
+         status='regional', fixture='potcontentinfospill.py + manual case 05_pot_put',
+         evidence='stack-specific predicate admits carried/appended 0,1,2 and ground '
+                  '0,7/20 Pot parents; deterministic populated Storage-Pot route reaches '
+                  'Info with zero explicit or sampled LCD-off frames; manually accepted '
+                  '2026-08-30 recheck 4'),
     dict(system='item', key='pot-content-item-info-return',
-         sites=(), origin='unresolved', stack='capture pending',
+         sites=(), origin='translation',
+         stack='...,12/13,16,4/5 -> ...,12/13',
          route='Contained-item Info -> Pot contents parent',
-         status='remaining', fixture='manual case 05_pot_put',
-         evidence='2026-08-30 visual pass observed a second whole-LCD blank on the return; '
-                  'each Pot parent context requires its own stack trace'),
+         status='regional', fixture='potcontentinfospill.py + manual case 05_pot_put',
+         evidence='state $17 removes Action+Info, preserves Pot screen/selector, and '
+                  'replays complete empty Pot chrome before title/content rows; carried '
+                  'fixture returns to exact 0,1,2,13 with zero LCD-off frames; full Pot '
+                  '-> Items -> field -> Status lifecycle manually accepted 2026-08-30 '
+                  'recheck 4'),
     dict(system='item', key='unknown-status-fallback',
          sites=(('LCDC', 53, STATUS_DISABLE_AT),), origin='translation', stack='unknown -> 0',
          route='Any other rejected LCD-on child -> Status reconstruction',
          status='dormant', fixture='all admitted Item/Info/Pot/Name/Floor returns',
-         evidence='fallback remains in ROM with zero hits in the established automated '
-                  'routes; the 2026-08-30 manual variants await causal tracing'),
+         evidence='fallback remains in ROM with zero hits across the expanded '
+                  '2026-08-30 Item/Floor regression battery'),
     dict(system='item', key='unknown-item-region-fallback',
          sites=(('LCDC', 60, 0x4222),), origin='translation', stack='unknown -> 1',
          route='Any other rejected Item page/sort/shape regional transaction',
@@ -293,19 +321,25 @@ MENU_BLANK_PATHS = (
                  'groundpotreturnspill.py',
          evidence='fallback remains in ROM; admitted page/See routes require zero'),
     dict(system='item', key='unknown-info-fallback',
-         sites=(('LCDC', 62, 0x4476),), origin='translation', stack='unknown -> 4/5',
+         sites=(('LCDC', 62, INFO_DISABLE_AT),), origin='translation', stack='unknown -> 4/5',
          route='Any rejected Item/Floor Info, seal, or Pot lifecycle',
          status='dormant',
-         fixture='iteminfospill.py, floorinfospill.py, unidentifiedpotspill.py, '
-                 'potseespill.py',
-         evidence='no execution in the complete 2026-08-27 automated battery; the new '
-                  'sealed-final and nested-Pot manual routes are not yet instrumented'),
+         fixture='iteminfospill.py, potcontentinfospill.py, shopspill.py, '
+                 'unidentifiedpotspill.py, potseespill.py',
+         evidence='fallback remains installed for malformed/unknown callers; sealed '
+                  'final-A, nested-Pot, shop appended-Floor, and established Info/See '
+                  'fixtures record zero executions'),
     dict(system='item', key='shop-floor-info-cycle',
-         sites=(), origin='translation', stack='0 -> 0,20 -> 0,20,4 -> 0,20',
-         route='Shop Status -> Floor -> action -> Info -> Floor',
+         sites=(), origin='translation',
+         stack='0 -> 0,20,4 or 0,1,2,4 -> exact Floor parent',
+         route='Shop direct or Items-appended Floor -> Action -> Info -> Floor',
          status='regional', fixture='shopspill.py',
-         evidence='isolated no-cheat store-screen run dispatches 20,4,0,20 with zero '
-                  'LCD-off sites; earlier grouped native hits belong to boot/field load'),
+         evidence='direct no-cheat route dispatches 20,4,0,20; appended route begins '
+                  'with private-Action admission zero because D0-DE hold prices, then '
+                  'independently proves Floor ownership; both directions are LCD-live '
+                  'and the initial/returned 3600 price suffixes are identical; Take '
+                  'preservation, price, field exit, and Status reopen manually accepted '
+                  '2026-08-30 recheck 5'),
     dict(system='item', key='action-to-gameplay',
          sites=(('shadow', 2, 0x463C), ('shadow', 4, 0x4154)),
          origin='base', stack='0,...',

@@ -147,8 +147,8 @@ if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   python3 tools/floorinfospill.py build/shiren_en.gb --seal
   # Reproduce mesen_spawn_fusion_kit.lua exactly, first isolating the injected bytes and
   # then visiting the carried Fusion Pot Action before screen-20 Floor Info. A
-  # gameplay-bound Action used to leave its private-pool admission at one and
-  # incorrectly force this later route to LCD-off.
+  # gameplay-bound Action leaves a non-idle regional header/admission history which
+  # used to force this later route to LCD-off.
   python3 tools/floorinfospill.py build/shiren_en.gb --fusion-kit
   python3 tools/floorinfospill.py build/shiren_en.gb --fusion-kit-history
 fi
@@ -161,6 +161,11 @@ if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
   python3 tools/groundpotreturnspill.py build/shiren_en.gb --screen20
   python3 tools/groundpotreturnspill.py build/shiren_en.gb --items-first
   python3 tools/groundpotreturnspill.py build/shiren_en.gb --screen20 --items-first
+  # Contained-item Info must preserve the exposed top Action verb, hand its replay
+  # state to the restored Pot page, then survive Pot -> Items -> Status -> field and a
+  # fresh Status reopen. This is the regression that catches a visually settled menu
+  # whose stale lifecycle byte freezes only after the player leaves it.
+  python3 tools/potcontentinfospill.py build/shiren_en.gb
   # Closing the menu is a NATIVE LCD-off reload of $9000-$97FF from menu font back to
   # terrain. A V4F publication that re-enables the LCD inside it exposes one frame of
   # dungeon map drawn through menu glyphs. That is what a transaction state sharing
@@ -194,6 +199,7 @@ if [ -f saves/shiren_en_path_select.srm ]; then
 fi
 if [ -f saves/shiren_log3_unidentified_naming.srm ]; then
   python3 tools/unidentifiednamespill.py build/shiren_en.gb
+  python3 tools/unidentifiedpotnamespill.py build/shiren_en.gb
 fi
 if [ -f saves/shiren_en_menu.srm ] &&
    [ -f saves/shiren_en_ranking_repaired.srm ]; then

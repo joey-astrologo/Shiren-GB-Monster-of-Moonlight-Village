@@ -125,6 +125,34 @@ CARRIED_EMPTY_CANCEL[5500] = ('up', 5)
 # Then exercise the ordinary Items -> Status exit so private Status planes are checked too.
 CARRIED_EMPTY_CANCEL[5600] = ('b', 5)
 
+# The same carried fixture, but visit the multi-page Info child before reopening the
+# Action picker and choosing Name.  Info retains its row records in the shared
+# transaction scratch; Name starts a new ownership epoch and must not retain Info's
+# child-screen identity.  Exercise both native Name exits and the later ordinary
+# Items -> Status pop.
+CARRIED_INFO_THEN_NAME = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+    3000: 'b', 3400: 'a', 3800: 'right',
+    4000: 'down', 4080: 'down', 4160: 'down', 4380: 'a',
+    4680: 'down', 4760: 'down', 4840: 'down', 4920: 'down',
+    5200: 'a', 5600: 'b',
+    6000: 'a', 6300: 'down', 6380: 'down', 6460: 'down', 6700: 'a',
+}
+CARRIED_INFO_NAME_EMPTY_CANCEL = dict(CARRIED_INFO_THEN_NAME)
+CARRIED_INFO_NAME_EMPTY_CANCEL.update({
+    7100: ('b', 5),
+    7200: ('up', 5),
+    7300: ('b', 5),
+})
+CARRIED_INFO_NAME_END = dict(CARRIED_INFO_THEN_NAME)
+CARRIED_INFO_NAME_END.update({
+    7000: ('a', 5),
+    7120: ('start', 5),
+    7220: ('a', 5),
+    7600: ('b', 5),
+})
+
 # Supplied Log 3 -> Floor/Take -> Items -> Name -> type ``Stun`` -> End (Start is the
 # native shortcut which selects the on-screen End action) -> Items -> status.  The
 # generated timing also drives synthetic one- through four-page layouts below; every
@@ -489,6 +517,9 @@ def snapshot(PyBoy, rom_path, script, frames, ram=None, png=None,
             'row': pb.memory[0xC6F5],
             'col': pb.memory[0xC6F0],
             'mode': pb.memory[0xC6F3],
+            'screen': pb.memory[0xC6A3],
+            'stack': tuple(pb.memory[0xC535 + index]
+                           for index in range(pb.memory[0xC534] + 1)),
             'lcdc': pb.memory[0xFF40],
             'fresh_entries': fresh_entries,
             'floor_entries': floor_entries,
@@ -1009,6 +1040,14 @@ def main():
         PyBoy, args.rom, STUN_ERASED_CANCEL, STUN_ERASED_FRAMES, args.ram,
         cursor_overrides=STUN_ERASED_CURSOR, status_runtime=status_labels,
         transition_png_dir=args.png_dir, transition_from=8160)
+    info_name_empty_cancel = snapshot(
+        PyBoy, args.rom, CARRIED_INFO_NAME_EMPTY_CANCEL, 7600, args.manual_ram,
+        status_runtime=status_labels, transition_png_dir=args.png_dir,
+        transition_from=6650)
+    info_name_end = snapshot(
+        PyBoy, args.rom, CARRIED_INFO_NAME_END, 7900, args.manual_ram,
+        status_runtime=status_labels, transition_png_dir=args.png_dir,
+        transition_from=6650)
     problems = []
 
     problems.extend(name_entry_problems(manual, 'manual carried fixture entry'))
@@ -1076,6 +1115,16 @@ def main():
         gate_key='item_name_erased_cancel_gates'))
     problems.extend('named-then-erased Name B cancel: ' + problem
                     for problem in erased_cancel['status_problems'])
+    problems.extend(name_cancel_problems(
+        info_name_empty_cancel, 'Info-before-Name empty B cancel'))
+    problems.extend(name_return_problems(
+        info_name_end, 'Info-before-Name End return'))
+    for label, case in (('Info-before-Name empty B cancel', info_name_empty_cancel),
+                        ('Info-before-Name End return', info_name_end)):
+        if case['native_name_restores'] or len(case['regional_name_starts']) != 1:
+            problems.append('%s used %d native / %d regional Name restores' %
+                            (label, len(case['native_name_restores']),
+                             len(case['regional_name_starts'])))
 
     if len(fresh['fresh_entries']) != 1:
         problems.append('fresh route reached fresh name entry %d times, expected once' %

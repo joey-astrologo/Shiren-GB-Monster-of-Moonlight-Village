@@ -395,7 +395,7 @@ def run(rom, ram=None, png_dir=None, trace=False, screen20=False,
     if not returned:
         problems.append('See B never returned to screen %d' % target)
     expected_entry = ({
-        'screen': 13, 'state': 0, 'phase': 0, 'floor': 0,
+        'screen': 13, 'state': 0, 'phase': 4, 'floor': 0,
         'render_phase': 1, 'c0d5': 1, 'shadow': 0xC380,
         'context': 0, 'flags': 0x81, 'count': 5, 'selector': 0,
         'rows': 5, 'depth': 2, 'stack': (0, 20, 13),
@@ -502,6 +502,12 @@ def run(rom, ram=None, png_dir=None, trace=False, screen20=False,
                 ('BG pixels', resolved(parent[0]), resolved(settled)),
                 ('Window pixels', resolved(parent[0], range(2), range(20), 'window'),
                  resolved(settled, range(2), range(20), 'window'))):
+            # Screen 20 rebuilds its proportional Action labels and may legally choose
+            # different private tile IDs. Its chrome is checked above and its complete
+            # resolved BG raster is checked below, so byte-identical BG references are
+            # not an invariant for that parent.
+            if target == 20 and label == 'BG tilemap':
+                continue
             if old != new:
                 problems.append('settled return differs from outgoing %s' % label)
 

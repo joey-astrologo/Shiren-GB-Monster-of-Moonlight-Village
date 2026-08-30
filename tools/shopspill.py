@@ -70,6 +70,18 @@ STORE_BOOT = {
     3040: 'down', 3100: 'down', 3160: 'down', 3220: 'a',
     3600: 'b',
 }
+# Log 3 -> Items -> all four carried pages -> appended Floor -> Info -> Floor.
+# The first Floor publication is the important distinction from STORE_BOOT: its single
+# shop row must receive the same native $D0-$D2 price suffix as the later Info replay.
+APPENDED_STORE_BOOT = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 350: 'down', 400: 'down', 460: 'a', 530: 'a',
+    2600: 'b', 2700: 'a',
+    3800: 'right', 4300: 'right', 4800: 'right', 5300: 'right',
+    5800: 'a',
+    6100: 'down', 6180: 'down', 6260: 'down', 6500: 'a',
+    6900: 'b',
+}
 STORE_PRICE_CODES = tuple(EN_CODES[ch] for ch in '  3600G')
 STORE_GITAN_CODES = tuple(EN_CODES[ch] for ch in '  3540G')
 STORE_VALUE_ROWS = ((0xC380, STORE_PRICE_CODES), (0xC4C0, STORE_GITAN_CODES))
@@ -532,11 +544,21 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
         queue_uploads = []
         active_uploads = []
         explicit_info_blanks = []
+        take_planes = []
+        schedule = dict(STORE_BOOT)
+        floor_exit_press = 4000
+        schedule[floor_exit_press] = 'b'
+        field_ready = [None]
+        reopen_press = [None]
+        reopen_accept = [None]
         expected_label_planes = b''.join(shop_label_tiles())
         label_vram_end = menuvwf.SHOP_LABEL_VRAM + len(expected_label_planes)
 
         def dispatch(_context=None):
             dispatches.append((frame[0], pb.register_file.A))
+            if (reopen_press[0] is not None and frame[0] >= reopen_press[0] and
+                    pb.register_file.A == 0):
+                reopen_accept[0] = frame[0]
 
         pb.hook_register(4, 0x48AA, dispatch, None)
         info_labels = menuvwf.info_lifecycle_labels()
@@ -585,7 +607,7 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
                     problems.append('%s action row $%04X has no raw=1 VWF record' %
                                     (label, key))
                 elif not menuspill.visible_row_matches(
-                        pb, profile, key, list(codes), raw=1):
+                        pb, profile, key, list(codes), raw=1, private=True):
                     problems.append('%s action row $%04X planes differ' % (label, key))
             invariant = menuspill.frame_invariant(pb, profile)
             if invariant:
@@ -594,12 +616,17 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
             if not pb.memory[0xFF40] & 0x80:
                 problems.append('%s leaves the LCD disabled' % label)
 
-        for current in range(4160):
+        for current in range(4700):
             frame[0] = current
-            button = STORE_BOOT.get(current)
+            button = schedule.get(current)
             if button:
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
+            if (field_ready[0] is None and current >= floor_exit_press + 60 and
+                    pb.memory[0xC6A3] == 0xFF and pb.memory[0xFF40] & 0x80):
+                field_ready[0] = current
+                reopen_press[0] = current + 80
+                schedule[reopen_press[0]] = 'b'
             planes = bytes(pb.memory[menuvwf.SHOP_LABEL_VRAM:label_vram_end])
             for upload in active_uploads:
                 if upload['done']:
@@ -622,6 +649,17 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
                                 'frame %d' % current)
             if current == 3000:
                 check_screen('initial shop Floor')
+                take = [record for record in menuspill.records(pb, profile)
+                        if record[0] == STORE_ACTION_ROWS[0][0] and record[3] == 1]
+                if len(take) != 1:
+                    problems.append('initial shop Take row has %d allocator records' %
+                                    len(take))
+                else:
+                    _key, base, cap, _raw = take[0]
+                    take_planes[:] = [
+                        (tile, bytes(pb.memory[menuspill.tile_data_addr(tile):
+                                               menuspill.tile_data_addr(tile) + 16]))
+                        for tile in range(base, base + cap)]
                 if png:
                     pb.screen.image.save(png)
             elif current == 3400:
@@ -633,6 +671,11 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
                     elif not menuspill.visible_row_matches(
                             pb, profile, key, list(codes), raw=0):
                         problems.append('shop Info row $%04X planes differ' % key)
+                for tile, want in take_planes:
+                    at = menuspill.tile_data_addr(tile)
+                    if bytes(pb.memory[at:at + 16]) != want:
+                        problems.append('shop Info overwrote background Take tile '
+                                        '$%02X planes' % tile)
             elif current == 3800:
                 check_screen('Info-return shop Floor')
 
@@ -650,6 +693,14 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
                             (explicit_info_blanks,))
         if checked != ['initial shop Floor', 'Info-return shop Floor']:
             problems.append('shop screen checks ran at %s' % checked)
+        if field_ready[0] is None or reopen_accept[0] is None:
+            problems.append('shop Floor B did not regain field input and reopen Status')
+        if reopen_accept[0] is not None and (pb.memory[0xC6A3] != 0 or
+                                             not pb.memory[0xFF40] & 0x80 or
+                                             pb.memory[0xC1B3] != 0):
+            problems.append('shop Floor reopen ended screen/state/LCDC %d/$%02X/$%02X' %
+                            (pb.memory[0xC6A3], pb.memory[0xC1B3],
+                             pb.memory[0xFF40]))
         if not label_entries:
             problems.append('shop Price label helper never ran with the LCD enabled')
         if not queue_uploads:
@@ -663,6 +714,83 @@ def store_screen_route_problems(rom_path, ram_path, png=None):
         if pb.register_file.PC < 0x0100:
             problems.append('no-cheat shop route ended at suspicious PC=$%04X' %
                             pb.register_file.PC)
+        pb.stop(save=False)
+    return problems
+
+
+def appended_store_floor_problems(rom_path, ram_path, png=None):
+    """Prove appended shop Floor publication plus its regional Info round trip."""
+    problems = []
+    PyBoy = _import_pyboy()
+    with tempfile.TemporaryDirectory(prefix='shop-appended-floor-') as tmp:
+        run_rom = os.path.join(tmp, 'shop.gb')
+        shutil.copyfile(rom_path, run_rom)
+        shutil.copyfile(ram_path, run_rom + '.ram')
+        pb = PyBoy(run_rom, window='null', cgb=True)
+        pb.set_emulation_speed(0)
+        frame = [0]
+        dispatches = []
+        suffixes = {}
+        lcd_off = []
+        uniform = []
+        explicit_info_blanks = []
+
+        pb.hook_register(4, 0x48AA, lambda _ctx=None:
+                         dispatches.append((frame[0], pb.register_file.A)), None)
+        info_labels = menuvwf.info_lifecycle_labels()
+        pb.hook_register(
+            menuvwf.ACTION_BLANK_BANK, info_labels['fidisable'],
+            lambda _ctx=None: explicit_info_blanks.append((
+                frame[0], pb.memory[0xC6A3], pb.memory[0xC1B3],
+                pb.memory[0xC1B6])), None)
+
+        # Cover the Items -> appended-Floor shape change and both sides of the Info
+        # round trip.  The latter deliberately starts with C1B6=0: shop prices collide
+        # with Action's private pool, so Info must prove the settled Floor parent on its
+        # own instead of relying on private-Action admission.
+        sample_ranges = ((5280, 5400), (6400, 6750), (6850, 7150))
+        for current in range(7400):
+            frame[0] = current
+            button = APPENDED_STORE_BOOT.get(current)
+            if button:
+                pb.button(button, PRESS_FRAMES)
+            pb.tick()
+            if current in (5500, 7300):
+                suffixes[current] = (
+                    bytes(pb.memory[0xC390:0xC393]),
+                    bytes(pb.memory[0x9890:0x9893]))
+                if png and current == 5500:
+                    pb.screen.image.save(png)
+            if any(lo <= current < hi for lo, hi in sample_ranges):
+                if not pb.memory[0xFF40] & 0x80:
+                    lcd_off.append(current)
+                if len(set(pb.screen.image.convert('RGB').getdata())) == 1:
+                    uniform.append(current)
+
+        expected = RAW_PRICE
+        for at, label in ((5500, 'initial appended shop Floor'),
+                          (7300, 'Info-return appended shop Floor')):
+            shadow, bg = suffixes.get(at, (b'', b''))
+            if shadow != expected or bg != expected:
+                problems.append('%s price suffix is %s/%s, expected %s' %
+                                (label, shadow.hex(' '), bg.hex(' '),
+                                 expected.hex(' ')))
+        screens = [screen for _at, screen in dispatches]
+        expected_tail = (2, 4, 0, 1)
+        if tuple(screens[-4:]) != expected_tail:
+            problems.append('appended shop Floor tail is %s, expected %s' %
+                            (screens[-4:], expected_tail))
+        if lcd_off:
+            problems.append('appended shop Floor produced LCD-off frames at %s' %
+                            ' '.join('f%d' % value for value in lcd_off[:12]))
+        if uniform:
+            problems.append('appended shop Floor produced uniform frames at %s' %
+                            ' '.join('f%d' % value for value in uniform[:12]))
+        if explicit_info_blanks:
+            problems.append('appended shop Floor reached explicit Info LCD blanker at '
+                            '%s' % (explicit_info_blanks,))
+        if not pb.memory[0xFF40] & 0x80:
+            problems.append('appended shop Floor ended with LCD disabled')
         pb.stop(save=False)
     return problems
 
@@ -760,6 +888,7 @@ def main():
     parser.add_argument('--invincible-png')
     parser.add_argument('--max-png')
     parser.add_argument('--store-screen-png')
+    parser.add_argument('--appended-store-png')
     args = parser.parse_args()
     if not os.path.exists(args.ram):
         raise SystemExit('shopspill: missing fixture %s' % args.ram)
@@ -779,8 +908,11 @@ def main():
                                               SHOP_BUY_CAP, args.max_png))
     problems.extend(store_screen_route_problems(
         args.rom, args.store_screen_ram, args.store_screen_png))
+    problems.extend(appended_store_floor_problems(
+        args.rom, args.store_screen_ram, args.appended_store_png))
     print('shopspill: private proportional Price/G + two amount rows; '
-          'no-cheat Floor/Info/Floor; five D0-DE row slots; complete `%s`; '
+          'no-cheat direct and Items-appended Floor/Info/Floor; '
+          'five D0-DE row slots; complete `%s`; '
           '500G row 0 + 3000G row 4 exact; '
           'controlled %dG maximum route exact; base max %d; %d problem(s)' %
           (LONG_TEXT, SHOP_BUY_CAP, MAX_BASE_PRICE, len(problems)))

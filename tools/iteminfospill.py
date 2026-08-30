@@ -42,6 +42,10 @@ import statusvwf                                                   # noqa: E402
 HELD_RAM = os.path.join(ROOT, 'saves', 'shiren_en_log_1_shield_VWF.srm')
 HELD_PAGE2_RAM = os.path.join(ROOT, 'saves', 'shiren_en_log_1_dragons_maw.srm')
 FLOOR_RAM = os.path.join(ROOT, 'saves', 'shiren_en_item_menu_wood_arrow.srm')
+REAL_SEALED_RAM = os.path.join(ROOT, 'saves',
+                               'shiren_log3_unidentified_naming.srm')
+REAL_DROP_RAM = os.path.join(ROOT, 'saves',
+                             'shiren_en_log3_carried_unidentified_naming.srm')
 FUSION_STATE = os.path.join(ROOT, 'saves', 'dungeon.state')
 INVENTORY = 0xA3B0
 OBJECTS = 0xA406
@@ -81,6 +85,12 @@ def resolved(state, layer, row, col):
 def visible_equal(left, right, layer, rows):
     return all(resolved(left, layer, row, col) ==
                resolved(right, layer, row, col)
+               for row in rows for col in range(20))
+
+
+def visible_pixels_equal(left, right, layer, rows):
+    return all(resolved(left, layer, row, col)[1] ==
+               resolved(right, layer, row, col)[1]
                for row in rows for col in range(20))
 
 
@@ -303,12 +313,463 @@ def run_fusion_pager_case(PyBoy, rom, profile, labels, state_path, frames=1400):
     return problems
 
 
+def run_real_sealed_short_page(PyBoy, rom, profile, labels, ram, frames=3900):
+    """Use the manual-test SRAM for sealed final-A return, then expose short page 2."""
+    problems = []
+    with tempfile.TemporaryDirectory(prefix='iteminfospill-real-sealed-') as tmp:
+        run_rom = os.path.join(tmp, 'real-sealed.gb')
+        shutil.copyfile(rom, run_rom)
+        shutil.copyfile(ram, run_rom + '.ram')
+        pb = PyBoy(run_rom, window='null', cgb=True)
+        pb.set_emulation_speed(0)
+        frame = [0]
+        schedule = {
+            60: 'start', 120: 'start', 180: 'start', 240: 'start',
+            300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+            2600: 'b', 2700: 'a',
+        }
+        phase = [0]
+        info_publishes = []
+        right_press = [None]
+        dispatches = []
+        explicit_blanks = []
+        status_blanks = []
+        lcd_off = []
+        uniform = []
+
+        def dispatch(_ctx=None):
+            dispatches.append((frame[0], pb.register_file.A,
+                               pb.memory[0xC6AC], pb.memory[0xC1B3]))
+
+        def render(_ctx=None):
+            shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+            row = pb.register_file.D
+            screen = pb.memory[0xC6A3]
+            if (phase[0] == 0 and screen == 1 and shape == ITEM_SHAPE and
+                    row == 4 and pb.memory[0xC6AC] == 0):
+                schedule[frame[0] + 90] = 'a'
+                phase[0] = 1
+            elif (phase[0] == 1 and screen == 2 and
+                  shape[:2] == ACTION_PREFIX and shape[3:] == ACTION_SUFFIX and
+                  row == shape[2] - 1):
+                at = frame[0] + 70
+                for _index in range(shape[2] - 1):
+                    schedule[at] = 'down'
+                    at += 60
+                schedule[at] = 'a'
+                phase[0] = 2
+
+        def info_publish(_ctx=None):
+            info_publishes.append((frame[0], pb.memory[0xC6BC],
+                                   pb.memory[0xC6BD]))
+            # This natural sealed item exits through screen 5's final-A handler.
+            schedule[frame[0] + 90] = 'a'
+
+        pb.hook_register(4, 0x48AA, dispatch, None)
+        pb.hook_register(menuvwf.FAR_BANK, profile['entry'], render, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['infopublish'],
+                         info_publish, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['fidisable'],
+                         lambda _ctx=None: explicit_blanks.append(frame[0]), None)
+        status_labels = statusvwf.runtime_labels()
+        pb.hook_register(statusvwf.FAR_BANK, status_labels['statusdisable'],
+                         lambda _ctx=None: status_blanks.append(frame[0]), None)
+
+        for frame[0] in range(frames):
+            button = schedule.get(frame[0])
+            if button:
+                pb.button(button, PRESS_FRAMES)
+            pb.tick()
+            if phase[0] >= 2:
+                if not pb.memory[0xFF40] & 0x80:
+                    lcd_off.append(frame[0])
+                if white_frame(pb.screen.image):
+                    uniform.append(frame[0])
+            if (info_publishes and right_press[0] is None and
+                    pb.memory[0xC6A3] == 1 and pb.memory[0xC1B3] == 0 and
+                    frame[0] > info_publishes[-1][0] + 20):
+                right_press[0] = frame[0] + 60
+                schedule[right_press[0]] = 'right'
+
+        selector = pb.memory[0xC6AC]
+        item_count = pb.memory[0xC6AA]
+        rows = []
+        for row in range(5):
+            bg_at = 0x9880 + row * 0x40
+            shadow_at = 0xC380 + row * 0x40
+            rows.append((bytes(pb.memory[bg_at:bg_at + 20]),
+                         bytes(pb.memory[shadow_at:shadow_at + 20])))
+        final_lcdc = pb.memory[0xFF40]
+        pb.stop(save=False)
+
+    screens = tuple(screen for _at, screen, _selector, _state in dispatches)
+    if 5 not in screens or not any(screens[index:index + 3] == (0, 1, 1)
+                                   for index in range(max(0, len(screens) - 2))):
+        problems.append('real sealed final-A/right dispatches are %s' % (screens,))
+    if len(info_publishes) != 1:
+        problems.append('real sealed route published Info %d times' %
+                        len(info_publishes))
+    if explicit_blanks or status_blanks:
+        problems.append('real sealed route reached explicit blankers %s/%s' %
+                        (explicit_blanks, status_blanks))
+    if lcd_off or uniform:
+        problems.append('real sealed route produced LCD-off/uniform frames %s/%s' %
+                        (lcd_off[:12], uniform[:12]))
+    if (selector, item_count) != (5, 8):
+        problems.append('real sealed short page settled selector/count %d/%d' %
+                        (selector, item_count))
+    # Eight carried items means page 2 owns rows 0-2. Every cell inside rows 3-4 must
+    # be blank in both the visible map and shadow; this catches the old stray $88 at
+    # row 4, column 18 even though the final screen otherwise looked settled.
+    for row in (3, 4):
+        bg, shadow = rows[row]
+        expected = bytes((0xBE,)) + bytes(18) + bytes((0xBF,))
+        if bg != expected or shadow != expected:
+            problems.append('real sealed short-page row %d is %s/%s, expected %s' %
+                            (row, bg.hex(' '), shadow.hex(' '), expected.hex(' ')))
+    if not final_lcdc & 0x80:
+        problems.append('real sealed short page ended with LCD disabled')
+    print('iteminfospill: real-sealed-short final-A pages %s; selector/count %d/%d; '
+          'blankers %d/%d; LCD-off %d, uniform %d' %
+          (' '.join('%d/%d' % (page + 1, total)
+                    for _at, page, total in info_publishes),
+           selector, item_count, len(explicit_blanks), len(status_blanks),
+           len(lcd_off), len(uniform)))
+    return problems
+
+
+def run_real_dropped_sealed_return(PyBoy, rom, profile, labels, ram, direct,
+                                   frames=6200, png_dir=None):
+    """Drop the fixture's sealed weapon normally, then finish its Floor Info pages.
+
+    This deliberately does not inject or rewrite an object.  The ordinary Drop action
+    crosses the intentional menu-to-gameplay boundary, after which the same object is
+    reached through either Status -> Floor (screen 20) or Items' appended Floor page
+    (screen 1).  The latter half reproduces the exact history which exposed the native
+    2:$4621 display reconstruction after our regional return had already completed.
+    """
+    label = 'real-sealed-direct' if direct else 'real-sealed-appended'
+    problems = []
+    with tempfile.TemporaryDirectory(prefix='iteminfospill-%s-' % label) as tmp:
+        run_rom = os.path.join(tmp, label + '.gb')
+        shutil.copyfile(rom, run_rom)
+        shutil.copyfile(ram, run_rom + '.ram')
+        pb = PyBoy(run_rom, window='null', cgb=True)
+        pb.set_emulation_speed(0)
+
+        frame = [0]
+        schedule = {
+            60: 'start', 120: 'start', 180: 'start', 240: 'start',
+            300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+            2600: 'b', 2700: 'a',
+        }
+        phase = [0]
+        drop_press = [None]
+        field_menu_press = [None]
+        floor_action_press = [None]
+        info_press = [None]
+        final_press = [None]
+        parent = [None]
+        exact_return = [None]
+        post_press = [None]
+        post_accept = [None]
+        reopen_press = [None]
+        reopen_accept = [None]
+        info_publishes = []
+        dispatches = []
+        native_reconfig = []
+        explicit_blanks = []
+        status_blanks = []
+        lcd_off = []
+        uniform = []
+        applied = []
+        info_attempts = []
+        pop_attempts = []
+        return_events = []
+        def dispatch(_ctx=None):
+            screen = pb.register_file.A
+            dispatches.append((frame[0], screen, pb.memory[0xC6AC],
+                               pb.memory[0xC1B3]))
+            if phase[0] == 2 and screen == 0:
+                # The Drop action has returned to the field and B has opened Status.
+                at = frame[0] + 70
+                if direct:
+                    schedule[at] = 'down'
+                    at += 70
+                schedule[at] = 'a'
+                phase[0] = 3
+            elif phase[0] == 3 and direct and screen == 20:
+                # Status -> Floor immediately constructs the standing item's Action
+                # picker; there is no intermediate A press on a one-row Floor page.
+                floor_action_press[0] = frame[0]
+                phase[0] = 4
+            if (direct and reopen_press[0] is not None and
+                    frame[0] >= reopen_press[0] and screen == 0):
+                reopen_accept[0] = frame[0]
+
+        def render(_ctx=None):
+            shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+            row = pb.register_file.D
+            screen = pb.memory[0xC6A3]
+            selector = pb.memory[0xC6AC]
+            if (phase[0] == 0 and screen == 1 and shape == ITEM_SHAPE and
+                    row == 4 and selector == 0):
+                schedule[frame[0] + 80] = 'a'
+                phase[0] = 1
+                return
+            if (phase[0] == 1 and screen == 2 and shape == (13, 1, 4, 5, 2) and
+                    row == 3):
+                if png_dir:
+                    os.makedirs(png_dir, exist_ok=True)
+                    pb.screen.image.save(os.path.join(
+                        png_dir, label + '-initial-action.png'))
+                # Remove, Toss, Drop, Info: choose Drop without modifying the object.
+                schedule[frame[0] + 70] = 'down'
+                schedule[frame[0] + 140] = 'down'
+                drop_press[0] = frame[0] + 210
+                schedule[drop_press[0]] = 'a'
+                phase[0] = 2
+                return
+            if phase[0] != 3:
+                return
+            if not direct and screen == 1 and shape == ITEM_SHAPE and row == 4:
+                if selector != 0xFF:
+                    schedule[frame[0] + 80] = 'right'
+                    return
+            if not direct and screen == 1 and selector == 0xFF:
+                if (shape == ITEM_SHAPE and row == 4) or \
+                        (shape == (0, 0, 1, 4, 0x50) and row == 0):
+                    floor_action_press[0] = frame[0] + 90
+                    parent[0] = snapshot(pb)
+                    schedule[floor_action_press[0]] = 'a'
+                    phase[0] = 4
+
+        action_scheduled = [False]
+
+        def action_render(_ctx=None):
+            render()
+            if phase[0] != 4 or action_scheduled[0]:
+                return
+            shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
+            if (shape[0] != 13 or shape[2] < 3 or shape[2] > 7 or
+                    shape[3:] != (5, 2)):
+                return
+            if pb.register_file.D != shape[2] - 1:
+                return
+            if png_dir:
+                os.makedirs(png_dir, exist_ok=True)
+                pb.screen.image.save(os.path.join(
+                    png_dir, label + '-floor-action.png'))
+            if parent[0] is None:
+                # Direct Floor's parent includes the Action picker which remains
+                # visible behind Info.  Capture it only after all six rows settle.
+                parent[0] = snapshot(pb)
+            at = frame[0] + 80
+            for _index in range(shape[2] - 1):
+                schedule[at] = 'down'
+                at += 70
+            info_press[0] = at
+            schedule[at] = 'a'
+            action_scheduled[0] = True
+            phase[0] = 5
+
+        def info_publish(_ctx=None):
+            page = pb.memory[0xC6BC]
+            total = pb.memory[0xC6BD]
+            info_publishes.append((frame[0], page, total))
+            at = frame[0] + 80
+            schedule[at] = 'a'
+            # Screen 5's seal-summary child reports the number of seal slots in C6BD;
+            # it is still a single displayed page and this A is its automatic return.
+            final_press[0] = at
+
+        def native_display_reconfig(_ctx=None):
+            if info_press[0] is not None and frame[0] >= info_press[0]:
+                native_reconfig.append(frame[0])
+
+        def info_try(_ctx=None):
+            depth = pb.memory[0xC534]
+            info_attempts.append((
+                frame[0], pb.register_file.D, pb.register_file.HL,
+                pb.memory[0xC6A3],
+                tuple(pb.memory[0xC535 + index] for index in range(depth + 1)),
+                pb.memory[0xC6A6], pb.memory[0xC6DE], pb.memory[0xC6AA],
+                pb.memory[0xC6AC], pb.memory[0xC6BB], pb.memory[0xC6BC],
+                pb.memory[0xC6BD], pb.memory[0xC1B3], pb.memory[0xC1B4],
+                pb.memory[0xC1B5], pb.memory[0xC1B6], pb.memory[0xC1B7],
+                tuple(pb.memory[0xC69A + i] for i in range(5))))
+
+        def info_pop(_ctx=None):
+            depth = pb.memory[0xC534]
+            pop_attempts.append((
+                frame[0], pb.register_file.HL, pb.memory[0xC6A3],
+                tuple(pb.memory[0xC535 + index] for index in range(depth + 1)),
+                pb.memory[0xC6DE], pb.memory[0xC6AC], pb.memory[0xC6BB],
+                pb.memory[0xC6BC], pb.memory[0xC6BD], pb.memory[0xC1B3],
+                pb.memory[0xC1B4], pb.memory[0xC1B5], pb.memory[0xC1B6]))
+
+        pb.hook_register(4, 0x48AA, dispatch, None)
+        pb.hook_register(menuvwf.FAR_BANK, profile['entry'], action_render, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['infopublish'],
+                         info_publish, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['infotry'],
+                         info_try, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['infopop'],
+                         info_pop, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['inforeturn20owned'],
+                         lambda _ctx=None: return_events.append(
+                             (frame[0], '20-owned', pb.memory[0xC1B3])), None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['inforeturn20publish'],
+                         lambda _ctx=None: return_events.append(
+                             (frame[0], '20-publish', pb.memory[0xC1B3])), None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['inforeturnitemarmed'],
+                         lambda _ctx=None: return_events.append(
+                             (frame[0], 'item-armed', pb.memory[0xC1B3])), None)
+        pb.hook_register(2, 0x463C, native_display_reconfig, None)
+        pb.hook_register(menuvwf.ACTION_BLANK_BANK, labels['fidisable'],
+                         lambda _ctx=None: explicit_blanks.append(frame[0]), None)
+        status_labels = statusvwf.runtime_labels()
+        pb.hook_register(statusvwf.FAR_BANK, status_labels['statusdisable'],
+                         lambda _ctx=None: status_blanks.append(frame[0]), None)
+
+        for frame[0] in range(frames):
+            if direct and info_press[0] == frame[0]:
+                # The direct parent retains its Action overlay and the selected Info
+                # cursor. Capture after the five navigation presses, not while Take was
+                # selected when the box first became complete.
+                parent[0] = snapshot(pb)
+            button = schedule.get(frame[0])
+            if button:
+                applied.append((frame[0], button, pb.memory[0xC6A3],
+                                pb.memory[0xC6A6], pb.memory[0xC6AC],
+                                tuple(pb.memory[0xC69A + i] for i in range(5))))
+                pb.button(button, PRESS_FRAMES)
+            pb.tick()
+            if (png_dir and drop_press[0] is not None and
+                    frame[0] == drop_press[0] - 180):
+                pb.screen.image.save(os.path.join(
+                    png_dir, label + '-initial-action-settled.png'))
+            if (phase[0] == 2 and drop_press[0] is not None and
+                    field_menu_press[0] is None and frame[0] > drop_press[0] + 500 and
+                    pb.memory[0xC6A3] == 0xFF):
+                field_menu_press[0] = frame[0] + 60
+                schedule[field_menu_press[0]] = 'b'
+            # The direct Floor B below deliberately crosses from the menu back to the
+            # dungeon. Its native LCD-off font/terrain reload is required; scope the
+            # no-blank contract to Info entry/return, before that boundary.
+            in_menu_contract = (not direct or post_press[0] is None or
+                                frame[0] < post_press[0])
+            if (info_press[0] is not None and frame[0] >= info_press[0] and
+                    in_menu_contract):
+                if not pb.memory[0xFF40] & 0x80:
+                    lcd_off.append(frame[0])
+                if white_frame(pb.screen.image):
+                    uniform.append(frame[0])
+            if (final_press[0] is not None and frame[0] > final_press[0] + 20 and
+                    exact_return[0] is None and parent[0] is not None and
+                    pb.memory[0xC1B3] == 0 and pb.memory[0xC6AC] == 0xFF and
+                    pb.memory[0xC11A] == 0):
+                current = snapshot(pb)
+                bg_equal = ((visible_pixels_equal if direct else visible_equal)(
+                    parent[0], current, 'bg', range(16)))
+                if (bg_equal and
+                        visible_pixels_equal(parent[0], current, 'window', range(2))):
+                    exact_return[0] = frame[0]
+                    post_press[0] = frame[0] + 60
+                    schedule[post_press[0]] = 'b' if direct else 'left'
+            if post_press[0] is not None and frame[0] > post_press[0] and \
+                    post_accept[0] is None:
+                shape = tuple(pb.memory[0xC69A + i] for i in range(5))
+                if ((direct and frame[0] >= post_press[0] + 60 and
+                     pb.memory[0xC6A3] == 0xFF and pb.memory[0xFF40] & 0x80) or
+                        (not direct and pb.memory[0xC6AC] != 0xFF)):
+                    post_accept[0] = frame[0]
+                    if direct:
+                        reopen_press[0] = frame[0] + 60
+                        schedule[reopen_press[0]] = 'b'
+
+        final_screen = pb.memory[0xC6A3]
+        final_state = (pb.memory[0xC1B3], pb.memory[0xC1B4],
+                       pb.memory[0xC1B5], pb.memory[0xC1B6],
+                       pb.memory[0xC1B7], pb.memory[0xC6AC],
+                       tuple(pb.memory[0xC69A + i] for i in range(5)))
+        final_lcdc = pb.memory[0xFF40]
+        pb.stop(save=False)
+
+    if drop_press[0] is None or field_menu_press[0] is None:
+        problems.append('%s did not complete the natural Drop/field boundary' % label)
+    if floor_action_press[0] is None or info_press[0] is None:
+        problems.append('%s did not enter the real Floor Action/Info route' % label)
+    if not info_publishes:
+        problems.append('%s published no Info pages' % label)
+    elif len(info_publishes) != 1 or info_publishes[0][1] != 0 or \
+            info_publishes[0][2] < 2:
+        problems.append('%s seal-summary publish is %s' %
+                        (label, tuple(event[1:] for event in info_publishes)))
+    if len(pop_attempts) != 1 or pop_attempts[0][9] != 3:
+        problems.append('%s final-A regional pop attempts are %s' %
+                        (label, pop_attempts))
+    expected_return_event = '20-publish' if direct else 'item-armed'
+    if not any(name == expected_return_event and state in (1, 9)
+               for _at, name, state in return_events):
+        problems.append('%s did not complete its %s lifecycle: %s' %
+                        (label, expected_return_event, return_events))
+    before_boundary = [at for at in native_reconfig
+                       if post_press[0] is None or at < post_press[0]]
+    after_boundary = [at for at in native_reconfig
+                      if post_press[0] is not None and at >= post_press[0]]
+    if before_boundary:
+        problems.append('%s reached native LCD-off reconstruction inside the Info '
+                        'transaction at %s' % (label, before_boundary))
+    if direct and not after_boundary:
+        problems.append('%s skipped the required native Floor-to-field reconstruction' %
+                        label)
+    if not direct and after_boundary:
+        problems.append('%s reached native reconstruction on an appended-page input' %
+                        label)
+    if explicit_blanks or status_blanks:
+        problems.append('%s reached explicit menu blankers %s/%s' %
+                        (label, explicit_blanks, status_blanks))
+    if lcd_off or uniform:
+        problems.append('%s produced LCD-off/uniform frames %s/%s' %
+                        (label, lcd_off[:12], uniform[:12]))
+    if exact_return[0] is None or post_accept[0] is None:
+        problems.append('%s did not restore the exact Floor parent/accept input' % label)
+    if direct and reopen_accept[0] is None:
+        problems.append('%s did not regain field input and reopen Status after Floor B' %
+                        label)
+    if not final_lcdc & 0x80:
+        problems.append('%s ended with LCD disabled on screen %d' %
+                        (label, final_screen))
+    print('iteminfospill: %-20s pages %s; native menu/field %d/%d; exact/input/reopen '
+          'f%s/f%s/f%s; LCD-off %d, uniform %d' %
+          (label,
+           ' '.join('%d/%d' % (page + 1, total)
+                    for _at, page, total in info_publishes),
+           len(before_boundary), len(after_boundary), exact_return[0], post_accept[0],
+           reopen_accept[0], len(lcd_off), len(uniform)))
+    if problems:
+        print('iteminfospill: %s phase %d presses drop/field/floor/info/final %s; '
+              'dispatches %s' %
+              (label, phase[0],
+               (drop_press[0], field_menu_press[0], floor_action_press[0],
+                info_press[0], final_press[0]),
+               dispatches))
+        print('iteminfospill: %s applied tail %s' % (label, applied[-18:]))
+        print('iteminfospill: %s Info attempts %s' % (label, info_attempts))
+        print('iteminfospill: %s pop attempts %s' % (label, pop_attempts))
+        print('iteminfospill: %s return events %s; final %s' %
+              (label, return_events, final_state))
+    return problems
+
+
 def run_case(PyBoy, rom, profile, labels, label, ram, floor, png_dir=None,
              frames=5200, held_selector=0, action_rows=4,
-             fusion_floor=False, fusion_inventory=False,
-             post_button=None, post_selector=None):
+             fusion_floor=False, fusion_inventory=False, sealed_floor=False,
+             post_button=None, post_selector=None, final_button='b', info_pages=None):
     problems = []
-    expected_pages = 5 if fusion_floor else (2 if floor else 1)
+    expected_pages = (info_pages if info_pages is not None else
+                      (5 if fusion_floor else (2 if floor else 1)))
     expected_selector = 0xFF if floor else 0
     with tempfile.TemporaryDirectory(prefix='iteminfospill-') as tmp:
         run_rom = os.path.join(tmp, label + '.gb')
@@ -349,7 +810,7 @@ def run_case(PyBoy, rom, profile, labels, label, ram, floor, png_dir=None,
         window_changes = []
         legacy_blankers = []
         status_blankers = []
-        injected = [not (fusion_floor or fusion_inventory)]
+        injected = [not (fusion_floor or fusion_inventory or sealed_floor)]
 
         def inject_fusion_floor(_ctx=None):
             if injected[0]:
@@ -364,6 +825,15 @@ def run_case(PyBoy, rom, profile, labels, label, ram, floor, png_dir=None,
                       if index not in set(carried) and
                       pb.memory[OBJECTS + 8 * index] != 0xFF]
             if len(ground) != 1 or len(carried) < 5 or len(set(carried[:5])) != 5:
+                return
+            if sealed_floor:
+                # Identified Manji Kabura+1 with one seal in the existing standing-item
+                # slot. This retains the real saved route and changes only the object
+                # class needed to exercise screen 5's final-A return from appended Floor.
+                floor_record = (0x06, 1, 0, 0xC4, 1, 0, 0xFF, 0xFF)
+                for offset, value in enumerate(floor_record):
+                    pb.memory[OBJECTS + 8 * ground[0] + offset] = value
+                injected[0] = True
                 return
             records = (
                 (0x3B, 0, 0, 0x04, 0, 0, 0xFF, 0xFF),  # Egg
@@ -458,7 +928,8 @@ def run_case(PyBoy, rom, profile, labels, label, ram, floor, png_dir=None,
             if not (shape[:2] == ACTION_PREFIX and shape[3:] == ACTION_SUFFIX):
                 return
             count = shape[2]
-            if count != action_rows or pb.register_file.D != count - 1:
+            if ((action_rows is not None and count != action_rows) or
+                    pb.register_file.D != count - 1):
                 return
             at = frame[0] + 60
             for _index in range(count - 1):
@@ -482,7 +953,7 @@ def run_case(PyBoy, rom, profile, labels, label, ram, floor, png_dir=None,
             elif floor:
                 schedule[frame[0] + 60] = 'a'
             else:
-                schedule[frame[0] + 60] = 'b'
+                schedule[frame[0] + 60] = final_button
 
         def info_box_done(_ctx=None):
             state = snapshot(pb)
@@ -728,11 +1199,14 @@ def main():
     parser.add_argument('--held-ram', default=HELD_RAM)
     parser.add_argument('--held-page2-ram', default=HELD_PAGE2_RAM)
     parser.add_argument('--floor-ram', default=FLOOR_RAM)
+    parser.add_argument('--real-sealed-ram', default=REAL_SEALED_RAM)
+    parser.add_argument('--real-drop-ram', default=REAL_DROP_RAM)
     parser.add_argument('--fusion-state', default=FUSION_STATE)
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=5200)
     args = parser.parse_args()
-    for path in (args.held_ram, args.held_page2_ram, args.floor_ram):
+    for path in (args.held_ram, args.held_page2_ram, args.floor_ram,
+                 args.real_sealed_ram, args.real_drop_ram):
         if not os.path.exists(path):
             raise SystemExit('iteminfospill: missing RAM fixture: ' + path)
     if args.png_dir:
@@ -757,11 +1231,27 @@ def main():
                              args.floor_ram, False, args.png_dir, args.frames,
                              held_selector=4, action_rows=4, fusion_inventory=True,
                              post_button='up', post_selector=3))
+    problems.extend(run_case(PyBoy, args.rom, profile, labels, 'held-seal-final-a',
+                             args.floor_ram, False, args.png_dir, args.frames,
+                             held_selector=4, action_rows=4, fusion_inventory=True,
+                             post_button='up', post_selector=3, final_button='a'))
     problems.extend(run_case(PyBoy, args.rom, profile, labels, 'floor-final-a',
                              args.floor_ram, True, args.png_dir, args.frames))
+    problems.extend(run_case(PyBoy, args.rom, profile, labels, 'floor-seal-final-a',
+                             args.floor_ram, True, args.png_dir, args.frames,
+                             action_rows=None, sealed_floor=True, info_pages=1))
     problems.extend(run_case(PyBoy, args.rom, profile, labels, 'floor-fusion-final-a',
                              args.floor_ram, True, args.png_dir, args.frames,
                              action_rows=6, fusion_floor=True))
+    problems.extend(run_real_sealed_short_page(
+        PyBoy, args.rom, profile, labels, args.real_sealed_ram,
+        frames=max(3900, args.frames)))
+    problems.extend(run_real_dropped_sealed_return(
+        PyBoy, args.rom, profile, labels, args.real_drop_ram, True,
+        frames=max(6200, args.frames)))
+    problems.extend(run_real_dropped_sealed_return(
+        PyBoy, args.rom, profile, labels, args.real_drop_ram, False,
+        frames=max(6500, args.frames)))
     if os.path.exists(args.fusion_state):
         problems.extend(run_fusion_pager_case(
             PyBoy, args.rom, profile, labels, args.fusion_state,

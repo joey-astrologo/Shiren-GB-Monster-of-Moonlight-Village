@@ -130,17 +130,17 @@ RANK_SCREEN_TEXT_ORG = 0x4400
 # layouts instead of depending on the current pool's high-water mark.
 MENU_TRANSITION_BANK = 0x3C
 MENU_TRANSITION_TEXT_ORG = 0x4700
-# Bank 37's exact held-/Floor-Action admission gate grows slightly past the ordinary
-# text origin; keep the following redirected text structurally clear of it.
+# Bank 37's exact held-/Floor-Action admission gate and contained-Pot Info owner share
+# the prefix. Keep redirected text structurally clear of both transition proofs.
 ACTION_GATE_BANK = 0x25
-ACTION_GATE_TEXT_ORG = 0x4120
+ACTION_GATE_TEXT_ORG = 0x42A0
 # Bank 62 shares its far table/tail with the title logo. The carried-/Floor-Action parent
 # restorer, exact screen-1/screen-20 Info lifecycle, and carried-Pot entry publisher
-# occupy the prefix below $5400, so
+# occupy the prefix below $5480, so
 # redirected text begins there while the title asset remains independently protected at
 # $7000.
 ACTION_BLANK_BANK = 0x3E
-ACTION_BLANK_TEXT_ORG = 0x5400
+ACTION_BLANK_TEXT_ORG = 0x5490
 
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 

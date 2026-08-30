@@ -227,13 +227,15 @@ def status_fragment_problems(pb):
     return problems
 
 
-def visible_row_matches(pb, profile, key, codes, raw=2):
+def visible_row_matches(pb, profile, key, codes, raw=2, private=False):
     """Does the row's currently displayed tilemap resolve to these exact pixels?"""
     want = compose(codes, profile)
     first = key + 1 + raw - SHADOW
     for i, tile_bytes in enumerate(want):
         tile = pb.memory[BGMAP + first + i]
-        if not in_pool(profile, tile):
+        if not in_pool(profile, tile) and not (
+                private and menuvwf.ACTION_POOL_BASE <= tile <
+                menuvwf.ACTION_POOL_END):
             return False
         at = tile_data_addr(tile)
         if bytes(pb.memory[at:at + 16]) != bytes(tile_bytes):
