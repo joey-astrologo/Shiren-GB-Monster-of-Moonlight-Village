@@ -9,9 +9,11 @@ record directly, then reproduces it through the canonical item builder in
 
 Nine canonical Manji Kabura objects carry masks with popcounts 1 through 9.  The first
 five are checked on item page 1, the other four on page 2, and count 9 is selected and
-opened in Info.  This proves the game itself emits suffix codes $8C-$94 and that every
-one receives a VWF record with exact visible planes.  $95 is asserted to be rejected:
-the original weapon/shield masks contain at most nine usable seal bits.
+opened in Info.  Its three groups of four seal descriptions must publish footer digits
+1/3, 2/3, and 3/3 with exact approved-font pixels.  This proves the game itself emits
+suffix codes $8C-$94 and that every one receives a VWF record with exact visible planes.
+$95 is asserted to be rejected: the original weapon/shield masks contain at most nine
+usable seal bits.
 """
 import argparse
 import os
@@ -25,6 +27,7 @@ from gbrun import PRESS_FRAMES, _import_pyboy                    # noqa: E402
 import menuspill                                                  # noqa: E402
 import menuvwf                                                    # noqa: E402
 import gbasm                                                      # noqa: E402
+import dotfont                                                    # noqa: E402
 
 
 RAM = os.path.join(ROOT, 'saves', 'shiren_en_log3_fusion_name.srm')
@@ -76,6 +79,12 @@ def expected_indicator(pages, active):
         return bytes((0xBC,)) * 4
     return bytes((0xC6 if slot == active else 0xC5) if slot < pages else 0xBC
                  for slot in range(4))
+
+
+def pager_digit_pixels(digit):
+    """Approved 1bpp digit duplicated into the Game Boy's two bitplanes."""
+    return bytes(value for row in dotfont.load_approved().glyphs[str(digit)]
+                 for value in (row, row))
 
 
 def page_count_case(PyBoy, rom, state_path, item_count, profile, region_labels):
@@ -373,6 +382,11 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     admitted_pops = []
     explicit_info_blanks = []
     settled_indicator = [None]
+    seal_publishes = []
+    seal_pending = []
+    seal_settled = []
+    seal_step_handlers = []
+    seal_group_handlers = []
 
     def inject(_context=None):
         if injected[0]:
@@ -464,26 +478,60 @@ def run(rom, ram=None, state=STATE, png_dir=None):
                      lambda _ctx=None: admitted_pops.append((
                          frame[0], pb.register_file.HL, pb.memory[0xC6A3],
                          pb.memory[0xC1B3], pb.memory[0xC1B6])), None)
+
+    def info_publish(_ctx=None):
+        if pb.memory[0xC6A3] != 5:
+            return
+        offset = pb.memory[0xC6BC]
+        count = pb.memory[0xC6BD]
+        seal_publishes.append((frame[0], offset, count))
+        seal_pending.append((frame[0] + 20, offset, count))
+        # Screen 5's group handler advances by the four descriptions visible on one
+        # page. Keep the final page stable long enough to sample, then leave with B.
+        schedule[frame[0] + 70] = 'right' if offset + 4 < count else 'b'
+
+    pb.hook_register(menuvwf.ACTION_BLANK_BANK, info_labels['infopublish'],
+                     info_publish, None)
+    # mgbdis: 4:$5926 advances one description; 4:$5941 advances one four-row group.
+    pb.hook_register(4, 0x5926,
+                     lambda _ctx=None: seal_step_handlers.append(
+                         (frame[0], pb.memory[0xC6BC])), None)
+    pb.hook_register(4, 0x5941,
+                     lambda _ctx=None: seal_group_handlers.append(
+                         (frame[0], pb.memory[0xC6BC])), None)
     schedule = {
         60: 'b', 120: 'a',                    # Main -> Items
         280: 'right',                         # counts 6-9
         400: 'down', 440: 'down', 480: 'down', 540: 'a',  # select count 9
         620: 'down', 660: 'down', 700: 'down', 760: 'a',  # Info
-        940: 'b',                              # screen-5 seals -> Items
     }
     screen_at_info = None
-    for frame[0] in range(1160):
+    for frame[0] in range(1400):
         button = schedule.get(frame[0])
         if button:
             pb.button(button, PRESS_FRAMES)
         pb.tick()
         if 280 <= frame[0] < 360 and not pb.memory[0xFF40] & 0x80:
             page_flip_lcd_off.append(frame[0])
-        if 700 <= frame[0] < 1100:
+        if 700 <= frame[0] < 1350:
             if not pb.memory[0xFF40] & 0x80:
                 info_lcd_off.append(frame[0])
             if len(set(pb.screen.image.convert('RGB').getdata())) == 1:
                 info_white.append(frame[0])
+        while seal_pending and frame[0] >= seal_pending[0][0]:
+            _at, offset, count = seal_pending.pop(0)
+            current_tile = pb.memory[0x99B0]
+            total_tile = pb.memory[0x99B2]
+            current_at = menuspill.tile_data_addr(current_tile)
+            total_at = menuspill.tile_data_addr(total_tile)
+            seal_settled.append({
+                'offset': offset,
+                'count': count,
+                'visible': bytes(pb.memory[0x99B0:0x99B3]),
+                'shadow': bytes(pb.memory[0xC4B0:0xC4B3]),
+                'current_pixels': bytes(pb.memory[current_at:current_at + 16]),
+                'total_pixels': bytes(pb.memory[total_at:total_at + 16]),
+            })
         if frame[0] == 220:
             settled_indicator[0] = bytes(pb.memory[0x986F:0x9873])
             snapshot('Items page 1', range(1, 6), ITEM_SHAPE, 2)
@@ -492,10 +540,10 @@ def run(rom, ram=None, state=STATE, png_dir=None):
         elif frame[0] == 900:
             screen_at_info = pb.memory[0xC6A3]
             snapshot('count-9 Info title', (9,), INFO_SHAPE, 0)
-        if png_dir and 920 <= frame[0] <= 1020:
+        if png_dir and 800 <= frame[0] <= 1250:
             os.makedirs(png_dir, exist_ok=True)
             pb.screen.image.save(os.path.join(
-                png_dir, 'seal_return_f%04d.png' % frame[0]))
+                png_dir, 'seal_info_f%04d.png' % frame[0]))
 
     if not injected[0]:
         problems.append('nine canonical equipment objects were not injected')
@@ -525,6 +573,45 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     if screen_at_info != 5:
         problems.append('sealed count-9 route reached screen %s, expected screen 5' %
                         screen_at_info)
+    expected_seal_pages = ((0, 9), (4, 9), (8, 9))
+    if tuple(event[1:] for event in seal_publishes) != expected_seal_pages:
+        problems.append('count-9 seal publish sequence is %s, expected %s; '
+                        'step/group handlers %s/%s' %
+                        (tuple(event[1:] for event in seal_publishes),
+                         expected_seal_pages, seal_step_handlers,
+                         seal_group_handlers))
+    if tuple((state['offset'], state['count']) for state in seal_settled) != \
+            expected_seal_pages:
+        problems.append('count-9 settled seal sequence is %s, expected %s' %
+                        (tuple((state['offset'], state['count'])
+                               for state in seal_settled),
+                         expected_seal_pages))
+    for state in seal_settled:
+        page = state['offset'] // 4 + 1
+        total = (state['count'] - 1) // 4 + 1
+        expected_footer = bytes((page + 1, 0xB0, total + 1))
+        if state['visible'] != expected_footer or state['shadow'] != expected_footer:
+            problems.append('count-9 seal page %d footer visible/shadow is %s/%s, '
+                            'expected %s' %
+                            (page, state['visible'].hex(' '),
+                             state['shadow'].hex(' '),
+                             expected_footer.hex(' ')))
+        if state['current_pixels'] != pager_digit_pixels(page):
+            problems.append('count-9 seal page %d current digit pixels are %s, '
+                            'expected %s' %
+                            (page, state['current_pixels'].hex(' '),
+                             pager_digit_pixels(page).hex(' ')))
+        if state['total_pixels'] != pager_digit_pixels(total):
+            problems.append('count-9 seal page %d total digit pixels are %s, '
+                            'expected %s' %
+                            (page, state['total_pixels'].hex(' '),
+                             pager_digit_pixels(total).hex(' ')))
+    if tuple(page for _at, page in seal_group_handlers) != (0, 4):
+        problems.append('count-9 seal group handler offsets are %s, expected (0, 4)' %
+                        (tuple(page for _at, page in seal_group_handlers),))
+    if seal_step_handlers:
+        problems.append('count-9 seal paging unexpectedly used one-description '
+                        'handler %s' % (seal_step_handlers,))
     if not pop_calls:
         problems.append('sealed count-9 B never reached the native popper')
     if not admitted_pops:
@@ -555,18 +642,21 @@ def run(rom, ram=None, state=STATE, png_dir=None):
     print('fusioncountspill: %scanonical counts 1-9 across two Items pages; '
           'indicator %s; regional begins/fallbacks/lcd-off %d/%d/%d; '
           'matrix %s; short-page cursor $%02X/r%d (%d regional); '
-          'count 9 screen-5 Info/B, explicit blanks %d; %d problem(s)'
+          'count 9 screen-5 seal pages %s/B, explicit blanks %d; %d problem(s)'
           % (fixture, indicator_text, len(regional_begins),
              len(regional_fallbacks), len(page_flip_lcd_off), matrix_text,
              cursor_case['selector'], cursor_case['row'],
              cursor_case['regional'],
+             ' '.join('%d/%d' % (state['offset'] // 4 + 1,
+                                  (state['count'] - 1) // 4 + 1)
+                      for state in seal_settled),
              len(explicit_info_blanks), len(problems)))
     for problem in problems:
         print('  ' + problem)
     if problems:
         raise SystemExit('fusioncountspill: failed')
     print('fusioncountspill: every possible fusion count $8C-$94 is plane-exact VWF; '
-          '$95 is rejected')
+          'count 9 owns footer digits 1/3 through 3/3; $95 is rejected')
 
 
 def main():

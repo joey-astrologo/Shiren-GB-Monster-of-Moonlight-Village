@@ -25,7 +25,9 @@ Accepted on 2026-08-30: SHA-256
 `3eca647016f1b78df6be91925d5ec145ab548a288685cdb1ac30e99e23bd5983`, staged under
 `build/manual-tests/item-floor-3eca647016f1/`. All six focused rechecks passed against
 this ROM in one clean grouped run. No focused recheck remains pending, and no standalone
-rerun of checks 1 or 6 is required.
+rerun of checks 1 or 6 is required. A later all-nine-seal footer defect is tracked in the
+post-freeze amendment below; it requires one new route, not a repeat of those accepted
+checks.
 
 Define this helper once in the same shell:
 
@@ -201,6 +203,27 @@ Together with the already accepted nine-case baseline below and the automated ga
 this freezes the catalogued Item/Floor regional-blanking scope. Malformed or unproved
 callers still retain their documented safety fallbacks, and gameplay/new-screen
 boundaries retain their intentional native whole-LCD transitions.
+
+## Post-freeze all-seal footer recheck — pending
+
+The accepted six-test ROM did not cover a screen-5 weapon with more than four seals. On
+2026-08-30 an all-nine-seal weapon exposed corrupt page digits. The corrected candidate
+is automated by `fusioncountspill.py`, which now requires exact `1/3`, `2/3`, and `3/3`
+map cells and digit pixels plus an LCD-live B return. Visual acceptance is still pending.
+
+Build the candidate, open it with a disposable dungeon save, and load
+`tools/mesen_spawn_fusion_kit.lua` in Mesen's Script Window. The script appends a
+Fusion Pot and a configurable weapon carrying all nine weapon seals; it does not need a
+personal save or a second memory-edit script.
+
+Open B -> `Items`, select the spawned weapon, choose `Info`, then press Right once per
+four-description group. Inspect the lower-right footer on all three settled pages and
+press B from the last page.
+
+Expected: the footer is visibly `1/3`, then `2/3`, then `3/3`; neither digit is replaced
+by letters, fragments, or garbage pixels. Page changes and B return remain LCD-live,
+chrome-first, and immediately responsive. Record the new ROM SHA-256 here only after
+this route passes visually.
 
 ## Baseline appendix — already accepted, not part of the six-test recheck
 

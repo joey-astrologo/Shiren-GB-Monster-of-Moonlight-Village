@@ -1,5 +1,6 @@
 -- mesen_spawn_fusion_kit.lua
--- Add a Fusion Pot[2] and a Manji Kabura+1 bearing the Cyclops Bane seal.
+-- Add a Fusion Pot[2] plus configurable +1 weapon and shield fixtures bearing every
+-- category-appropriate seal.
 --
 -- HOW TO USE
 --   1. Back up the save RAM beside the ROM, or use a disposable save state. Mesen may
@@ -8,8 +9,42 @@
 --   3. In Mesen, open Debug > Script Window, load this file, and press Run (F5).
 --   4. Open Item. If Item was already visible, close and reopen it.
 --
+-- WEAPON TO SPAWN
+--   Edit only FUSED_WEAPON_ID below. The weapon IDs are:
+--
+--     0x00  Club                 0x09  True Rapier
+--     0x01  Nagamaki             0x0A  Minotaur Axe
+--     0x02  New Weapon 3         0x0B  Kama Itachi
+--     0x03  Katana               0x0C  Cyclops Bane
+--     0x04  Dragonkiller         0x0D  Drain Slayer
+--     0x05  Doutanuki            0x0E  Kajin Fuuma
+--     0x06  Manji Kabura         0x0F  Kabura Sutegi
+--     0x07  Sickle               0x10  Mamel Sword
+--     0x08  Pickaxe              0x11  New Weapon 2
+--
+--   New Weapon 2/3 are internal placeholder entries; use the named ordinary weapons
+--   for normal gameplay testing. To add several different source weapons, change the
+--   value, reload/run the script, and reopen Item after each run. An exact weapon already
+--   present is not duplicated.
+--
+-- SHIELD TO SPAWN
+--   Edit only FUSED_SHIELD_ID below. The shield IDs are:
+--
+--     0x12  Leather Shield       0x1B  Evasion Shield
+--     0x13  Bronze Shield        0x1C  Hyakki Shield
+--     0x14  Wooden Shield        0x1D  One-Use Shield
+--     0x15  Iron Shield          0x1E  Blast Shield
+--     0x16  Dragon Shield        0x1F  Walrus Shield
+--     0x17  Fuuma Shield         0x20  Rasen Fuuma
+--     0x18  Battle Counter       0x21  Mamel Shield
+--     0x19  Heavy Shield         0x22  New Shield 2
+--     0x1A  Echo Shield
+--
+--   New Shield 2 is an internal placeholder entry. As with the weapon, changing the ID
+--   changes only the base item; the all-seals shield mask remains installed.
+--
 -- The script appends each exact fixture once. It never overwrites a full inventory or a
--- live dungeon object, and rolls back if both objects cannot be installed safely.
+-- live dungeon object, and rolls back if every missing fixture cannot be installed safely.
 --
 -- MEASURED FORMAT (2026-08-14)
 --   $A3B0-$A3C3       twenty canonical inventory object indices; $FF is free
@@ -20,15 +55,86 @@
 --
 --   87 02 00 04 00 00 FF FF   Fusion Pot[2]
 --
--- A normal Cyclops Bane in the menu fixture carries ability mask $0004, while the fused
--- Cyclops Bane in saves/shiren_en_log3_cyclops_name.srm has byte-3 flag $40 added. Thus
--- the second record applies that real Cyclops Bane seal and fused-item state to a Manji
--- Kabura. It should display as `Manji Kabura+1` followed by the native fused-item mark.
+-- Object bytes 4-5 are the little-endian weapon-seal mask. The native weapon mask has
+-- nine usable bits, $01FF; setting all of them produces every weapon seal. Byte-3 $C4
+-- retains the canonical equipment, carried-object, and fused-item flags. The default
+-- record is therefore:
 --
---   06 01 00 C4 04 00 FF FF   Manji Kabura+1, Cyclops Bane seal
+--   06 01 00 C4 FF 01 FF FF   Manji Kabura+1, all nine weapon seals
+--
+-- Shield bytes 4-5 use a different non-contiguous nine-bit mask, $06FD. The canonical
+-- default shield record is:
+--
+--   20 01 00 C4 FD 06 FF FF   Rasen Fuuma+1, all nine shield seals
+--
+-- The equipment Info screen displays four seal descriptions per page, so nine seals
+-- should produce three seal pages for both categories. Changing either configurable ID
+-- changes only the base equipment; the masks remain $01FF for weapons and $06FD for
+-- shields.
 --
 -- These are canonical objects, not forged WRAM menu rows, so Item, Info, Drop, and the
 -- Fusion Pot all see the same objects.
+
+-- Change this one value to select the spawned weapon. Default: Manji Kabura ($06).
+local FUSED_WEAPON_ID = 0x0A
+local ALL_WEAPON_SEALS_LO = 0xFF
+local ALL_WEAPON_SEALS_HI = 0x01
+-- Change this one value to select the spawned shield. Default: Rasen Fuuma ($20).
+local FUSED_SHIELD_ID = 0x20
+local ALL_SHIELD_SEALS_LO = 0xFD
+local ALL_SHIELD_SEALS_HI = 0x06
+
+local WEAPON_NAMES = {
+  [0x00] = "Club",
+  [0x01] = "Nagamaki",
+  [0x02] = "New Weapon 3",
+  [0x03] = "Katana",
+  [0x04] = "Dragonkiller",
+  [0x05] = "Doutanuki",
+  [0x06] = "Manji Kabura",
+  [0x07] = "Sickle",
+  [0x08] = "Pickaxe",
+  [0x09] = "True Rapier",
+  [0x0A] = "Minotaur Axe",
+  [0x0B] = "Kama Itachi",
+  [0x0C] = "Cyclops Bane",
+  [0x0D] = "Drain Slayer",
+  [0x0E] = "Kajin Fuuma",
+  [0x0F] = "Kabura Sutegi",
+  [0x10] = "Mamel Sword",
+  [0x11] = "New Weapon 2",
+}
+
+local SHIELD_NAMES = {
+  [0x12] = "Leather Shield",
+  [0x13] = "Bronze Shield",
+  [0x14] = "Wooden Shield",
+  [0x15] = "Iron Shield",
+  [0x16] = "Dragon Shield",
+  [0x17] = "Fuuma Shield",
+  [0x18] = "Battle Counter",
+  [0x19] = "Heavy Shield",
+  [0x1A] = "Echo Shield",
+  [0x1B] = "Evasion Shield",
+  [0x1C] = "Hyakki Shield",
+  [0x1D] = "One-Use Shield",
+  [0x1E] = "Blast Shield",
+  [0x1F] = "Walrus Shield",
+  [0x20] = "Rasen Fuuma",
+  [0x21] = "Mamel Shield",
+  [0x22] = "New Shield 2",
+}
+
+local FUSED_WEAPON_NAME = WEAPON_NAMES[FUSED_WEAPON_ID]
+if FUSED_WEAPON_NAME == nil then
+  error(string.format("Fusion Kit: invalid FUSED_WEAPON_ID $%02X; use $00-$11",
+                      FUSED_WEAPON_ID))
+end
+local FUSED_SHIELD_NAME = SHIELD_NAMES[FUSED_SHIELD_ID]
+if FUSED_SHIELD_NAME == nil then
+  error(string.format("Fusion Kit: invalid FUSED_SHIELD_ID $%02X; use $12-$22",
+                      FUSED_SHIELD_ID))
+end
 
 local INVENTORY_IDS = 0xA3B0
 local INVENTORY_SLOTS = 20
@@ -46,8 +152,18 @@ local ITEMS = {
     bytes = { 0x87, 0x02, 0x00, 0x04, 0x00, 0x00, 0xFF, 0xFF },
   },
   {
-    name = "Manji Kabura+1 (Cyclops Bane seal)",
-    bytes = { 0x06, 0x01, 0x00, 0xC4, 0x04, 0x00, 0xFF, 0xFF },
+    name = FUSED_WEAPON_NAME .. "+1 (all 9 seals)",
+    bytes = {
+      FUSED_WEAPON_ID, 0x01, 0x00, 0xC4,
+      ALL_WEAPON_SEALS_LO, ALL_WEAPON_SEALS_HI, 0xFF, 0xFF,
+    },
+  },
+  {
+    name = FUSED_SHIELD_NAME .. "+1 (all 9 seals)",
+    bytes = {
+      FUSED_SHIELD_ID, 0x01, 0x00, 0xC4,
+      ALL_SHIELD_SEALS_LO, ALL_SHIELD_SEALS_HI, 0xFF, 0xFF,
+    },
   },
 }
 
@@ -162,7 +278,7 @@ local function inject()
     end
   end
   if #missing == 0 then
-    emu.log(LABEL .. ": both fixtures are already present")
+    emu.log(LABEL .. ": all fixtures are already present")
     finished = true
     return
   end

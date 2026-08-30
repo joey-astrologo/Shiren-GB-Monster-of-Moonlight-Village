@@ -4429,9 +4429,17 @@ fireturnlegacy:
 """, 1)
 
 
+def _packed_info_digit(digit):
+    """Pack two approved upper-nibble glyph rows into each byte."""
+    rows = dotfont.load_approved().glyphs[digit]
+    if len(rows) != 8 or any(value & 0x0F for value in rows):
+        raise SystemExit('menuvwf: Info digit %s is not an eight-row 4px glyph' % digit)
+    return tuple(rows[index] | (rows[index + 1] >> 4)
+                 for index in range(0, 8, 2))
+
+
 _INFO_DIGIT_TABLE = '\n'.join(
-    '  db ' + ','.join('$%02X' % value for value in
-                       dotfont.load_approved().glyphs[digit])
+    '  db ' + ','.join('$%02X' % value for value in _packed_info_digit(digit))
     for digit in '123456789')
 
 
@@ -6752,6 +6760,21 @@ infocopycells:
   ret
 
 infopagerpixels:
+  ; Screen 5 stores a seal offset/count rather than screen 4's direct page index/count.
+  ; At most nine seal bits produce three four-description pages, so restore its exact
+  ; possible digit tiles directly. The native footer may still be queued when this
+  ; helper runs, which makes deriving these codes from its shadow cells too early.
+  ld a,[$C6A3]
+  cp $05
+  jr nz,infoordinarypagerpixels
+  ld a,$02
+  call infodigit
+  ld a,$03
+  call infodigit
+  ld a,$04
+  call infodigit
+  ret
+infoordinarypagerpixels:
   ld a,[$C6BD]
   cp $02
   ret c
@@ -6764,12 +6787,12 @@ infopagerpixels:
   call infodigit
   ret
 
-; A is the native tile code ($02-$0A) for digits 1-9. The approved font is 1bpp, so
-; duplicate each row into both Game Boy bitplanes at that tile's signed $9000 address.
+; A is the native tile code ($02-$0A) for digits 1-9. Each table byte packs two
+; approved-font 4px rows; expand their high nibbles and duplicate each row into both
+; Game Boy bitplanes at that tile's signed $9000 address.
 infodigit:
   ld c,a
   sub $02
-  add a,a
   add a,a
   add a,a
   ld e,a
@@ -6780,9 +6803,18 @@ infodigit:
   swap a
   ld e,a
   ld d,$90
-  ld b,$08
+  ld b,$04
 infodigitrow:
   ld a,[hl+]
+  ld c,a
+  and $F0
+  ld [de],a
+  inc de
+  ld [de],a
+  inc de
+  ld a,c
+  swap a
+  and $F0
   ld [de],a
   inc de
   ld [de],a

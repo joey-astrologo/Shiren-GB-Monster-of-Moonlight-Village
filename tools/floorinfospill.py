@@ -14,9 +14,12 @@ footer rasters plus the two BG rows which the taller outgoing Action box had occ
 ``--seal`` instead installs a Manji Kabura+1 with one seal on the ground, proving the
 same screen-20 parent owns a real screen-5 seal child and its return.
 
-``--fusion-kit`` reproduces the two canonical inventory records appended by
-``mesen_spawn_fusion_kit.lua`` at the same bank-6 builder boundary. It can be combined
-with ``--fusion`` to cover a standing Fusion Pot while the Lua kit is carried.
+``--fusion-kit`` reproduces the canonical default records from
+``mesen_spawn_fusion_kit.lua`` at the same bank-6 builder boundary: Fusion Pot[2] plus
+Manji Kabura+1 carrying all nine weapon seals and Rasen Fuuma+1 carrying all nine shield
+seals. The Lua file deliberately lets a manual tester change either base equipment ID
+without changing its category mask. This route can be combined with ``--fusion`` to
+cover a standing Fusion Pot while the Lua kit is carried.
 
 ``--fusion-kit-history`` additionally opens the spawned carried Pot's Action menu and
 returns to gameplay before entering Status -> Floor -> Info on the standing Wood Arrow.
@@ -58,7 +61,8 @@ INVENTORY = 0xA3B0
 OBJECTS = 0xA406
 FUSION_KIT_RECORDS = (
     (0x87, 0x02, 0x00, 0x04, 0x00, 0x00, 0xFF, 0xFF),
-    (0x06, 0x01, 0x00, 0xC4, 0x04, 0x00, 0xFF, 0xFF),
+    (0x06, 0x01, 0x00, 0xC4, 0xFF, 0x01, 0xFF, 0xFF),
+    (0x20, 0x01, 0x00, 0xC4, 0xFD, 0x06, 0xFF, 0xFF),
 )
 INFO_TEXT_ROWS = (4, 6, 8, 10, 12)
 # The two-tile down arrow replaces this portion of box 7's bottom border. On the final

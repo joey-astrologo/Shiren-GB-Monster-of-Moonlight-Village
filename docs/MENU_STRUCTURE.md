@@ -15,6 +15,13 @@ passes. Leaving any of pages 1-4 keeps the outgoing page live until Status repla
 Direct Status-to-Items entry/re-entry blanks only BG rows 0-15, preserves the bottom
 Window, and commits empty box chrome before item text.
 
+**Post-freeze amendment (2026-08-30):** the accepted hash above did not visually cover
+screen 5 with more than four seals. An all-nine-seal weapon exposed corrupted footer
+digit rasters even though the page map itself contained the correct `1/3`, `2/3`, and
+`3/3` references. The corrected candidate now has an exact automated three-page gate;
+its one-route visual recheck remains pending and does not revoke the previously accepted
+Item/Floor paths.
+
 The nine follow-up findings `IFR-01` through `IFR-09` are implemented, automated, and
 visually accepted. Final-page A returns for sealed equipment,
 Info-before-Name histories, contained-item Pot Info, shop price publication, direct
@@ -972,16 +979,28 @@ publisher now retires those two input bytes only after the completed page is vis
 The fixture proves one Down tap advances from page 1 to page 2 exactly once, then uses
 separate deliberate A presses for the remaining pages.
 
-The native footer writer at `4:$49C4-$49EF` stages current-page tile `$C6BC+2`, slash
-`$B0`, and total-page tile `$C6BD+1` at `$C4B0-$C4B2`; their visible counterparts are
-BG `$99B0-$99B2`. This exposed a translated ownership collision that two-page fixtures
-could not see: Status VWF legitimately repaints low tiles `$04-$0A`, and Fusion Pot's
-five-page total uses tile `$06`. The exact Info publisher now restores the current and
-total digit rasters from the approved font during VBlank before exposing those native
-references. The five-page fixture also caught incorrect first-candidate destinations:
-body `$C381` maps to `$9881` and the pager maps to `$99A9/$99B0`, not one row/eight rows
-earlier. Native queued publication had eventually covered those writes, masking the
-transient contamination in settled screenshots.
+Screen 4's native footer writer at `4:$49C4-$49EF` stages current-page tile
+`$C6BC+2`, slash `$B0`, and total-page tile `$C6BD+1` at `$C4B0-$C4B2`; their visible
+counterparts are BG `$99B0-$99B2`. Screen 5 has a distinct writer at
+`4:$4A12-$4A49`: `$C6BC` is a seal offset and `$C6BD` is the seal count, so it stages
+current tile `($C6BC >> 2)+2` and total tile `(($C6BD-1) >> 2)+2`. Nine seals therefore
+produce map triples `$02,$B0,$04`, `$03,$B0,$04`, and `$04,$B0,$04` for `1/3` through
+`3/3`.
+
+These writers exposed a translated ownership collision that smaller fixtures could not
+see: Status VWF legitimately repaints low tiles `$04-$0A`. The Info publisher restores
+the approved digit rasters during VBlank before the native footer references become
+visible. Screen 4 retains its guarded current/total computation. Screen 5 restores its
+bounded tile `$02-$04` domain directly because its native footer shadow is still queued
+at that restoration point; reading `$C4B0/$C4B2` there is too early. The nine approved
+digit rasters are stored as two 4px rows per byte and expanded into both Game Boy
+bitplanes, keeping the fixed bank-62 lifecycle boundary unchanged. The count-nine
+regression now follows the native group handler at `4:$5941` through offsets `0,4,8` and
+requires both shadow/visible footer maps and digit pixels to match `1/3`, `2/3`, and
+`3/3` exactly. The five-page screen-4 fixture also catches incorrect first-candidate
+destinations: body `$C381` maps to `$9881` and the pager maps to `$99A9/$99B0`, not one
+row/eight rows earlier. Native queued publication had eventually covered those writes,
+masking transient contamination in settled screenshots.
 
 Both exits remove screens 4 and 2, changing stack `0,1,2,4` to `0,1`; native replay then
 reconstructs screen 0 followed by the exact screen-1 Items/Floor parent. This disproved an
@@ -1563,7 +1582,7 @@ ROM and WRAM ownership added for this checkpoint is:
 | Bank 40, far `$05` | `$4060-$4063` (4 bytes) | final-row Info publication ABI |
 | Bank 37, far `$05/$07` | `$405A-$4293` (570 bytes) | screen-2/direct-Floor/screen-16 Action admission plus contained-item Info proof for carried/appended `0,1,2,12/13,16,4/5` and ground `0,7/20,12/13,16,4/5` stacks; redirected text begins at `$42A0` |
 | Bank 62, far `$07` | `$405A-$4429` (976 bytes) | screen-2 Action restore, screen-7 disposable-screen deferral, plus exact screen-12/13 Pot entry routing and Pot-pop proof |
-| Bank 62, far `$09/$0B/$0D/$0F` | `$4430-$547E` (4175 bytes) | exact screen-1/screen-7/screen-20 Info entry/page publication and replay, all Pot-return forms, shop appended-Floor admission, plus exact carried/screen-1-Floor/screen-7/screen-20/contained-item Pot entry chrome and ordered final publication |
+| Bank 62, far `$09/$0B/$0D/$0F` | `$4430-$547C` (4173 bytes) | exact screen-1/screen-7/screen-20 Info entry/page publication and replay, all Pot-return forms, shop appended-Floor admission, plus exact carried/screen-1-Floor/screen-7/screen-20/contained-item Pot entry chrome and ordered final publication |
 | Bank 62 fixed leaf | `$5480-$548F` (16 bytes) | packs the retained screen-1 Floor selector and enters state `$08` for exact `0,1,2,12/13` See return without consuming another far-table slot |
 | Bank 62 redirected text origin | `$5490` | leaves a hard boundary between lifecycle code and redirected strings |
 | `$C1B3` | `$02 -> $03 -> $08/$09/$0B -> $00` | Info construction, settled page, exact screen-1/screen-7/screen-20 replay, idle; exact alternate ground-Pot See return enters `$0B` directly; Items-derived Floor-Pot See return enters `$08` directly; carried screen-5 return briefly hands `$08 -> $01` to the Item-page transaction |
@@ -1616,7 +1635,9 @@ the complete route has zero
 LCD-off, uniform, empty-body, or torn-row frames. The simpler `--fusion-kit` case remains
 independent so record bytes alone cannot be mistaken for the history-dependent trigger.
 `tools/fusioncountspill.py` proves an actual screen-5 equipment-seal page enters this
-lifecycle without disabling the LCD. `tools/potreturnspill.py` drives real carried
+lifecycle without disabling the LCD and now drives an all-nine-seal weapon through
+`1/3`, `2/3`, and `3/3`, checking the exact footer map and approved digit pixels on every
+page. `tools/potreturnspill.py` drives real carried
 screen-12 and full-page screen-13 Pots through `See`. Its third case uses the reported
 five-row item mix that forces screen 12's zero-latch generic Action path. Every case
 hooks `$4338` and requires zero executions in both directions, requires a complete empty

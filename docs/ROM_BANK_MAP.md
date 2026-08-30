@@ -137,7 +137,7 @@ can consume more of a pool bank later.
 | 61 | `$405A-$40EF` | `tools/menuvwf.py`: admitted carried-/Floor-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09`; redirected text begins at `$4100` |
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
 | 62 | `$405A-$4429` | `tools/menuvwf.py`: carried-/Floor-Action box-6 parent, screen-1 machine-state restorer, and Action/Pot routing | Exclusive, far index `$07` |
-| 62 | `$4430-$547E`, `$5480-$548F` | `tools/menuvwf.py`: Item/Floor Info/seal/Pot regional lifecycle and fixed Floor/Pot return leaf | Exclusive, far indices `$09/$0B/$0D/$0F`; redirected text begins at `$5490` |
+| 62 | `$4430-$547C`, `$5480-$548F` | `tools/menuvwf.py`: Item/Floor Info/seal/Pot regional lifecycle and fixed Floor/Pot return leaf | Exclusive, far indices `$09/$0B/$0D/$0F`; redirected text begins at `$5490` |
 | 62 | `$7000-$7F43` | `tools/titlelogo.py`: illustrated title screen | Exclusive tail |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |
 

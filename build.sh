@@ -145,8 +145,9 @@ if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   python3 tools/floorinfospill.py build/shiren_en.gb
   python3 tools/floorinfospill.py build/shiren_en.gb --fusion
   python3 tools/floorinfospill.py build/shiren_en.gb --seal
-  # Reproduce mesen_spawn_fusion_kit.lua exactly, first isolating the injected bytes and
-  # then visiting the carried Fusion Pot Action before screen-20 Floor Info. A
+  # Reproduce mesen_spawn_fusion_kit.lua's canonical all-seal weapon/shield records,
+  # first isolating the injected bytes and then visiting the carried Fusion Pot Action
+  # before screen-20 Floor Info. A
   # gameplay-bound Action leaves a non-idle regional header/admission history which
   # used to force this later route to LCD-off.
   python3 tools/floorinfospill.py build/shiren_en.gb --fusion-kit

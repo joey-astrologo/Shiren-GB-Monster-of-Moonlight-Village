@@ -208,7 +208,7 @@ rewrite.
    gameplay-bound item use are regression checks, not new regional transitions. Screen
    16, shop context, screen-20 Floor box 39, Info, Name entry, and Pot descendants remain
    on their current paths until separately traced.
-4. **Item/Floor Info lifecycle — REVISED, visual acceptance pending:** exact
+4. **Item/Floor Info lifecycle — COMPLETE; post-freeze nine-seal footer recheck pending:** exact
    screen-1 carried-Item/settled-Floor and independent screen-20 Floor parents may enter
    screen-4 Info or screen-5 equipment seals. Screen 1 publishes complete empty box-7
    chrome before complete rows. Screen 20 instead keeps its Action box until complete
@@ -221,8 +221,11 @@ rewrite.
    that target to the same fast regional renderer as Item paging; screen-4 descriptions
    retain their exact final-header publisher. Both reveal text only after complete boxes. Screen-20
    preserves its real 3-7-row Action height; five-page Fusion Pot footers settle as
-   `1/5` through `5/5`, with no stale Action tail. A one-frame Down tap enters the native
-   page handler once, avoiding translated-redraw autorepeat. The exact carried-Pot
+   `1/5` through `5/5`, with no stale Action tail. The post-freeze screen-5 amendment
+   separately restores the bounded three-page seal footer and automatically proves
+   `1/3`, `2/3`, and `3/3`; only its focused visual recheck remains pending. A one-frame
+   Down tap enters the native page handler once, avoiding translated-redraw autorepeat.
+   The exact carried-Pot
    screen-12/13 `See` B paths also skip their disposable Status redraw and hand off to
    box-first direct Items entry. All scoped fixtures keep the LCD enabled and avoid a
    uniform whole-display frame. The revised five-page screen-20 fixture additionally
