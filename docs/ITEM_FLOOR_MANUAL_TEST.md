@@ -204,26 +204,29 @@ this freezes the catalogued Item/Floor regional-blanking scope. Malformed or unp
 callers still retain their documented safety fallbacks, and gameplay/new-screen
 boundaries retain their intentional native whole-LCD transitions.
 
-## Post-freeze all-seal footer recheck — pending
+## Post-freeze all-seal footer recheck — passed
 
-The accepted six-test ROM did not cover a screen-5 weapon with more than four seals. On
-2026-08-30 an all-nine-seal weapon exposed corrupt page digits. The corrected candidate
-is automated by `fusioncountspill.py`, which now requires exact `1/3`, `2/3`, and `3/3`
-map cells and digit pixels plus an LCD-live B return. Visual acceptance is still pending.
+The accepted six-test ROM did not cover screen 5 with more than four seals. On 2026-08-30
+an all-nine-seal weapon exposed corrupt page digits. The corrected weapon and symmetric
+all-nine-seal shield routes passed visual review on 2026-08-30 against accepted SHA-256
+`8e14822ea2e1834ef5b620fb39607667b2df1b87e5ded33b8b0ba3a42cc47a29`.
+`fusioncountspill.py` now independently requires exact
+`1/3`, `2/3`, and `3/3` map cells and digit pixels plus an LCD-live B return for both the
+contiguous weapon mask `$01FF` and the non-contiguous shield mask `$06FD`.
 
 Build the candidate, open it with a disposable dungeon save, and load
 `tools/mesen_spawn_fusion_kit.lua` in Mesen's Script Window. The script appends a
-Fusion Pot and a configurable weapon carrying all nine weapon seals; it does not need a
-personal save or a second memory-edit script.
+Fusion Pot, a configurable weapon carrying all nine weapon seals, and a configurable
+shield carrying all nine shield seals; it does not need a personal save or a second
+memory-edit script.
 
-Open B -> `Items`, select the spawned weapon, choose `Info`, then press Right once per
-four-description group. Inspect the lower-right footer on all three settled pages and
-press B from the last page.
+The accepted shield procedure was: open B -> `Items`, select the spawned
+`Rasen Fuuma+1`, choose `Info`, then press Right once per four-description group. Inspect
+the lower-right footer on all three settled pages and press B from the last page.
 
-Expected: the footer is visibly `1/3`, then `2/3`, then `3/3`; neither digit is replaced
-by letters, fragments, or garbage pixels. Page changes and B return remain LCD-live,
-chrome-first, and immediately responsive. Record the new ROM SHA-256 here only after
-this route passes visually.
+Accepted result: the shield footer is visibly `1/3`, then `2/3`, then `3/3`; neither
+digit is replaced by letters, fragments, or garbage pixels. Page changes and B return
+remain LCD-live, chrome-first, and immediately responsive.
 
 ## Baseline appendix — already accepted, not part of the six-test recheck
 

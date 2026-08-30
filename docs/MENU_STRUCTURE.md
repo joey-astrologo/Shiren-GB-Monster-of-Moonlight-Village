@@ -18,9 +18,12 @@ Window, and commits empty box chrome before item text.
 **Post-freeze amendment (2026-08-30):** the accepted hash above did not visually cover
 screen 5 with more than four seals. An all-nine-seal weapon exposed corrupted footer
 digit rasters even though the page map itself contained the correct `1/3`, `2/3`, and
-`3/3` references. The corrected candidate now has an exact automated three-page gate;
-its one-route visual recheck remains pending and does not revoke the previously accepted
-Item/Floor paths.
+`3/3` references. The corrected weapon route and the symmetric shield route passed
+visual review against post-freeze accepted SHA-256
+`8e14822ea2e1834ef5b620fb39607667b2df1b87e5ded33b8b0ba3a42cc47a29`. The exact
+automated gate independently drives the weapon's contiguous mask and the shield's
+non-contiguous nine-bit mask through all three pages. This amendment does not revoke the
+previously accepted Item/Floor paths.
 
 The nine follow-up findings `IFR-01` through `IFR-09` are implemented, automated, and
 visually accepted. Final-page A returns for sealed equipment,
@@ -1634,10 +1637,11 @@ Info candidate, that the exact owner clears it before the first pixels publish, 
 the complete route has zero
 LCD-off, uniform, empty-body, or torn-row frames. The simpler `--fusion-kit` case remains
 independent so record bytes alone cannot be mistaken for the history-dependent trigger.
-`tools/fusioncountspill.py` proves an actual screen-5 equipment-seal page enters this
-lifecycle without disabling the LCD and now drives an all-nine-seal weapon through
-`1/3`, `2/3`, and `3/3`, checking the exact footer map and approved digit pixels on every
-page. `tools/potreturnspill.py` drives real carried
+`tools/fusioncountspill.py` proves actual screen-5 equipment-seal pages enter this
+lifecycle without disabling the LCD. It independently drives an all-nine-seal weapon
+with contiguous mask `$01FF` and an all-nine-seal shield with non-contiguous mask `$06FD`
+through `1/3`, `2/3`, and `3/3`, checking the exact footer map and approved digit pixels
+on every page. `tools/potreturnspill.py` drives real carried
 screen-12 and full-page screen-13 Pots through `See`. Its third case uses the reported
 five-row item mix that forces screen 12's zero-latch generic Action path. Every case
 hooks `$4338` and requires zero executions in both directions, requires a complete empty
