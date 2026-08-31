@@ -1,18 +1,20 @@
 system	key	route	stack	sites	origin	status	fixture	evidence
 start	boot-title-presentation	Boot/logo/title presentation -> Start root	pre-menu	29:$411A + shadow 31:$49B1 + shadow 31:$4AE8 + shadow 31:$4D59 + shadow 31:$4899 + shadow 4:$65F4	base	keep	titlecardspill.py, titlelogospill.py	pre-interactive display initialization, not a menu blanking target
-start	adventure-log-summary	Adventure -> saved-log summary and log changes	15,23	41:$40E1	translation	review	mainmenuspill.py, copylogspill.py, savesummaryspill.py	observed title/file composite replacement
+start	adventure-log-summary	Adventure -> saved-log summary and log changes	15,23	none (regional)	translation	regional	startpathspill.py, startspill.py, savesummaryspill.py	S1: exact screen-23 root-child stack commits box-26 BG rectangle x=4..19/y=4..10 during VBlank; zero Start LCD-off hits; visually accepted 2026-08-31
 start	adventure-to-gameplay	Select Adventure log -> gameplay	15,23,21	shadow 2:$463C + shadow 4:$4154	base	keep	all save-backed menu fixtures	replacement boundary
-start	new-log-selector	New Log -> log selector	15,22	41:$40E1	translation	review	mainmenuspill.py, nameflowspill.py	observed screen 22
-start	new-log-difficulty	New Log -> difficulty and explanation composite	15,22,25	41:$40E1	translation	review	mainmenuspill.py, nameflowspill.py	observed screen 25
+start	new-log-selector	New Log -> log selector	15,22	none (regional)	translation	regional	startpathspill.py, mainmenuspill.py, nameflowspill.py	S2: mgbdis handler 4:$4C61/box 25; exact root-child stack clears x=5..15/y=9..15 during VBlank; entry and screen-25 return both produce zero Start LCD-off hits
+start	new-log-difficulty	New Log -> difficulty and explanation composite	15,22,25	41:$40E6	translation	review	mainmenuspill.py, nameflowspill.py	observed screen 25
 start	new-log-name	New Log -> personal-name keyboard	15,22,25,8	44:$4066	translation	keep	nameflowspill.py, newgamesmoke.py	caller 4:$4B04
 start	new-log-to-gameplay	Confirm New Log name -> village/gameplay	15,22,25,8	shadow 2:$463C	base	keep	newgamesmoke.py	replacement boundary
-start	copy-log	Copy Log -> source/destination summaries and confirmation	15,23 and 15,23,24	41:$40E1	translation	review	copylogspill.py	observed screens 23 and 24
-start	erase-log	Erase Log -> log summary and confirmation	15,23 and 15,23,24	41:$40E1	translation	review	copylogspill.py, startspill.py	observed screens 23 and 24
-start	rename-log-selector	Rename -> alternate log-selector wrapper	15,23,26	41:$40E1	translation	review	nameflowspill.py	observed screen 26
-start	rename-log-name	Rename -> personal-name keyboard	screen 8 variant	44:$4066	translation	keep	no isolated Rename entry fixture	static caller 4:$4B04 is shared with New Log; exact Rename visual route remains a coverage gap
+start	copy-log-summary	Copy Log -> source-log summary	15,23	none (regional)	translation	regional	startpathspill.py, copylogspill.py	S1 screen 23; zero Start LCD-off hits; visually accepted 2026-08-31
+start	copy-log-destination	Copy Log source -> destination selector	15,23,26	none (regional)	translation	regional	startpathspill.py, copylogspill.py	S2: mgbdis handler 4:$4CCA calls screen-22 builder and owns box 25; exact stack clears x=5..15/y=9..15 during VBlank with zero Start LCD-off hits
+start	erase-log-summary	Erase Log -> log summary	15,23	none (regional)	translation	regional	startpathspill.py, copylogspill.py	S1 screen 23; zero Start LCD-off hits; visually accepted 2026-08-31
+start	erase-log-confirmation	Erase Log summary -> No/Yes confirmation	15,23,24	none (regional)	translation	regional	startpathspill.py, copylogspill.py, startspill.py	S2: mgbdis handler 4:$4C94 draws box 27 then box 28; exact stack clears x=3..19/y=7..11 plus x=11..16/y=2..6 in one VBlank with zero Start LCD-off hits
+start	rename-log-summary	Rename -> log summary	15,23	none (regional)	translation	regional	startpathspill.py, nameflowspill.py	S1 screen 23 visually accepted 2026-08-31; Rename enters screen 8 directly and never uses screen 26
+start	rename-log-name	Rename -> personal-name keyboard	screen 8 variant	44:$4066	translation	keep	startpathspill.py, nameflowspill.py	exact 15,23,8 route; independent native-font keyboard boundary
 start	return-to-start-root	Return from file/Rank children -> Start root/native font	15	46:$42B5	translation	keep	nameflowspill.py, copylogspill.py, rankspill.py	observed beyond Rankings; physical owner is rankvwf.nativerestore
-start	rank-pass	Rank/Pass -> root/category/Pass log composites	15,30 and 15,30,32	41:$40E1	translation	review	mainmenuspill.py, awardspill.py	observed screens 30 and 32
+start	rank-pass	Rank/Pass -> root/category/Pass log composites	15,30 and 15,30,32	41:$40E6	translation	review	mainmenuspill.py, awardspill.py	observed screens 30 and 32
 start	rankings-display	Rank category -> completed Rankings display/native-font restore	15,30[,31],33	43:$40B6 + 46:$42B5	translation	review	rankspill.py, orochisymbolspill.py, deathrankspill.py	both publication and restoration execute on screen 33
 start	fay-entry	Fay's Puzzle -> task composite	15 -> 17	38:$408F	translation	keep	faypathspill.py	observed at the screen-15 boundary
 start	fay-to-gameplay	Fay's Puzzle task -> gameplay	15,17	shadow 2:$463C + shadow 4:$4154	base	keep	faypathspill.py	replacement boundary
-start	replay-log-summary	Replay -> saved-log summary before replay begins	15,23	41:$40E1	translation	review	focused exhaustive gbrun trace, 2026-08-27	observed screen 23; selecting the log produced no additional LCD-off producer before the replay handoff
+start	replay-log-summary	Replay -> saved-log summary before replay begins	15,23	none (regional)	translation	regional	startpathspill.py	S1 screen 23 visually accepted 2026-08-31; zero Start LCD-off hits; selecting the log crosses to the replay replacement without another Start blanker

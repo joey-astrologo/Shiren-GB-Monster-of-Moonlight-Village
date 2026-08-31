@@ -89,7 +89,7 @@ LCDC	32	$6CD2	ldh	variable	translation	translation-added writer	observe	does not
 LCDC	32	$6D42	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	38	$408F	ldh	explicit-off	translation	structvwf.feirestore	keep	Fay's Puzzle composite entry and native fixed-tile reload
 LCDC	41	$40C8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	41	$40E1	ldh	explicit-off	translation	menuvwf.starttransition	review	title/file composite shadow-map replacement
+LCDC	41	$40E6	ldh	explicit-off	translation	menuvwf.starttransition	review	title/file composite fallback after exact screen-22/23/24/26 regional admission
 LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	review	completed Rankings whole-map publication
 LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition

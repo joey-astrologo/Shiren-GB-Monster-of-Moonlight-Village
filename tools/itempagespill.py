@@ -751,12 +751,16 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         if len(return_latencies) != len(inputs):
             problems.append('measured %d redraw returns for %d inputs' %
                             (len(return_latencies), len(inputs)))
-        visual_budget = 18 if test_wrap else 13
+        # The fixture reaches Items through title screen 23.  Its live regional
+        # transaction deliberately changes the downstream VBlank/input phase from the
+        # former LCD-off boot path; the same unchanged page redraw consequently has two
+        # legal no-wrap ceilings, 13/17 and 14/18, depending on that phase.
+        visual_budget = 18 if test_wrap else 14
         # The standing-Floor boundary also clamps an invalid carried-row selector,
         # publishes the corrected cursor, and commits the replacement four-cell header.
         # Those correctness writes add at most two frames to the wrap-only route;
         # ordinary page-only redraws retain the lower budget.
-        return_budget = 25 if test_wrap else 17
+        return_budget = 25 if test_wrap else 18
         if visual_latencies and max(visual_latencies) > visual_budget:
             problems.append('page visual latency reached %d frames, budget is %d' %
                             (max(visual_latencies), visual_budget))

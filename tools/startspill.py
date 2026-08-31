@@ -101,7 +101,12 @@ class Audit:
                     self.problems.append(
                         'f%d: initial cursor helper clobbered HL/BC: want %r got %r' %
                         (self.frame, want_context, got_context))
-        selector = pb.memory[0xC6A5]
+        # Mirror native 4:$4E2B.  During a Start-root return C6A5 is temporarily zero;
+        # the native initializer restores the saved low-nibble selector immediately
+        # before writing its cursor.
+        saved_depth = pb.memory[0xC6A6]
+        selector = (pb.memory[0xC53F + saved_depth - 1] & 0x0F
+                    if saved_depth else pb.memory[0xC6A5])
         offset = 0x41 + selector * 0x40
         source = BGMAP if published else SHADOW
         got = pb.memory[source + offset]
@@ -109,6 +114,17 @@ class Audit:
             self.problems.append(
                 'f%d: initial title cursor at %s +$%03X is $%02X, expected $81' %
                 (self.frame, 'BG' if published else 'shadow', offset, got))
+        if self.cursor_context is not None:
+            rows = self.cursor_context['shape'][2]
+            cursor_cells = tuple(pb.memory[source + 0x41 + row * 0x40]
+                                 for row in range(rows))
+            want_cursor_cells = tuple(0x81 if row == selector else 0x00
+                                      for row in range(rows))
+            if cursor_cells != want_cursor_cells:
+                self.problems.append(
+                    'f%d: %s title cursor ownership wants %s, got %s' %
+                    (self.frame, 'BG' if published else 'shadow',
+                     want_cursor_cells, cursor_cells))
         if published:
             if self.cursor_context is not None:
                 x, y, rows, width, _flags = self.cursor_context['shape']

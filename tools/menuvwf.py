@@ -395,7 +395,11 @@ ACTION_ALLOC_BANK = 0x3D
 ACTION_ALLOC_INDEX = 0x07
 TITLE_CURSOR_INDEX = 0x09
 ACTION_ALLOC_AT = 0x405A
-ACTION_ALLOC_LIMIT = 0x4100
+# The root-cursor scrub mirrors the native saved-selector lookup and extends just past
+# $4100.  Bank 61 is currently unused by redirected text (its guarded title-card owner
+# begins at $7000); the installer still requires this whole interval to be $FF so future
+# pool growth fails loudly instead of overlapping it.
+ACTION_ALLOC_LIMIT = 0x4180
 ACTION_BLANK_BANK = 0x3E
 ACTION_BLANK_INDEX = 0x07
 ACTION_BLANK_AT = 0x405A
@@ -456,6 +460,27 @@ START_FINISH_INDEX = 0x05
 START_ALLOC_INDEX = 0x07
 START_FINISH_AT = 0x405A
 START_FINISH_LIMIT = 0x4100
+# Screen-23 save summaries are the first Start-menu regional checkpoint.  Bank 44 is
+# already reserved by name6 for its native-font restore at $405A-$408A; the remaining
+# prefix is structurally outside redirected text (which starts at $4100).  Keeping this
+# helper after $4090 makes overlap fail loudly if either owner ever grows.
+START_REGION_BANK = 0x2C
+START_REGION_INDEX = 0x07
+START_REGION_AT = 0x4090
+START_REGION_LIMIT = 0x4100
+# Start checkpoint S2 has two different native compositions.  The screen-22/26 Log
+# selector controller fits in the declared gap after bank 46's Rankings-category helper
+# and before rankvwf's manager.  The screen-24 confirmation controller fits after
+# faypath's bank-52 status-label helper and before redirected text.  Their far indices
+# are likewise outside the existing owners ($05/$07/$09 in bank 46 and $05 in bank 52).
+START_S2_SELECTOR_BANK = 0x2E
+START_S2_SELECTOR_INDEX = 0x0B
+START_S2_SELECTOR_AT = 0x40E9
+START_S2_SELECTOR_LIMIT = 0x4180
+START_S2_CONFIRM_BANK = 0x34
+START_S2_CONFIRM_INDEX = 0x07
+START_S2_CONFIRM_AT = 0x4090
+START_S2_CONFIRM_LIMIT = 0x4100
 
 # Save-summary place names are assembled in bank 4 as fixed-cell rows.  A numberless
 # place was still indented by four cells, while a numbered long place could spill its
@@ -1956,26 +1981,49 @@ aafail:
   scf
   ret
 
-; The title/file atomic publisher runs before 4:$4E2B installs the native initial
-; cursor. Pre-stage only screen 15's selected box-1 cell so the first complete Adventure
-; map already contains it; the native writer repeats the same store afterward.
+; The title/file atomic publisher runs before 4:$4E2B installs the native cursor.  On a
+; child return C6A5 is temporarily zero, but 4:$4E2B replaces it from the low nibble of
+; C53F+(C6A6-1) before writing tile $81.  Mirror that lookup exactly: otherwise the
+; atomic map exposes Adventure and the native writer adds a second cursor at the saved
+; option.  First retire every raw root-cursor cell, then pre-stage only the same option
+; that native code is about to restore.
 titlecursor:
-  ld a,[$C6A3]
-  cp $0F
-  ret nz
   push bc
+  push de
   push hl
-  ld a,[$C6A5]
-  ld c,$00
-  ld b,a
-  srl b
-  rr c
-  srl b
-  rr c
-  ld hl,$C341
+  ld a,[$C6A6]
+  and a
+  jr z,tcactive
+  dec a
+  ld c,a
+  ld b,$00
+  ld hl,$C53F
   add hl,bc
+  ld a,[hl]
+  and $0F
+  jr tcselector
+tcactive:
+  ld a,[$C6A5]
+tcselector:
+  ld e,a
+  ld hl,$C341
+  ld a,[$C69C]
+  ld d,a
+  ld bc,$0040
+tcclear:
+  xor a
+  ld [hl],a
+  ld a,e
+  and a
+  jr nz,tcnext
   ld [hl],$81
+tcnext:
+  dec e
+  add hl,bc
+  dec d
+  jr nz,tcclear
   pop hl
+  pop de
   pop bc
   ret
 """ % (ACTION_GATE_INDEX, ACTION_GATE_BANK, ACTION_POOL_BASE)
@@ -6928,7 +6976,14 @@ strank:
   ldh [$FF40],a
   jr stdone
 stgeneric:
-  ld a,$10
+  ; Give exact regional Start-menu screens first refusal.  The helper returns zero only
+  ; after it has retired the complete incoming rectangle during VBlank; every other
+  ; shape returns the legacy state $10 and falls through to the LCD-off transaction.
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  jr z,stdone
 stoff:
   ld [$C1B3],a
   ldh a,[$FF40]
@@ -6940,6 +6995,7 @@ stwait:
   jr c,stwait
   ldh a,[$FF40]
   res 7,a
+stdisable:
   ldh [$FF40],a
   ; The title owns the otherwise-unused $9C00 BG map as a guaranteed blank page.
   ; Rankings keeps the LCD/queue running by displaying this page while rebuilding
@@ -6960,7 +7016,267 @@ stdone:
   pop bc
   pop af
   ret
-""" % (START_ALLOC_INDEX, START_FINISH_BANK, START_AUX_INDEX, START_AUX_BANK)
+""" % (START_ALLOC_INDEX, START_FINISH_BANK, START_AUX_INDEX, START_AUX_BANK,
+         START_REGION_INDEX, START_REGION_BANK)
+
+
+def start_transition_labels():
+    """Return symbolic addresses from the exact installed Start transition source."""
+    return gbasm.assemble(START_TRANSITION_SRC, START_TRANSITION_AT)[1]
+
+
+START_REGION_SRC = """
+startregion:
+  push bc
+  push de
+  push hl
+  ; S2's exact selector/confirmation controller gets first refusal.  It is reached only
+  ; from stgeneric, whose row-zero test already proves D=0.  A nonzero return preserves
+  ; S1's screen-23 check and, after that rejects, the legacy whole-LCD fallback.
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  jr z,srdone
+  ; mgbdis identifies screen 23 as native handler 4:$4C75 / box 26.  Admit only its
+  ; real root-child stack and row-zero entry.  Screen 24 shares the allocator
+  ; classification but is admitted only by S2's separate two-rectangle helper above.
+  ld a,[$C6A3]
+  cp $17
+  jr nz,srreject
+  ld a,d
+  and a
+  jr nz,srreject
+  ld a,[$C534]
+  cp $01
+  jr nz,srreject
+  ld a,[$C535]
+  cp $0F
+  jr nz,srreject
+  ld a,[$C536]
+  cp $17
+  jr nz,srreject
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,srreject
+  ; Acquire a complete VBlank.  The second LY check closes the race where an interrupt
+  ; begins VBlank between the visible-period check and DI.
+  ei
+srvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,srwait
+srlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srlate
+srwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,srwait
+srcommit:
+  ; Box 26 occupies x=4..19 and y=4..10: 16 complete cells across seven rows.  Clear
+  ; only the visible BG map.  The native handler is concurrently constructing the full
+  ; incoming chrome/text in shadow, which the unchanged publisher reveals afterwards.
+  ld hl,$9884
+  ld d,$07
+  xor a
+srrow:
+  ld b,$10
+srcell:
+  ld [hl+],a
+  dec b
+  jr nz,srcell
+  ld bc,$0010
+  add hl,bc
+  dec d
+  jr nz,srrow
+  ei
+  xor a
+  jr srdone
+srreject:
+  ld a,$10
+srdone:
+  pop hl
+  pop de
+  pop bc
+  ret
+""" % (START_S2_SELECTOR_INDEX, START_S2_SELECTOR_BANK)
+
+
+# Fresh mgbdis output establishes screen 22 at 4:$4C61 and screen 26 at 4:$4CCA; the
+# latter calls the former's native builder, so both own box 25.  The physical box spans
+# x=5..15/y=9..15 after including the native border cells.  Screen 24 is delegated to a
+# separate exact helper because it owns two boxes and because neither declared code gap
+# can hold both transactions without crossing another subsystem's boundary.
+START_S2_SELECTOR_SRC = """
+starts2selector:
+  push bc
+  push de
+  push hl
+  ld a,[$C6A3]
+  cp $18
+  jr nz,s2selectorcheck
+  xor a
+  rst $10
+  db $%02X,$%02X
+  jr s2done
+s2selectorcheck:
+  ld a,[$C535]
+  cp $0F
+  jr nz,s2reject
+  ld a,[$C6A3]
+  cp $16
+  jr z,s2screen22
+  cp $1A
+  jr nz,s2reject
+  ld a,[$C534]
+  cp $02
+  jr nz,s2reject
+  ld a,[$C536]
+  cp $17
+  jr nz,s2reject
+  ld a,[$C537]
+  cp $1A
+  jr nz,s2reject
+  jr s2admit
+s2screen22:
+  ld a,[$C534]
+  cp $01
+  jr nz,s2reject
+  ld a,[$C536]
+  cp $16
+  jr nz,s2reject
+s2admit:
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,s2reject
+  ; Use the same complete-VBlank rendezvous proven by S1.  The caller already established
+  ; row zero, and the second LY check closes the interrupt-entry race.
+  ei
+s2visible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,s2visible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,s2wait
+s2late:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,s2late
+s2wait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,s2wait
+s2commit:
+  ld hl,$9925
+  ld d,$07
+  xor a
+s2row:
+  ld b,$0B
+s2cell:
+  ld [hl+],a
+  dec b
+  jr nz,s2cell
+  ld bc,$0015
+  add hl,bc
+  dec d
+  jr nz,s2row
+  ei
+  xor a
+  jr s2done
+s2reject:
+  ld a,$10
+s2done:
+  pop hl
+  pop de
+  pop bc
+  ret
+""" % (START_S2_CONFIRM_INDEX, START_S2_CONFIRM_BANK)
+
+
+# Screen 24's native handler at 4:$4C94 draws prompt box 27 first, then the higher-z
+# No/Yes box 28.  Their exact bordered rectangles are x=3..19/y=7..11 and
+# x=11..16/y=2..6.  Both are retired in one VBlank before the untouched native handler
+# constructs and publishes the incoming shadow, so no parent summary text can leak into
+# either child.
+START_S2_CONFIRM_SRC = """
+starts2confirm:
+  push bc
+  push de
+  push hl
+  ld a,[$C534]
+  cp $02
+  jr nz,s2creject
+  ld a,[$C535]
+  cp $0F
+  jr nz,s2creject
+  ld a,[$C536]
+  cp $17
+  jr nz,s2creject
+  ld a,[$C537]
+  cp $18
+  jr nz,s2creject
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,s2creject
+  ei
+s2cvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,s2cvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,s2cwait
+s2clate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,s2clate
+s2cwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,s2cwait
+  xor a
+s2ccommit:
+  ld hl,$984B
+  ld d,$05
+  ld e,$06
+  ld c,$1A
+  call s2cclear
+  ld hl,$98E3
+  ld d,$05
+  ld e,$11
+  ld c,$0F
+  call s2cclear
+  ei
+  xor a
+  jr s2cdone
+s2cclear:
+  ld b,e
+s2ccell:
+  ld [hl+],a
+  dec b
+  jr nz,s2ccell
+  ld b,$00
+  add hl,bc
+  dec d
+  jr nz,s2cclear
+  ret
+s2creject:
+  ld a,$10
+s2cdone:
+  pop hl
+  pop de
+  pop bc
+  ret
+"""
 
 
 START_FINISH_SRC = """
@@ -7017,6 +7333,11 @@ sffei:
   cp $12
   jr nz,sfdone
 sfpublish:
+  ; The cursor scrub is meaningful only for the Start root.  Other generic composites
+  ; share this finalizer but must retain their own raw prefix cells.
+  ld a,[$C6A3]
+  cp $0F
+  jr nz,sfcursorready
   rst $10
   db $%02X,$%02X
 sfcursorready:
@@ -10137,6 +10458,9 @@ def install(buf, notes=None, font=None):
                            ('INFO_LIFECYCLE_SRC', INFO_LIFECYCLE_SRC),
                            ('POT_FLOOR_RETURN_SRC', POT_FLOOR_RETURN_SRC),
                            ('START_TRANSITION_SRC', START_TRANSITION_SRC),
+                           ('START_REGION_SRC', START_REGION_SRC),
+                           ('START_S2_SELECTOR_SRC', START_S2_SELECTOR_SRC),
+                           ('START_S2_CONFIRM_SRC', START_S2_CONFIRM_SRC),
                            ('START_FINISH_SRC', START_FINISH_SRC)):
             if '$C0D7' in blob or '$C0D8' in blob:
                 raise SystemExit('menuvwf: %s references propvwf scratch $C0D7/$C0D8; '
@@ -10174,6 +10498,17 @@ def install(buf, notes=None, font=None):
             POT_FLOOR_RETURN_SRC, POT_FLOOR_RETURN_AT)
         floor_chrome_code, floor_chrome_labels = gbasm.assemble(
             FLOOR_CHROME_SRC, FLOOR_CHROME_AT)
+        # Bank 61 has no intervening redirected-text owner. Reserve the allocator's
+        # complete declared interval, rather than merely its current byte length, so a
+        # future pool expansion cannot silently grow into the title-cursor tail.
+        action_alloc_guard = _off(ACTION_ALLOC_BANK, ACTION_ALLOC_AT)
+        if any(b != 0xFF for b in
+               buf[action_alloc_guard:
+                   action_alloc_guard + ACTION_ALLOC_LIMIT - ACTION_ALLOC_AT]):
+            raise SystemExit('menuvwf: bank %d Action allocator reservation '
+                             '$%04X-$%04X is not free' %
+                             (ACTION_ALLOC_BANK, ACTION_ALLOC_AT,
+                              ACTION_ALLOC_LIMIT - 1))
         action_helpers = (
             ('admission gate', ACTION_GATE_BANK, ACTION_GATE_INDEX, ACTION_GATE_AT,
              ACTION_GATE_LIMIT, action_gate_code, action_gate_labels['actiongate']),
@@ -10497,6 +10832,91 @@ def install(buf, notes=None, font=None):
         buf[start_transition_ix + 1] = \
             start_transition_labels['starttransition'] >> 8
 
+        start_region_code, start_region_labels = gbasm.assemble(
+            START_REGION_SRC, START_REGION_AT)
+        if START_REGION_AT + len(start_region_code) > START_REGION_LIMIT:
+            raise SystemExit('menuvwf: Start regional helper needs %d bytes, only %d '
+                             'available' %
+                             (len(start_region_code),
+                              START_REGION_LIMIT - START_REGION_AT))
+        if buf[_off(START_REGION_BANK, 0x4000)] != START_REGION_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_REGION_BANK)
+        start_region_at = _off(START_REGION_BANK, START_REGION_AT)
+        if any(b != 0xFF for b in
+               buf[start_region_at:start_region_at + len(start_region_code)]):
+            raise SystemExit('menuvwf: bank %d Start regional region at $%04X is not free'
+                             % (START_REGION_BANK, START_REGION_AT))
+        start_region_ix = (_off(START_REGION_BANK, 0x4000) +
+                           START_REGION_INDEX - 1)
+        if bytes(buf[start_region_ix:start_region_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used'
+                             % (START_REGION_INDEX, START_REGION_BANK))
+        buf[start_region_at:start_region_at + len(start_region_code)] = start_region_code
+        buf[start_region_ix] = start_region_labels['startregion'] & 0xFF
+        buf[start_region_ix + 1] = start_region_labels['startregion'] >> 8
+
+        start_s2_selector_code, start_s2_selector_labels = gbasm.assemble(
+            START_S2_SELECTOR_SRC, START_S2_SELECTOR_AT)
+        if START_S2_SELECTOR_AT + len(start_s2_selector_code) > \
+                START_S2_SELECTOR_LIMIT:
+            raise SystemExit('menuvwf: Start S2 selector helper needs %d bytes, only %d '
+                             'available' %
+                             (len(start_s2_selector_code),
+                              START_S2_SELECTOR_LIMIT - START_S2_SELECTOR_AT))
+        if buf[_off(START_S2_SELECTOR_BANK, 0x4000)] != START_S2_SELECTOR_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_S2_SELECTOR_BANK)
+        start_s2_selector_at = _off(START_S2_SELECTOR_BANK,
+                                    START_S2_SELECTOR_AT)
+        if any(b != 0xFF for b in
+               buf[start_s2_selector_at:
+                   start_s2_selector_at + len(start_s2_selector_code)]):
+            raise SystemExit('menuvwf: bank %d Start S2 selector region at $%04X is '
+                             'not free' %
+                             (START_S2_SELECTOR_BANK, START_S2_SELECTOR_AT))
+        start_s2_selector_ix = (_off(START_S2_SELECTOR_BANK, 0x4000) +
+                                START_S2_SELECTOR_INDEX - 1)
+        if bytes(buf[start_s2_selector_ix:start_s2_selector_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (START_S2_SELECTOR_INDEX, START_S2_SELECTOR_BANK))
+        buf[start_s2_selector_at:
+            start_s2_selector_at + len(start_s2_selector_code)] = \
+            start_s2_selector_code
+        buf[start_s2_selector_ix] = \
+            start_s2_selector_labels['starts2selector'] & 0xFF
+        buf[start_s2_selector_ix + 1] = \
+            start_s2_selector_labels['starts2selector'] >> 8
+
+        start_s2_confirm_code, start_s2_confirm_labels = gbasm.assemble(
+            START_S2_CONFIRM_SRC, START_S2_CONFIRM_AT)
+        if START_S2_CONFIRM_AT + len(start_s2_confirm_code) > START_S2_CONFIRM_LIMIT:
+            raise SystemExit('menuvwf: Start S2 confirmation helper needs %d bytes, only '
+                             '%d available' %
+                             (len(start_s2_confirm_code),
+                              START_S2_CONFIRM_LIMIT - START_S2_CONFIRM_AT))
+        if buf[_off(START_S2_CONFIRM_BANK, 0x4000)] != START_S2_CONFIRM_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_S2_CONFIRM_BANK)
+        start_s2_confirm_at = _off(START_S2_CONFIRM_BANK, START_S2_CONFIRM_AT)
+        if any(b != 0xFF for b in
+               buf[start_s2_confirm_at:
+                   start_s2_confirm_at + len(start_s2_confirm_code)]):
+            raise SystemExit('menuvwf: bank %d Start S2 confirmation region at $%04X is '
+                             'not free' %
+                             (START_S2_CONFIRM_BANK, START_S2_CONFIRM_AT))
+        start_s2_confirm_ix = (_off(START_S2_CONFIRM_BANK, 0x4000) +
+                               START_S2_CONFIRM_INDEX - 1)
+        if bytes(buf[start_s2_confirm_ix:start_s2_confirm_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (START_S2_CONFIRM_INDEX, START_S2_CONFIRM_BANK))
+        buf[start_s2_confirm_at:
+            start_s2_confirm_at + len(start_s2_confirm_code)] = start_s2_confirm_code
+        buf[start_s2_confirm_ix] = \
+            start_s2_confirm_labels['starts2confirm'] & 0xFF
+        buf[start_s2_confirm_ix + 1] = \
+            start_s2_confirm_labels['starts2confirm'] >> 8
+
         start_finish_code, start_finish_labels = gbasm.assemble(
             START_FINISH_SRC, START_FINISH_AT)
         if START_FINISH_AT + len(start_finish_code) > START_FINISH_LIMIT:
@@ -10596,6 +11016,10 @@ def install(buf, notes=None, font=None):
         lo, hi = buf[ptab + 2 * box], buf[ptab + 2 * box + 1]
         d = _off(31, (hi << 8) | lo)
         return buf[d], buf[d + 1], buf[d + 3], buf[d + 4]    # x, y, width, flags
+
+    def desc_rows(box):
+        lo, hi = buf[ptab + 2 * box], buf[ptab + 2 * box + 1]
+        return buf[_off(31, (hi << 8) | lo) + 2]
 
     if proportional:
         allowed = set(propvwf.EN_CODES.values()) | {0x7D}
@@ -10766,13 +11190,21 @@ def install(buf, notes=None, font=None):
                 'menuvwf: clear-condition box 44 descriptor '
                 '(x=%d y=%d w=%d fl=$%02X) no longer matches the proportional '
                 'five-row allowlist' % (x, y, w, fl))
-        for box, want in ((23, (0, 1, 11, 2)), (26, (4, 4, 14, 4)),
-                          (27, (3, 7, 15, 0)), (45, (3, 8, 6, 2))):
+        for box, want in ((23, (0, 1, 11, 2)), (25, (5, 9, 9, 2)),
+                          (26, (4, 4, 14, 4)), (27, (3, 7, 15, 0)),
+                          (28, (11, 2, 4, 0x40)), (45, (3, 8, 6, 2))):
             got = desc(box)
             if got != want:
                 raise SystemExit(
                     'menuvwf: start-flow box %d descriptor %s no longer matches %s -- '
                     'update both the helper and census' % (box, got, want))
+        for box, want_rows in ((25, 3), (26, 3), (27, 2), (28, 2)):
+            got_rows = desc_rows(box)
+            if got_rows != want_rows:
+                raise SystemExit(
+                    'menuvwf: Start regional box %d has %d rows, expected %d -- '
+                    'update the exact physical clear rectangle' %
+                    (box, got_rows, want_rows))
         debug_categories = (desc(33), desc(34))
         if debug_categories != ((0, 0, 6, 0x50), (0, 0, 6, 0x50)):
             raise SystemExit('menuvwf: hidden debug category pages no longer share one '
@@ -10849,11 +11281,20 @@ def install(buf, notes=None, font=None):
                             len(info_lifecycle_code), ACTION_BLANK_BANK,
                             INFO_LIFECYCLE_AT))
             notes.append('menuvwf: %d+%d-byte title/file transition at '
-                         '%d:$%04X + %d:$%04X; layered title, Log, difficulty and '
-                         'Rank/Pass redraws publish one complete shadow map'
+                         '%d:$%04X + %d:$%04X plus %d-byte screen-23 and %d+%d-byte '
+                         'screen-22/26/24 regional helpers at %d:$%04X, %d:$%04X, and '
+                         '%d:$%04X; admitted summaries, Log selectors, and Erase '
+                         'confirmation clear only their exact native box rectangles '
+                         'with LCD on, while rejected difficulty/Rank/Pass redraws '
+                         'retain one complete shadow-map transaction'
                          % (len(start_transition_code), len(start_finish_code),
                             START_TRANSITION_BANK, START_TRANSITION_AT,
-                            START_FINISH_BANK, START_FINISH_AT))
+                            START_FINISH_BANK, START_FINISH_AT,
+                            len(start_region_code), len(start_s2_selector_code),
+                            len(start_s2_confirm_code), START_REGION_BANK,
+                            START_REGION_AT, START_S2_SELECTOR_BANK,
+                            START_S2_SELECTOR_AT, START_S2_CONFIRM_BANK,
+                            START_S2_CONFIRM_AT))
             pool = '$43-$7B + $8B-$95 + $9A-$9D (72 usable; isolated $87 unused)'
         else:
             notes.append('menuvwf: item-list rows composed at uniform 6px')

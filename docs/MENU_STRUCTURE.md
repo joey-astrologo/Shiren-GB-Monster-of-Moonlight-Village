@@ -192,7 +192,7 @@ The ten explicit translation-owned whole-LCD sites are:
 | Site | Owner and route | Policy |
 |---|---|---|
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — independent composite screen |
-| `41:$40E1` | `menuvwf.starttransition`: title/file complete shadow-map replacement | `review` — complete-screen menu transaction |
+| `41:$40E6` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `review` — retained for Start composites not yet converted |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `review` — complete-screen menu transaction |
 | `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items, Items-appended screen-7 Floor, and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
 | `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `keep` — tile-data lifetime boundary |
@@ -270,28 +270,93 @@ touches a personal save. That document records the accepted baseline, the implem
 
 ### Start-menu LCD-off catalogue
 
-The generated Start table has 17 caller rows. It names each visual path separately even
-though most composites share `41:$40E1`.
+The generated Start table has 19 caller rows. It names each visual path separately even
+though the unconverted composites share the fallback at `41:$40E6`.
+
+A fresh `mgbdis` pass over both `build/base.gb` and `build/shiren_en.gb` established the
+native dispatcher and publisher before S1 was changed. Screen 23 is handler `4:$4C75`
+(box 26); screen 24 is the No/Yes confirmation at `4:$4C94`; screen 26 is Copy's
+destination selector at `4:$4CCA`, not Rename. The native pop path clears the shadow,
+replays surviving stack screens, and publishes all 18 rows; pushes preserve the parent
+shadow. `startpathspill.py` now drives and freezes these exact observed routes:
+
+- Adventure: `15 -> 23` (including Down/Up redraws) -> `15`;
+- New Log: `15 -> 22 -> 25` -> `15 -> 22 -> 15` on the tested returns;
+- Copy: `15 -> 23 -> 26 -> 15`;
+- Erase: `15 -> 23 -> 24 -> 15`;
+- Rename: `15 -> 23 -> 8`;
+- Rank: `15 -> 30 -> 33`, or `15 -> 30 -> 31 -> 33` with multiple eligible logs;
+- Pass: `15 -> 30 -> 32 -> 34`; and
+- Replay: `15 -> 23 ->` replay replacement.
+
+S1 admits only row-zero screen 23 with exact stack `(15,23)`. During a complete VBlank
+it clears visible BG rectangle x=4..19/y=4..10 (box 26), leaving the handler to construct
+complete incoming chrome and text in shadow before the unchanged native publisher
+reveals it. Joey visually accepted all five S1 paths on 2026-08-31 against ROM SHA-256
+`a1221b6a89d30f58115fd0de44b037f179552a4dc1d7885b8014c787ecd72536`.
+
+S2 adds three exact callers. Screen 22's handler `4:$4C61` and screen 26's wrapper
+`4:$4CCA` both use box 25, so stacks `(15,22)` and `(15,23,26)` clear only
+x=5..15/y=9..15. Screen 24's handler `4:$4C94` draws box 27 followed by higher-z box 28;
+stack `(15,23,24)` clears x=3..19/y=7..11 plus x=11..16/y=2..6 in the same complete
+VBlank. The native shadow builders and publisher remain unchanged.
+
+| Regional owner | Far entry | Installed code | Structural neighbours |
+|---|---|---|---|
+| S1 screen 23 | bank 44 index `$07` (`44:$4006-$4007`) | `44:$4090-$40F6` | after `name6` restore; redirected text begins `$4100` |
+| S2 screens 22/26 | bank 46 index `$0B` (`46:$400A-$400B`) | `46:$40E9-$416C` | after Rankings-category allocator; before rank manager at `$4180` |
+| S2 screen 24 | bank 52 index `$07` (`52:$4006-$4007`) | `52:$4090-$40FD` | after `faypath`; redirected text begins `$4100` |
+
+Every installer checks both the whole code interval and its far-entry pair for `$FF`, and
+the build asserts boxes 25-28 retain the row/width/flag geometry encoded by these masks.
+Joey visually accepted all three S2 incoming transitions on 2026-08-31. A follow-up
+found that returning from any child could expose both an `Adventure` cursor and the
+saved-option cursor. Fresh `mgbdis` inspection of the candidate ROM established why:
+the native initializer at `4:$4E2B` replaces temporary selector `$C6A5` from the low
+nibble of `$C53F + ($C6A6-1)` before writing tile `$81`. The atomic publisher had staged
+the temporary zero (`Adventure`) before that restore.
+
+The return helper at `61:$40E1-$4115` now mirrors the native saved-selector lookup,
+clears every exact root cursor-owned cell `$C341 + 64*row`, and pre-stages `$81` only at
+the option native code is about to restore. The helper is gated to Start-root screen 15;
+other generic composites retain their own prefix cells. Its guarded allocation was
+extended to `61:$405A-$417F`; redirected text owns none of this bank and the next known
+owner begins at `$7000`. The installer requires the complete interval to remain `$FF`,
+so any future allocator overlap fails the build.
+
+All nine `startpathspill.py` routes and the complete `startspill.py` matrix pass against
+the post-fix ROM SHA-256
+`12fe799ad06b505c6bcfa0b8f2c8b858e430202b415b77b9bfb70f27114e538c`.
+The fixtures now require exactly one `$81` at the effective saved selector in both the
+root shadow and BG maps at every commit and final return. The three S2 entries are
+accepted; the focused transient cursor-return retest remains.
+
+The isolated SRAM staging command, S1 acceptance record, and three exact S2 visual routes
+are in [`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md). It resets a uniquely
+named Mesen save before each destructive title choice and never uses Lua or a personal
+SRAM.
 
 | Player path | Causal off producer(s) | Status and evidence |
 |---|---|---|
 | Boot/logo/title presentation -> Start | `29:$411A`; shadows `31:$49B1`, `31:$4AE8`, `31:$4D59`, `31:$4899`, `4:$65F4` | `keep`; pre-interactive hardware/title initialization |
-| Adventure -> saved-log summary/log changes | `41:$40E1` | `review`; observed screen 23 composite |
+| Adventure -> saved-log summary/log changes | none | `regional` S1; exact screen 23, stack `(15,23)`; visually accepted 2026-08-31 |
 | Select Adventure log -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
-| New Log -> selector | `41:$40E1` | `review`; observed screen 22 |
-| New Log -> difficulty/explanation | `41:$40E1` | `review`; observed screen 25 |
+| New Log -> selector | none | `regional` S2; exact screen 22/box 25, stack `(15,22)`; entry and screen-25 return have zero Start LCD-off hits |
+| New Log -> difficulty/explanation | `41:$40E6` | `review`; observed screen 25; planned S3 |
 | New Log -> personal-name keyboard | `44:$4066` | `keep`; independent screen-8/native-font replacement |
 | Confirm New Log name -> village | shadow `2:$463C` | `keep`; replacement boundary |
-| Copy Log summaries/confirmation | `41:$40E1` | `review`; observed screens 23 and 24 |
-| Erase Log summary/confirmation | `41:$40E1` | `review`; observed screens 23 and 24 |
-| Rename -> alternate selector | `41:$40E1` | `review`; observed screen 26 |
-| Rename -> personal-name keyboard | `44:$4066` | `keep`; same static screen-8 caller as New Log, but an isolated Rename-entry trace is still missing |
-| Return from file/Rank child -> Start root | `46:$42B5` | `keep`; complete native-font restoration observed beyond Rankings too |
-| Rank/Pass root and Pass selector | `41:$40E1` | `review`; observed screens 30 and 32 |
+| Copy Log -> source summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
+| Copy source -> destination selector | none | `regional` S2; exact screen 26/box 25, stack `(15,23,26)`; zero Start LCD-off hits |
+| Erase Log -> summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
+| Erase summary -> No/Yes confirmation | none | `regional` S2; exact screen 24/boxes 27+28, stack `(15,23,24)`; zero Start LCD-off hits |
+| Rename -> log summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
+| Rename -> personal-name keyboard | `44:$4066` | `keep`; exact `15,23,8` independent screen/native-font boundary |
+| Return from file/Rank child -> Start root | `46:$42B5` | `keep`; complete native-font restoration observed beyond Rankings too; cursor publisher mirrors native saved selector and enforces one owned cursor |
+| Rank/Pass root and Pass selector | `41:$40E6` | `review`; exact screens 30 and 32; planned S4 |
 | Rank category -> Rankings display | `43:$40B6`, `46:$42B5` | `review`; completed map publication plus native-font restoration on screen 33 |
 | Fay's Puzzle -> task composite | `38:$408F` | `keep`; independent composite screen |
 | Fay task -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
-| Replay -> saved-log summary | `41:$40E1` | `review`; focused exhaustive trace observed screen 23; choosing the log produced no additional LCD-off producer before replay handoff |
+| Replay -> saved-log summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31; replay selection then crosses an intentional replacement boundary |
 
 The normal ending site `59:$406F` belongs to neither menu system and remains in the
 instruction census as an intentional new-scene blank. Native `2:$4702` and the remaining
@@ -541,17 +606,17 @@ Title/start root                                            screen 15
 |   `-- saved-log summary                                  screen 23
 |       `-- Continue / New Game                            screen 21
 |           `-- gameplay/status                            replacement; screen 0 later
-|-- New Log                                                outline
-|   `-- log selection                                      screen 22 or 26
+|-- New Log                                                traced
+|   `-- log selection                                      screen 22
 |       `-- difficulty + explanation                       screen 25
 |           `-- name entry                                 replacement; screen 8 variant
-|-- Copy Log                                               outline + fixture coverage
-|   `-- source/target log selection                        screens 22/26
-|-- Erase Log                                              outline + fixture coverage
-|   `-- log selection
+|-- Copy Log                                               traced
+|   `-- source summary -> destination selector             screens 23 -> 26
+|-- Erase Log                                              traced
+|   `-- log summary                                        screen 23
 |       `-- prompt + No/Yes                                screen 24
-|-- Rename                                                 outline + fixture coverage
-|   `-- log selection
+|-- Rename                                                 traced
+|   `-- log summary                                        screen 23
 |       `-- name entry                                     replacement; screen 8 variant
 |-- Rank/Pass                                              screen 30
 |   |-- Rank category                                      screen 31
@@ -559,7 +624,7 @@ Title/start root                                            screen 15
 |   `-- Pass log selection                                 screen 32
 |       `-- password/award/conditions                      replacement/composite, screen 34
 |           `-- no-password fallback                      screen 19 when applicable
-|-- Replay                                                 replacement into gameplay replay
+|-- Replay                                                 screen 23, then replacement into gameplay replay
 |-- Fay's Puzzle                                           screen 17
 |   `-- selected task enters gameplay/status               replacement; screen 0 later
 ```
@@ -568,14 +633,19 @@ Measured dispatcher sequences include:
 
 - Adventure load: `15 -> 23 -> 21 -> 0`; moving among logs can redraw screen 23 more than
   once.
+- New Log/returns: `15 -> 22 -> 25`, then `15 -> 22 -> 15` in the traced Back paths.
+- Copy: `15 -> 23 -> 26 -> 15`; screen 26 is the destination selector.
+- Erase: `15 -> 23 -> 24 -> 15`.
+- Rename: `15 -> 23 -> 8`.
+- Direct Rank: `15 -> 30 -> 33`; multi-log Rank inserts screen 31.
 - Pass/award route: `15 -> 30 -> 32 -> 34`.
+- Replay: `15 -> 23`, then a replacement-screen handoff.
 - Fay route: `15 -> 17 -> 0` after task selection.
-- Copy, Erase, New, and name flows are exercised pixelwise by the current fixtures, but
-  their complete dispatcher edge logs should be added before regional work targets them.
 
 Title/file screens are composites. A child can borrow tile planes while title rows remain
 visible, and returning can restore native planes. Current translation states `$10-$14`
-protect these transactions; they are not candidates for the first regional checkpoint.
+protect these transactions. S1 is the first exception: exact screen 23 owns box 26's
+regional rectangle; every other composite retains the atomic controller.
 The atomic screen-15 publisher finishes before the native cursor initializer at
 `4:$4E2B`. The translation therefore pre-stages cursor tile `$81` at
 `$C341 + 64*$C6A5`; `tools/startspill.py` checks both that shadow cell and the first
@@ -2240,9 +2310,10 @@ display reconstruction.
 2. Treat future alternate Pot-content, shop action, or screen-16 callers as independent
    ownership epochs; the current exact Put-selector and shop Floor/Info proofs do not
    authorize them.
-3. Capture complete dispatcher logs for New Log, Copy Log, Erase Log, Rename, Rank, Replay,
-   and every staged action verb. Replace every `outline`/`inferred` edge before using it as
-   an implementation boundary.
+3. Extend `startpathspill.py` with any newly discovered title choice or conditional
+   branch before admitting it. The currently known New/Copy/Erase/Rename/Rank/Pass/Replay
+   routes are exact; staged gameplay action verbs remain context-specific and must not
+   inherit a menu mask from a shared screen ID.
 
 The implemented scope remains narrow: screen-1 paging/Start-sort owns an exact five-row
 mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; direct

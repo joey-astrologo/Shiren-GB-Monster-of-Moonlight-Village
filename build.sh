@@ -198,6 +198,13 @@ if [ -f saves/shiren_en_path_select.srm ]; then
   python3 tools/nameflowspill.py build/shiren_en.gb \
           --ram saves/shiren_en_path_select.srm
 fi
+if [ -f saves/shiren_en_path_select.srm ] &&
+   [ -f saves/shiren_en_log_1_password.srm ] &&
+   [ -f saves/shiren_en_logs_passwords.srm ]; then
+  # Freeze the native screen-stack routes and exact LCD-off/regional ownership for all
+  # nine title choices before broader Start-menu regional checkpoints are admitted.
+  python3 tools/startpathspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_log3_unidentified_naming.srm ]; then
   python3 tools/unidentifiednamespill.py build/shiren_en.gb
   python3 tools/unidentifiedpotnamespill.py build/shiren_en.gb

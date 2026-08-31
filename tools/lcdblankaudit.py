@@ -35,6 +35,7 @@ BANK_SIZE = 0x4000
 # statusdisable entry's read/bit-clear prologue.
 STATUS_DISABLE_AT = statusvwf.runtime_labels()['statusdisable'] + 4
 INFO_DISABLE_AT = menuvwf.info_lifecycle_labels()['fidisable'] + 4
+START_DISABLE_AT = menuvwf.start_transition_labels()['stdisable']
 
 
 # (bank, write address): (owner, route/purpose, current policy)
@@ -52,9 +53,9 @@ TRANSLATION_OFF = {
         "Fay's Puzzle composite entry and native fixed-tile reload",
         'keep',
     ),
-    (41, 0x40E1): (
+    (41, START_DISABLE_AT): (
         'menuvwf.starttransition',
-        'title/file composite shadow-map replacement',
+        'title/file composite fallback after exact screen-22/23/24/26 regional admission',
         'review',
     ),
     (43, 0x40B6): (
@@ -362,21 +363,26 @@ MENU_BLANK_PATHS = (
          status='keep', fixture='titlecardspill.py, titlelogospill.py',
          evidence='pre-interactive display initialization, not a menu blanking target'),
     dict(system='start', key='adventure-log-summary',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,23',
-         route='Adventure -> saved-log summary and log changes', status='review',
-         fixture='mainmenuspill.py, copylogspill.py, savesummaryspill.py',
-         evidence='observed title/file composite replacement'),
+         sites=(), origin='translation', stack='15,23',
+         route='Adventure -> saved-log summary and log changes', status='regional',
+         fixture='startpathspill.py, startspill.py, savesummaryspill.py',
+         evidence='S1: exact screen-23 root-child stack commits box-26 BG rectangle '
+                  'x=4..19/y=4..10 during VBlank; zero Start LCD-off hits; visually '
+                  'accepted 2026-08-31'),
     dict(system='start', key='adventure-to-gameplay',
          sites=(('shadow', 2, 0x463C), ('shadow', 4, 0x4154)),
          origin='base', stack='15,23,21', route='Select Adventure log -> gameplay',
          status='keep', fixture='all save-backed menu fixtures',
          evidence='replacement boundary'),
     dict(system='start', key='new-log-selector',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,22',
-         route='New Log -> log selector', status='review',
-         fixture='mainmenuspill.py, nameflowspill.py', evidence='observed screen 22'),
+         sites=(), origin='translation', stack='15,22',
+         route='New Log -> log selector', status='regional',
+         fixture='startpathspill.py, mainmenuspill.py, nameflowspill.py',
+         evidence='S2: mgbdis handler 4:$4C61/box 25; exact root-child stack clears '
+                  'x=5..15/y=9..15 during VBlank; entry and screen-25 return both '
+                  'produce zero Start LCD-off hits'),
     dict(system='start', key='new-log-difficulty',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,22,25',
+         sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation', stack='15,22,25',
          route='New Log -> difficulty and explanation composite', status='review',
          fixture='mainmenuspill.py, nameflowspill.py', evidence='observed screen 25'),
     dict(system='start', key='new-log-name',
@@ -387,31 +393,48 @@ MENU_BLANK_PATHS = (
          sites=(('shadow', 2, 0x463C),), origin='base', stack='15,22,25,8',
          route='Confirm New Log name -> village/gameplay', status='keep',
          fixture='newgamesmoke.py', evidence='replacement boundary'),
-    dict(system='start', key='copy-log',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,23 and 15,23,24',
-         route='Copy Log -> source/destination summaries and confirmation', status='review',
-         fixture='copylogspill.py', evidence='observed screens 23 and 24'),
-    dict(system='start', key='erase-log',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,23 and 15,23,24',
-         route='Erase Log -> log summary and confirmation', status='review',
-         fixture='copylogspill.py, startspill.py', evidence='observed screens 23 and 24'),
-    dict(system='start', key='rename-log-selector',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,23,26',
-         route='Rename -> alternate log-selector wrapper', status='review',
-         fixture='nameflowspill.py', evidence='observed screen 26'),
+    dict(system='start', key='copy-log-summary',
+         sites=(), origin='translation', stack='15,23',
+         route='Copy Log -> source-log summary', status='regional',
+         fixture='startpathspill.py, copylogspill.py',
+         evidence='S1 screen 23; zero Start LCD-off hits; visually accepted 2026-08-31'),
+    dict(system='start', key='copy-log-destination',
+         sites=(), origin='translation', stack='15,23,26',
+         route='Copy Log source -> destination selector', status='regional',
+         fixture='startpathspill.py, copylogspill.py',
+         evidence='S2: mgbdis handler 4:$4CCA calls screen-22 builder and owns box 25; '
+                  'exact stack clears x=5..15/y=9..15 during VBlank with zero Start '
+                  'LCD-off hits'),
+    dict(system='start', key='erase-log-summary',
+         sites=(), origin='translation', stack='15,23',
+         route='Erase Log -> log summary', status='regional',
+         fixture='startpathspill.py, copylogspill.py',
+         evidence='S1 screen 23; zero Start LCD-off hits; visually accepted 2026-08-31'),
+    dict(system='start', key='erase-log-confirmation',
+         sites=(), origin='translation', stack='15,23,24',
+         route='Erase Log summary -> No/Yes confirmation', status='regional',
+         fixture='startpathspill.py, copylogspill.py, startspill.py',
+         evidence='S2: mgbdis handler 4:$4C94 draws box 27 then box 28; exact stack '
+                  'clears x=3..19/y=7..11 plus x=11..16/y=2..6 in one VBlank with '
+                  'zero Start LCD-off hits'),
+    dict(system='start', key='rename-log-summary',
+         sites=(), origin='translation', stack='15,23',
+         route='Rename -> log summary', status='regional',
+         fixture='startpathspill.py, nameflowspill.py',
+         evidence='S1 screen 23 visually accepted 2026-08-31; Rename enters screen 8 '
+                  'directly and never uses screen 26'),
     dict(system='start', key='rename-log-name',
          sites=(('LCDC', 44, 0x4066),), origin='translation', stack='screen 8 variant',
          route='Rename -> personal-name keyboard', status='keep',
-         fixture='no isolated Rename entry fixture',
-         evidence='static caller 4:$4B04 is shared with New Log; exact Rename visual '
-                  'route remains a coverage gap'),
+         fixture='startpathspill.py, nameflowspill.py',
+         evidence='exact 15,23,8 route; independent native-font keyboard boundary'),
     dict(system='start', key='return-to-start-root',
          sites=(('LCDC', 46, 0x42B5),), origin='translation', stack='15',
          route='Return from file/Rank children -> Start root/native font', status='keep',
          fixture='nameflowspill.py, copylogspill.py, rankspill.py',
          evidence='observed beyond Rankings; physical owner is rankvwf.nativerestore'),
     dict(system='start', key='rank-pass',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,30 and 15,30,32',
+         sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation', stack='15,30 and 15,30,32',
          route='Rank/Pass -> root/category/Pass log composites', status='review',
          fixture='mainmenuspill.py, awardspill.py', evidence='observed screens 30 and 32'),
     dict(system='start', key='rankings-display',
@@ -429,11 +452,12 @@ MENU_BLANK_PATHS = (
          origin='base', stack='15,17', route="Fay's Puzzle task -> gameplay",
          status='keep', fixture='faypathspill.py', evidence='replacement boundary'),
     dict(system='start', key='replay-log-summary',
-         sites=(('LCDC', 41, 0x40E1),), origin='translation', stack='15,23',
-         route='Replay -> saved-log summary before replay begins', status='review',
-         fixture='focused exhaustive gbrun trace, 2026-08-27',
-         evidence='observed screen 23; selecting the log produced no additional LCD-off '
-                  'producer before the replay handoff'),
+         sites=(), origin='translation', stack='15,23',
+         route='Replay -> saved-log summary before replay begins', status='regional',
+         fixture='startpathspill.py',
+         evidence='S1 screen 23 visually accepted 2026-08-31; zero Start LCD-off hits; '
+                  'selecting the log crosses to the replay replacement without another '
+                  'Start blanker'),
 )
 
 
