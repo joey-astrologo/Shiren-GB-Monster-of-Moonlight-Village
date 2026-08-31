@@ -133,15 +133,18 @@ just entered. There must not also be a cursor beside `Adventure`. Move Up/Down o
 each return and confirm that only the single active cursor moves.
 
 The automated fixture checks this invariant for every root return in all nine traced
-Start routes, in both the shadow map and the published BG map. This visual check remains
-necessary to confirm that no transient duplicate is exposed between publication and
-the native cursor writer.
+Start routes, in both the shadow map and the published BG map. Joey visually accepted
+the transient cursor-return correction on 2026-08-31.
 
 ## Later checkpoints
 
-- S3: screen 25 difficulty plus explanation composite.
-- S4: screen 30 Rank/Pass and screen 32 Pass log selector. Screens 31 and 34 are already
-  LCD-live; Rankings screen 33 remains a separate whole-page review.
-- Whole-LCD policy for root/native-font returns, Start name keyboards, Fay's Puzzle,
-  gameplay, and replay handoffs retains its catalogued independent-screen policy unless
-  reviewed separately. Root cursor ownership is covered by the regression check above.
+- S2R: B returns from Adventure/New/Copy/Erase/Rename/Replay selectors or summaries to
+  the Start root. Cursor ownership is accepted; their whole-LCD policy remains work.
+- S3: New Log difficulty/explanation entry, difficulty redraws, and B returns.
+- S3N: New Log/Rename name-entry directions, pending final visual-policy review.
+- S4: Rank/Pass choice, category, and Pass log-selector layers only. The final Rankings
+  and Pass displays are user-approved independent screens; whole-LCD blanking is allowed
+  entering and leaving them, and between Rankings pages.
+- Replay saved-log selection remains LCD-live; its gameplay handoff may blank.
+- Start <-> Fay's Puzzle and Fay -> gameplay may blank. Fay's two puzzle pages must
+  continue paging LCD-live and need a second-50-puzzles save-backed regression fixture.

@@ -50,7 +50,8 @@ START_DISABLE_AT = menuvwf.start_transition_labels()['stdisable']
 TRANSLATION_OFF = {
     (38, 0x408F): (
         'structvwf.feirestore',
-        "Fay's Puzzle composite entry and native fixed-tile reload",
+        "user-approved Fay's Puzzle independent-screen entry/B-exit and native "
+        'fixed-tile reload; internal puzzle paging remains LCD-live',
         'keep',
     ),
     (41, START_DISABLE_AT): (
@@ -60,8 +61,8 @@ TRANSLATION_OFF = {
     ),
     (43, 0x40B6): (
         'rankvwf.rankfinish',
-        'completed Rankings whole-map publication',
-        'review',
+        'user-approved independent Rankings display publication/page replacement',
+        'keep',
     ),
     (44, 0x4066): (
         'name6.namerestore',
@@ -72,8 +73,9 @@ TRANSLATION_OFF = {
     ),
     (46, 0x42B5): (
         'rankvwf.nativerestore',
-        'Rankings result/native-font restoration',
-        'keep',
+        'native-font restoration shared by approved final Rankings/Pass exits and '
+        'unreviewed file/choice-menu B returns',
+        'mixed',
     ),
     (53, STATUS_DISABLE_AT): (
         'statusvwf.statusentry',
@@ -430,34 +432,47 @@ MENU_BLANK_PATHS = (
          evidence='exact 15,23,8 route; independent native-font keyboard boundary'),
     dict(system='start', key='return-to-start-root',
          sites=(('LCDC', 46, 0x42B5),), origin='translation', stack='15',
-         route='Return from file/Rank children -> Start root/native font', status='keep',
-         fixture='nameflowspill.py, copylogspill.py, rankspill.py',
-         evidence='observed beyond Rankings; physical owner is rankvwf.nativerestore'),
+         route='Return from file selectors/summaries -> Start root/native font',
+         status='review', fixture='startpathspill.py, nameflowspill.py, copylogspill.py',
+         evidence='cursor ownership accepted 2026-08-31; whole-LCD policy for '
+                  'Adventure/New/Copy/Erase/Rename/Replay B returns remains S2R work'),
     dict(system='start', key='rank-pass',
          sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation', stack='15,30 and 15,30,32',
-         route='Rank/Pass -> root/category/Pass log composites', status='review',
-         fixture='mainmenuspill.py, awardspill.py', evidence='observed screens 30 and 32'),
+         route='Start root -> Rank/Pass choices, category, and Pass log selector',
+         status='review', fixture='mainmenuspill.py, awardspill.py',
+         evidence='choice layers (screens 30/31/32) remain in scope in both directions'),
     dict(system='start', key='rankings-display',
          sites=(('LCDC', 43, 0x40B6), ('LCDC', 46, 0x42B5)),
          origin='translation', stack='15,30[,31],33',
-         route='Rank category -> completed Rankings display/native-font restore',
-         status='review', fixture='rankspill.py, orochisymbolspill.py, deathrankspill.py',
-         evidence='both publication and restoration execute on screen 33'),
+         route='Rank choice -> Rankings display, Rankings paging, and reverse',
+         status='keep', fixture='rankspill.py, orochisymbolspill.py, deathrankspill.py',
+         evidence='user-approved independent-screen boundary 2026-08-31; whole-LCD '
+                  'blanking is allowed on entry, every ranking page change, and exit'),
+    dict(system='start', key='pass-display',
+         sites=(('LCDC', 46, 0x42B5),), origin='translation', stack='15,30,32,34',
+         route='Pass log selector -> password/award display and reverse', status='keep',
+         fixture='startpathspill.py, awardspill.py',
+         evidence='user-approved independent-screen boundary 2026-08-31; current entry '
+                  'is LCD-live, but whole-LCD blanking is allowed in either direction'),
     dict(system='start', key='fay-entry',
          sites=(('LCDC', 38, 0x408F),), origin='translation', stack='15 -> 17',
-         route="Fay's Puzzle -> task composite", status='keep',
-         fixture='faypathspill.py', evidence='observed at the screen-15 boundary'),
+         route="Start root <-> Fay's Puzzle task composite", status='keep',
+         fixture='faypathspill.py',
+         evidence='user-approved independent-screen boundary 2026-08-31; entry and B '
+                  'exit may blank, but its existing two-page puzzle paging must stay '
+                  'LCD-live'),
     dict(system='start', key='fay-to-gameplay',
          sites=(('shadow', 2, 0x463C), ('shadow', 4, 0x4154)),
          origin='base', stack='15,17', route="Fay's Puzzle task -> gameplay",
-         status='keep', fixture='faypathspill.py', evidence='replacement boundary'),
+         status='keep', fixture='faypathspill.py',
+         evidence='user-approved gameplay replacement boundary 2026-08-31'),
     dict(system='start', key='replay-log-summary',
          sites=(), origin='translation', stack='15,23',
          route='Replay -> saved-log summary before replay begins', status='regional',
          fixture='startpathspill.py',
          evidence='S1 screen 23 visually accepted 2026-08-31; zero Start LCD-off hits; '
-                  'selecting the log crosses to the replay replacement without another '
-                  'Start blanker'),
+                  'B return remains S2R work; selecting the log crosses a user-approved '
+                  'gameplay-replay replacement boundary where whole-LCD blanking is fine'),
 )
 
 

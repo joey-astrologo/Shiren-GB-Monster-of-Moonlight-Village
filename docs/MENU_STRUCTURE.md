@@ -191,11 +191,11 @@ The ten explicit translation-owned whole-LCD sites are:
 
 | Site | Owner and route | Policy |
 |---|---|---|
-| `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — independent composite screen |
+| `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — user-approved independent-screen entry/B-exit; internal two-page puzzle paging stays LCD-live |
 | `41:$40E6` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `review` — retained for Start composites not yet converted |
-| `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `review` — complete-screen menu transaction |
+| `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `keep` — user-approved independent Rankings display; entry, exit, and page changes may blank |
 | `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items, Items-appended screen-7 Floor, and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
-| `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `keep` — tile-data lifetime boundary |
+| `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `mixed` — keep for user-approved final Rankings/Pass display exits; file/choice-menu B returns remain review work |
 | `53:$4600` | `statusvwf.statusentry`: rejected Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower owner | `replace-menu` safety fallback; dormant in the expanded automated routes |
 | `59:$406F` | `normalending.install`: Normal-ending full-screen art installation | `keep` — new scene |
 | `60:$4222` | `menuvwf.itemregion`: rejected Item-row transaction; the canonical cursed/plated/fused equipment route is now admitted before it | `replace-menu` safety fallback, dormant for known callers |
@@ -270,7 +270,7 @@ touches a personal save. That document records the accepted baseline, the implem
 
 ### Start-menu LCD-off catalogue
 
-The generated Start table has 19 caller rows. It names each visual path separately even
+The generated Start table has 20 caller rows. It names each visual path separately even
 though the unconverted composites share the fallback at `41:$40E6`.
 
 A fresh `mgbdis` pass over both `build/base.gb` and `build/shiren_en.gb` established the
@@ -328,8 +328,21 @@ All nine `startpathspill.py` routes and the complete `startspill.py` matrix pass
 the post-fix ROM SHA-256
 `12fe799ad06b505c6bcfa0b8f2c8b858e430202b415b77b9bfb70f27114e538c`.
 The fixtures now require exactly one `$81` at the effective saved selector in both the
-root shadow and BG maps at every commit and final return. The three S2 entries are
-accepted; the focused transient cursor-return retest remains.
+root shadow and BG maps at every commit and final return. Joey visually accepted the
+three S2 entries and the focused transient cursor-return correction on 2026-08-31.
+
+The visual-policy review on 2026-08-31 further separates choice layers from true
+replacement displays:
+
+- Replay's saved-log selector must remain LCD-live; selecting the log may blank because
+  replay gameplay replaces the menu. B from the selector to Start remains return work.
+- Start <-> Fay's Puzzle may blank, as may Fay -> gameplay. Fay's two existing puzzle
+  pages are internal navigation and must continue paging without an LCD blank. A save
+  with the second set of 50 puzzles will become the no-Lua regression fixture.
+- Rank/Pass choice, category, and log-selector layers remain menu work. Once a choice
+  enters the final Rankings or Pass display, whole-LCD blanking is allowed in both
+  directions. Rankings page-to-page blanking is also explicitly allowed because every
+  page is treated as a new display.
 
 The isolated SRAM staging command, S1 acceptance record, and three exact S2 visual routes
 are in [`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md). It resets a uniquely
@@ -351,12 +364,13 @@ SRAM.
 | Erase summary -> No/Yes confirmation | none | `regional` S2; exact screen 24/boxes 27+28, stack `(15,23,24)`; zero Start LCD-off hits |
 | Rename -> log summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
 | Rename -> personal-name keyboard | `44:$4066` | `keep`; exact `15,23,8` independent screen/native-font boundary |
-| Return from file/Rank child -> Start root | `46:$42B5` | `keep`; complete native-font restoration observed beyond Rankings too; cursor publisher mirrors native saved selector and enforces one owned cursor |
-| Rank/Pass root and Pass selector | `41:$40E6` | `review`; exact screens 30 and 32; planned S4 |
-| Rank category -> Rankings display | `43:$40B6`, `46:$42B5` | `review`; completed map publication plus native-font restoration on screen 33 |
-| Fay's Puzzle -> task composite | `38:$408F` | `keep`; independent composite screen |
-| Fay task -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
-| Replay -> saved-log summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31; replay selection then crosses an intentional replacement boundary |
+| Return from file selectors/summaries -> Start root | `46:$42B5` | `review` S2R; cursor ownership accepted, but Adventure/New/Copy/Erase/Rename/Replay B-return blanking policy remains to implement/review |
+| Rank/Pass choice, category, and Pass log-selector layers | `41:$40E6` | `review`; exact screens 30/31/32 remain S4 work in both directions |
+| Rank choice -> Rankings display, paging, and reverse | `43:$40B6`, `46:$42B5` | `keep`; user-approved independent display—entry, exit, and every Rankings page change may blank |
+| Pass selector -> password/award display and reverse | `46:$42B5` on reverse | `keep`; user-approved independent display; current entry is LCD-live, but blanking is allowed in either direction |
+| Start root <-> Fay's Puzzle | `38:$408F` | `keep`; user-approved independent composite entry/B-exit; its two puzzle pages must continue paging LCD-live |
+| Fay task -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; user-approved replacement boundary |
+| Replay -> saved-log summary | none | `regional` S1; selector entry visually accepted and remains LCD-live; B return is S2R; selecting a save crosses a user-approved gameplay replacement boundary |
 
 The normal ending site `59:$406F` belongs to neither menu system and remains in the
 instruction census as an intentional new-scene blank. Native `2:$4702` and the remaining
@@ -620,12 +634,13 @@ Title/start root                                            screen 15
 |       `-- name entry                                     replacement; screen 8 variant
 |-- Rank/Pass                                              screen 30
 |   |-- Rank category                                      screen 31
-|   |   `-- Rankings                                       replacement/composite, screen 33
+|   |   `-- Rankings                                       approved replacement display, screen 33
 |   `-- Pass log selection                                 screen 32
-|       `-- password/award/conditions                      replacement/composite, screen 34
+|       `-- password/award/conditions                      approved replacement display, screen 34
 |           `-- no-password fallback                      screen 19 when applicable
-|-- Replay                                                 screen 23, then replacement into gameplay replay
-|-- Fay's Puzzle                                           screen 17
+|-- Replay                                                 LCD-live screen 23, then approved gameplay replacement
+|-- Fay's Puzzle                                           approved replacement screen 17
+|   |-- puzzle page 1 <-> puzzle page 2                    must remain LCD-live
 |   `-- selected task enters gameplay/status               replacement; screen 0 later
 ```
 
@@ -2290,10 +2305,16 @@ display reconstruction.
   `Put` intentionally leaves the menu for a dungeon
   action and therefore retains the base engine's two new-screen blanks. Shared screen
   IDs do not imply shared ownership.
-- **Start/title composites:** log summaries, confirmation, difficulty, Rank/Pass, Fay, and
-  Rankings borrow planes across several boxes. Their current atomic controller remains.
-- **Map, Quit, Replay, and gameplay verbs:** these are replacement paths. Preserve their
-  native blank/transition unless a separate visual defect is demonstrated.
+- **Remaining Start/title choice composites:** New Log difficulty and the Rank/Pass
+  choice/category/log-selector layers borrow planes across several boxes and remain
+  review work. Final Rankings and Pass displays are user-approved replacement screens;
+  their entry, exit, and Rankings page changes may blank. Start <-> Fay and Fay ->
+  gameplay may also blank, while Fay's internal two-page puzzle navigation must remain
+  LCD-live.
+- **Map, Quit, Replay gameplay, and gameplay verbs:** these are replacement paths.
+  Preserve their native blank/transition unless a separate visual defect is demonstrated.
+  Replay's preceding saved-log selector is not a replacement: its entry stays LCD-live
+  and its B return remains S2R work.
 - **Unknown Name entry/return contexts:** carried entry is admitted only by the exact
   `0,1,2,9` stack/viewport proof above, and the matching inventory return only by the
   separate state-`$0D` proof below. Any other screen-9 caller or malformed replay retains
@@ -2310,10 +2331,13 @@ display reconstruction.
 2. Treat future alternate Pot-content, shop action, or screen-16 callers as independent
    ownership epochs; the current exact Put-selector and shop Floor/Info proofs do not
    authorize them.
-3. Extend `startpathspill.py` with any newly discovered title choice or conditional
-   branch before admitting it. The currently known New/Copy/Erase/Rename/Rank/Pass/Replay
-   routes are exact; staged gameplay action verbs remain context-specific and must not
-   inherit a menu mask from a shared screen ID.
+3. Complete Start S2R for Adventure/New/Copy/Erase/Rename/Replay B returns, then S3 for
+   New Log difficulty and its reverse path, S3N for Start name-entry policy, and S4 for
+   only the Rank/Pass choice/category/log-selector layers. Extend `startpathspill.py`
+   before admitting any new conditional branch. Add a no-Lua second-50-puzzles save
+   fixture that locks Fay page-to-page navigation LCD-live. Final Rankings/Pass displays,
+   Rankings paging, Start <-> Fay, Fay -> gameplay, and Replay -> gameplay are approved
+   replacement boundaries and are not blank-removal targets.
 
 The implemented scope remains narrow: screen-1 paging/Start-sort owns an exact five-row
 mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; direct
