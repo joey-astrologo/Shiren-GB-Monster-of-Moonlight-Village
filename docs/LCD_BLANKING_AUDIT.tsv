@@ -88,15 +88,15 @@ LCDC	32	$686B	ldh	variable	translation	translation-added writer	observe	does not
 LCDC	32	$6CD2	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	32	$6D42	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	38	$408F	ldh	explicit-off	translation	structvwf.feirestore	keep	user-approved Fay's Puzzle independent-screen entry/B-exit and native fixed-tile reload; internal puzzle paging remains LCD-live
-LCDC	41	$40C8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	41	$40E6	ldh	explicit-off	translation	menuvwf.starttransition	review	title/file composite fallback after exact screen-22/23/24/26 regional admission
+LCDC	41	$40D4	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	41	$40F2	ldh	explicit-off	translation	menuvwf.starttransition	dormant	title/file composite fallback after all catalogued file, difficulty, and Rank/Pass choice-layer regional admissions
 LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	keep	user-approved independent Rankings display publication/page replacement
 LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete native menu-font reload retained for Start naming and rejected screen-9 callers; exact carried-Item, Items-appended screen-7 Floor, and screen-20 Floor callers are regional
 LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	46	$42B5	ldh	explicit-off	translation	rankvwf.nativerestore	mixed	native-font restoration shared by approved final Rankings/Pass exits and unreviewed file/choice-menu B returns
+LCDC	46	$42C2	ldh	explicit-off	translation	rankvwf.nativerestore	keep	native-font restoration retained for approved final Rankings/Pass exits, already-dark transactions, and rejected unknown callers; exact file-menu B returns bypass it through the S2R regional owner
 LCDC	53	$4624	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower regional owner
 LCDC	53	$462D	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	53	$58CD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
@@ -148,7 +148,7 @@ LCDC-shadow	31	$7D4C	res-[hl]	explicit-off	base	base ROM	native-observe	native/s
 LCDC-shadow	31	$7DAE	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
 LCDC-shadow	31	$7E99	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
 LCDC-shadow	31	$7EF9	set-[hl]	explicit-on	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
-LCDC-shadow	41	$40C5	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC-shadow	41	$40D1	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC-shadow	43	$4083	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC-shadow	43	$40C2	ld	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC-shadow	46	$429B	ld	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition

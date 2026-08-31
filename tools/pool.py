@@ -141,6 +141,24 @@ ACTION_GATE_TEXT_ORG = 0x42A0
 # $7000.
 ACTION_BLANK_BANK = 0x3E
 ACTION_BLANK_TEXT_ORG = 0x5490
+# Bank 40's four-byte Floor/Info ABI, exact Start cancellation-return controller, and
+# screen-25 difficulty owner share a declared prefix. Redirected strings begin after
+# those controllers instead of relying on whichever bytes happen to remain $FF in the
+# current build.
+START_ROOT_RETURN_BANK = 0x28
+START_ROOT_RETURN_TEXT_ORG = 0x4200
+# Bank 61 already owns the Action allocator below $4180 and title-card data from $7000.
+# The retained Rank/Pass choice and screen-25 difficulty owners occupy the adjacent
+# $4180-$42B9 interval; keep redirected strings structurally above them. This bank is
+# unused by the current text pool, so the reservation does not perturb the established
+# allocation of unrelated dialogue.
+START_RANK_CHOICE_BANK = 0x3D
+START_RANK_CHOICE_TEXT_ORG = 0x42C0
+# Bank 41's Start transition controller grows by three bytes when the exact screen-25
+# regional far call replaces the old LCD-off branch. Reserve the next 16-byte boundary
+# structurally rather than depending on the current first redirected string.
+START_TRANSITION_BANK = 0x29
+START_TRANSITION_TEXT_ORG = 0x4110
 
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 
@@ -820,6 +838,9 @@ class Pool:
             ACTION_GATE_BANK: ACTION_GATE_TEXT_ORG,
             MENU_TRANSITION_BANK: MENU_TRANSITION_TEXT_ORG,
             ACTION_BLANK_BANK: ACTION_BLANK_TEXT_ORG,
+            START_ROOT_RETURN_BANK: START_ROOT_RETURN_TEXT_ORG,
+            START_RANK_CHOICE_BANK: START_RANK_CHOICE_TEXT_ORG,
+            START_TRANSITION_BANK: START_TRANSITION_TEXT_ORG,
         }
         self.at = {b: max(text_org, special_orgs.get(b, text_org))
                    for b in TEXT_BANKS}

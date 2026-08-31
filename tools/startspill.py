@@ -37,6 +37,7 @@ TARGETS = {
     'selector': (5, 9, {1, 2, 3}, 9, 0x02, 1),
     'summary': (4, 4, {3}, 14, 0x04, 0),
     'confirm': (3, 7, {2}, 15, 0x00, 0),
+    'erasechoice': (11, 2, {2}, 4, 0x00, 1),
     'rankpass': (3, 8, {2}, 6, 0x02, 1),
 }
 ROW_EPILOG = menuromcensus.ROW_EPILOG
@@ -174,7 +175,7 @@ class Audit:
         shape = tuple(pb.memory[a] for a in range(0xC69A, 0xC69F))
         label, raw = self.classify(shape)
         if (not menuvwf.CONTEXT_STATIC_ROWS and
-                label in ('summary', 'confirm', 'rankpass')):
+                label in ('summary', 'confirm', 'erasechoice', 'rankpass')):
             return
         if label is None:
             return
@@ -189,12 +190,31 @@ class Audit:
                             pb.memory[0xC647] == 1)
         if summary_redirect:
             source = 0xC648
+        # Box 28 is ROM-backed: unlike the other audited rows, its source pointer still
+        # names bank-4 text when the integrated renderer entry is reached.  The hook is
+        # running from bank 32, so reading that switchable address through PyBoy would
+        # inspect the wrong bank.  Freeze the two exact screen-24 rows by identity; the
+        # epilogue below still validates their map IDs and both rendered bitplanes.
+        if label == 'erasechoice':
+            if pb.register_file.D not in (0, 1):
+                self.problems.append('f%d: erasechoice has invalid row %d' %
+                                     (self.frame, pb.register_file.D))
+                return
+            cells = [0] + list(menuspill.encode(
+                'No' if pb.register_file.D == 0 else 'Yes'))
+            self.calls[label] += 1
+            self.live.pop(pb.register_file.HL, None)
+            self.pending = Pending(label, pb.register_file.HL,
+                                   pb.register_file.D, shape, source, raw, cells)
+            if os.environ.get('STARTSPILL_CENSUS'):
+                self.trace_tile_census(pb, self.pending)
+            return
         if not 0xC616 <= source < 0xC69A:
             self.problems.append('f%d: %s source $%04X is outside staging' %
                                  (self.frame, label, source))
             return
         cells = []
-        # Summary and erase-confirmation row 0 are one 16-character logical header.
+        # Summary and confirmation row 0 are one 16-character logical header.
         # The legacy fixed-cell drawer split it at the 14/15-cell descriptor width;
         # proportional rendering is expected to consume the whole header terminator.
         # Title rows use the proportional renderer's 18-source-cell staging contract,
@@ -224,7 +244,8 @@ class Audit:
         self.live.pop(pb.register_file.HL, None)
         self.pending = Pending(label, pb.register_file.HL, pb.register_file.D,
                                shape, source, raw, cells)
-        if os.environ.get('STARTSPILL_CENSUS') and label in ('confirm', 'rankpass'):
+        if os.environ.get('STARTSPILL_CENSUS') and label in \
+                ('confirm', 'erasechoice', 'rankpass'):
             self.trace_tile_census(pb, self.pending)
 
     def trace_tile_census(self, pb, pending):
@@ -255,11 +276,14 @@ class Audit:
             return
         self.pending = None
         problems_before = len(self.problems)
-        static = pending.label in ('summary', 'confirm', 'rankpass')
+        static = pending.label in ('summary', 'confirm', 'erasechoice', 'rankpass')
         if static:
             if pending.label == 'rankpass':
                 base = menuvwf.CONFIRM_POOL_ROWS[pending.row]
                 cap = menuvwf.RANKPASS_POOL_CAPS[pending.row]
+            elif pending.label == 'erasechoice':
+                base = menuvwf.ERASE_CHOICE_POOL_ROWS[pending.row]
+                cap = menuvwf.ERASE_CHOICE_POOL_CAPS[pending.row]
             else:
                 digit = pb.memory[0xC616]
                 if digit not in (2, 3, 4):
@@ -583,10 +607,14 @@ def main():
         if calls['confirm'] != 6:
             problems.append('erase-confirmation coverage reached %d rows, expected 6 '
                             '(two rows x three logs)' % calls['confirm'])
+        if calls['erasechoice'] != 6:
+            problems.append('erase No/Yes coverage reached %d rows, expected 6 '
+                            '(two rows x three logs)' % calls['erasechoice'])
         if args.wide_ram and calls['rankpass'] != 2:
             problems.append('Rank/Pass coverage reached %d rows, expected 2' %
                             calls['rankpass'])
-    elif calls['summary'] or calls['confirm'] or calls['rankpass']:
+    elif (calls['summary'] or calls['confirm'] or calls['erasechoice'] or
+          calls['rankpass']):
         problems.append('disabled context-static rows still reached VWF: %s' %
                         dict(calls))
     if not sum(audit.visible for audit in audits):
@@ -597,12 +625,13 @@ def main():
         problems.append('no initial title cursor reached the first complete BG map')
     for problem in problems[:20]:
         print('  ' + problem)
-    print('startspill: %d title, %d selector, %d summary, %d confirm, %d Rank/Pass '
+    print('startspill: %d title, %d selector, %d summary, %d confirm, %d No/Yes, '
+          '%d Rank/Pass '
           'row call(s); '
           '%d epilogue-exact and %d visible plane check(s); '
           '%d cursor prepare/publication pair(s); %d problem(s)' %
           (calls['title'], calls['selector'], calls['summary'], calls['confirm'],
-           calls['rankpass'],
+           calls['erasechoice'], calls['rankpass'],
            sum(audit.exact for audit in audits),
            sum(audit.visible for audit in audits),
            min(sum(audit.cursor_prepares for audit in audits),

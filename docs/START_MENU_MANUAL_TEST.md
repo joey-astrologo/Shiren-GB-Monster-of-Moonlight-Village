@@ -1,25 +1,22 @@
 # Start-menu regional blanking manual test
 
-This is the visual acceptance procedure for Start checkpoint S2. Checkpoint S1 was
-visually accepted on 2026-08-31 for the screen-23 saved-log summaries shared by
-Adventure, Copy, Erase, Rename, and Replay. The three S2 incoming transitions were
-visually accepted on 2026-08-31; the final check below covers the cursor regression
-found while returning from those accepted children.
+This is the accepted visual procedure for Start checkpoint S4. S1 through S3 were
+accepted on 2026-08-31 and do not need to be repeated. The focused Erase-No/Orochi
+prerequisite also passed on 2026-08-31. S4 itself covers only the retained
+Rank/Pass menu layers:
 
-S2 changes exactly three incoming screens:
+1. screen 30, the Rank/Pass choice;
+2. screen 31, the conditional Rank category choice; and
+3. screen 32, the Pass log selector.
 
-- screen 22: New Log's log selector;
-- screen 26: Copy Log's destination selector; and
-- screen 24: Erase Log's No/Yes confirmation.
+The final Rankings display (screen 33) and final Pass display (screen 34) are independent
+screens. Their entry, exit, and Rankings page changes may blank the LCD. The test below
+uses those displays only to verify that their retained blanking does not break the
+regional parent on return.
 
-Difficulty, personal-name keyboards, Rank/Pass, and gameplay/replay handoffs retain
-their separately catalogued behavior and are not scored in S2. Whole-LCD policy for B
-returns to the Start root also remains separate, but the returned root must have exactly
-one cursor at the option the player backed out from.
+## Build and stage four isolated saves
 
-## Build and stage an isolated save
-
-Run from the repository root:
+Close Mesen, then run this from the repository root:
 
 ```sh
 ./build.sh
@@ -30,17 +27,19 @@ MESEN_SAVES="$HOME/Library/Application Support/MesenCE/Saves"
 mkdir -p "$MESEN_SAVES"
 ```
 
-The post-acceptance cursor candidate is SHA-256
-`12fe799ad06b505c6bcfa0b8f2c8b858e430202b415b77b9bfb70f27114e538c`.
-`startpathspill.py` must report nine routes and zero problems. In particular, its New,
-Copy, and Erase lines must report `regional=22,22`, `regional=23,26`, and
-`regional=23,24`, respectively, with no Start LCD-off hit for screens 22, 26, or 24.
+The accepted S4 ROM is SHA-256
+`9e3ce9cfe5adb5c76aa4741b07930b533725b4198922485ab0c982fcac9ae8c2`.
+`startpathspill.py` must report **23 routes and zero problems**.
 
 Define this helper once in the same terminal session:
 
 ```sh
-run_start_s2() {
-  test_base="shiren_start_s2"
+run_start_s4() {
+  case "$1" in
+    erase_orochi|rank_direct|rank_category|pass_selector) ;;
+    *) echo "usage: run_start_s4 erase_orochi|rank_direct|rank_category|pass_selector"; return 2 ;;
+  esac
+  test_base="shiren_start_s4_$1"
   cp -f "$START_ROOT/$test_base.srm" \
     "$MESEN_SAVES/$test_base.srm"
   open -na "/Applications/Mesen.app" --args \
@@ -48,103 +47,133 @@ run_start_s2() {
 }
 ```
 
-Close Mesen before invoking `run_start_s2`. Invoke it again before every numbered test.
-This resets only the uniquely named `shiren_start_s2.srm`; it cannot overwrite the
-normal `shiren_en.srm` or another personal save. The tracked SRAM is hash-verified and no
-Lua mutation is used.
+The function lasts only for this terminal session. Close Mesen before each numbered
+test, then run the named command. Each command recopies a tracked, hash-verified SRAM
+under its own S4 basename. It does not touch `shiren_en.srm`, use Lua, or use a save
+state.
 
-## S2 visual contract
+For each run, wait for the title screen and press Start before following the steps.
 
-On each tested incoming transition:
+## Accepted prerequisite regression: Erase No preserves Orochi
 
-- the LCD must never blank the whole screen;
-- title/root or summary content outside the incoming child's rectangles must remain
-  stable;
-- only the incoming child rectangles may clear while they redraw;
-- each complete border/chrome must precede its text and cursor; and
-- no stale text, partial border, missing cursor, or delayed input may remain once
-  settled.
+```sh
+run_start_s4 erase_orochi
+```
 
-The exact `mgbdis`-derived rectangles, including borders, are:
+1. Press Start at the title.
+2. Move Down once to `Erase Log` and press A.
+3. Select the completed Log carrying the Orochi badge and press A.
+4. Leave `No` selected and press A.
+5. Inspect the returned saved-Log summary for several seconds.
 
-| Screen | Native owner | Visible BG rectangle(s) |
+Expected: the return is LCD-live, the summary border and text settle normally, and the
+four-tile Orochi badge remains intact. Neither `No` nor any fragment of it may replace
+the badge while the summary is visible. This prerequisite was added after the regression
+was reported before S4 visual testing; it does not ask you to repeat the already accepted
+S1-S3 transition review. Joey visually accepted this exact route on 2026-08-31 against
+the accepted hash above; it does not need to be repeated during the three S4 checks.
+
+## Visual contract
+
+On transitions among the Start root and screens 30, 31, and 32:
+
+- the LCD must not become a whole white/blank screen;
+- only the outgoing owned rectangle may temporarily clear;
+- incoming border/chrome must be complete before its text and cursor appear;
+- there must be no stale text, partial border, duplicate/missing cursor, or long input
+  delay; and
+- once settled, Up/Down/A/B must respond immediately.
+
+A regional clear lasting through a full redraw is expected and is not a defect.
+
+The `mgbdis`- and runtime-proven bordered rectangles are:
+
+| Screen | Layer | Rectangle including border |
 |---|---|---|
-| 22 New Log selector | handler `4:$4C61`, box 25 | x=5..15, y=9..15 |
-| 26 Copy destination | handler `4:$4CCA`, calls screen-22 builder/box 25 | x=5..15, y=9..15 |
-| 24 Erase confirmation | handler `4:$4C94`, boxes 27 then 28 | x=3..19, y=7..11 and x=11..16, y=2..6 |
+| 30 | Rank/Pass choice | x=3..10, y=8..11 |
+| 31 | Rank category | x=5..16, y=7..10 |
+| 32 | Pass log selector | x=5..15, y=9..11 |
 
-A regional clear lasting through the child's redraw is acceptable. A full-screen white
-frame is not.
+## Three accepted S4 checks
 
-## Three accepted incoming checks
-
-### 1. New Log selector
+### 1. Rank/Pass choice and direct Rankings return
 
 ```sh
-run_start_s2
+run_start_s4 rank_direct
 ```
 
-At the Start root, move down once to `New Log` and press A. Inspect the log selector
-before selecting a slot.
+1. Press Start at the title.
+2. Move Down five times to `Rank/Pass` and press A.
+3. Inspect the Rank/Pass choice, then press B.
+4. Confirm the Start root returns with exactly one cursor on `Rank/Pass`.
+5. Press A again, leave `Rank` selected, and press A to enter Rankings.
+6. Press B to return from Rankings, then press B from Rank/Pass to the Start root.
 
-Expected: the root remains visible outside box 25; only x=5..15/y=9..15 may clear; the
-selector border appears before its text and cursor; there is no whole-screen blank.
+Expected: steps 2-4 and the final Rank/Pass-to-root return are LCD-live and follow the
+visual contract. Rankings entry and exit may blank because screen 33 is an approved
+independent display. After that allowed return, the Rank/Pass box itself must be complete
+and responsive before the final B.
 
-Selecting a slot proceeds to screen 25's difficulty/explanation composite, which is S3
-and may still blank.
-
-### 2. Copy destination selector
+### 2. Rank category return
 
 ```sh
-run_start_s2
+run_start_s4 rank_category
 ```
 
-Select `Copy Log`. Wait for the source summary to settle, then press A once to open the
-destination selector.
+1. Press Start at the title.
+2. Move Down three times to `Rank/Pass` and press A.
+3. Leave `Rank` selected and press A to open the two-row Rank category box.
+4. Press B once to return to Rank/Pass, then B once to return to the Start root.
+5. Re-enter Rank/Pass and the Rank category box.
+6. Choose either category with A to enter Rankings, then press B to return.
+7. Press B from the category box, then B from Rank/Pass.
 
-Expected: the already accepted screen-23 summary remains visible outside box 25; only
-x=5..15/y=9..15 may clear; the destination border appears before text/cursor; there is
-no whole-screen blank. Do not complete the copy.
+Expected: root <-> Rank/Pass <-> Rank category is LCD-live in both directions, with
+complete borders before text and no duplicate cursor. The screen-33 boundary in step 6
+may blank in either direction. Its returned category parent must still settle correctly,
+and the two following B returns must remain LCD-live.
 
-### 3. Erase No/Yes confirmation
+### 3. Pass log-selector return
 
 ```sh
-run_start_s2
+run_start_s4 pass_selector
 ```
 
-Select `Erase Log`. Wait for the summary to settle, then press A once to open the
-confirmation. Do not choose Yes.
+1. Press Start at the title.
+2. Move Down five times to `Rank/Pass` and press A.
+3. Move Down once to `Pass` and press A to open the log selector.
+4. Press B once to return to Rank/Pass, then B once to return to the Start root.
+5. Re-enter Rank/Pass, select `Pass`, and press A again.
+6. Select the available log with A to enter the final Pass display, then press B.
+7. Press B from the log selector, then B from Rank/Pass.
 
-Expected: the summary remains stable outside the two child rectangles. The prompt box
-and higher-z No/Yes box may clear regionally, but both borders must precede their text
-and cursor. There is no whole-screen blank.
+Expected: root <-> Rank/Pass <-> Pass selector is LCD-live in both directions and follows
+the visual contract. The screen-34 boundary in step 6 may blank in either direction.
+After that allowed return, the log selector must be complete and responsive, and the two
+following B returns must stay LCD-live.
 
-## Cursor-return regression check
+## Automated ownership frozen with S4
 
-```sh
-run_start_s2
-```
+The prerequisite has an independent real-input gate. Fresh sibling `../mgbdis` output
+confirms the exact screen-24 classifier at `56:$40B0-$40F6` and the private No/Yes queue
+destinations `$8A` and `$8E`. `orochipopupspill.py` requires exact screen sequence
+`15,23,24,15,23`, six plane-exact No/Yes rows across the three saved Logs, and all four
+Orochi tiles to remain plane-exact through 224 returned-summary frames.
 
-At the Start root, select `New Log`, then press B to return without choosing a slot.
-Repeat from `Copy Log` and `Erase Log`, backing out from each first child screen.
+Fresh sibling `../mgbdis` output identifies handlers `4:$4D10`, `4:$4D20`, and
+`4:$4D2B` for screens 30, 31, and 32. The S4 owner admits only exact Start-root stacks
+whose retained parent is screen 30. It clears the exact bordered rectangle during one
+complete VBlank with LCDC.7 set. Screens 33 and 34 fail that admission deliberately and
+retain their approved full-screen paths.
 
-Expected after every return: exactly one cursor is visible, and it is beside the option
-just entered. There must not also be a cursor beside `Adventure`. Move Up/Down once after
-each return and confirm that only the single active cursor moves.
+`startpathspill.py` freezes 23 routes. Its three focused `return-rank-*`/`return-pass-*`
+cases never enter screens 33 or 34, require zero LCD-off frames and zero whole-white
+frames, compare every returned root raster to its initial reference, verify exact cursor
+ownership, and require the expected regional commit sequence. The full `rank-direct`,
+`rank-category`, and `pass` routes separately prove that the final-display fallbacks are
+retained and their choice-layer parents still recover correctly.
 
-The automated fixture checks this invariant for every root return in all nine traced
-Start routes, in both the shadow map and the published BG map. Joey visually accepted
-the transient cursor-return correction on 2026-08-31.
-
-## Later checkpoints
-
-- S2R: B returns from Adventure/New/Copy/Erase/Rename/Replay selectors or summaries to
-  the Start root. Cursor ownership is accepted; their whole-LCD policy remains work.
-- S3: New Log difficulty/explanation entry, difficulty redraws, and B returns.
-- S3N: New Log/Rename name-entry directions, pending final visual-policy review.
-- S4: Rank/Pass choice, category, and Pass log-selector layers only. The final Rankings
-  and Pass displays are user-approved independent screens; whole-LCD blanking is allowed
-  entering and leaving them, and between Rankings pages.
-- Replay saved-log selection remains LCD-live; its gameplay handoff may blank.
-- Start <-> Fay's Puzzle and Fay -> gameplay may blank. Fay's two puzzle pages must
-  continue paging LCD-live and need a second-50-puzzles save-backed regression fixture.
+Joey visually accepted all three S4 checks on 2026-08-31 against the hash above. All
+catalogued same-menu Start and Item/Floor whole-LCD blanking work is complete. Remaining
+whole-LCD sites are approved independent screen/gameplay boundaries or dormant
+exact-caller fallbacks.

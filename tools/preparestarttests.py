@@ -16,7 +16,12 @@ import shutil
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIXTURES = os.path.join(ROOT, 'tests', 'fixtures', 'saves')
 MANIFEST = os.path.join(ROOT, 'tests', 'fixtures', 'manifest.tsv')
-SOURCE_SRM = 'shiren_en_path_select.srm'
+CASES = (
+    ('erase_orochi', 'shiren_en_fays_puzzles.srm'),
+    ('rank_direct', 'shiren_en_path_select.srm'),
+    ('rank_category', 'shiren_en_logs_passwords.srm'),
+    ('pass_selector', 'shiren_en_log_1_password.srm'),
+)
 
 
 def digest(path):
@@ -27,12 +32,18 @@ def digest(path):
     return value.hexdigest()
 
 
-def expected_hash():
+def expected_hashes():
+    wanted = {source for _case, source in CASES}
+    found = {}
     with open(MANIFEST, encoding='utf-8', newline='') as handle:
         for row in csv.DictReader(handle, delimiter='\t'):
-            if row['filename'] == SOURCE_SRM:
-                return row['sha256']
-    raise SystemExit('preparestarttests: fixture is absent from manifest: ' + SOURCE_SRM)
+            if row['filename'] in wanted:
+                found[row['filename']] = row['sha256']
+    missing = sorted(wanted - set(found))
+    if missing:
+        raise SystemExit('preparestarttests: fixture(s) absent from manifest: ' +
+                         ', '.join(missing))
+    return found
 
 
 def main():
@@ -50,26 +61,36 @@ def main():
         ROOT, 'build', 'manual-tests', 'start-' + rom_sha[:12]))
     os.makedirs(output, exist_ok=True)
 
-    source = os.path.join(FIXTURES, SOURCE_SRM)
-    if not os.path.isfile(source):
-        raise SystemExit('preparestarttests: missing fixture: ' + source)
-    source_sha = digest(source)
-    wanted = expected_hash()
-    if source_sha != wanted:
-        raise SystemExit('preparestarttests: fixture hash mismatch: %s (expected %s)' %
-                         (source_sha, wanted))
+    wanted = expected_hashes()
+    staged = []
+    for case, source_name in CASES:
+        source = os.path.join(FIXTURES, source_name)
+        if not os.path.isfile(source):
+            raise SystemExit('preparestarttests: missing fixture: ' + source)
+        source_sha = digest(source)
+        if source_sha != wanted[source_name]:
+            raise SystemExit('preparestarttests: fixture hash mismatch for %s: %s '
+                             '(expected %s)' %
+                             (source_name, source_sha, wanted[source_name]))
 
-    base = 'shiren_start_s2'
-    rom_out = os.path.join(output, base + '.gb')
-    srm_out = os.path.join(output, base + '.srm')
-    shutil.copy2(rom, rom_out)
-    shutil.copy2(source, srm_out)
+        # Every route has a distinct emulator identity. Re-running one case can reset
+        # only its matching battery save and cannot inherit another route's selectors.
+        base = 'shiren_start_s4_' + case
+        rom_out = os.path.join(output, base + '.gb')
+        srm_out = os.path.join(output, base + '.srm')
+        shutil.copy2(rom, rom_out)
+        shutil.copy2(source, srm_out)
+        staged.append((case, rom_out, srm_out, source_sha))
 
-    print('preparestarttests: staged isolated Start case in %s' % output)
+    print('preparestarttests: staged %d isolated Start cases in %s' %
+          (len(staged), output))
     print('preparestarttests: ROM SHA-256 %s' % rom_sha)
-    print('preparestarttests: SRAM SHA-256 %s' % source_sha)
-    print('preparestarttests: ROM %s' % os.path.relpath(rom_out, ROOT))
-    print('preparestarttests: SRAM %s' % os.path.relpath(srm_out, ROOT))
+    for case, rom_out, srm_out, source_sha in staged:
+        print('preparestarttests: %-13s SRAM SHA-256 %s' % (case, source_sha))
+        print('preparestarttests: %-13s ROM  %s' %
+              (case, os.path.relpath(rom_out, ROOT)))
+        print('preparestarttests: %-13s SRAM %s' %
+              (case, os.path.relpath(srm_out, ROOT)))
 
 
 if __name__ == '__main__':

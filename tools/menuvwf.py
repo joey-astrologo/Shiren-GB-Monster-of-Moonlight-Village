@@ -451,10 +451,25 @@ FLOOR_INFO_FINISH_BANK = 0x28
 FLOOR_INFO_FINISH_INDEX = 0x05
 FLOOR_INFO_FINISH_AT = 0x4060
 FLOOR_INFO_FINISH_LIMIT = 0x4100
+# The four-byte Floor/Info ABI leaves the rest of bank 40's declared pre-text arena
+# available. S2R owns a second far entry for exact Start cancellation returns; S3 owns
+# the adjacent entry/region for the screen-25 difficulty composite.
+START_ROOT_RETURN_BANK = FLOOR_INFO_FINISH_BANK
+START_ROOT_RETURN_INDEX = 0x07
+START_ROOT_RETURN_AT = 0x4068
+START_ROOT_RETURN_LIMIT = 0x4200
+START_RANK_CHOICE_BANK = ACTION_ALLOC_BANK
+START_RANK_CHOICE_INDEX = 0x0B
+START_RANK_CHOICE_AT = ACTION_ALLOC_LIMIT
+START_RANK_CHOICE_LIMIT = 0x4240
+START_DIFFICULTY_BANK = START_RANK_CHOICE_BANK
+START_DIFFICULTY_INDEX = 0x0D
+START_DIFFICULTY_AT = START_RANK_CHOICE_LIMIT
+START_DIFFICULTY_LIMIT = 0x42C0
 START_TRANSITION_BANK = 0x29  # pool banks 41/42: reader ends $405A, text starts $4100
 START_TRANSITION_INDEX = 0x05
 START_TRANSITION_AT = 0x405A
-START_TRANSITION_LIMIT = 0x4100
+START_TRANSITION_LIMIT = 0x4110
 START_FINISH_BANK = 0x2A
 START_FINISH_INDEX = 0x05
 START_ALLOC_INDEX = 0x07
@@ -475,7 +490,7 @@ START_REGION_LIMIT = 0x4100
 # are likewise outside the existing owners ($05/$07/$09 in bank 46 and $05 in bank 52).
 START_S2_SELECTOR_BANK = 0x2E
 START_S2_SELECTOR_INDEX = 0x0B
-START_S2_SELECTOR_AT = 0x40E9
+START_S2_SELECTOR_AT = 0x40F5
 START_S2_SELECTOR_LIMIT = 0x4180
 START_S2_CONFIRM_BANK = 0x34
 START_S2_CONFIRM_INDEX = 0x07
@@ -577,6 +592,13 @@ SHOP_SHAPE_BANK = 0x38
 SHOP_SHAPE_INDEX = 0x05
 SHOP_SHAPE_AT = 0x405A
 SHOP_SHAPE_LIMIT = 0x4100
+# Screen 24's No/Yes allocator needs a second exact classifier, but expanding bank 46's
+# category allocator would collide with the S2 selector before the Rankings manager.
+# Bank 56 already owns the 71-byte shop shape gate and leaves this declared suffix free.
+ERASE_CHOICE_BANK = SHOP_SHAPE_BANK
+ERASE_CHOICE_INDEX = 0x07
+ERASE_CHOICE_AT = 0x40B0
+ERASE_CHOICE_LIMIT = 0x4100
 SHOP_UPLOAD_BANK = 0x39
 SHOP_UPLOAD_INDEX = 0x05
 SHOP_UPLOAD_AT = 0x405A
@@ -710,6 +732,13 @@ SUMMARY_ALT_POOL_ROWS = SUMMARY_POOL_ROWS
 # than adding them to the global pool.
 CONFIRM_POOL_ROWS = (0x82, 0x9A)
 CONFIRM_POOL_CAPS = (9, 7)
+# Box 28's higher-z No/Yes rows used the generic $CB/$D3 queue slices. On No, those
+# delayed writes could survive the regional pop and overwrite a returned summary's
+# native $CB-$CE Orochi badge. Runtime censuses across all three Erase summaries prove
+# $8A-$91 has no simultaneous outside owner; keep two independent four-tile transfer
+# slices so the queue itself can drain harmlessly after either return.
+ERASE_CHOICE_POOL_ROWS = (0x8A, 0x8E)
+ERASE_CHOICE_POOL_CAPS = (4, 4)
 RANKPASS_POOL_CAPS = (4, 5)
 
 # A nested far call lets bank 32 read bank-31 source bytes without new bank-0 code or
@@ -1096,6 +1125,16 @@ selectorrow:
 
 RANK_CATEGORY_SRC = """
 rankcategoryalloc:
+  ; Give the exact screen-24 No/Yes overlay first refusal. Zero means it selected a
+  ; private four-tile queue slice; nonzero retains the established popup/category path.
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  jr nz,categorypopup
+  scf
+  ret
+categorypopup:
   ; The exact saved-Log Continue/New Game popup is drawn over a still-visible summary.
   ; Its native Orochi badge owns $CB-$CE, so it must not enter the generic two-row pool
   ; at $CB.  Reuse the independently censused confirmation slices instead.
@@ -1176,9 +1215,52 @@ categoryok:
 categorybad:
   and a
   ret
-""" % (CONFIRM_POOL_ROWS[1], CONFIRM_POOL_ROWS[0],
+""" % (ERASE_CHOICE_INDEX, ERASE_CHOICE_BANK,
+         CONFIRM_POOL_ROWS[1], CONFIRM_POOL_ROWS[0],
          RANK_CATEGORY_ROW0_BASE, RANK_CATEGORY_ROW1_BASE,
          ROM_POOL_BASE, ROM_POOL_BASE + 8)
+
+
+ERASE_CHOICE_SRC = """
+erasechoicealloc:
+  ld a,[$C6A3]
+  cp $18
+  jr nz,ecareject
+  ld a,[$C69A]
+  cp $0B
+  jr nz,ecareject
+  ld a,[$C69B]
+  cp $02
+  jr nz,ecareject
+  ld a,[$C69C]
+  cp $02
+  jr nz,ecareject
+  ld a,[$C69D]
+  cp $04
+  jr nz,ecareject
+  ld a,[$C69E]
+  and $1F
+  jr nz,ecareject
+  ld a,[$C0D3]
+  cp $05
+  jr nc,ecareject
+  ld a,d
+  and a
+  jr z,ecano
+  cp $01
+  jr nz,ecareject
+  ld a,$%02X
+  jr ecaaccept
+ecano:
+  ld a,$%02X
+ecaaccept:
+  ld [$C0DB],a
+  xor a
+  ret
+ecareject:
+  ld a,$01
+  ret
+""" % (ERASE_CHOICE_POOL_ROWS[1], ERASE_CHOICE_POOL_ROWS[0])
 
 
 SUMMARY_SRC = """
@@ -6924,6 +7006,14 @@ starttransition:
   ld a,[$C1B3]
   and a
   jp nz,stdone
+  ; S4 owns only the retained Rank/Pass choice layers (screens 30/31/32). Final
+  ; Rankings/Pass displays 33/34 never pass its exact stack proof and retain their
+  ; approved whole-screen transitions.
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  jp z,stdone
   xor a
   rst $10
   db $%02X,$%02X
@@ -6951,7 +7041,12 @@ starttransition:
   ld a,[$C69E]
   cp $50
   jr nz,stdone
-  ld a,$11
+  ; S3 gives the exact screen-25 composite first refusal. It returns zero only after
+  ; clearing both owned rectangles and arming state $11 with LCDC.7 still set.
+  rst $10
+  db $%02X,$%02X
+  and a
+  jr z,stdone
   jr stoff
 strank:
   ; Rankings header box 41 can switch to the title-prepared blank map without
@@ -7016,7 +7111,9 @@ stdone:
   pop bc
   pop af
   ret
-""" % (START_ALLOC_INDEX, START_FINISH_BANK, START_AUX_INDEX, START_AUX_BANK,
+""" % (START_ALLOC_INDEX, START_FINISH_BANK, START_RANK_CHOICE_INDEX,
+         START_RANK_CHOICE_BANK, START_AUX_INDEX, START_AUX_BANK,
+         START_DIFFICULTY_INDEX, START_DIFFICULTY_BANK,
          START_REGION_INDEX, START_REGION_BANK)
 
 
@@ -7277,6 +7374,439 @@ s2cdone:
   pop bc
   ret
 """
+
+
+# S2R/S3 returns: the Japanese pop/replay loop at 4:$4857 and 4:$487C-$48A9 decrements C534
+# without clearing the discarded stack slot.  During the transient screen-15 rebuild,
+# C536+C534 therefore names the exact child being left.  The native input reader at
+# 0:$0564 keeps the current one-shot button in FF84 ($02 is B, while $01 is A). Erase's
+# A-on-No route is separately admitted only when the native selector is zero; successful
+# Copy/Erase commits and A-on-Yes therefore cannot be mistaken for cancellation.
+#
+# Retire every visible rectangle owned by that child (and its still-visible summary
+# parent for the two nested cases) in one VBlank.  State $10 then reuses the established
+# full-root shadow finalizer: root chrome/text is built off-screen and published once,
+# without disabling the LCD or exposing borrowed VWF planes.
+START_ROOT_RETURN_SRC = """
+startrootreturn:
+  push bc
+  push de
+  push hl
+  ldh a,[$FF84]
+  ld d,a
+  cp $02
+  jr z,srrbuttonok
+  cp $01
+  jp nz,srrreject
+srrbuttonok:
+  ld a,[$C6A3]
+  cp $0F
+  jp nz,srrreject
+  ld a,[$C535]
+  cp $0F
+  jp nz,srrreject
+  ld a,[$C534]
+  ld c,a
+  ld b,$00
+  ld hl,$C536
+  add hl,bc
+  ld a,[hl]
+  cp $15
+  jp c,srrreject
+  cp $1B
+  jr c,srrchildok
+  cp $1E
+  jp c,srrreject
+  cp $21
+  jp nc,srrreject
+srrchildok:
+  ld e,a
+  ld a,d
+  cp $02
+  jr z,srradmit
+  ; The only A cancellation is Erase screen 24 with No (selector zero). Yes and all
+  ; destructive commits retain the native atomic restore.
+  ld a,e
+  cp $18
+  jp nz,srrreject
+  ld a,[$C6A5]
+  and a
+  jp nz,srrreject
+srradmit:
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,srrreject
+  ei
+srrvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srrvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,srrwait
+srrlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srrlate
+srrwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,srrwait
+srrcommit:
+  ld a,e
+  cp $15
+  jp z,srrchoice
+  cp $16
+  jp z,srrselectoronly
+  cp $17
+  jp z,srrsummaryonly
+  cp $19
+  jp z,srrdifficulty
+  cp $1A
+  jp z,srrboth
+  cp $1E
+  jr z,srrrankpass
+  cp $1F
+  jr z,srrrankcategory
+  cp $20
+  jr z,srrpassselector
+  ; The only remaining admitted child is screen 24: clear its summary parent,
+  ; prompt, and No/Yes overlay.
+  xor a
+  call srrsummary
+  ld hl,$984B
+  ld d,$05
+  ld e,$06
+  ld c,$1A
+  call srrclear
+  ld hl,$98E3
+  ld d,$05
+  ld e,$11
+  ld c,$0F
+  call srrclear
+  jp srraccepted
+srrrankpass:
+  ; Screen 30 Rank/Pass choice: x=3..10/y=8..11.
+  xor a
+  ld hl,$9903
+  ld d,$04
+  ld e,$08
+  ld c,$18
+  call srrclear
+  jp srraccepted
+srrrankcategory:
+  ; Screen 31 Rank category: x=5..16/y=7..10.
+  xor a
+  ld hl,$98E5
+  ld d,$04
+  ld e,$0C
+  ld c,$14
+  call srrclear
+  ; The category's $C0-$CB pool borrows tile $CB. A cleared Log uses that same tile
+  ; for the top-left quarter of its real Orochi badge on the Adventure root. Restore
+  ; the one colliding native plane inside this same bounded VBlank before the root map
+  ; can be published; the other three badge tiles $CC-$CE are never borrowed here.
+  ld hl,srrorochi
+  ld de,$8CB0
+  ld b,$10
+srrorochicopy:
+  ld a,[hl+]
+  ld [de],a
+  inc de
+  dec b
+  jr nz,srrorochicopy
+  jp srraccepted
+srrpassselector:
+  ; Screen 32 Pass log selector: x=5..15/y=9..11.
+  xor a
+  ld hl,$9925
+  ld d,$03
+  ld e,$0B
+  ld c,$15
+  call srrclear
+  jp srraccepted
+srrchoice:
+  ; Screen 21 uses box 24 (x=3..14/y=4..8), or its one-row box-51 variant.
+  xor a
+  ld hl,$9883
+  ld d,$05
+  ld e,$0C
+  ld c,$14
+  call srrclear
+  jp srraccepted
+srrdifficulty:
+  ; Screen 25 owns box 29 (x=12..19/y=6..12) plus the active explanation box
+  ; 46/48/50 (x=0..19/y=13..17).
+  xor a
+  ld hl,$98CC
+  ld d,$07
+  ld e,$08
+  ld c,$18
+  call srrclear
+  ld hl,$99A0
+  ld d,$05
+  ld e,$14
+  ld c,$0C
+  call srrclear
+  jp srraccepted
+srrsummaryonly:
+  xor a
+  call srrsummary
+  jp srraccepted
+srrboth:
+  xor a
+  call srrsummary
+  jp srrselector
+srrselectoronly:
+  xor a
+srrselector:
+  ld hl,$9925
+  ld d,$07
+  ld e,$0B
+  ld c,$15
+  call srrclear
+  jp srraccepted
+srrsummary:
+  ld hl,$9884
+  ld d,$07
+  ld e,$10
+  ld c,$10
+srrclear:
+  ld b,e
+srrcell:
+  ld [hl+],a
+  dec b
+  jr nz,srrcell
+  ld b,$00
+  add hl,bc
+  dec d
+  jr nz,srrclear
+  ret
+srraccepted:
+  ei
+  ld a,$10
+  ld [$C1B3],a
+  xor a
+  jr srrdone
+srrreject:
+  ld a,$10
+srrdone:
+  pop hl
+  pop de
+  pop bc
+  ret
+srrorochi:
+  ; Exact native tile $CB plane installed by the Japanese $00-$D2 menu-font loader.
+  db $7F,$7F,$F9,$FE,$BC,$CF,$E6,$BB,$DB,$FD,$FF,$F7,$96,$F3,$CE,$FF
+"""
+
+
+def start_root_return_labels():
+    """Return stable labels for the exact Start cancellation-return controller."""
+    return gbasm.assemble(START_ROOT_RETURN_SRC, START_ROOT_RETURN_AT)[1]
+
+
+# S3: screen 25 redraws the same two disjoint rectangles for initial entry and every
+# Easy/Normal/Hard change. The start-transition caller has already identified box 29;
+# repeat the exact dispatcher stack proof here, retire both rectangles in one complete
+# VBlank, and reuse state $11's established atomic shadow finalizer with LCDC.7 set.
+START_DIFFICULTY_SRC = """
+startdifficulty:
+  push bc
+  push de
+  push hl
+  ld a,[$C6A3]
+  cp $19
+  jr nz,sdreject
+  ld a,[$C534]
+  cp $02
+  jr nz,sdreject
+  ld a,[$C535]
+  cp $0F
+  jr nz,sdreject
+  ld a,[$C536]
+  cp $16
+  jr nz,sdreject
+  ld a,[$C537]
+  cp $19
+  jr nz,sdreject
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,sdreject
+  ei
+sdvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,sdvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,sdwait
+sdlate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,sdlate
+sdwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,sdwait
+  xor a
+sdcommit:
+  ld hl,$98CC
+  ld d,$07
+  ld e,$08
+  ld c,$18
+  call sdclear
+  ld hl,$99A0
+  ld d,$05
+  ld e,$14
+  ld c,$0C
+  call sdclear
+  ei
+  ld a,$11
+  ld [$C1B3],a
+  xor a
+  jr sddone
+sdclear:
+  ld b,e
+sdcell:
+  ld [hl+],a
+  dec b
+  jr nz,sdcell
+  ld b,$00
+  add hl,bc
+  dec d
+  jr nz,sdclear
+  ret
+sdreject:
+  ld a,$11
+sddone:
+  pop hl
+  pop de
+  pop bc
+  ret
+"""
+
+
+def start_difficulty_labels():
+    """Return stable labels for the exact screen-25 regional controller."""
+    return gbasm.assemble(START_DIFFICULTY_SRC, START_DIFFICULTY_AT)[1]
+
+
+# S4: mgbdis maps the retained Rank/Pass choice layers to screen handlers 30=$4D10,
+# 31=$4D20, and 32=$4D2B. Runtime row traces prove their complete bordered rectangles:
+# screen 30 x=3..10/y=8..11, screen 31 x=5..16/y=7..10, and screen 32
+# x=5..15/y=9..11. Screens 33/34 are independent final displays and intentionally do
+# not enter this owner.
+START_RANK_CHOICE_SRC = """
+startrankchoice:
+  push bc
+  push de
+  push hl
+  ld a,[$C535]
+  cp $0F
+  jp nz,srcreject
+  ld a,[$C536]
+  cp $1E
+  jp nz,srcreject
+  ld a,[$C6A3]
+  cp $1E
+  jr z,srcscreen30
+  cp $1F
+  jr z,srcscreen31
+  cp $20
+  jr z,srcscreen32
+  jp srcreject
+srcscreen30:
+  ld a,[$C534]
+  cp $01
+  jr z,src30stack
+  cp $02
+  jp nz,srcreject
+  ld a,[$C537]
+  cp $1F
+  jr z,src30stack
+  cp $20
+  jp nz,srcreject
+src30stack:
+  ld hl,$9903
+  ld d,$04
+  ld e,$08
+  ld c,$18
+  jr srcadmit
+srcscreen31:
+  ld a,[$C534]
+  cp $02
+  jp nz,srcreject
+  ld a,[$C537]
+  cp $1F
+  jp nz,srcreject
+  ld hl,$98E5
+  ld d,$04
+  ld e,$0C
+  ld c,$14
+  jr srcadmit
+srcscreen32:
+  ld a,[$C534]
+  cp $02
+  jp nz,srcreject
+  ld a,[$C537]
+  cp $20
+  jp nz,srcreject
+  ld hl,$9925
+  ld d,$03
+  ld e,$0B
+  ld c,$15
+srcadmit:
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,srcreject
+  ei
+srcvisible:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srcvisible
+  di
+  ldh a,[$FF44]
+  cp $90
+  jr c,srcwait
+srclate:
+  ldh a,[$FF44]
+  cp $90
+  jr nc,srclate
+srcwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,srcwait
+srccommit:
+  xor a
+srcrow:
+  ld b,e
+srccell:
+  ld [hl+],a
+  dec b
+  jr nz,srccell
+  ld b,$00
+  add hl,bc
+  dec d
+  jr nz,srcrow
+  ei
+  xor a
+  jr srcdone
+srcreject:
+  ld a,$10
+srcdone:
+  pop hl
+  pop de
+  pop bc
+  ret
+"""
+
+
+def start_rank_choice_labels():
+    """Return stable labels for the exact screens-30/31/32 regional controller."""
+    return gbasm.assemble(START_RANK_CHOICE_SRC, START_RANK_CHOICE_AT)[1]
 
 
 START_FINISH_SRC = """
@@ -10206,6 +10736,33 @@ def install(buf, notes=None, font=None):
         buf[shop_shape_ix] = shop_shape_labels['shopshape'] & 0xFF
         buf[shop_shape_ix + 1] = shop_shape_labels['shopshape'] >> 8
 
+        erase_choice_code, erase_choice_labels = gbasm.assemble(
+            ERASE_CHOICE_SRC, ERASE_CHOICE_AT)
+        if SHOP_SHAPE_AT + len(shop_shape_code) > ERASE_CHOICE_AT:
+            raise SystemExit('menuvwf: shop-value shape helper reaches Erase-choice '
+                             'region at %d:$%04X' %
+                             (ERASE_CHOICE_BANK, ERASE_CHOICE_AT))
+        if ERASE_CHOICE_AT + len(erase_choice_code) > ERASE_CHOICE_LIMIT:
+            raise SystemExit('menuvwf: Erase-choice allocator needs %d bytes, only %d '
+                             'available' %
+                             (len(erase_choice_code),
+                              ERASE_CHOICE_LIMIT - ERASE_CHOICE_AT))
+        erase_choice_at = _off(ERASE_CHOICE_BANK, ERASE_CHOICE_AT)
+        if any(value != 0xFF for value in
+               buf[erase_choice_at:erase_choice_at + len(erase_choice_code)]):
+            raise SystemExit('menuvwf: bank %d Erase-choice region at $%04X is not '
+                             'free' % (ERASE_CHOICE_BANK, ERASE_CHOICE_AT))
+        erase_choice_ix = (_off(ERASE_CHOICE_BANK, 0x4000) +
+                           ERASE_CHOICE_INDEX - 1)
+        if bytes(buf[erase_choice_ix:erase_choice_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (ERASE_CHOICE_INDEX, ERASE_CHOICE_BANK))
+        buf[erase_choice_at:erase_choice_at + len(erase_choice_code)] = \
+            erase_choice_code
+        buf[erase_choice_ix] = erase_choice_labels['erasechoicealloc'] & 0xFF
+        buf[erase_choice_ix + 1] = \
+            erase_choice_labels['erasechoicealloc'] >> 8
+
         shop_label_call = bytes((0xD7, SHOP_LABEL_INDEX, SHOP_LABEL_BANK))
         for address in SHOP_LABEL_PATCHES:
             at = _off(4, address)
@@ -10457,10 +11014,14 @@ def install(buf, notes=None, font=None):
                            ('FLOOR_INFO_FINISH_SRC', FLOOR_INFO_FINISH_SRC),
                            ('INFO_LIFECYCLE_SRC', INFO_LIFECYCLE_SRC),
                            ('POT_FLOOR_RETURN_SRC', POT_FLOOR_RETURN_SRC),
+                           ('START_ROOT_RETURN_SRC', START_ROOT_RETURN_SRC),
+                           ('START_DIFFICULTY_SRC', START_DIFFICULTY_SRC),
+                           ('START_RANK_CHOICE_SRC', START_RANK_CHOICE_SRC),
                            ('START_TRANSITION_SRC', START_TRANSITION_SRC),
                            ('START_REGION_SRC', START_REGION_SRC),
                            ('START_S2_SELECTOR_SRC', START_S2_SELECTOR_SRC),
                            ('START_S2_CONFIRM_SRC', START_S2_CONFIRM_SRC),
+                           ('ERASE_CHOICE_SRC', ERASE_CHOICE_SRC),
                            ('START_FINISH_SRC', START_FINISH_SRC)):
             if '$C0D7' in blob or '$C0D8' in blob:
                 raise SystemExit('menuvwf: %s references propvwf scratch $C0D7/$C0D8; '
@@ -10805,6 +11366,96 @@ def install(buf, notes=None, font=None):
         buf[floor_finish_at:floor_finish_at + len(floor_finish_code)] = floor_finish_code
         buf[floor_finish_ix] = floor_finish_labels['floorinfofinish'] & 0xFF
         buf[floor_finish_ix + 1] = floor_finish_labels['floorinfofinish'] >> 8
+
+        start_root_return_code, start_root_return_labels = gbasm.assemble(
+            START_ROOT_RETURN_SRC, START_ROOT_RETURN_AT)
+        if START_ROOT_RETURN_AT + len(start_root_return_code) > \
+                START_ROOT_RETURN_LIMIT:
+            raise SystemExit('menuvwf: Start-root B-return helper needs %d bytes, only '
+                             '%d available' %
+                             (len(start_root_return_code),
+                              START_ROOT_RETURN_LIMIT - START_ROOT_RETURN_AT))
+        if buf[_off(START_ROOT_RETURN_BANK, 0x4000)] != START_ROOT_RETURN_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_ROOT_RETURN_BANK)
+        start_root_return_at = _off(START_ROOT_RETURN_BANK, START_ROOT_RETURN_AT)
+        if any(b != 0xFF for b in
+               buf[start_root_return_at:
+                   start_root_return_at + len(start_root_return_code)]):
+            raise SystemExit('menuvwf: bank %d Start-root B-return region at $%04X is '
+                             'not free' %
+                             (START_ROOT_RETURN_BANK, START_ROOT_RETURN_AT))
+        start_root_return_ix = (_off(START_ROOT_RETURN_BANK, 0x4000) +
+                                START_ROOT_RETURN_INDEX - 1)
+        if bytes(buf[start_root_return_ix:start_root_return_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (START_ROOT_RETURN_INDEX, START_ROOT_RETURN_BANK))
+        buf[start_root_return_at:
+            start_root_return_at + len(start_root_return_code)] = start_root_return_code
+        buf[start_root_return_ix] = \
+            start_root_return_labels['startrootreturn'] & 0xFF
+        buf[start_root_return_ix + 1] = \
+            start_root_return_labels['startrootreturn'] >> 8
+
+        start_difficulty_code, start_difficulty_labels = gbasm.assemble(
+            START_DIFFICULTY_SRC, START_DIFFICULTY_AT)
+        if START_DIFFICULTY_AT + len(start_difficulty_code) > \
+                START_DIFFICULTY_LIMIT:
+            raise SystemExit('menuvwf: screen-25 regional helper needs %d bytes, only '
+                             '%d available' %
+                             (len(start_difficulty_code),
+                              START_DIFFICULTY_LIMIT - START_DIFFICULTY_AT))
+        if buf[_off(START_DIFFICULTY_BANK, 0x4000)] != START_DIFFICULTY_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_DIFFICULTY_BANK)
+        start_difficulty_at = _off(START_DIFFICULTY_BANK, START_DIFFICULTY_AT)
+        if any(b != 0xFF for b in
+               buf[start_difficulty_at:
+                   start_difficulty_at + len(start_difficulty_code)]):
+            raise SystemExit('menuvwf: bank %d screen-25 regional area at $%04X is '
+                             'not free' %
+                             (START_DIFFICULTY_BANK, START_DIFFICULTY_AT))
+        start_difficulty_ix = (_off(START_DIFFICULTY_BANK, 0x4000) +
+                               START_DIFFICULTY_INDEX - 1)
+        if bytes(buf[start_difficulty_ix:start_difficulty_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (START_DIFFICULTY_INDEX, START_DIFFICULTY_BANK))
+        buf[start_difficulty_at:
+            start_difficulty_at + len(start_difficulty_code)] = start_difficulty_code
+        buf[start_difficulty_ix] = \
+            start_difficulty_labels['startdifficulty'] & 0xFF
+        buf[start_difficulty_ix + 1] = \
+            start_difficulty_labels['startdifficulty'] >> 8
+
+        start_rank_choice_code, start_rank_choice_labels = gbasm.assemble(
+            START_RANK_CHOICE_SRC, START_RANK_CHOICE_AT)
+        if START_RANK_CHOICE_AT + len(start_rank_choice_code) > \
+                START_RANK_CHOICE_LIMIT:
+            raise SystemExit('menuvwf: screens-30/31/32 regional helper needs %d '
+                             'bytes, only %d available' %
+                             (len(start_rank_choice_code),
+                              START_RANK_CHOICE_LIMIT - START_RANK_CHOICE_AT))
+        if buf[_off(START_RANK_CHOICE_BANK, 0x4000)] != START_RANK_CHOICE_BANK:
+            raise SystemExit('menuvwf: bank %d pool code is not installed' %
+                             START_RANK_CHOICE_BANK)
+        start_rank_choice_at = _off(START_RANK_CHOICE_BANK, START_RANK_CHOICE_AT)
+        if any(b != 0xFF for b in
+               buf[start_rank_choice_at:
+                   start_rank_choice_at + len(start_rank_choice_code)]):
+            raise SystemExit('menuvwf: bank %d screens-30/31/32 regional area at '
+                             '$%04X is not free' %
+                             (START_RANK_CHOICE_BANK, START_RANK_CHOICE_AT))
+        start_rank_choice_ix = (_off(START_RANK_CHOICE_BANK, 0x4000) +
+                                START_RANK_CHOICE_INDEX - 1)
+        if bytes(buf[start_rank_choice_ix:start_rank_choice_ix + 2]) != b'\xff\xff':
+            raise SystemExit('menuvwf: far index $%02X in bank %d is already used' %
+                             (START_RANK_CHOICE_INDEX, START_RANK_CHOICE_BANK))
+        buf[start_rank_choice_at:
+            start_rank_choice_at + len(start_rank_choice_code)] = start_rank_choice_code
+        buf[start_rank_choice_ix] = \
+            start_rank_choice_labels['startrankchoice'] & 0xFF
+        buf[start_rank_choice_ix + 1] = \
+            start_rank_choice_labels['startrankchoice'] >> 8
 
         start_transition_code, start_transition_labels = gbasm.assemble(
             START_TRANSITION_SRC, START_TRANSITION_AT)
@@ -11231,6 +11882,11 @@ def install(buf, notes=None, font=None):
                          % (len(shop_label_code), SHOP_LABEL_BANK, SHOP_LABEL_AT,
                             len(shop_upload_code), SHOP_UPLOAD_BANK, SHOP_UPLOAD_AT,
                             len(shop_shape_code), SHOP_SHAPE_BANK, SHOP_SHAPE_AT))
+            notes.append('menuvwf: %d-byte exact Erase No/Yes allocator at %d:$%04X '
+                         'keeps its delayed four-tile queue writes in private '
+                         '$8A-$91 slices, outside returned save-summary/Orochi planes'
+                         % (len(erase_choice_code), ERASE_CHOICE_BANK,
+                            ERASE_CHOICE_AT))
             notes.append('menuvwf: %d-byte hidden debug-menu shape helper at %d:$%04X; '
                          'category pages, selected item rows, and enhancement values '
                          '0..99 stay proportional'
@@ -11280,13 +11936,25 @@ def install(buf, notes=None, font=None):
                             FLOOR_INFO_FINISH_BANK, FLOOR_INFO_FINISH_AT,
                             len(info_lifecycle_code), ACTION_BLANK_BANK,
                             INFO_LIFECYCLE_AT))
+            notes.append('menuvwf: %d-byte Start cancellation-return owner at '
+                         '%d:$%04X uses native popped-child/input/selector residue, '
+                         'retires exact screen-21..26 and screen-30..32 rectangles, and arms the atomic '
+                         'root finalizer without disabling LCD; %d-byte screen-25 '
+                         'entry/redraw owner at %d:$%04X regionally publishes the '
+                         'difficulty composite; %d-byte screens-30/31/32 owner at '
+                         '%d:$%04X keeps only the retained Rank/Pass choice layers live' %
+                         (len(start_root_return_code), START_ROOT_RETURN_BANK,
+                          START_ROOT_RETURN_AT, len(start_difficulty_code),
+                          START_DIFFICULTY_BANK, START_DIFFICULTY_AT,
+                          len(start_rank_choice_code), START_RANK_CHOICE_BANK,
+                          START_RANK_CHOICE_AT))
             notes.append('menuvwf: %d+%d-byte title/file transition at '
                          '%d:$%04X + %d:$%04X plus %d-byte screen-23 and %d+%d-byte '
                          'screen-22/26/24 regional helpers at %d:$%04X, %d:$%04X, and '
                          '%d:$%04X; admitted summaries, Log selectors, and Erase '
                          'confirmation clear only their exact native box rectangles '
-                         'with LCD on, while rejected difficulty/Rank/Pass redraws '
-                         'retain one complete shadow-map transaction'
+                         'with LCD on, while rejected final Rankings/Pass displays '
+                         'retain their approved complete-screen transactions'
                          % (len(start_transition_code), len(start_finish_code),
                             START_TRANSITION_BANK, START_TRANSITION_AT,
                             START_FINISH_BANK, START_FINISH_AT,

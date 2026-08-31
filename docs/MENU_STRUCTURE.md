@@ -1,7 +1,7 @@
 # Menu systems and regional-blanking ownership
 
-**Status:** Engineering map plus implemented Item/Floor checkpoints, measured through
-2026-08-30. The dispatcher, box catalogue, memory map, and fixture-backed routes below
+**Status:** Engineering map plus implemented Item/Floor and Start checkpoints, measured
+through 2026-08-31. The dispatcher, box catalogue, memory map, and fixture-backed routes below
 are established. Routes marked `outline` or `inferred` still need a real button-driven
 trace before later work depends on them. Checkpoints 1-3 are committed and visually
 accepted. Checkpoint 4 is visually accepted against ROM SHA-256
@@ -14,6 +14,12 @@ now catalogued as `IFR-01` through `IFR-09`; they are not silently covered by th
 passes. Leaving any of pages 1-4 keeps the outgoing page live until Status replaces it.
 Direct Status-to-Items entry/re-entry blanks only BG rows 0-15, preserves the bottom
 Window, and commits empty box chrome before item text.
+
+Start checkpoints S1-S4 are visually accepted. S4's Rank/Pass choice, Rank category,
+and Pass log-selector owners are frozen at accepted ROM SHA-256
+`9e3ce9cfe5adb5c76aa4741b07930b533725b4198922485ab0c982fcac9ae8c2`.
+Both 50-entry Fay puzzle pages (all 100 puzzles) were also visually confirmed on
+2026-08-31. No catalogued same-menu Item/Floor or Start blank-removal work remains.
 
 **Post-freeze amendment (2026-08-30):** the accepted hash above did not visually cover
 screen 5 with more than four seals. An all-nine-seal weapon exposed corrupted footer
@@ -192,15 +198,15 @@ The ten explicit translation-owned whole-LCD sites are:
 | Site | Owner and route | Policy |
 |---|---|---|
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — user-approved independent-screen entry/B-exit; internal two-page puzzle paging stays LCD-live |
-| `41:$40E6` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `review` — retained for Start composites not yet converted |
+| `41:$40F2` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `dormant` — all catalogued file, difficulty, and Rank/Pass choice-layer callers bypass it; rejected/unknown callers retain it |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `keep` — user-approved independent Rankings display; entry, exit, and page changes may blank |
 | `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items, Items-appended screen-7 Floor, and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
-| `46:$42B5` | `rankvwf.nativerestore`: Rankings and Start-root native-font restoration | `mixed` — keep for user-approved final Rankings/Pass display exits; file/choice-menu B returns remain review work |
-| `53:$4600` | `statusvwf.statusentry`: rejected Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower owner | `replace-menu` safety fallback; dormant in the expanded automated routes |
+| `46:$42C2` | `rankvwf.nativerestore`: native-font restoration after Rankings/Pass or a rejected caller | `keep` — approved final Rankings/Pass exits, already-dark transactions, and unknown callers; exact file-child B returns bypass it through S2R |
+| `53:$4624` | `statusvwf.statusentry`: rejected Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower owner | `replace-menu` safety fallback; dormant in the expanded automated routes |
 | `59:$406F` | `normalending.install`: Normal-ending full-screen art installation | `keep` — new scene |
 | `60:$4222` | `menuvwf.itemregion`: rejected Item-row transaction; the canonical cursed/plated/fused equipment route is now admitted before it | `replace-menu` safety fallback, dormant for known callers |
 | `60:$4338` | `menuvwf.itempage`: rejected Item/Pot transaction; the Pot `Put` selector is now admitted before it | `replace-menu` safety fallback, dormant for known callers |
-| `62:$447E` | `menuvwf.infolifecycle`: legacy Item/Floor Info or seal fallback | `replace-menu`; dormant for every catalogued Info/seal/Pot route |
+| `62:$448B` | `menuvwf.infolifecycle`: legacy Item/Floor Info or seal fallback | `replace-menu`; dormant for every catalogued Info/seal/Pot route |
 
 `keep` applies only to the named caller. The clearest example is `44:$4066`: the Start
 keyboard is an independent screen and may keep the atomic native-font reload, while the
@@ -270,8 +276,8 @@ touches a personal save. That document records the accepted baseline, the implem
 
 ### Start-menu LCD-off catalogue
 
-The generated Start table has 20 caller rows. It names each visual path separately even
-though the unconverted composites share the fallback at `41:$40E6`.
+The generated Start table has 22 caller rows. It names each visual path separately and
+keeps the rejected/unknown title-file fallback as its own dormant row at `41:$40F2`.
 
 A fresh `mgbdis` pass over both `build/base.gb` and `build/shiren_en.gb` established the
 native dispatcher and publisher before S1 was changed. Screen 23 is handler `4:$4C75`
@@ -280,8 +286,9 @@ destination selector at `4:$4CCA`, not Rename. The native pop path clears the sh
 replays surviving stack screens, and publishes all 18 rows; pushes preserve the parent
 shadow. `startpathspill.py` now drives and freezes these exact observed routes:
 
-- Adventure: `15 -> 23` (including Down/Up redraws) -> `15`;
-- New Log: `15 -> 22 -> 25` -> `15 -> 22 -> 15` on the tested returns;
+- Adventure: `15 -> 23` (including Down/Up redraws) -> `21 -> 15 -> 23`, or `15`;
+- New Log: `15 -> 22 -> 25`, including every difficulty redraw, then `15 -> 22 -> 15`
+  on the tested returns;
 - Copy: `15 -> 23 -> 26 -> 15`;
 - Erase: `15 -> 23 -> 24 -> 15`;
 - Rename: `15 -> 23 -> 8`;
@@ -304,8 +311,12 @@ VBlank. The native shadow builders and publisher remain unchanged.
 | Regional owner | Far entry | Installed code | Structural neighbours |
 |---|---|---|---|
 | S1 screen 23 | bank 44 index `$07` (`44:$4006-$4007`) | `44:$4090-$40F6` | after `name6` restore; redirected text begins `$4100` |
-| S2 screens 22/26 | bank 46 index `$0B` (`46:$400A-$400B`) | `46:$40E9-$416C` | after Rankings-category allocator; before rank manager at `$4180` |
+| S2 screens 22/26 | bank 46 index `$0B` (`46:$400A-$400B`) | `46:$40F5-$4178` | after Rankings-category allocator and three-byte guard; before rank manager at `$4180` |
 | S2 screen 24 | bank 52 index `$07` (`52:$4006-$4007`) | `52:$4090-$40FD` | after `faypath`; redirected text begins `$4100` |
+| Screen-24 No/Yes tile allocator | bank 56 index `$07` (`56:$4006-$4007`) | `56:$40B0-$40F6` | after shop amount gate and 15-byte guard; redirected text begins `$4100` |
+| S2R/S4 cancellation returns | bank 40 index `$07` (`40:$4006-$4007`) | `40:$4068-$41D9` | after Floor/Info ABI; exact popped screens 21..26 and 30..32; redirected text begins `$4200` |
+| S4 screens 30/31/32 | bank 61 index `$0B` (`61:$400A-$400B`) | `61:$4180-$4231` | after Action/root-cursor arena; before S3 owner |
+| S3 screen 25 | bank 61 index `$0D` (`61:$400C-$400D`) | `61:$4240-$42B9` | after S4; redirected text begins `$42C0` |
 
 Every installer checks both the whole code interval and its far-entry pair for `$FF`, and
 the build asserts boxes 25-28 retain the row/width/flag geometry encoded by these masks.
@@ -324,53 +335,120 @@ extended to `61:$405A-$417F`; redirected text owns none of this bank and the nex
 owner begins at `$7000`. The installer requires the complete interval to remain `$FF`,
 so any future allocator overlap fails the build.
 
-All nine `startpathspill.py` routes and the complete `startspill.py` matrix pass against
-the post-fix ROM SHA-256
-`12fe799ad06b505c6bcfa0b8f2c8b858e430202b415b77b9bfb70f27114e538c`.
-The fixtures now require exactly one `$81` at the effective saved selector in both the
-root shadow and BG maps at every commit and final return. Joey visually accepted the
-three S2 entries and the focused transient cursor-return correction on 2026-08-31.
+S2R removes the native-font whole-LCD restore from the exact file-child cancellation
+routes. A fresh Japanese/current-ROM `mgbdis` comparison established three pieces of ownership:
+native pop at `4:$4857` decrements `$C534` without erasing the popped child byte at
+`$C536+$C534`; the one-shot input reader at `0:$0564` leaves B as `$02` in `$FF84`; and
+root handler 15 is `4:$4C15`. The expanded bank-40 owner at `$4068-$41D9` admits B only
+for root screen 15, the native root stack, and popped child 21 through 26 or 30 through
+32. Its sole A
+admission is popped screen 24 with native selector `$C6A5=0`, which is Erase No. It
+retires that child's exact rectangle during one complete VBlank and arms the existing
+atomic root-shadow finalizer. It never disables LCDC.7.
+
+This input/selector predicate is significant: Erase Yes and other destructive A commits
+still take the native atomic restore, while B from nested children and A on Erase No
+first reconstruct the transient root and then the surviving screen-23 summary.
+Final Rankings/Pass displays and rejected callers continue through
+`rankvwf.nativerestore` at `46:$42C2`; retained choice layers 30..32 bypass it.
+
+A later visual regression exposed a second, independent screen-24 ownership problem.
+Box 28 originally entered the generic two-row allocator at `$CB` for `No` and `$D3` for
+`Yes`. The visible words need only two tiles, but the native transfer queue publishes
+the complete four-cell slices after the regional pop. On A at `No`, that delayed write
+could therefore land after screen 23 was already visible and repaint `$CB-$CE`, exactly
+the four native Orochi badge planes, with the word `No`. A fresh sibling `mgbdis` pass
+over the corrected ROM confirms the exact screen-24 classifier at `56:$40B0-$40F6` and
+its private destinations `$8A` and `$8E`. Runtime reference censuses prove `$8A-$91`
+have no simultaneous owner on either screen 24 or returned screen 23. The retained
+`orochipopupspill.py` route now requires exact dispatcher sequence
+`15,23,24,15,23`, all four gold badge planes across 224 returned-summary frames, and
+six plane-exact No/Yes rows across Logs 1-3. This regression existed before S4 visual
+testing; its isolated visual prerequisite is recorded in
+[`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md) and was visually accepted by
+Joey on 2026-08-31 against the accepted hash below.
+
+S3's exact screen-25 owner now occupies `61:$4240-$42B9`. Handler `4:$4CAB`
+combines box 29 at x=12..19/y=6..12 with explanation box 46, 48, or 50 at
+x=0..19/y=13..17. Exact stack `(15,22,25)` retires both rectangles in one VBlank on
+initial entry and each Easy/Normal/Hard change, then reuses the established atomic
+difficulty finalizer with LCDC.7 set. Popped screen 25 uses the same rectangles on B.
+
+S4 follows a fresh `../mgbdis` pass over the current ROM. Screen handlers 30, 31, and 32
+are `4:$4D10`, `4:$4D20`, and `4:$4D2B`. Runtime row traces prove their complete bordered
+rectangles as x=3..10/y=8..11, x=5..16/y=7..10, and x=5..15/y=9..11 respectively. The
+owner at `61:$4180-$4231` admits only exact Start stacks rooted at `(15,30)` and clears
+the selected rectangle during one complete VBlank with LCDC.7 set. Screens 33 and 34
+cannot pass that predicate and retain their approved independent-display transitions.
+The expanded cancellation owner uses the same rectangles for B from screens 30..32.
+Screen 31's proportional category rows borrow `$C0-$CB`. A cleared Adventure Log uses
+tile `$CB` for the top-left quarter of its native Orochi badge, so the screen-31 B owner
+also restores that exact 16-byte native plane at `$8CB0` inside the same VBlank before
+the root can be published. The other badge tiles `$CC-$CE` are not borrowed. The
+`orochisymbolspill.py` lifetime route proves the initial root plus three returns through
+Kuyo/Village/Kuyo are map-, plane-, and framebuffer-exact with no corrupt reveal.
+
+All 23 `startpathspill.py` routes and the complete `startspill.py` matrix pass against
+the accepted S4 ROM SHA-256
+`9e3ce9cfe5adb5c76aa4741b07930b533725b4198922485ab0c982fcac9ae8c2`.
+Every isolated regional return requires zero LCD-off frames, zero whole-white frames,
+the exact commit sequence, correct cursor ownership, and a returned parent/root raster
+pixel-identical to its reference after normalizing cursor cells.
+Joey visually accepted the three S2 entries, the focused transient cursor-return
+correction, all eight S2R return checks, and all three S3-specific routes on 2026-08-31.
+The accepted S3 ROM SHA-256 remains
+`1ed177868ecbeb341333763b534a5cc0967c13e4427def9feb3d8ee3b993cb7a`.
+Joey visually accepted all three focused S4 checks on 2026-08-31. The exact procedures
+and accepted hash are frozen in [`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md).
 
 The visual-policy review on 2026-08-31 further separates choice layers from true
 replacement displays:
 
-- Replay's saved-log selector must remain LCD-live; selecting the log may blank because
-  replay gameplay replaces the menu. B from the selector to Start remains return work.
+- Replay's saved-log selector and its B return must remain LCD-live; selecting the log
+  may blank because replay gameplay replaces the menu.
 - Start <-> Fay's Puzzle may blank, as may Fay -> gameplay. Fay's two existing puzzle
-  pages are internal navigation and must continue paging without an LCD blank. A save
-  with the second set of 50 puzzles will become the no-Lua regression fixture.
-- Rank/Pass choice, category, and log-selector layers remain menu work. Once a choice
-  enters the final Rankings or Pass display, whole-LCD blanking is allowed in both
+  pages are internal navigation and must continue paging without an LCD blank. Joey
+  visually confirmed both 50-entry pages—all 100 puzzles—on 2026-08-31.
+- Rank/Pass choice, category, and log-selector layers now have exact S4 regional owners
+  and passed visual acceptance on 2026-08-31. Once a choice enters the final Rankings or
+  Pass display, whole-LCD blanking is allowed in both
   directions. Rankings page-to-page blanking is also explicitly allowed because every
   page is treated as a new display.
+- New Log and Rename both enter the independent screen-8 name keyboard. Under the same
+  replacement-screen rule, its native whole-LCD transition is allowed in both
+  directions. Joey visually approved the New Log and Rename keyboard paths on
+  2026-08-31: the keyboard is a complete new screen, most of the Start UI is already
+  white, and the brief LCD blank is not objectionable. New Log success continues into
+  gameplay and is independently `keep`. No S3N blank-removal work remains.
 
-The isolated SRAM staging command, S1 acceptance record, and three exact S2 visual routes
-are in [`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md). It resets a uniquely
-named Mesen save before each destructive title choice and never uses Lua or a personal
-SRAM.
+The isolated SRAM staging command, prior S1-S3 acceptance record, Erase/Orochi
+prerequisite, and three exact S4 visual routes are in
+[`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md). It resets four uniquely named
+Mesen saves before every check and never uses Lua or a personal SRAM.
 
 | Player path | Causal off producer(s) | Status and evidence |
 |---|---|---|
 | Boot/logo/title presentation -> Start | `29:$411A`; shadows `31:$49B1`, `31:$4AE8`, `31:$4D59`, `31:$4899`, `4:$65F4` | `keep`; pre-interactive hardware/title initialization |
 | Adventure -> saved-log summary/log changes | none | `regional` S1; exact screen 23, stack `(15,23)`; visually accepted 2026-08-31 |
-| Select Adventure log -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary |
+| B from Adventure Continue/New Game -> saved-log summary | none | `regional` S2R follow-up; exact popped screen 21 clears x=3..14/y=4..8 and rebuilds surviving screen 23 with zero LCD-off/white frames; visually accepted 2026-08-31 |
+| Select Adventure log -> Continue/New Game -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; replacement boundary after the choice |
 | New Log -> selector | none | `regional` S2; exact screen 22/box 25, stack `(15,22)`; entry and screen-25 return have zero Start LCD-off hits |
-| New Log -> difficulty/explanation | `41:$40E6` | `review`; observed screen 25; planned S3 |
-| New Log -> personal-name keyboard | `44:$4066` | `keep`; independent screen-8/native-font replacement |
+| New Log -> difficulty/explanation, difficulty redraws, and B return | none | `regional` S3; exact screen 25/stack `(15,22,25)` clears box 29 plus explanation box 46/48/50 in one VBlank; zero LCD-off/white frames; visually accepted 2026-08-31 |
+| New Log -> personal-name keyboard | `44:$4066` | `keep`; independent screen-8/native-font replacement, visually approved 2026-08-31 |
 | Confirm New Log name -> village | shadow `2:$463C` | `keep`; replacement boundary |
 | Copy Log -> source summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
 | Copy source -> destination selector | none | `regional` S2; exact screen 26/box 25, stack `(15,23,26)`; zero Start LCD-off hits |
 | Erase Log -> summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
-| Erase summary -> No/Yes confirmation | none | `regional` S2; exact screen 24/boxes 27+28, stack `(15,23,24)`; zero Start LCD-off hits |
+| Erase summary -> No/Yes confirmation; A on No -> summary | none | `regional` S2/S2R follow-up; exact screen 24/boxes 27+28, stack `(15,23,24)`; A-on-No is admitted by selector zero while Yes retains the destructive fallback. Post-S4-prerequisite fix moves delayed No/Yes queue slices from Orochi-owned `$CB-$CE`/`$D3-$D6` to private `$8A-$8D`/`$8E-$91`; complete automated battery and focused visual recheck passed 2026-08-31 |
 | Rename -> log summary | none | `regional` S1; exact screen 23; visually accepted 2026-08-31 |
-| Rename -> personal-name keyboard | `44:$4066` | `keep`; exact `15,23,8` independent screen/native-font boundary |
-| Return from file selectors/summaries -> Start root | `46:$42B5` | `review` S2R; cursor ownership accepted, but Adventure/New/Copy/Erase/Rename/Replay B-return blanking policy remains to implement/review |
-| Rank/Pass choice, category, and Pass log-selector layers | `41:$40E6` | `review`; exact screens 30/31/32 remain S4 work in both directions |
-| Rank choice -> Rankings display, paging, and reverse | `43:$40B6`, `46:$42B5` | `keep`; user-approved independent display—entry, exit, and every Rankings page change may blank |
-| Pass selector -> password/award display and reverse | `46:$42B5` on reverse | `keep`; user-approved independent display; current entry is LCD-live, but blanking is allowed in either direction |
+| Rename -> personal-name keyboard | `44:$4066` | `keep`; exact `15,23,8` independent screen/native-font boundary, visually approved 2026-08-31 |
+| Return from file selectors/summaries -> Start root/parent | none | `regional` S2R/S4; B from exact popped screens 21..26 and 30..32 plus A-on-No from screen 24 retire exact regions; all automated routes have no LCD-off/white frame |
+| Rank/Pass choice, category, and Pass log-selector layers | none | `regional` S4 accepted; exact handlers 30/31/32 clear only their bordered rectangles in one VBlank; six focused/full automated routes and all three focused visual checks passed 2026-08-31 |
+| Rank choice -> Rankings display, paging, and reverse | `43:$40B6`, `46:$42C2` | `keep`; user-approved independent display—entry, exit, and every Rankings page change may blank |
+| Pass selector -> password/award display and reverse | `46:$42C2` on reverse | `keep`; user-approved independent display; current entry is LCD-live, but blanking is allowed in either direction |
 | Start root <-> Fay's Puzzle | `38:$408F` | `keep`; user-approved independent composite entry/B-exit; its two puzzle pages must continue paging LCD-live |
 | Fay task -> gameplay | shadows `2:$463C`, `4:$4154` | `keep`; user-approved replacement boundary |
-| Replay -> saved-log summary | none | `regional` S1; selector entry visually accepted and remains LCD-live; B return is S2R; selecting a save crosses a user-approved gameplay replacement boundary |
+| Replay -> saved-log summary | none | `regional` S1/S2R; selector entry was visually accepted, B return has the exact regional root owner, and selecting a save crosses a user-approved gameplay replacement boundary |
 
 The normal ending site `59:$406F` belongs to neither menu system and remains in the
 instruction census as an intentional new-scene blank. Native `2:$4702` and the remaining
@@ -2305,16 +2383,18 @@ display reconstruction.
   `Put` intentionally leaves the menu for a dungeon
   action and therefore retains the base engine's two new-screen blanks. Shared screen
   IDs do not imply shared ownership.
-- **Remaining Start/title choice composites:** New Log difficulty and the Rank/Pass
-  choice/category/log-selector layers borrow planes across several boxes and remain
-  review work. Final Rankings and Pass displays are user-approved replacement screens;
+- **Start/title choice composites:** the isolated Erase-No/Orochi prerequisite and the
+  Rank/Pass choice/category/log-selector layers are visually accepted. Their exact
+  S4 regional owners also have complete automated coverage. New Log difficulty remains
+  an accepted S3 regional owner. Final
+  Rankings and Pass displays are user-approved replacement screens;
   their entry, exit, and Rankings page changes may blank. Start <-> Fay and Fay ->
   gameplay may also blank, while Fay's internal two-page puzzle navigation must remain
   LCD-live.
 - **Map, Quit, Replay gameplay, and gameplay verbs:** these are replacement paths.
   Preserve their native blank/transition unless a separate visual defect is demonstrated.
-  Replay's preceding saved-log selector is not a replacement: its entry stays LCD-live
-  and its B return remains S2R work.
+  Replay's preceding saved-log selector is not a replacement: its entry and S2R B
+  return stay LCD-live.
 - **Unknown Name entry/return contexts:** carried entry is admitted only by the exact
   `0,1,2,9` stack/viewport proof above, and the matching inventory return only by the
   separate state-`$0D` proof below. Any other screen-9 caller or malformed replay retains
@@ -2323,7 +2403,10 @@ display reconstruction.
 - **Forced context-dependent screens:** a forced screen can draw plausible garbage or
   run through invalid state. It cannot authorize a blanking mask.
 
-## Remaining exploration and implementation worklist
+## Future extension safeguards (not current remaining work)
+
+The catalogued Item/Floor and Start regional-blanking project is complete. The following
+rules apply only if new callers or features are added later:
 
 1. Extend the direct Window reference-set audits used by `itemexitspill.py` and
    `itementryspill.py` to any future
@@ -2331,13 +2414,12 @@ display reconstruction.
 2. Treat future alternate Pot-content, shop action, or screen-16 callers as independent
    ownership epochs; the current exact Put-selector and shop Floor/Info proofs do not
    authorize them.
-3. Complete Start S2R for Adventure/New/Copy/Erase/Rename/Replay B returns, then S3 for
-   New Log difficulty and its reverse path, S3N for Start name-entry policy, and S4 for
-   only the Rank/Pass choice/category/log-selector layers. Extend `startpathspill.py`
-   before admitting any new conditional branch. Add a no-Lua second-50-puzzles save
-   fixture that locks Fay page-to-page navigation LCD-live. Final Rankings/Pass displays,
-   Rankings paging, Start <-> Fay, Fay -> gameplay, and Replay -> gameplay are approved
-   replacement boundaries and are not blank-removal targets.
+
+Both Fay puzzle pages were visually accepted across all 100 puzzles. A future tracked
+second-page SRAM would improve automation, but it is optional coverage hardening rather
+than unfinished implementation. Final Rankings/Pass displays, Rankings paging, Start
+<-> Fay, Fay -> gameplay, and Replay -> gameplay are approved replacement boundaries
+and are not blank-removal targets.
 
 The implemented scope remains narrow: screen-1 paging/Start-sort owns an exact five-row
 mask; direct Status-to-Items owns BG rows 0-15 while locking the Window; direct

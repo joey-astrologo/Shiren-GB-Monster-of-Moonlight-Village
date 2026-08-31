@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Protect the saved-Log Orochi badge while Continue/New Game is composed.
+"""Protect the saved-Log Orochi badge across retained Start overlays.
 
 The completed-Log badge is native graphics at tiles $CB-$CE.  The generic two-row
 ROM-text allocator also began at $CB, so opening the Log popup repainted the badge with
 letters from ``Continue``.  This real-save regression watches every frame from the
 settled summary through the popup, requires the four native planes never to change, and
-proves both popup rows use their context-local proportional slices instead.
+proves both popup rows use their context-local proportional slices instead.  A second
+real-input route opens Erase's No/Yes confirmation and selects No; the returned summary
+must restore every badge plane before it is visible again.
 """
 import argparse
 import os
@@ -46,6 +48,16 @@ POPUP_ROWS = (
     (5, 5, 'Continue', menuvwf.CONFIRM_POOL_ROWS[0]),
     (7, 5, 'New Game', menuvwf.CONFIRM_POOL_ROWS[1]),
 )
+ERASE_BUTTONS = {
+    700: 'start', 760: 'start', 820: 'start', 880: 'start',
+    1250: 'down',                 # Erase Log on this six-row Start root
+    1460: 'a',                    # Erase Log -> saved Log summary
+    1800: 'a',                    # saved Log -> No/Yes confirmation
+    2200: 'a',                    # No -> returned saved Log summary
+}
+ERASE_WATCH_FIRST = 1750
+ERASE_FINAL_FRAME = 2450
+DISPATCH = (4, 0x48AA)
 
 
 def tile_plane(pb, tile):
@@ -121,10 +133,59 @@ def run(rom, ram, png=None):
             pb.screen.image.save(png)
         pb.stop(save=False)
 
+    erase_corrupt = []
+    erase_dispatches = []
+    returned_badge_frames = 0
+    with tempfile.TemporaryDirectory(prefix='orochierasespill-') as tmp:
+        work = os.path.join(tmp, 'erase.gb')
+        shutil.copyfile(rom, work)
+        shutil.copyfile(ram, work + '.ram')
+        pb = PyBoy(work, window='null')
+        pb.set_emulation_speed(0)
+        current_frame = [0]
+
+        def dispatch(_context=None):
+            erase_dispatches.append((current_frame[0], pb.register_file.A))
+
+        pb.hook_register(*DISPATCH, dispatch, None)
+        for frame in range(ERASE_FINAL_FRAME + 1):
+            current_frame[0] = frame
+            button = ERASE_BUTTONS.get(frame)
+            if button:
+                pb.button(button, PRESS_FRAMES)
+            pb.tick()
+            if frame < ERASE_WATCH_FIRST:
+                continue
+            map_ok = all(pb.memory[MAP + row * 32 + col] == tile
+                         for row, col, tile in EMBLEM_CELLS)
+            if not map_ok:
+                continue
+            if frame >= 2200:
+                returned_badge_frames += 1
+            bad = tuple(tile for _row, _col, tile in EMBLEM_CELLS
+                        if tile_plane(pb, tile) != GOLD_PLANES[tile])
+            if bad:
+                erase_corrupt.append((frame, bad))
+        pb.stop(save=False)
+
+    screens = tuple(screen for _frame, screen in erase_dispatches)
+    if screens != (15, 23, 24, 15, 23):
+        problems.append('Erase No route screens are %s, expected root/summary/'
+                        'confirmation/returned-summary' % (screens,))
+    if not returned_badge_frames:
+        problems.append('Erase No route never exposed the returned Orochi summary')
+    if erase_corrupt:
+        first_frame, first_tiles = erase_corrupt[0]
+        problems.append('Erase No exposed corrupt Orochi planes from frame %d; first '
+                        'tiles %s' %
+                        (first_frame, ' '.join('$%02X' % tile for tile in first_tiles)))
+
     for problem in problems:
         print('  ' + problem)
-    print('orochipopupspill: %d badge frame(s), popup tiles %s; %d problem(s)' %
+    print('orochipopupspill: %d popup badge frame(s), popup tiles %s; Erase screens %s, '
+          '%d returned badge frame(s); %d problem(s)' %
           (badge_frames, ' '.join('$%02X' % tile for tile in sorted(used)),
+           ','.join(str(screen) for screen in screens), returned_badge_frames,
            len(problems)))
     return 1 if problems else 0
 

@@ -12,10 +12,13 @@ The complete settled screen is one allocation at ``$82-$B0``: five tiles for
 each of five names, and four shared tiles apiece for the native special-floor markers
 ``Village``/``Dragon``.  Tile ``$81`` remains native because the result page uses it for
 the current-entry arrow; the native clear/status graphics at ``$B7`` and ``$CB-$D2`` are
-also disjoint while the board is visible.  The earlier category selector temporarily
+also disjoint while the board is visible. The earlier category selector temporarily
 uses ``$C0-$CB``; the cartridge's LCD-off native font loader restores that whole slice
-before any result map is revealed, and restores ``$80-$D2`` again before a title or
-Adventure map is revealed.
+before any result map is revealed. It remains authoritative for approved final
+Rankings/Pass exits, already-dark transactions, and rejected callers. Exact file-child
+B returns bypass it through the S2R regional Start-root owner. A screen-31 category
+return also bypasses it, but that owner restores the category's sole collision with the
+root (native Orochi tile ``$CB``) inside its bounded VBlank before publishing the map.
 
 Eligibility remains a WHOLE-PAGE decision.  Before any shared VWF plane is uploaded or
 any row is drawn, all five 12-byte rank records are checked and the result is held for the
@@ -205,8 +208,15 @@ def manager_src(font):
                           menuvwf.START_AUX_INDEX, menuvwf.START_AUX_BANK,
                           static_vram,
                           SPECIAL_INDEX, SPECIAL_BANK,
+                          menuvwf.START_ROOT_RETURN_INDEX,
+                          menuvwf.START_ROOT_RETURN_BANK,
                           ','.join('$%02X' % value for value in data),
                           ','.join('$%02X' % value for value in native_header))
+
+
+def manager_labels(font):
+    """Return assembled screen-manager labels for audits and runtime fixtures."""
+    return gbasm.assemble(manager_src(font), MANAGER_AT)[1]
 
 
 def special_src(font):
@@ -342,7 +352,7 @@ rankmanager:
   cp $01
   jr z,staticmap
   cp $02
-  jp z,nativerestore
+  jp z,titlefontrestore
   cp $03
   jp z,packpayload
   cp $04
@@ -537,6 +547,22 @@ preparedone:
   pop af
   ret
 
+titlefontrestore:
+  ; File selectors/summaries do not borrow the Rankings planes.  menuvwf's exact
+  ; B-return owner validates the Japanese stack/input evidence, retires the outgoing
+  ; rectangles, restores screen 31's one root-visible $CB collision when applicable,
+  ; and arms the ordinary full-root shadow finalizer. An already-dark transaction,
+  ; Rankings/Pass, Fay, successful file operation, and every unknown caller reject
+  ; there and retain the conservative native-font restore.
+  ldh a,[$FF40]
+  bit 7,a
+  jp z,nativerestore
+  xor a
+  rst $10
+  db $%02X,$%02X
+  and a
+  ret z
+
 nativerestore:
   ; The complete native menu-font loader restores $00-$D2.  If the LCD is on, disable
   ; only in VBlank; callers decide whether and which hidden/finished map is selected.
@@ -548,6 +574,7 @@ restorewait:
   cp $90
   jr c,restorewait
   ldh a,[$FF40]
+nativeoff:
   res 7,a
   ldh [$FF40],a
 restoredark:

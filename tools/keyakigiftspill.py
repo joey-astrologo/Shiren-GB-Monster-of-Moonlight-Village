@@ -89,8 +89,12 @@ def run(rom_path, ram_path, png=None, frames=2860):
         for address in staged:
             if not starts or starts[-1] != address:
                 starts.append(address)
-        if tuple(starts) != EXPECTED_STARTS:
-            problems.append('live event staged %s, expected %s' % (
+        # The faster regional Start return can reach the field soon enough for this
+        # fixture's later scripted input to stage the standing-tile command popup too.
+        # That popup is outside Keyaki's event. Freeze the event's ordered prefix while
+        # allowing later, unrelated menu rows to use the same bank-14 stager.
+        if tuple(starts[:len(EXPECTED_STARTS)]) != EXPECTED_STARTS:
+            problems.append('live event prefix staged %s, expected %s' % (
                 ' '.join('$%04X' % value for value in starts) or 'nothing',
                 ' '.join('$%04X' % value for value in EXPECTED_STARTS)))
         if receipt is None:

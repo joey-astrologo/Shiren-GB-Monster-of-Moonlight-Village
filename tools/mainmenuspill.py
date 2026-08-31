@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Real-save regression for atomic title, difficulty and Rankings transitions.
+"""Real-save regression for title, regional difficulty and Rankings transitions.
 
 The path-select fixture has the exact eight-row title, empty Log 3 and four populated
 ranking records which exposed the shared-tile lifetime bugs.  This test proves that:
 
 * title/selector rows keep identical tile IDs and planes through Easy/Normal/Hard;
-* every LCD-off title/file transaction is visibly white while its state is pending;
+* title initialization retains its coherent LCD-off transaction;
+* every sampled screen-25 difficulty frame remains LCD-on and non-white;
 * Rankings shows only its harmless top border (at most) before the blank map takes over,
   then reveals one complete page and clears its transaction state.
 
@@ -51,6 +52,7 @@ def run_new(PyBoy, rom, ram):
         script = {60: 'start', 120: 'start', 180: 'start', 240: 'start',
                   300: 'down', 350: 'a', 430: 'a', 520: 'down', 600: 'down'}
         white = 0
+        difficulty_frames = difficulty_white = difficulty_off = 0
         pending_dark = []
         owners = planes = None
         checkpoints = {}
@@ -64,6 +66,12 @@ def run_new(PyBoy, rom, ram):
                 pending_dark.append((frame, state, dark))
                 if dark == 0:
                     white += 1
+            if pb.memory[0xC6A3] == 0x19:
+                difficulty_frames += 1
+                if not pb.memory[0xFF40] & 0x80:
+                    difficulty_off += 1
+                if dark_pixels(pb.screen.image) == 0:
+                    difficulty_white += 1
             if frame == 420:
                 shadow = bytes(pb.memory[SHADOW:SHADOW + VISIBLE])
                 all_owners = {pos: tile for pos, tile in enumerate(shadow)
@@ -85,14 +93,18 @@ def run_new(PyBoy, rom, ram):
 
     problems = []
     if not pending_dark or white < 3:
-        problems.append('title/difficulty route did not expose the expected white '
-                        'transaction frames')
+        problems.append('title route did not expose its expected white transaction frames')
+    if not difficulty_frames:
+        problems.append('difficulty screen 25 was never sampled')
+    if difficulty_off or difficulty_white:
+        problems.append('difficulty exposed %d LCD-off and %d white frame(s)' %
+                        (difficulty_off, difficulty_white))
     # The screen sampled on the first pending tick may still be the coherent outgoing
     # frame; the LCD-off effect begins on the next scan.  White coverage above is the
     # invariant, while plane/map ownership below rejects mixed outgoing/incoming text.
     if owners is None or len(checkpoints) != 3:
         problems.append('difficulty ownership checkpoints were not captured')
-        return problems, white, 0
+        return problems, white, 0, difficulty_frames, difficulty_off, difficulty_white
     for frame, (shadow, bg, got_planes) in checkpoints.items():
         changed = [(pos, tile, shadow[pos], bg[pos]) for pos, tile in owners.items()
                    if shadow[pos] != tile or bg[pos] != tile]
@@ -104,7 +116,8 @@ def run_new(PyBoy, rom, ram):
         if bad_planes:
             problems.append('f%d difficulty overwrote title/selector planes %s' %
                             (frame, ' '.join('$%02X' % tile for tile in bad_planes)))
-    return problems, white, len(owners)
+    return (problems, white, len(owners), difficulty_frames, difficulty_off,
+            difficulty_white)
 
 
 def run_rank(PyBoy, rom, ram):
@@ -167,13 +180,15 @@ def main():
         if not os.path.exists(path):
             raise SystemExit('mainmenuspill: missing %s' % path)
     PyBoy = _import_pyboy()
-    new_problems, white, owners = run_new(PyBoy, args.rom, args.ram)
+    (new_problems, white, owners, difficulty_frames, difficulty_off,
+     difficulty_white) = run_new(PyBoy, args.rom, args.ram)
     rank_problems, rank_frames, rank_dark = run_rank(PyBoy, args.rom, args.ram)
     problems = new_problems + rank_problems
-    print('mainmenuspill: %d white title/difficulty frame(s), %d persistent '
-          'title/selector owner(s); Rankings hidden %d frame(s), settled with %d dark '
-          'pixels; %d problem(s)' %
-          (white, owners, rank_frames, rank_dark, len(problems)))
+    print('mainmenuspill: %d white title frame(s), difficulty %d sampled/%d off/%d '
+          'white, %d persistent title/selector owner(s); Rankings hidden %d frame(s), '
+          'settled with %d dark pixels; %d problem(s)' %
+          (white, difficulty_frames, difficulty_off, difficulty_white, owners,
+           rank_frames, rank_dark, len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

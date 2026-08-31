@@ -109,7 +109,9 @@ can consume more of a pool bank later.
 | 34-45 | `$405A-$40FF` when assigned | VWF carry/transition helpers | See per-module constants; otherwise reader-owned |
 | 37 | `$405A-$429F` | `tools/menuvwf.py`: carried-/Floor-/contained-Action live-layer admission/collision gate, exact visible top-verb preservation for direct Floor and screen 16, contained-item Info stack proof, and page-edge save dispatch | Exclusive, far indices `$05/$07`; redirected text begins at `$42A0` |
 | 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fei restore | Exclusive |
-| 46 | `$4100-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: rank-screen helpers | Exclusive |
+| 40 | `$4068-$41D9` | `tools/menuvwf.py`: exact Start cancellation-return owner for popped file children 21..26 and Rank/Pass layers 30..32, including screen 31's bounded native `$CB` Orochi-plane restore | Exclusive, far index `$07`; redirected text begins at `$4200` |
+| 41 | `$405A-$40FF` | `tools/menuvwf.py`: Start title/file transition controller | Exclusive, far index `$05`; redirected text begins at `$4110` |
+| 46 | `$4060-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: saved-Log/category allocator, screen-22/26 regional owner, and rank-screen helpers | Exclusive; deliberate `$40F2-$40F4` and `$4179-$417F` guards |
 | 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
 | 48-49 | `$405A-$40FF` | `tools/menuvwf.py`: native fusion-count residue shifter plus `$8C-$94` glyph table/reader | Exclusive |
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
@@ -119,6 +121,7 @@ can consume more of a pool bank later.
 | 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 55 | `$405A-$40D7` | `tools/menuvwf.py`: shop `Price` / `G` private-raster stager and map writer | Exclusive, exact call-site guard |
 | 56 | `$405A-$40A0` | `tools/menuvwf.py`: exact shop amount-row VWF classifier | Exclusive, exact shape/source gate |
+| 56 | `$40B0-$40F6` | `tools/menuvwf.py`: exact screen-24 Erase No/Yes allocator using private delayed-queue slices `$8A-$91` | Exclusive, far index `$07`; `$40A1-$40AF` is a structural guard and redirected text begins at `$4100` |
 | 57 | `$405A-$40B5` | `tools/menuvwf.py`: shop `Price` / `G` native-queue VBlank uploader | Exclusive, called only by bank 55 |
 | 58 | `$405A-$40FE` | `tools/menuvwf.py`: standing-item Floor/Items one-row/five-row chrome and shared-title-reference converter | Exclusive, far index `$07`; ending-credit code begins at `$4100` |
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
@@ -134,7 +137,9 @@ can consume more of a pool bank later.
 | 60 | `$46B1-$46FF` | `tools/menuvwf.py`: native-equivalent page-indicator builder and VBlank publisher | Exclusive, direct from the completed-body path |
 | 60 | `$4700-$4FFF` | `tools/pool.py`: redirected English text | Pool-only; raised origin protects the menu controller arena |
 | 60 | `$5000-$78AF` | `tools/markers.py`: town/dungeon arrival-card graphics | Exclusive tail, far index `$0B` |
-| 61 | `$405A-$40EF` | `tools/menuvwf.py`: admitted carried-/Floor-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09`; redirected text begins at `$4100` |
+| 61 | `$405A-$417F` | `tools/menuvwf.py`: guarded carried-/Floor-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09` |
+| 61 | `$4180-$4231` | `tools/menuvwf.py`: exact Start Rank/Pass choice/category/log-selector regional owner | Exclusive, far index `$0B` |
+| 61 | `$4240-$42B9` | `tools/menuvwf.py`: exact screen-25 difficulty/explanation regional owner | Exclusive, far index `$0D`; redirected text begins at `$42C0` |
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
 | 62 | `$405A-$4429` | `tools/menuvwf.py`: carried-/Floor-Action box-6 parent, screen-1 machine-state restorer, and Action/Pot routing | Exclusive, far index `$07` |
 | 62 | `$4430-$547C`, `$5480-$548F` | `tools/menuvwf.py`: Item/Floor Info/seal/Pot regional lifecycle and fixed Floor/Pot return leaf | Exclusive, far indices `$09/$0B/$0D/$0F`; redirected text begins at `$5490` |

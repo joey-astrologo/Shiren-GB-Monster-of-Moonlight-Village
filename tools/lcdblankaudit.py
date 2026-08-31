@@ -26,7 +26,9 @@ import argparse
 import csv
 import os
 
+import dotfont
 import menuvwf
+import rankvwf
 import statusvwf
 
 
@@ -36,6 +38,9 @@ BANK_SIZE = 0x4000
 STATUS_DISABLE_AT = statusvwf.runtime_labels()['statusdisable'] + 4
 INFO_DISABLE_AT = menuvwf.info_lifecycle_labels()['fidisable'] + 4
 START_DISABLE_AT = menuvwf.start_transition_labels()['stdisable']
+# The catalogue names the hardware write; ``nativeoff`` labels its immediately
+# preceding two-byte ``res 7,a`` so runtime fixtures can hook before the mutation.
+NATIVE_FONT_OFF_AT = (rankvwf.manager_labels(dotfont.load_approved())['nativeoff'] + 2)
 
 
 # (bank, write address): (owner, route/purpose, current policy)
@@ -46,7 +51,8 @@ START_DISABLE_AT = menuvwf.start_transition_labels()['stdisable']
 # must reject reaching it. ``mixed`` means the physical instruction has both an
 # intentional complete-screen caller and rejected same-menu callers; each caller needs
 # a direct fixture. ``review`` is a complete-screen menu transaction whose final product
-# is correct but whose whole-LCD policy has not been frozen with the user.
+# is correct but whose whole-LCD policy has not been frozen with the user. ``dormant`` is
+# executable fallback code which every catalogued exact caller bypasses.
 TRANSLATION_OFF = {
     (38, 0x408F): (
         'structvwf.feirestore',
@@ -56,8 +62,9 @@ TRANSLATION_OFF = {
     ),
     (41, START_DISABLE_AT): (
         'menuvwf.starttransition',
-        'title/file composite fallback after exact screen-22/23/24/26 regional admission',
-        'review',
+        'title/file composite fallback after all catalogued file, difficulty, and '
+        'Rank/Pass choice-layer regional admissions',
+        'dormant',
     ),
     (43, 0x40B6): (
         'rankvwf.rankfinish',
@@ -71,11 +78,12 @@ TRANSLATION_OFF = {
         'screen-20 Floor callers are regional',
         'mixed',
     ),
-    (46, 0x42B5): (
+    (rankvwf.MANAGER_BANK, NATIVE_FONT_OFF_AT): (
         'rankvwf.nativerestore',
-        'native-font restoration shared by approved final Rankings/Pass exits and '
-        'unreviewed file/choice-menu B returns',
-        'mixed',
+        'native-font restoration retained for approved final Rankings/Pass exits, '
+        'already-dark transactions, and rejected unknown callers; exact file-menu B '
+        'returns bypass it through the S2R regional owner',
+        'keep',
     ),
     (53, STATUS_DISABLE_AT): (
         'statusvwf.statusentry',
@@ -373,9 +381,18 @@ MENU_BLANK_PATHS = (
                   'accepted 2026-08-31'),
     dict(system='start', key='adventure-to-gameplay',
          sites=(('shadow', 2, 0x463C), ('shadow', 4, 0x4154)),
-         origin='base', stack='15,23,21', route='Select Adventure log -> gameplay',
+         origin='base', stack='15,23,21',
+         route='Select Adventure log -> Continue/New Game -> gameplay',
          status='keep', fixture='all save-backed menu fixtures',
          evidence='replacement boundary'),
+    dict(system='start', key='adventure-choice-return',
+         sites=(), origin='translation', stack='15,23,21 -> 15,23',
+         route='B from Continue/New Game choice -> Adventure saved-log summary',
+         status='regional', fixture='startpathspill.py',
+         evidence='S2R follow-up: mgbdis handler 4:$4C55 owns box 24/51; exact popped '
+                  'screen 21 clears x=3..14/y=4..8, reconstructs the surviving '
+                  'screen-23 summary, records zero LCD-off/white frames, and was '
+                  'visually accepted 2026-08-31'),
     dict(system='start', key='new-log-selector',
          sites=(), origin='translation', stack='15,22',
          route='New Log -> log selector', status='regional',
@@ -384,13 +401,20 @@ MENU_BLANK_PATHS = (
                   'x=5..15/y=9..15 during VBlank; entry and screen-25 return both '
                   'produce zero Start LCD-off hits'),
     dict(system='start', key='new-log-difficulty',
-         sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation', stack='15,22,25',
-         route='New Log -> difficulty and explanation composite', status='review',
-         fixture='mainmenuspill.py, nameflowspill.py', evidence='observed screen 25'),
+         sites=(), origin='translation', stack='15,22,25',
+         route='New Log -> difficulty and explanation composite, redraws, and B return',
+         status='regional', fixture='startpathspill.py, mainmenuspill.py, nameflowspill.py',
+         evidence='S3: mgbdis handler 4:$4CAB owns box 29 and explanation box 46/48/50; '
+                  'exact stack clears x=12..19/y=6..12 plus x=0..19/y=13..17 in one '
+                  'VBlank on entry and each Easy/Normal/Hard change; popped screen 25 '
+                  'uses the same regions on B; zero LCD-off/white frames; visually '
+                  'accepted 2026-08-31'),
     dict(system='start', key='new-log-name',
          sites=(('LCDC', 44, 0x4066),), origin='translation', stack='15,22,25,8',
          route='New Log -> personal-name keyboard', status='keep',
-         fixture='nameflowspill.py, newgamesmoke.py', evidence='caller 4:$4B04'),
+         fixture='nameflowspill.py, newgamesmoke.py',
+         evidence='replacement screen via caller 4:$4B04; entry/cancel/success LCD '
+                  'blanking visually approved 2026-08-31'),
     dict(system='start', key='new-log-to-gameplay',
          sites=(('shadow', 2, 0x463C),), origin='base', stack='15,22,25,8',
          route='Confirm New Log name -> village/gameplay', status='keep',
@@ -416,9 +440,11 @@ MENU_BLANK_PATHS = (
          sites=(), origin='translation', stack='15,23,24',
          route='Erase Log summary -> No/Yes confirmation', status='regional',
          fixture='startpathspill.py, copylogspill.py, startspill.py',
-         evidence='S2: mgbdis handler 4:$4C94 draws box 27 then box 28; exact stack '
+         evidence='S2/S2R follow-up: mgbdis handler 4:$4C94 draws box 27 then box 28; exact stack '
                   'clears x=3..19/y=7..11 plus x=11..16/y=2..6 in one VBlank with '
-                  'zero Start LCD-off hits'),
+                  'zero Start LCD-off hits; A on No returns regionally, while A on Yes '
+                  'retains the native destructive atomic restore; No was visually '
+                  'accepted 2026-08-31'),
     dict(system='start', key='rename-log-summary',
          sites=(), origin='translation', stack='15,23',
          route='Rename -> log summary', status='regional',
@@ -429,27 +455,44 @@ MENU_BLANK_PATHS = (
          sites=(('LCDC', 44, 0x4066),), origin='translation', stack='screen 8 variant',
          route='Rename -> personal-name keyboard', status='keep',
          fixture='startpathspill.py, nameflowspill.py',
-         evidence='exact 15,23,8 route; independent native-font keyboard boundary'),
+         evidence='exact 15,23,8 entry route; independent native-font keyboard '
+                  'boundary; entry/cancel/success LCD blanking visually approved '
+                  '2026-08-31'),
     dict(system='start', key='return-to-start-root',
-         sites=(('LCDC', 46, 0x42B5),), origin='translation', stack='15',
+         sites=(), origin='translation', stack='15 or transient 15,23',
          route='Return from file selectors/summaries -> Start root/native font',
-         status='review', fixture='startpathspill.py, nameflowspill.py, copylogspill.py',
-         evidence='cursor ownership accepted 2026-08-31; whole-LCD policy for '
-                  'Adventure/New/Copy/Erase/Rename/Replay B returns remains S2R work'),
+         status='regional', fixture='startpathspill.py, nameflowspill.py, copylogspill.py',
+         evidence='S2R exact owner uses JP pop-stack residue, FF84 input, and the native '
+                  'Erase selector; B from screen 21..26 plus A-on-No from screen 24 '
+                  'retire exact rectangles in one VBlank, returned parent/root rasters '
+                  'are pixel-identical after cursor normalization, and every isolated '
+                  'return fixture records zero LCD-off/white frames'),
     dict(system='start', key='rank-pass',
-         sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation', stack='15,30 and 15,30,32',
+         sites=(), origin='translation', stack='15,30[,31|32]',
          route='Start root -> Rank/Pass choices, category, and Pass log selector',
-         status='review', fixture='mainmenuspill.py, awardspill.py',
-         evidence='choice layers (screens 30/31/32) remain in scope in both directions'),
+         status='regional', fixture='startpathspill.py, mainmenuspill.py, startspill.py',
+         evidence='S4: mgbdis handlers 4:$4D10/$4D20/$4D2B; exact screens 30/31/32 '
+                  'clear only their bordered rectangles in one VBlank; focused root, '
+                  'category, and Pass-selector returns record zero LCD-off/white frames '
+                  'and pixel-identical returned root rasters; visual review pending'),
+    dict(system='start', key='title-file-fallback',
+         sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation',
+         stack='rejected or unknown title/file caller',
+         route='Conservative title/file whole-map fallback', status='dormant',
+         fixture='all 23 startpathspill.py routes, startspill.py',
+         evidence='S4 exact regional owners admit every catalogued same-menu caller; '
+                  'all route traces require zero executions of this fallback'),
     dict(system='start', key='rankings-display',
-         sites=(('LCDC', 43, 0x40B6), ('LCDC', 46, 0x42B5)),
+         sites=(('LCDC', 43, 0x40B6),
+                ('LCDC', rankvwf.MANAGER_BANK, NATIVE_FONT_OFF_AT)),
          origin='translation', stack='15,30[,31],33',
          route='Rank choice -> Rankings display, Rankings paging, and reverse',
          status='keep', fixture='rankspill.py, orochisymbolspill.py, deathrankspill.py',
          evidence='user-approved independent-screen boundary 2026-08-31; whole-LCD '
                   'blanking is allowed on entry, every ranking page change, and exit'),
     dict(system='start', key='pass-display',
-         sites=(('LCDC', 46, 0x42B5),), origin='translation', stack='15,30,32,34',
+         sites=(('LCDC', rankvwf.MANAGER_BANK, NATIVE_FONT_OFF_AT),),
+         origin='translation', stack='15,30,32,34',
          route='Pass log selector -> password/award display and reverse', status='keep',
          fixture='startpathspill.py, awardspill.py',
          evidence='user-approved independent-screen boundary 2026-08-31; current entry '
@@ -471,7 +514,8 @@ MENU_BLANK_PATHS = (
          route='Replay -> saved-log summary before replay begins', status='regional',
          fixture='startpathspill.py',
          evidence='S1 screen 23 visually accepted 2026-08-31; zero Start LCD-off hits; '
-                  'B return remains S2R work; selecting the log crosses a user-approved '
+                  'S2R B return has the exact regional root owner with zero LCD-off or '
+                  'whole-white frames; selecting the log crosses a user-approved '
                   'gameplay-replay replacement boundary where whole-LCD blanking is fine'),
 )
 

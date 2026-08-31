@@ -25,7 +25,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import gbasm                                                     # noqa: E402
+import dotfont                                                   # noqa: E402
+import menuspill                                                  # noqa: E402
 import menuvwf                                                   # noqa: E402
+import rankvwf                                                   # noqa: E402
 from gbrun import PRESS_FRAMES, _import_pyboy                    # noqa: E402
 
 
@@ -55,7 +58,10 @@ SCREEN_HANDLERS = {
 SITES = {
     'start-off': (41, menuvwf.start_transition_labels()['stdisable']),
     'rank-off': (43, 0x40B6),
-    'native-font-off': (46, 0x42B5),
+    'native-font-off': (
+        rankvwf.MANAGER_BANK,
+        rankvwf.manager_labels(dotfont.load_approved())['nativeoff'],
+    ),
     'name-entry-off': (44, 0x4066),
     'start-transition': (41, 0x405A),
     'start-finish': (42, 0x405A),
@@ -78,9 +84,23 @@ SITES = {
         gbasm.assemble(menuvwf.START_S2_CONFIRM_SRC,
                        menuvwf.START_S2_CONFIRM_AT)[1]['s2ccommit'],
     ),
+    'start-root-return-region': (
+        menuvwf.START_ROOT_RETURN_BANK,
+        menuvwf.start_root_return_labels()['srrcommit'],
+    ),
+    'start-difficulty-region': (
+        menuvwf.START_DIFFICULTY_BANK,
+        menuvwf.start_difficulty_labels()['sdcommit'],
+    ),
+    'start-rank-choice-region': (
+        menuvwf.START_RANK_CHOICE_BANK,
+        menuvwf.start_rank_choice_labels()['srccommit'],
+    ),
 }
 REGIONAL_SITES = {
     'start-region', 'start-s2-selector-region', 'start-s2-confirm-region',
+    'start-root-return-region', 'start-difficulty-region',
+    'start-rank-choice-region',
 }
 
 
@@ -102,7 +122,7 @@ CASES = {
         'frames': 2450,
         'screens': (23, 23, 23, 15),
         'start_off_screens': (),
-        'regional_screens': (23, 23, 23),
+        'regional_screens': (23, 23, 23, 15),
     },
     'new': {
         'buttons': buttons((1250, 'down'), (1350, 'a'), (1650, 'a'),
@@ -110,8 +130,9 @@ CASES = {
                            (2800, 'b')),
         'frames': 3050,
         'screens': (22, 25, 25, 25, 15, 22, 15),
-        'start_off_screens': (25, 25, 25),
-        'regional_screens': (22, 22),
+        'start_off_screens': (),
+        'native_off_screens': (),
+        'regional_screens': (22, 25, 25, 25, 15, 22, 15),
     },
     'copy': {
         'buttons': buttons((1250, 'down'), (1310, 'down'), (1400, 'a'),
@@ -119,6 +140,7 @@ CASES = {
         'frames': 2450,
         'screens': (23, 26, 15),
         'start_off_screens': (),
+        'native_off_screens': (15,),
         'regional_screens': (23, 26),
     },
     'erase': {
@@ -127,6 +149,7 @@ CASES = {
         'frames': 2650,
         'screens': (23, 24),
         'start_off_screens': (),
+        'native_off_screens': (15,),
         'regional_screens': (23, 24),
     },
     'rename': {
@@ -145,8 +168,8 @@ CASES = {
                            (1750, 'a'), (2050, 'b'), (2350, 'b')),
         'frames': 2600,
         'screens': (30, 33, 15, 30, 15),
-        'start_off_screens': (30, 30),
-        'regional_screens': (),
+        'start_off_screens': (),
+        'regional_screens': (30, 30, 15),
     },
     'rank-category': {
         # A three-log title has six rows, so Rank/Pass is the fourth row.  More than
@@ -157,8 +180,8 @@ CASES = {
                            (2250, 'b'), (2550, 'b'), (2850, 'b')),
         'frames': 3100,
         'screens': (30, 31, 33, 15, 30, 31, 15, 30, 15),
-        'start_off_screens': (30, 30, 30),
-        'regional_screens': (),
+        'start_off_screens': (),
+        'regional_screens': (30, 31, 30, 31, 15, 30, 15),
     },
     'pass': {
         'ram': PASSWORD_RAM,
@@ -168,8 +191,8 @@ CASES = {
                            (2400, 'b'), (2700, 'b'), (3000, 'b')),
         'frames': 3250,
         'screens': (30, 32, 34, 15, 30, 32, 15, 30, 15),
-        'start_off_screens': (30, 32, 30, 32, 30),
-        'regional_screens': (),
+        'start_off_screens': (),
+        'regional_screens': (30, 32, 30, 32, 15, 30, 15),
     },
     'replay': {
         'buttons': buttons((1210, 'down'), (1250, 'down'), (1290, 'down'),
@@ -179,6 +202,148 @@ CASES = {
         'screens': (23,),
         'start_off_screens': (),
         'regional_screens': (23,),
+    },
+    # S2R freezes every direct file-child B return independently.  The forward cases
+    # above cover deeper/committing behavior; these short cases make it impossible for
+    # one shared root reconstruction to hide a context-specific regression.
+    'return-adventure': {
+        'buttons': buttons((1250, 'a'), (1750, 'b')),
+        'frames': 2050,
+        'screens': (23, 15),
+        'start_off_screens': (),
+        'regional_screens': (23, 15),
+        'native_off_screens': (),
+    },
+    'return-new': {
+        'buttons': buttons((1250, 'down'), (1350, 'a'), (1750, 'b')),
+        'frames': 2050,
+        'screens': (22, 15),
+        'start_off_screens': (),
+        'regional_screens': (22, 15),
+        'native_off_screens': (),
+    },
+    'return-copy-summary': {
+        'buttons': buttons((1250, 'down'), (1310, 'down'), (1400, 'a'),
+                           (1800, 'b')),
+        'frames': 2100,
+        'screens': (23, 15),
+        'start_off_screens': (),
+        'regional_screens': (23, 15),
+        'native_off_screens': (),
+    },
+    'return-copy-destination': {
+        'buttons': buttons((1250, 'down'), (1310, 'down'), (1400, 'a'),
+                           (1750, 'a'), (2100, 'b')),
+        'frames': 2400,
+        'screens': (23, 26, 15),
+        'start_off_screens': (),
+        # B first replays the root transaction, then restores the source-summary
+        # parent.  Both child screens must therefore commit their own regions.
+        'regional_screens': (23, 26, 15, 23),
+        'native_off_screens': (),
+    },
+    'return-erase-summary': {
+        'buttons': buttons((1250, 'down'), (1310, 'down'), (1370, 'down'),
+                           (1460, 'a'), (1850, 'b')),
+        'frames': 2150,
+        'screens': (23, 15),
+        'start_off_screens': (),
+        'regional_screens': (23, 15),
+        'native_off_screens': (),
+    },
+    'return-erase-confirmation': {
+        'buttons': buttons((1250, 'down'), (1310, 'down'), (1370, 'down'),
+                           (1460, 'a'), (1800, 'a'), (2150, 'b')),
+        'frames': 2450,
+        'screens': (23, 24, 15),
+        'start_off_screens': (),
+        # B first replays the root transaction, then restores the summary parent.
+        'regional_screens': (23, 24, 15, 23),
+        'native_off_screens': (),
+    },
+    'return-rename-summary': {
+        'buttons': buttons((1250, 'down'), (1290, 'down'), (1330, 'down'),
+                           (1370, 'down'), (1450, 'a'), (1850, 'b')),
+        'frames': 2150,
+        'screens': (23, 15),
+        'start_off_screens': (),
+        'regional_screens': (23, 15),
+        'native_off_screens': (),
+    },
+    'return-replay': {
+        'buttons': buttons((1210, 'down'), (1250, 'down'), (1290, 'down'),
+                           (1330, 'down'), (1370, 'down'), (1410, 'down'),
+                           (1500, 'a'), (1900, 'b')),
+        'frames': 2200,
+        'screens': (23, 15),
+        'start_off_screens': (),
+        'regional_screens': (23, 15),
+        'native_off_screens': (),
+    },
+    # S4 freezes the retained Rank/Pass choice layers separately from their approved
+    # independent final displays. These focused routes never enter screens 33/34, so
+    # any LCD-off or uniform-white frame is unambiguously a choice-layer regression.
+    'return-rank-pass': {
+        'buttons': buttons((1230, 'down'), (1270, 'down'), (1310, 'down'),
+                           (1350, 'down'), (1390, 'down'), (1460, 'a'),
+                           (1750, 'b')),
+        'frames': 2050,
+        'screens': (30, 15),
+        'start_off_screens': (),
+        'regional_screens': (30, 15),
+        'native_off_screens': (),
+    },
+    'return-rank-category': {
+        'ram': MULTI_LOG_RAM,
+        'buttons': buttons((1230, 'down'), (1270, 'down'), (1310, 'down'),
+                           (1400, 'a'), (1650, 'a'), (1900, 'b'),
+                           (2200, 'b')),
+        'frames': 2450,
+        'screens': (30, 31, 15, 30, 15),
+        'start_off_screens': (),
+        'regional_screens': (30, 31, 15, 30, 15),
+        'native_off_screens': (),
+    },
+    'return-pass-selector': {
+        'ram': PASSWORD_RAM,
+        'buttons': buttons((1230, 'down'), (1270, 'down'), (1310, 'down'),
+                           (1350, 'down'), (1390, 'down'), (1460, 'a'),
+                           (1700, 'down'), (1800, 'a'), (2100, 'b'),
+                           (2400, 'b')),
+        'frames': 2650,
+        'screens': (30, 32, 15, 30, 15),
+        'start_off_screens': (),
+        'regional_screens': (30, 32, 15, 30, 15),
+        'native_off_screens': (),
+    },
+    # Post-S2R visual discovery: these are cancellation edges too, but they do not use
+    # the direct B/file-child history above. Adventure has an intervening screen 21;
+    # Erase selects No with A and therefore needs proof of the saved confirmation row.
+    'return-adventure-choice': {
+        'buttons': buttons((1250, 'a'), (1750, 'a'), (2150, 'b')),
+        'frames': 2500,
+        'screens': (23, 21, 15, 23),
+        'start_off_screens': (),
+        'regional_screens': (23, 15, 23),
+        'native_off_screens': (),
+    },
+    'return-erase-no': {
+        'buttons': buttons((1250, 'down'), (1310, 'down'), (1370, 'down'),
+                           (1460, 'a'), (1800, 'a'), (2200, 'a')),
+        'frames': 2550,
+        'screens': (23, 24, 15, 23),
+        'start_off_screens': (),
+        'regional_screens': (23, 24, 15, 23),
+        'native_off_screens': (),
+    },
+    'difficulty-cycle': {
+        'buttons': buttons((1250, 'down'), (1350, 'a'), (1650, 'a'),
+                           (1950, 'down'), (2200, 'down'), (2500, 'b')),
+        'frames': 2800,
+        'screens': (22, 25, 25, 25, 15, 22),
+        'start_off_screens': (),
+        'regional_screens': (22, 25, 25, 25, 15, 22),
+        'native_off_screens': (),
     },
 }
 
@@ -221,6 +386,9 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
         sites = []
         rows = []
         root_cursor_commits = []
+        root_rasters = []
+        lcd_off_frames = []
+        white_frames = []
 
         def effective_root_selector():
             saved_depth = pb.memory[0xC6A6]
@@ -235,6 +403,8 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
                 'stack': stack(pb),
                 'state': state(pb),
                 'menu': menu_state(pb),
+                'saved': tuple(pb.memory[0xC53F + index] for index in range(5)),
+                'input': pb.memory[0xFF84],
                 'lcdc': pb.memory[0xFF40],
             })
 
@@ -267,7 +437,25 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
                     tuple(pb.memory[0x9841 + row * 0x40]
                           for row in range(count)),
                 ))
+                root_raster_commit()
             return callback
+
+        def root_raster_commit(_context=None):
+            if pb.memory[0xC6A3] != 15:
+                return
+            shadow = bytes(pb.memory[0xC300:0xC700])
+            cursor_cells = {0x41 + row * 0x40 for row in range(8)}
+            # Compare the resolved 20x18 pixels, not allocator IDs.  All possible
+            # cursor-owned cells are normalized because the correct return restores
+            # the selected file action rather than forcing Adventure.
+            raster = []
+            for row in range(18):
+                for col in range(20):
+                    offset = row * 32 + col
+                    tile = 0 if offset in cursor_cells else shadow[offset]
+                    at = menuspill.tile_data_addr(tile)
+                    raster.append(bytes(pb.memory[at:at + 16]))
+            root_rasters.append((frame[0], tuple(raster)))
 
         pb.hook_register(*DISPATCH, dispatch, None)
         pb.hook_register(*ROW_ENTRY, row, None)
@@ -286,6 +474,11 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
             if button:
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
+            if case.get('native_off_screens') == () and frame[0] >= 1200:
+                if not pb.memory[0xFF40] & 0x80:
+                    lcd_off_frames.append(frame[0])
+                elif pb.screen.image.convert('L').getextrema() == (255, 255):
+                    white_frames.append(frame[0])
         final = (pb.memory[0xC6A3], stack(pb), state(pb), pb.memory[0xFF40])
         root_rows = pb.memory[0xC6BB]
         root_selector = pb.memory[0xC6A5]
@@ -322,12 +515,34 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
         if got != want:
             problems.append('f%d %s Start cursor commit wants %s, got %s' %
                             (at, stage, want, got))
+    if case.get('native_off_screens') == ():
+        if len(root_rasters) < 2:
+            problems.append('S2R route captured %d complete Start-root raster(s), '
+                            'expected initial plus return' % len(root_rasters))
+        elif any(raster != root_rasters[0][1]
+                 for _at, raster in root_rasters[1:]):
+            bad = [at for at, raster in root_rasters[1:]
+                   if raster != root_rasters[0][1]]
+            problems.append('returned Start root differs from its initial resolved '
+                            'raster at frame(s) %s' % bad)
+        if lcd_off_frames:
+            problems.append('S2R route disabled LCD after root settled at frame(s) %s' %
+                            lcd_off_frames[:12])
+        if white_frames:
+            problems.append('S2R route exposed whole-white frame(s) %s' %
+                            white_frames[:12])
 
     start_off_screens = tuple(event[2] for event in sites
                               if event[1] == 'start-off')
     if start_off_screens != case['start_off_screens']:
         problems.append('wanted Start LCD-off screens %s, got %s' %
                         (case['start_off_screens'], start_off_screens))
+    native_off_screens = tuple(event[2] for event in sites
+                               if event[1] == 'native-font-off')
+    if ('native_off_screens' in case and
+            native_off_screens != case['native_off_screens']):
+        problems.append('wanted native-font LCD-off screens %s, got %s' %
+                        (case['native_off_screens'], native_off_screens))
     regional_screens = tuple(event[2] for event in sites
                              if event[1] in REGIONAL_SITES)
     if regional_screens != case['regional_screens']:
@@ -343,10 +558,13 @@ def run_case(PyBoy, rom, ram, label, case, trace=False):
            len(rows), len(problems)))
     if trace:
         for event in dispatches:
-            print('  f%-4d dispatch %-2d stack=%-18s state=%s menu=%s lcdc=$%02X' %
+            print('  f%-4d dispatch %-2d stack=%-18s state=%s menu=%s saved=%s '
+                  'input=$%02X lcdc=$%02X' %
                   (event['frame'], event['incoming'], str(event['stack']),
                    ''.join('%02X' % value for value in event['state']),
                    ''.join('%02X' % value for value in event['menu']),
+                   ''.join('%02X' % value for value in event['saved']),
+                   event['input'],
                    event['lcdc']))
         for event in sites:
             at, name, screen, event_stack, event_state, lcdc = event
