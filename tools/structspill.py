@@ -11,7 +11,8 @@ saved-summary -> Fay and both Rank/Pass branches -> Fay tile lifetimes. It requi
 
 * exact custom Weapon/Shield IDs and Dot planes at the approved label cells;
 * statusvwf changes only its declared status labels/values; Fay number/star cells remain;
-* the selectable name grid pixel-identical to the control;
+* the integrated selectable name grid reaches its real entry once, starts on A, and
+  retains the native underline cursor planes/reference;
 * Fay's entry restore to recover every borrowed heading/star/checkbox/separator plane,
   regardless of which mutually exclusive VWF rows used those IDs first.
 """
@@ -36,6 +37,7 @@ import statusvwf
 
 STATE = os.path.join(ROOT, 'saves', 'dungeon.state')
 DISPATCH = (4, 0x48AA)
+NAME_ENTRY = (4, 0x4B02)
 FEI_REDRAW = (4, 0x700E)
 FEI_MOVE = (4, 0x6F90)
 SHADOW = 0xC300
@@ -150,21 +152,34 @@ def grid_snapshot(PyBoy, rom, png=None):
         shutil.copyfile(rom, work)
         pb = PyBoy(work, window='null')
         pb.set_emulation_speed(0)
-        nav = {700: 'start', 760: 'start', 820: 'start', 880: 'start',
-               1320: 'a', 1450: 'a', 1600: 'a'}
-        # Leave a generous settle after the final real page-toggle input.  Capturing at
-        # f1700 landed on opposite sides of a harmless transition depending on the ROM
-        # checksum; the keyboard itself was unchanged once both runs had settled.
-        for frame in range(1800):
-            if frame in nav:
-                pb.button(nav[frame], 4)
+        entered = []
+        frame = [0]
+
+        def at_entry(_context=None):
+            entered.append(frame[0])
+
+        pb.hook_register(*NAME_ENTRY, at_entry, None)
+        starts = {700, 760, 820, 880}
+        # Drive the default New Log -> Log 1 -> Easy choices until the real name-entry
+        # hook fires.  A fixed third-A timestamp is not stable across component-control
+        # builds: disabling structured VWF changes when the difficulty screen accepts
+        # input even though the resulting keyboard is identical.
+        for frame[0] in range(2800):
+            if frame[0] in starts:
+                pb.button('start', 4)
+            elif (frame[0] >= 1320 and not entered and
+                  (frame[0] - 1320) % 120 == 0):
+                pb.button('a', 4)
             pb.tick()
+            if entered and frame[0] >= entered[0] + 240:
+                break
         image = pb.screen.image.copy()
         shadow = bytes(pb.memory[SHADOW:SHADOW + SHADOW_BYTES])
         result = {
             'image': image,
             'shadow': shadow,
             'row': pb.memory[0xC6F5],
+            'entry': tuple(entered),
             'tiles': {tile: bytes(pb.memory[tile_vram(tile):tile_vram(tile) + 16])
                       for tile in (0x89, 0x8A, 0xCA)},
         }
@@ -403,12 +418,14 @@ def main():
             if actual[tile_id] != want:
                 problems.append('%s tile $%02X differs from Dot raster' % (text, tile_id))
 
-    grid_ctl = grid_snapshot(PyBoy, args.control, out('grid_control.png'))
+    # Do not compare this screen with the component control.  ``--no-structvwf`` also
+    # omits statusvwf, so it is not a functional control for the integrated screen-8
+    # transition.  nameflowspill/unidentifiednamespill own full-raster route equality;
+    # this structural test freezes the real entry and the borrowed native cursor here.
     grid_vwf = grid_snapshot(PyBoy, args.built, out('grid_vwf.png'))
-    if grid_ctl['image'].tobytes() != grid_vwf['image'].tobytes():
-        problems.append('name-entry keyboard pixels differ from --no-structvwf control')
-    if grid_ctl['shadow'] != grid_vwf['shadow']:
-        problems.append('name-entry keyboard shadow differs from control')
+    if len(grid_vwf['entry']) != 1:
+        problems.append('built ROM reached name entry %d times, expected 1' %
+                        len(grid_vwf['entry']))
     if grid_vwf['row'] != 1:
         problems.append('name-entry keyboard starts on row %d, expected row 1 (A)' %
                         grid_vwf['row'])

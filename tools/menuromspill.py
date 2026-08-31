@@ -428,7 +428,9 @@ def verify_build(rom_path):
     # Keep this expectation independent from menuvwf's policy tuple. Box 14 (`Items`)
     # must not re-enter the raw-prefix set: its forced-screen-1 mutation is synthetic,
     # and preserving that `I` visibly splits the ordinary heading into fixed + VWF text.
-    expected_raw = {5} if not menuvwf.ROM_BOXES else {5, 8, 17}
+    # Box 17 (`Pot`) also composes its complete word: its former raw `$1A` P tile is
+    # legitimately repainted by Status VWF before the Pot title becomes visible.
+    expected_raw = {5} if not menuvwf.ROM_BOXES else {5, 8}
     if raw_prefix != expected_raw:
         raise SystemExit('menuromspill: raw-prefix boxes are %s, expected %s' %
                          (sorted(raw_prefix), sorted(expected_raw)))
