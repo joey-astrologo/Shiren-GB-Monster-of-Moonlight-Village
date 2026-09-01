@@ -36,6 +36,14 @@ CASES = (
      'Direct and Items-appended shop Floor/Info cycles with initial price parity.'),
     ('09_unidentified_pot', 'shiren_en_log3_unidentified_pot_crash.srm', 'Log 3',
      'Seven-row Pot Info/See, direct Name exits, and appended post-Name Action B.'),
+    ('10_empty_inventory', 'shiren_en_log3_empty_inventory.srm', 'Log 3',
+     'Status empty-inventory overlay entry and B return, with no Lua-created state.'),
+    ('11_floor_swap', 'shiren_en_item_menu_wood_arrow.srm', 'Log 1',
+     'Direct Floor and Items-appended Floor Swap selector entry, paging, and B return.'),
+    ('12_floor_pot_put', 'shiren_en_log1_floor_pot_selector.srm', 'Log 1',
+     'Direct Floor and Items-appended Floor ground-Pot Put selector lifecycle.'),
+    ('13_carried_pot_put', 'shiren_en_log_1_dragons_maw.srm', 'Log 1',
+     'Full carried inventory and carried-Pot Put selector paging.'),
 )
 
 

@@ -104,8 +104,9 @@ TRANSLATION_OFF = {
     ),
     (60, 0x4338): (
         'menuvwf.itempage',
-        'rejected Item/Pot transaction retained for unknown callers; Action -> Pot Put '
-        'selector is admitted regionally',
+        'rejected Item/Pot transaction retained for unknown callers; exact screen-6 '
+        'empty overlay plus screen-11/screen-14 candidate selectors are admitted '
+        'regionally',
         'replace-menu',
     ),
     (62, INFO_DISABLE_AT): (
@@ -139,6 +140,22 @@ MENU_BLANK_PATHS = (
          status='regional', fixture='equipmentmarkerspill.py',
          evidence='exact auxiliary cursed-equipment fragment is distinguished from a '
                   'failed row; three plane-exact rows and zero irdisable executions'),
+    dict(system='item', key='empty-items-entry',
+         sites=(), origin='translation', stack='0,6',
+         route='Status -> Items with an empty inventory -> No items held overlay',
+         status='regional',
+         fixture='selectorblankspill.py + shiren_en_log3_empty_inventory.srm',
+         evidence='exact screen-6/count-zero owner publishes only complete box-9 chrome '
+                  'before native text; fixture was generated through the real final-item '
+                  'Drop action and a clean reboot; zero LCD-off/uniform frames'),
+    dict(system='item', key='empty-items-return',
+         sites=(), origin='translation', stack='0,6 -> 0',
+         route='B from No items held overlay -> Status', status='regional',
+         fixture='selectorblankspill.py + shiren_en_log3_empty_inventory.srm',
+         evidence='exact stale child 6/count-zero pop prepublishes complete empty Status '
+                  'chrome before bounded Status fields; the regression requires exactly '
+                  'one prepublication and zero whole-map fallback/LCD-off/uniform frames; '
+                  'visually accepted 2026-09-01'),
     dict(system='item', key='sealed-item-info-final-return',
          sites=(), origin='translation', stack='0,1,2,5 -> 0,1',
          route='Items case-3/6 sealed equipment -> Info final-page A -> Items',
@@ -269,9 +286,40 @@ MENU_BLANK_PATHS = (
                   'LCD-off/uniform frames'),
     dict(system='item', key='pot-put-selector',
          sites=(), origin='translation', stack='0,1,2,11',
-         route='Carried Pot Action -> Put item selector', status='regional',
-         fixture='potputspill.py', evidence='exact screen-11 owner retires Action and '
-                 'publishes empty Items chrome before selector rows; zero pbdisable'),
+         route='Carried Pot Action -> Put item selector and Right/Left paging',
+         status='regional', fixture='selectorblankspill.py carried-put',
+         evidence='exact screen-11 owner retires Action on entry and every page '
+                  'replacement, publishes empty Items chrome before selector rows, and '
+                  'completes selectors 0/5/0 with zero pbdisable/irdisable/LCD-off/'
+                  'uniform frames'),
+    dict(system='item', key='floor-swap-selector',
+         sites=(), origin='translation', stack='0,20,14 -> 0,20',
+         route='Direct ordinary Floor -> Swap selector, Right/Left paging, and B return',
+         status='regional', fixture='selectorblankspill.py direct-swap',
+         evidence='exact shared-screen-14 owner saves the four-row box-39 parent before '
+                  'C6BB becomes five; selector pages 0/5/0 stay live and state $09 '
+                  'reconstructs the exact direct Floor Action parent'),
+    dict(system='item', key='items-floor-swap-selector',
+         sites=(), origin='translation', stack='0,1,2,14 -> 0,1',
+         route='Items-appended Floor -> Swap selector, Right/Left paging, and B return',
+         status='regional', fixture='selectorblankspill.py appended-swap',
+         evidence='exact screen-14 owner preserves the settled Floor latch and four-row '
+                  'parent; native pop amount two hands state $08 to the screen-1 Floor '
+                  'publisher with zero fallback/LCD-off/uniform frames'),
+    dict(system='item', key='floor-pot-put-selector',
+         sites=(), origin='translation', stack='0,7,14 -> 0,7',
+         route='Direct ground-Pot Floor -> Put selector, Right/Left paging, and B return',
+         status='regional', fixture='selectorblankspill.py direct-pot-put',
+         evidence='clean-reboot fixture stands on a naturally dropped identified Storage '
+                  'Pot; shared screen 14 saves its seven-row Action height and state $0B '
+                  'rebuilds the exact direct screen-7 parent'),
+    dict(system='item', key='items-floor-pot-put-selector',
+         sites=(), origin='translation', stack='0,1,2,14 -> 0,1',
+         route='Items-appended ground-Pot Floor -> Put selector, Right/Left paging, and B return',
+         status='regional', fixture='selectorblankspill.py appended-pot-put',
+         evidence='the same no-Lua Storage-Pot fixture reaches screen 14 through selector '
+                  '$FF; seven-row parent/latch survive pages 0/5/0 and state $08 returns '
+                  'to exact responsive screen-1 Floor'),
     dict(system='item', key='pot-put-commit-to-gameplay',
          sites=(('shadow', 2, 0x463C),), origin='base', stack='0,1,2,11',
          route='Commit Put -> dungeon action animation', status='keep',
@@ -439,12 +487,16 @@ MENU_BLANK_PATHS = (
     dict(system='start', key='erase-log-confirmation',
          sites=(), origin='translation', stack='15,23,24',
          route='Erase Log summary -> No/Yes confirmation', status='regional',
-         fixture='startpathspill.py, copylogspill.py, startspill.py',
+         fixture='startpathspill.py, copylogspill.py, startspill.py, orochipopupspill.py',
          evidence='S2/S2R follow-up: mgbdis handler 4:$4C94 draws box 27 then box 28; exact stack '
                   'clears x=3..19/y=7..11 plus x=11..16/y=2..6 in one VBlank with '
                   'zero Start LCD-off hits; A on No returns regionally, while A on Yes '
-                  'retains the native destructive atomic restore; No was visually '
-                  'accepted 2026-08-31'),
+                  'retains the native destructive atomic restore. Post-S4 prerequisite '
+                  'regression: box-28 No/Yes delayed queue slices moved from Orochi-owned '
+                  '$CB-$CE/$D3-$D6 to private $8A-$8D/$8E-$91; all three logs and 224 '
+                  'returned-badge frames are plane-exact; visually accepted 2026-08-31 '
+                  'against ROM SHA-256 '
+                  '9e3ce9cfe5adb5c76aa4741b07930b533725b4198922485ab0c982fcac9ae8c2'),
     dict(system='start', key='rename-log-summary',
          sites=(), origin='translation', stack='15,23',
          route='Rename -> log summary', status='regional',
@@ -474,7 +526,9 @@ MENU_BLANK_PATHS = (
          evidence='S4: mgbdis handlers 4:$4D10/$4D20/$4D2B; exact screens 30/31/32 '
                   'clear only their bordered rectangles in one VBlank; focused root, '
                   'category, and Pass-selector returns record zero LCD-off/white frames '
-                  'and pixel-identical returned root rasters; visual review pending'),
+                  'and pixel-identical returned root rasters; all three visual checks '
+                  'accepted 2026-08-31 against ROM SHA-256 '
+                  '9e3ce9cfe5adb5c76aa4741b07930b533725b4198922485ab0c982fcac9ae8c2'),
     dict(system='start', key='title-file-fallback',
          sites=(('LCDC', 41, START_DISABLE_AT),), origin='translation',
          stack='rejected or unknown title/file caller',
@@ -502,8 +556,8 @@ MENU_BLANK_PATHS = (
          route="Start root <-> Fay's Puzzle task composite", status='keep',
          fixture='faypathspill.py',
          evidence='user-approved independent-screen boundary 2026-08-31; entry and B '
-                  'exit may blank, but its existing two-page puzzle paging must stay '
-                  'LCD-live'),
+                  'exit may blank; internal paging remains LCD-live and both 50-entry '
+                  'pages/all 100 puzzles were visually accepted 2026-08-31'),
     dict(system='start', key='fay-to-gameplay',
          sites=(('shadow', 2, 0x463C), ('shadow', 4, 0x4154)),
          origin='base', stack='15,17', route="Fay's Puzzle task -> gameplay",

@@ -214,18 +214,24 @@ Item/Floor Name caller is same-menu debt.
 
 ### Item/Status LCD-off catalogue
 
-The generated Item table currently has 32 caller rows: twenty-three admitted regional
+The generated Item table currently has 38 caller rows: twenty-nine admitted regional
 rows, four dormant safety fallbacks, and five intentional gameplay/new-screen
 replacement boundaries. There are no `remaining` Item/Floor rows. `IFR-03` and
 `IFR-06` were LCD-live ordering/steady-state defects rather than off-producer paths, but
 their history and price-row parity are now included in the named regional fixtures. The
-catalogued regional scope was manually accepted on 2026-08-30 against ROM SHA-256
-`3eca647016f1b78df6be91925d5ec145ab548a288685cdb1ac30e99e23bd5983`.
+older twenty-three regional rows were manually accepted on 2026-08-30 against ROM
+SHA-256 `3eca647016f1b78df6be91925d5ec145ab548a288685cdb1ac30e99e23bd5983`.
+The six screen-6/screen-11/screen-14 routes added on 2026-09-01 pass the automated
+battery. Tests 2-6 were visually accepted on 2026-09-01. Test 1's overlay entry passed,
+but its B return needed complete Status chrome before bounded fields; that exact fix is
+also visually accepted against SHA-256
+`b2e8f382c664cd59982d9cf43aae47d93f1cb15ad8b0a0b0de626946bc92dca9`.
 
 | Player path | Causal off producer(s) | Status and evidence |
 |---|---|---|
 | Dungeon field -> Status | shadow `4:$4154` | `keep`; independent field-to-menu replacement |
 | Status -> Items with injected cursed/plated/fused rows | none | `regional`; exact auxiliary cursed-equipment fragment is distinguished from a failed row; three plane-exact rows and zero `irdisable` executions |
+| Empty Status -> Items -> `No items held` and B -> Status | none | `regional`; screen 6 is an overlay, not a replacement screen. The real-Drop/clean-reboot fixture proves complete box-9 chrome before text; B prepublishes complete empty Status chrome before bounded fields. The regression requires one prepublication and zero fallback/LCD-off/uniform frames; both directions were visually accepted 2026-09-01 |
 | Items case-3/6 sealed equipment -> Info final-page A -> Items | none | `regional` (`IFR-01`); `iteminfospill.py` independently drives native final-A handler `$C6BC` and B, returns chrome-first, and records zero LCD-off/uniform frames plus prompt input |
 | Dropped case-3 sealed equipment Floor -> Info final-page A -> Floor | none | `regional` (`IFR-02`); a no-Lua carried fixture performs the real Drop onto an empty tile, then proves both direct `0,20,5` and appended `0,1,2,5` `$C6BC` final-A pops with zero explicit fallback/LCD-off/uniform frames and prompt input |
 | Carried unidentified item -> Action -> Name | none | `regional` (`IFR-03`); direct and Info-then-Name B/End histories drain pending work, retire keyboard/status fragments, and publish complete Items chrome before rows with LCDC.7 set |
@@ -242,17 +248,21 @@ catalogued regional scope was manually accepted on 2026-08-30 against ROM SHA-25
 | B after erasing a reopened screen-20 Floor item name -> Floor | none | `regional`; exact `9 -> 0 -> 20`, mode/row `$03/$01`, zero Status fallback/LCD-off/uniform frames |
 | Direct unidentified-Pot Floor seven-row Action -> Name | none | `regional` (`IFR-07`); exact screen-7/seven-row owner retires the parent region and restores keyboard planes without reaching the native whole-screen Name restore |
 | Direct unidentified-Pot Name End/B -> Floor Action | none | `regional` (`IFR-08`); deterministic End and initial-empty B routes retire the keyboard before complete screen-7 Floor/Action chrome and rows, with zero LCD-off/uniform frames |
-| Carried Pot Action -> `Put` selector, screen 11 | none | `regional`; screen-11 owner retires Action and publishes empty Items chrome before selector rows; zero `pbdisable` |
+| Carried Pot Action -> `Put` selector, screen 11 | none | `regional`; screen-11 owner retires Action and publishes empty Items chrome before selector rows on entry and Right/Left paging; `selectorblankspill.py` proves pages 1/2/1 with zero `pbdisable`, `irdisable`, LCD-off, or uniform frames |
+| Direct Floor -> `Swap` selector, screen 14 -> B | none | `regional`; exact `0,20,14` owner saves the four-row box-39 parent before screen 14 reuses `$C6BB`, pages 1/2/1 live, then state `$09` reconstructs exact screen 20 |
+| Items-appended Floor -> `Swap` selector, screen 14 -> B | none | `regional`; exact `0,1,2,14` owner retains the Floor latch and four-row parent, then native pop amount two hands state `$08` to responsive screen 1 |
+| Direct ground-Pot Floor -> `Put` selector, screen 14 -> B | none | `regional`; clean-reboot fixture reaches exact `0,7,14`; seven-row parent height survives selector paging and state `$0B` rebuilds screen 7 |
+| Items-appended ground-Pot Floor -> `Put` selector, screen 14 -> B | none | `regional`; exact `0,1,2,14`/seven-row owner returns through state `$08` to the appended Floor page without a full-map fallback |
 | Commit `Put` -> dungeon action animation | shadow `2:$463C` | `keep`; frame trace shows the field/action animation from f3610-f3683, so this is a menu-to-gameplay boundary |
 | Dungeon action animation -> rebuilt Items | shadow `4:$4154` | `keep`; new-screen boundary after the field action, not a same-menu redraw |
 | First B after `Put` -> disposable Status -> Items replay | none | `regional`; exact Put epoch suppresses disposable screen 0 and never reaches `statusdisable` |
 | Final B after `Put` -> Status | none | `regional`; ordinary Items-to-Status owner; the later Status-to-field teardown is separately kept |
 | Pot contents item Action -> Info from carried/direct-Floor/appended-Floor parents | none | `regional` (`IFR-04`); stack-specific proof distinguishes carried/appended `0,1,2` from ground `0,7/20` Pot parents; the deterministic populated Storage-Pot route reaches Info with zero explicit or sampled LCD-off frames |
 | Contained-item Info -> Pot contents parent | none | `regional` (`IFR-05`); state `$17` removes Action+Info, preserves Pot screen/selector, and reveals complete empty Pot chrome before restored title/content rows |
-| Unknown rejected child -> Status | `53:$4600` | `dormant`; zero hits across the expanded 2026-08-30 Item/Floor regression battery |
+| Unknown rejected child -> Status | `53:$4702` | `dormant`; zero hits across the expanded 2026-08-30 Item/Floor regression battery |
 | Unknown rejected page/sort/shape transaction | `60:$4222` | `dormant`; admitted paging, sort, and Floor paths require zero |
 | Unknown rejected Item/Pot replacement | `60:$4338` | `dormant`; admitted paging and `See` paths require zero |
-| Unknown rejected Info/seal/Pot lifecycle | `62:$447E` | `dormant`; sealed final-A, nested-Pot, shop appended-Floor, and established Info/See fixtures all record zero executions |
+| Unknown rejected Info/seal/Pot lifecycle | `62:$448B` | `dormant`; sealed final-A, nested-Pot, shop appended-Floor, and established Info/See fixtures all record zero executions |
 | Shop direct or Items-appended Floor -> Action -> Info -> Floor | none | `regional` (`IFR-06`); direct route dispatches `20,4,0,20`; appended route independently proves settled Floor ownership despite the `$D0-$DE` Action-pool collision, stays LCD-live both ways, and preserves identical initial/returned price suffixes |
 | Action whose destination is gameplay/field message | shadow `2:$463C`, shadow `4:$4154` | `keep`; replacement path, including the pre-Floor history in `floorinfospill.py --fusion-kit-history` |
 | B from Status -> dungeon field | shadow `2:$463C` | `keep`; intentional final menu teardown |
@@ -476,8 +486,8 @@ BG cell refers to it if a visible Window cell still does.
 | Menu upload scheduler | `$C006`, selector `$C11A` | Drain it before changing map ownership; do not bypass it with long LY busy-waits |
 | VWF row scratch | `$C0CC-$C0DD` | Translation-owned while the menu renderer is active |
 | VWF row records | `$C163-$C1B2` | Five-byte keyed records plus proportional metadata; ownership is per rendered row |
-| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; `$08-$0C` own exact Info/Pot families, `$0D-$0F` own carried-Item Name returns, `$15` owns all Items-appended Floor Name returns, and `$16` owns the Pot Put selector |
-| Shared Action/Item transition state | `$C1B4-$C1B6` | Held-Action row count and packed Item state; screen-1 Info return records child screen 4/5 in `$C1B4`, while screen-20 and screen-7 returns preserve their Action heights there. During exact Item paging `$C1B4` is instead the four-slice tile-copy counter, `$C1B5` marks an Items/Floor header change after the final body row, and `$C1B6` is the page phase (`2` body, `4` replacement header, `3` redraw tail). Direct screen-20 Action mode 4 owns the exact `$C1B5/$C1B6=$20/$04` pair while its top verb remains live; Name entry consumes and clears that pair. Screen 1 retains admitted Info/seal value `1`, then uses `2` only after complete empty return chrome is published. An exact Items-to-Status pop retires phase `3` because the initial Items build has no same-screen redraw-tail call; no later Floor child may inherit that dead transaction. An exact screen-20 child accepts idle `0` or stale carried-Action value `1` and clears it before publication; screen 7 uses `2` only after its independent empty parent chrome publishes. The lifecycles are mutually exclusive |
+| Synchronous transition state | `$C1B3` | Translation-owned byte; values are listed below; `$08-$0C` own exact Info/Pot/Floor replay families, `$0D-$0F` own carried-Item Name returns, `$15` owns all Items-appended Floor Name returns, and `$16` owns exact screen-11/screen-14 candidate selectors |
+| Shared Action/Item transition state | `$C1B4-$C1B6` | Held-Action row count and packed Item state; screen-1 Info return records child screen 4/5 in `$C1B4`, while screen-20 and screen-7 returns preserve their Action heights there. Screen 14 also saves its overwritten direct/appended Floor Action height (four or seven) in `$C1B4` before replacing `$C6BB` with five selector rows. During exact Item paging `$C1B4` is instead the four-slice tile-copy counter, `$C1B5` marks an Items/Floor header change after the final body row, and `$C1B6` is the page phase (`2` body, `4` replacement header, `3` redraw tail). Direct screen-20 Action mode 4 owns the exact `$C1B5/$C1B6=$20/$04` pair while its top verb remains live; Name entry consumes and clears that pair. Screen 1 retains admitted Info/seal value `1`, then uses `2` only after complete empty return chrome is published. An exact Items-to-Status pop retires phase `3` because the initial Items build has no same-screen redraw-tail call; no later Floor child may inherit that dead transaction. An exact screen-20 child accepts idle `0` or stale carried-Action value `1` and clears it before publication; screen 7 uses `2` only after its independent empty parent chrome publishes. The lifecycles are mutually exclusive |
 | Standing-item Floor settlement | `$C1B7` | One only after screen 1 selector `$FF` has completed; authorizes its exact live Status pop, then clears |
 | Held-Action / Pot-viewer snapshot | `$C1B8-$C1BE` | Seven exact cells saved before box 6 overwrites a carried Item page marker; in the mutually exclusive screen-20 Pot-viewer lifetime, `$C1B8` instead preserves the parent box-39 row count before screen 12/13 reuses `$C6BB` |
 | Tile-12 composition buffer | `$C12C-$C13B` | Translation-owned scratch |
@@ -1919,7 +1929,7 @@ scratch and should remain nonzero until the associated pixels and map publicatio
 | `$13` | Fay composite transaction |
 | `$14` | native Rankings transaction |
 | `$15` | exact Items-appended Floor Name replay: suppress disposable Status/screen 1, retire the keyboard, publish complete Floor/Action chrome, then normalize to the ordinary regional screen-1 owner |
-| `$16` | exact carried-Pot screen-11 Put selector: retire Action, publish empty Items chrome, and hold incoming selector rows until complete |
+| `$16` | exact screen-11/screen-14 candidate selector: retire the Action/old selector region, save screen-14's four- or seven-row parent height, publish empty Items chrome, and hold incoming selector rows until complete; admission covers carried-Pot Put plus direct/appended Floor Swap and ground-Pot Put |
 
 `$C1B6` retains value one while an admitted screen-1 Action child is on screen 4 or 5.
 During state `$08`, its change to two records that complete empty Item/Floor return chrome
@@ -1946,7 +1956,11 @@ disposable Status/screen-1 handoffs. Screen-20 Floor Name returns reuse the inde
 proved `$09` parent-reconstruction lifecycle after exact Name-mode classification;
 Items-appended Floor returns use `$15` because their replay is `9 -> 0 -> 1 -> 2`.
 Exact admitted Pot entries share the state-`$0C` chrome-first
-publisher while retaining stack-specific admission and return ownership.
+publisher while retaining stack-specific admission and return ownership. Screen-11 and
+screen-14 candidate selectors independently use state `$16`; screen-14 B maps the
+exact `0,20,14`, `0,7,14`, and `0,1,2,14` stacks to the already-proven `$09`, `$0B`,
+and `$08` parent publishers. Screen 6's count-zero overlay needs no persistent state:
+its exact box-9 entry and stale-child-6 Status return are each proven at their hook.
 Unexpected nonempty Item fallback, rejected Pot viewers, and unknown LCD-on Status or
 Info reconstructions still disable LCDC bit 7 before pixels are reused, build the
 replacement in `$C300`, publish all visible 20x18 cells, then re-enable the LCD. That

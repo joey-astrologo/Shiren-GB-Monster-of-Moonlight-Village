@@ -127,6 +127,7 @@ def main() -> int:
         py("itempagespill.py", rom, "--settle-frames", "20", "--no-wrap")
         py("itemexitspill.py", rom)
         py("itementryspill.py", rom)
+        py("selectorblankspill.py", rom)
         py("equipmentmarkerspill.py", rom)
         py("fusioncountspill.py", rom)
         py("playernamedspill.py", rom)

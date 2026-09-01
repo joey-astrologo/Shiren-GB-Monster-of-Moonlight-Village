@@ -36,6 +36,8 @@ import menuvwf                                                   # noqa: E402
 
 
 STATE = os.path.join(ROOT, 'saves', 'dungeon.state')
+EMPTY_RAM = os.path.join(
+    ROOT, 'tests', 'fixtures', 'saves', 'shiren_en_log3_empty_inventory.srm')
 SHADOW = 0xC300
 BGMAP = 0x9800
 VISIBLE_ROWS = 18
@@ -381,6 +383,33 @@ def drive_saved(PyBoy, rom_path, profile, ram):
         return audit
 
 
+def drive_empty_overlay(PyBoy, rom_path, profile):
+    """Real count-zero Status -> box-9 overlay -> Status route.
+
+    A synthetic forced screen 6 does not satisfy the regional owner's stack/count
+    predicate and therefore cannot certify the marked row in an integrated build.  Use
+    the tracked no-Lua fixture and normal input path so every hostile layout exercises
+    the same owner accepted by selectorblankspill.
+    """
+    rom = open(rom_path, 'rb').read()
+    with tempfile.TemporaryDirectory(prefix='menuromspill-empty-') as tmp:
+        work = os.path.join(tmp, 'empty.gb')
+        shutil.copyfile(rom_path, work)
+        shutil.copyfile(EMPTY_RAM, work + '.ram')
+        pb = PyBoy(work, window='null')
+        pb.set_emulation_speed(0)
+        audit = Audit(rom, profile, 'real empty-inventory overlay')
+        attach(pb, audit)
+        script = {
+            60: ('start',), 120: ('start',), 180: ('start',), 240: ('start',),
+            300: ('a',), 380: ('down',), 460: ('down',), 540: ('a',),
+            700: ('a',), 2600: ('b',), 2700: ('a',), 2861: ('b',),
+        }
+        run_frames(pb, audit, script, 3100)
+        pb.stop(save=False)
+        return audit
+
+
 def drive_fresh_difficulty(PyBoy, rom_path, profile):
     """Blank-cart title flow, including all three live difficulty descriptions."""
     # Keep this deferred until after PyBoy's stdlib imports; tools/dis.py otherwise
@@ -462,6 +491,7 @@ def main():
         {60: ('b',), 120: ('a',), 180: ('right',), 240: ('right',),
          300: ('left',), 360: ('a',), 420: ('b',)}, 480)]
     audits.append(drive_fresh_difficulty(PyBoy, args.rom, profile))
+    audits.append(drive_empty_overlay(PyBoy, args.rom, profile))
     if args.ram:
         audits.append(drive_saved(PyBoy, args.rom, profile, args.ram))
     for index in range(menushot.TABLE_LEN):

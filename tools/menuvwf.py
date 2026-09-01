@@ -432,6 +432,12 @@ ACTION_POP_OLD = bytes.fromhex('4ffa34c591ea34c5')
 POT_SEE_12_ENTRY_HOOK = (0x04, 0x4B83)
 POT_SEE_13_ENTRY_HOOK = (0x04, 0x4BA5)
 POT_SEE_ENTRY_OLD = bytes.fromhex('2100c3')
+# Screen 11 (Pot Put) and screen 14 (Swap) clear the shadow at these entry points.
+# Replace only `ld hl,$C300`; statusvwf's shared selector gate restores HL for rejected
+# calls and regionally retires exact LCD-live entries before the clear can reuse tiles.
+POT_PUT_SELECTOR_ENTRY_HOOK = (0x04, 0x4B47)
+SWAP_SELECTOR_ENTRY_HOOK = (0x04, 0x4BEE)
+SELECTOR_ENTRY_OLD = bytes.fromhex('2100c3')
 # Screen-1 selector $FF changes the Item list chrome between five carried rows and one
 # standing-item row. Bank 58's standard pre-text helper slot is disjoint from ending
 # credits at $4100 and gives the regional blanker room to commit the complete incoming
@@ -2292,7 +2298,10 @@ actionblank:
   ; chrome-first regional transaction; every rejected caller resumes unchanged.
   ld a,[$C6A3]
   cp $0B
+  jr z,abselector
+  cp $0E
   jr nz,abzero
+abselector:
   rst $10
   db $%02X,$%02X
   ret c
@@ -11209,6 +11218,18 @@ def install(buf, notes=None, font=None):
                                  % see_hook[1])
             buf[see_off:see_off + len(POT_SEE_ENTRY_OLD)] = bytes(
                 (0xD7, INFO_RETURN_INDEX, ACTION_BLANK_BANK))
+
+        for selector_hook in (POT_PUT_SELECTOR_ENTRY_HOOK,
+                              SWAP_SELECTOR_ENTRY_HOOK):
+            selector_off = _off(*selector_hook)
+            if bytes(buf[selector_off:
+                         selector_off + len(SELECTOR_ENTRY_OLD)]) != \
+                    SELECTOR_ENTRY_OLD:
+                raise SystemExit('menuvwf: selector shadow setup at 4:$%04X changed'
+                                 % selector_hook[1])
+            buf[selector_off:
+                selector_off + len(SELECTOR_ENTRY_OLD)] = bytes(
+                    (0xD7, POT_PUT_ENTRY_INDEX, POT_PUT_ENTRY_BANK))
 
         if ITEM_REGION_AT + len(item_region_code) > ACTION_POP_AT:
             raise SystemExit('menuvwf: item regional controller overlaps Action pop gate '

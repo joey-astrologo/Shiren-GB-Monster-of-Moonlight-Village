@@ -94,6 +94,133 @@ acceptance through the numbered routes below.
 | `IFR-08` | direct Pot/ordinary Floor Name End/B blanked and retired text out of order | independent Pot and Willow-Staff End, initial-empty B, named-then-erased B, repeated-B, and Info-first histories use their exact action-state pairs with zero off/uniform frames | Test the ordinary direct-Floor histories in recheck 6; complete Floor/Action chrome precedes labels and cursor |
 | `IFR-09` | appended Floor Name then Action B blanked | exact `9,0,1,2` Name return followed by Action B reaches responsive screen 1 with zero Status fallback/off/uniform frames | Already passed in the broad baseline; retain as automated regression |
 
+## 2026-09-01 empty/selector follow-up — all accepted
+
+The five reported regressions expand to six exact engine routes because Items-appended
+Floor -> Swap has a different stack from direct Floor -> Swap. Tests 2-6 were visually
+accepted on 2026-09-01. Test 1's incoming overlay was accepted, but its B dismissal
+still exposed the outgoing-map replacement order. That exact child-6 return now
+prepublishes complete empty Status chrome before bounded Status fields. The focused
+accepted ROM is SHA-256
+`b2e8f382c664cd59982d9cf43aae47d93f1cb15ad8b0a0b0de626946bc92dca9`.
+`selectorblankspill.py` passes all six routes automatically with zero whole-map
+fallbacks, LCD-off frames, uniform frames, or CPU halts; Test 1 additionally requires
+exactly one Status-chrome prepublication. Test 1's corrected B dismissal and the five
+selector routes were all visually accepted on 2026-09-01.
+
+### Selector test 1 — empty inventory overlay and return
+
+```sh
+run_item_floor_case 10_empty_inventory
+```
+
+Load Adventure -> Log 3. Press B for Status and A on `Items`. Wait for `No items held`,
+then press B.
+
+Expected: both directions keep the LCD and bottom HUD visible. The message's complete
+border appears before its text. On B, complete Status chrome appears before its fields,
+then the finished Status page is immediately responsive.
+There must be no full-screen white flash, partial border, stale message cell, or Status
+text appearing through the overlay.
+
+Visual status: **PASS, 2026-09-01**, including the corrected B dismissal.
+
+### Selector test 2 — direct Floor -> Swap
+
+```sh
+run_item_floor_case 11_floor_swap
+```
+
+Load Adventure -> Log 1. Press B, move Down once from `Items` to `Floor`, and press A.
+The Wood Arrow's four-row Action menu is `Take / Fire / Swap / Info`; move Down twice
+and press A on `Swap`. In the candidate-item list press Right, Left, Right, and Left,
+then press B once.
+
+Expected: entry, every page change, and B back to the four-row direct-Floor Action menu
+remain LCD-live. Each page shows complete Items chrome before rows and its page dot
+updates with the rows. B restores `Floor`, the Wood Arrow row, all four Action verbs,
+and the correct cursor without a flash or delay.
+
+Visual status: **PASS, 2026-09-01**.
+
+### Selector test 3 — Items-appended Floor -> Swap
+
+Reset the same isolated case:
+
+```sh
+run_item_floor_case 11_floor_swap
+```
+
+Load Adventure -> Log 1. Press B and A on `Items`. Press Right four times to reach the
+appended `Floor` page, press A, move Down twice to `Swap`, and press A. Page Right and
+Left several times, then press B.
+
+Expected: the same LCD-live/chrome-before-rows behavior as test 2, but B must return to
+the one-row appended Floor page, not direct Floor or Status. The Floor cursor and row
+must be present immediately; Left must then page back into carried Items normally.
+
+Visual status: **PASS, 2026-09-01**.
+
+### Selector test 4 — direct ground-Pot Floor -> Put
+
+```sh
+run_item_floor_case 12_floor_pot_put
+```
+
+Load Adventure -> Log 1. The tracked save stands on an identified Storage Pot and was
+created through the game's real Drop action. Press B, move Down once to `Floor`, and
+press A. Its seven-row Action menu is `Take / See / Put / Toss / Swap / Name / Info`;
+move Down twice and press A on `Put`. Page Right and Left several times, then press B.
+
+Expected: Put entry, all candidate pages, and B remain LCD-live. B restores the direct
+`Floor` title, Storage Pot row, complete seven-row Action border/text, and cursor. No
+five-row selector border or candidate text may survive in the returned page.
+
+Visual status: **PASS, 2026-09-01**.
+
+### Selector test 5 — Items-appended ground-Pot Floor -> Put
+
+Reset the same isolated case:
+
+```sh
+run_item_floor_case 12_floor_pot_put
+```
+
+Load Adventure -> Log 1. Press B and A on `Items`, then press Right four times to reach
+the appended `Floor` page. Press A, move Down twice to `Put`, press A, page Right and
+Left several times, and press B.
+
+Expected: all transitions remain LCD-live and B returns to the appended one-row Floor
+page with its title, Storage Pot, cursor, and border complete. Left must immediately
+page back to the last carried-Items page. This is a separate acceptance path from test
+4 even though both use native screen 14.
+
+Visual status: **PASS, 2026-09-01**.
+
+### Selector test 6 — carried Pot -> Put paging
+
+```sh
+run_item_floor_case 13_carried_pot_put
+```
+
+Load Adventure -> Log 1. Press B and A on `Items`, then press Right three times to page
+4. Select the first-row Square Pot, move Down once to `Put`, and press A. Page Right and
+Left repeatedly through the candidate items. This test ends after paging; close/reset
+the isolated case rather than committing an item.
+
+Expected: entering Put and every candidate page replacement remain LCD-live. The old
+rows retire regionally, complete Items chrome appears first, the correct five rows and
+cursor follow, and the page dot changes in the same completed redraw. There must be no
+rare full-screen flash during repeated paging.
+
+Visual status: **PASS, 2026-09-01**.
+
+Automated equivalent:
+
+```sh
+python3 tools/selectorblankspill.py build/shiren_en.gb
+```
+
 ## Focused six-test recheck — all passed 2026-08-30
 
 These are the exact manual checks used to accept the ROM above. Each case was reset before
@@ -421,6 +548,7 @@ python3 tools/flooractionspill.py build/shiren_en.gb
 python3 tools/unidentifiednamespill.py build/shiren_en.gb
 python3 tools/unidentifiedpotnamespill.py build/shiren_en.gb
 python3 tools/potputspill.py build/shiren_en.gb
+python3 tools/selectorblankspill.py build/shiren_en.gb
 python3 tools/potcontentinfospill.py build/shiren_en.gb
 python3 tools/equipmentmarkerspill.py build/shiren_en.gb
 python3 tools/iteminfospill.py build/shiren_en.gb --frames 5200

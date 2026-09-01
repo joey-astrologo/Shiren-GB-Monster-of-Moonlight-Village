@@ -59,6 +59,8 @@ HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
 ITEM_ENTRY_HOOK = (4, 0x4951)
 ITEM_ENTRY_OLD = bytes.fromhex('21 00 C3 CD 0E 48')
+EMPTY_ITEMS_HOOK = (4, 0x4A50)
+EMPTY_ITEMS_OLD = bytes.fromhex('3E 09 CF 03 1F')
 
 # The four structured Weapon/Shield tiles are installed into the canonical menu font by
 # structvwf.  The remaining slices are private to the settled dungeon status screen.
@@ -205,6 +207,13 @@ statusfloorpre:
   push bc
   push de
   push hl
+  ; Screen 14 is the shared Swap candidate list.  Its direct Floor parent and its
+  ; Items-appended Floor parent pop by different depths, but both can hand their
+  ; completed selector directly to the already-proven Floor/Info return machinery.
+  ; This call only arms that later replay; unlike a genuine Floor -> Status pop it
+  ; does not publish Status chrome here.
+  call selectorpopcheck
+  jr c,statusprerestore
   call statusfloorcheck
   jr nc,statusprerestore
   call statusprepublish
@@ -213,6 +222,116 @@ statusprerestore:
   pop de
   pop bc
   pop af
+  ret
+
+selectorpopcheck:
+  ld a,[$C6A3]
+  cp $0E
+  jp nz,statusprebad
+  ld a,h
+  cp $56
+  jp nz,statusprebad
+  ld a,l
+  cp $AC
+  jp nz,statusprebad
+  ld a,[$C1B3]
+  and a
+  jp nz,statusprebad
+  ld a,[$C6AA]
+  and a
+  jp z,statusprebad
+  cp $15
+  jp nc,statusprebad
+  ld a,[$C6AC]
+  inc a
+  jp nz,statusprebad
+  ld a,[$C6A6]
+  and a
+  jp nz,statusprebad
+  ld a,[$C1B4]
+  cp $03
+  jp c,statusprebad
+  cp $08
+  jp nc,statusprebad
+  ld a,[$C534]
+  cp $02
+  jr z,selectorpopdirect
+  cp $03
+  jp nz,statusprebad
+  ; Appended Floor: 0,1,2,14 and native pop amount two.  Keep the retained row-record
+  ; pack/latch for state 8's exact one-row Floor reconstruction.
+  ld a,c
+  cp $02
+  jp nz,statusprebad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,statusprebad
+  ld a,[hl+]
+  dec a
+  jp nz,statusprebad
+  ld a,[hl+]
+  cp $02
+  jp nz,statusprebad
+  ld a,[hl]
+  cp $0E
+  jp nz,statusprebad
+  ld a,[$C6DE]
+  and a
+  jp nz,statusprebad
+  ld a,[$C1B7]
+  dec a
+  jp nz,statusprebad
+  ld a,[$C1B5]
+  and $E0
+  jp z,statusprebad
+  ld a,[$C1B6]
+  cp $02
+  jp nc,statusprebad
+  ld a,$08
+  ld [$C1B3],a
+  scf
+  ret
+selectorpopdirect:
+  ; Direct Floor: 0,20,14 or the alternate ground-Pot 0,7,14 stack, both with native
+  ; pop amount one. selectorentry saved the original Action height before screen 14
+  ; changed C6BB to five.
+  ld a,c
+  dec a
+  jp nz,statusprebad
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jp nz,statusprebad
+  ld a,[hl+]
+  cp $14
+  jr z,selectorpop20
+  cp $07
+  jp nz,statusprebad
+  ld a,[hl]
+  cp $0E
+  jp nz,statusprebad
+  ld a,[$C6DE]
+  dec a
+  jp nz,statusprebad
+  xor a
+  ld [$C1B6],a
+  ld a,$0B
+  ld [$C1B3],a
+  scf
+  ret
+selectorpop20:
+  ld a,[hl]
+  cp $0E
+  jp nz,statusprebad
+  ld a,[$C6DE]
+  dec a
+  jp nz,statusprebad
+  xor a
+  ld [$C1B6],a
+  ld a,$09
+  ld [$C1B3],a
+  scf
   ret
 
 statusfloorcheck:
@@ -1566,23 +1685,33 @@ statusputbad:
   and a
   ret
 
-; First refusal from menuvwf's existing item-page fallback boundary. Screen 11 is
-; the carried-Pot Put selector: it has the ordinary five-row Item geometry but sits
-; above screen 2, so screen-1's page gate cannot own it. Retire the complete visible
-; Action parent, publish empty Items chrome, and keep every incoming row shadow-only
-; until the native completed-map boundary. State $16 covers repeated row attempts.
+; First refusal from the native screen-11/14 entry hooks and menuvwf's existing
+; item-page fallback boundary.  Screen 11 is every Pot Put selector; screen 14 is every
+; Swap selector.  They share the ordinary five-row Item geometry but sit above different
+; Floor/Action parents, so screen 1's page gate cannot own them.  The entry hook runs
+; before the native shadow clear, retires the complete visible parent, publishes empty
+; selector chrome, and arms state $16.  Later row calls merely prove that ownership and
+; stay shadow-only until the completed-map boundary.  Repeated pages re-enter the same
+; hook and repeat the regional transaction without ever disabling LCDC.7.
 potputentry:
   ; itemregion reaches this gate with the first rejected staging code still in A.
   cp $2F
   jp z,equipmentfixed
+  ld a,[$C6A3]
+  cp $06
+  jp z,emptyoverlay
   push af
   push bc
   push de
   push hl
   cp $0B
+  jr z,potputscreen
+  cp $0E
   jp nz,potputbad
+potputscreen:
+  ld e,a
   ld a,[$C6A3]
-  cp $0B
+  cp e
   jp nz,potputbad
   ld a,[$C1B3]
   cp $16
@@ -1590,20 +1719,21 @@ potputentry:
   and a
   jp nz,potputbad
   ld a,[$C534]
-  cp $03
-  jp nz,potputbad
+  cp $02
+  jp c,potputbad
+  cp $04
+  jp nc,potputbad
+  ld b,a
   ld hl,$C535
-  ld a,[hl+]
+  ld a,[hl]
   and a
   jp nz,potputbad
-  ld a,[hl+]
-  dec a
-  jp nz,potputbad
-  ld a,[hl+]
-  cp $02
-  jp nz,potputbad
+  ld a,b
+  ld c,a
+  ld b,$00
+  add hl,bc
   ld a,[hl]
-  cp $0B
+  cp e
   jp nz,potputbad
   ld a,[$C6A6]
   and a
@@ -1618,33 +1748,76 @@ potputentry:
   cp b
   jp nc,potputbad
   ld a,[$C6DE]
-  and a
-  jp nz,potputbad
+  cp $02
+  jp nc,potputbad
   ld a,[$C1B1]
-  dec a
-  jp nz,potputbad
+  cp $01
+  jr nz,potputpre
+  ; A row call with no pre-entry ownership is never promoted after tile allocation has
+  ; already begun.  Exact native entry hooks always arm state $16 first.
+  jp potputbad
+potputpre:
+  ; The initial screen-14 dispatch still carries the parent Action height in C6BB.
+  ; Preserve it before the selector overwrites C6BB with five.  Same-screen paging
+  ; arrives with renderer phase four and retains the original saved height.
+  ld a,e
+  cp $0E
+  jr nz,potputshape
+  ld a,[$C1B1]
+  cp $02
+  jr nz,potputshape
+  ld a,[$C6BB]
+  cp $03
+  jp c,potputbad
+  cp $08
+  jp nc,potputbad
+  ld [$C1B4],a
+potputshape:
   ld hl,$C69A
   ld a,[hl+]
+  ; Initial entry still exposes the parent Action descriptor.  Same-screen pages expose
+  ; the completed selector header.  Both are native screen-specific and therefore safe
+  ; here; the row fallback below is excluded by C1B1 == 1.
+  cp $0D
+  jr z,potputactionshape
+  and a
+  jr nz,potputbad
+  ld a,[hl+]
   and a
   jp nz,potputbad
   ld a,[hl+]
+  dec a
+  jp nz,potputbad
+  ld a,[hl+]
+  cp $04
+  jp nz,potputbad
+  ld a,[hl]
+  and $70
+  cp $70
+  jp nz,potputbad
+  jr potputhardware
+potputactionshape:
+  ld a,[hl+]
+  cp $01
+  jr z,potputactionrows
   cp $03
   jp nz,potputbad
+potputactionrows:
+  ld a,[hl+]
+  cp $03
+  jp c,potputbad
+  cp $08
+  jp nc,potputbad
   ld a,[hl+]
   cp $05
-  jp nz,potputbad
-  ld a,[hl+]
-  cp $12
   jp nz,potputbad
   ld a,[hl]
   cp $02
   jp nz,potputbad
-  ld a,[$C0D9]
-  cp $80
-  jp nz,potputbad
-  ld a,[$C0DA]
-  cp $C3
-  jp nz,potputbad
+potputhardware:
+  ; The entry hook precedes row staging and may legitimately retain the parent row
+  ; address.  Only the later state-$16 row call depends on C0D9/C0DA, so the stack,
+  ; descriptor, and hardware proof above remain authoritative here.
   ldh a,[$FF40]
   and $F8
   cp $E0
@@ -1669,6 +1842,11 @@ potputowned:
   pop de
   pop bc
   pop af
+  ld a,[$C1B1]
+  cp $01
+  jr z,potputcarry
+  ld hl,$C300
+potputcarry:
   scf
   ret
 potputbad:
@@ -1676,7 +1854,65 @@ potputbad:
   pop de
   pop bc
   pop af
+  ld a,[$C1B1]
+  cp $01
+  jr z,potputreject
+  ld hl,$C300
+potputreject:
   and a
+  ret
+
+; Screen 6 is the exact empty-inventory overlay over the retained Status screen.  Draw
+; only its complete empty box during VBlank, then invoke the unchanged native box-9
+; producer.  The generic dispatcher may publish the finished shadow normally; the rest
+; of Status and the bottom Window never disappear while the message is composed.
+emptyoverlay:
+  push bc
+  push de
+  ld a,[$C534]
+  dec a
+  jr nz,emptyoverlaydraw
+  ld hl,$C535
+  ld a,[hl+]
+  and a
+  jr nz,emptyoverlaydraw
+  ld a,[hl]
+  cp $06
+  jr nz,emptyoverlaydraw
+  ld a,[$C6AA]
+  and a
+  jr nz,emptyoverlaydraw
+  ld a,[$C1B3]
+  and a
+  jr nz,emptyoverlaydraw
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,emptyoverlaydraw
+  call statusreadywait
+  di
+  ld hl,$98C0
+  ld c,$12
+  call itementrytop
+  ld hl,$98E0
+  ld [hl],$BE
+  inc hl
+  xor a
+  ld b,$12
+emptyoverlaycell:
+  ld [hl+],a
+  dec b
+  jr nz,emptyoverlaycell
+  ld [hl],$BF
+  ld hl,$9900
+  ld c,$12
+  call itementrybottom
+  ei
+emptyoverlaydraw:
+  pop de
+  pop bc
+  ld a,$09
+  rst $08
+  db $03,$1F
   ret
 
 ; The cursed-equipment producer appends its canonical two-code `ki` fragment after
@@ -1801,7 +2037,9 @@ itemexit:
   jp nz,itemexitbad
   ld a,[$C536]
   cp $01
-  jr z,itemexititems
+  jp z,itemexititems
+  cp $06
+  jp z,itemexitempty
   cp $07
   jp nz,itemexitbad
 
@@ -1849,6 +2087,34 @@ itemexit:
   jp nz,itemexitbad
   jr itemexithardware
 
+itemexitempty:
+  ; The no-items message is a one-box screen-6 overlay on Status.  Its text uses the
+  ; menu pool, disjoint from every private Status field plane repainted by statusdraw.
+  ; Accept only the exact post-pop 6 -> 0 replay so dismissing it never needs a
+  ; whole-LCD interval.
+  ld a,[$C6AA]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C1B3]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C1B6]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C1B7]
+  and a
+  jp nz,itemexitbad
+  ld a,[$C6A6]
+  dec a
+  jp nz,itemexitbad
+  ld a,[$C6BB]
+  cp $04
+  jp nz,itemexitbad
+  ld a,[$C6DE]
+  and a
+  jp nz,itemexitbad
+  jr itemexithardware
+
 itemexititems:
   ld a,[$C6AA]
   and a
@@ -1882,6 +2148,14 @@ itemexithardware:
   ldh a,[$FF4B]
   cp $07
   jp nz,itemexitbad
+  ; Screen 6 is a child overlay whose box covers part of the Status root.  Replacing
+  ; that box and immediately painting Status fields can expose an almost-empty map for
+  ; several frames even though LCDC.7 never clears.  Publish complete empty Status
+  ; chrome first, then let statusdraw add the fields.  C536 is still the stale child
+  ; slot here, so this cannot affect Items/Floor or any selector return.
+  ld a,[$C536]
+  cp $06
+  call z,statusprepublish
   ; A completed initial Items entry can retain menu VWF phase 3 because its native
   ; Status-entry path has no same-screen redraw-tail call.  This exact pop proves the
   ; Item page is gone, so retire that stale transaction before any later direct Floor
@@ -2536,6 +2810,17 @@ def install(buf, notes=None, font=None):
     buf[item_entry_hook:item_entry_hook + len(ITEM_ENTRY_OLD)] = bytes(
         (0xD7, ITEM_ENTRY_INDEX, FAR_BANK, 0x00, 0x00, 0x00))
 
+    empty_items_hook = _off(*EMPTY_ITEMS_HOOK)
+    if bytes(buf[empty_items_hook:
+                 empty_items_hook + len(EMPTY_ITEMS_OLD)]) != EMPTY_ITEMS_OLD:
+        raise SystemExit('statusvwf: empty-Items box call at %d:$%04X changed' %
+                         EMPTY_ITEMS_HOOK)
+    # potputentry is the shared selector/empty-overlay multiplexer.  It invokes the
+    # original box-9 call itself; the two padding bytes replace its former operands.
+    buf[empty_items_hook:
+        empty_items_hook + len(EMPTY_ITEMS_OLD)] = bytes(
+            (0xD7, POT_PUT_INDEX, FAR_BANK, 0x00, 0x00))
+
     if notes is not None:
         notes.append('statusvwf: full Strength/Experience labels and seven live status '
                      'values use approved proportional glyphs in 40 private low-page '
@@ -2553,4 +2838,8 @@ def install(buf, notes=None, font=None):
                      'screen-20 Floor Name entries retire '
                      'only BG rows 0-15 and '
                      'restores its native keyboard planes in bounded VBlank batches; '
+                     'the exact count-zero screen-6 overlay stays regional and its return '
+                     'prepublishes complete Status chrome before bounded fields; '
+                     'screen-11/screen-14 candidate selectors regionally own '
+                     'entry and paging, with stack-specific Floor Action B replay; '
                      'unknown LCD-on returns retain the conservative path')

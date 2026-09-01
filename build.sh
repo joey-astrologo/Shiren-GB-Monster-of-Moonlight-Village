@@ -173,6 +173,16 @@ if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
   # propvwf's $C0D7 scratch did after every dungeon message.
   python3 tools/potputspill.py build/shiren_en.gb
 fi
+# Screen 11 and screen 14 are shared candidate selectors, but their callers have five
+# distinct stacks: carried-Pot Put, direct/appended Floor Swap, and direct/appended
+# ground-Pot Put.  Screen 6's empty-inventory overlay is the sixth route.  All six must
+# stay LCD-live through entry/paging and every catalogued same-menu B return.
+if [ -f tests/fixtures/saves/shiren_en_log_1_dragons_maw.srm ] && \
+   [ -f tests/fixtures/saves/shiren_en_item_menu_wood_arrow.srm ] && \
+   [ -f tests/fixtures/saves/shiren_en_log1_floor_pot_selector.srm ] && \
+   [ -f tests/fixtures/saves/shiren_en_log3_empty_inventory.srm ]; then
+  python3 tools/selectorblankspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_log2_scroll_menu.srm ]; then
   python3 tools/scrollinfospill.py build/shiren_en.gb
 fi

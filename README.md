@@ -32,12 +32,12 @@ Screenshots from the current English build:
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **Full release battery passed — 2026-08-22** | Continue manual hardware and emulator playtesting before the final release tag. |
+| Release validation | **Full release battery passed — 2026-09-01** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The current normal, shuffled and redirect-all battery passed on 2026-08-22. All 39 curated
+The current normal, shuffled and redirect-all battery passed on 2026-09-01. All 43 curated
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
-1,226,679 text-visible containment frames had zero spill. The no-cheat shop route passed
+1,226,765 text-visible containment frames had zero spill. The no-cheat shop route passed
 proportional `Price`/`G`, both visible amounts, all four actions, item Info and the return to
 Floor under all three layouts. The hidden GameShark debug menu also passed both category
 pages, all ten item categories and every weapon enhancement value from 0 through 99.
@@ -45,9 +45,9 @@ Current release-candidate artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `bc599df712eaf8f83c01c639c787328cbe2fddcd2c2e68489d2e07bfc3f65e9e` |
-| `build/shiren_en_shuffle.gb` | `6444045dc5f0bbe8ec1bf63200f03798c23832508a5f6e7da77b2980945aff16` |
-| `build/shiren_en_redirect_all.gb` | `468a37d122bd650d18630c6306134692f571c6c6462c57ce4014d3a963d21d0b` |
+| `build/shiren_en.gb` | `b2e8f382c664cd59982d9cf43aae47d93f1cb15ad8b0a0b0de626946bc92dca9` |
+| `build/shiren_en_shuffle.gb` | `c0fa11bc177204ff71ba1b3b6de36aa907a4a041018d8cc20039b7595f06cb9f` |
+| `build/shiren_en_redirect_all.gb` | `8621ed99dd1cded851104c1308ea93bcbc992616f2bbe21a9a2d20fb7e274107` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,
