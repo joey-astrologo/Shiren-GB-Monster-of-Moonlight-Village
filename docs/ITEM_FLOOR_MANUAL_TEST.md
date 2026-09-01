@@ -235,8 +235,8 @@ python3 tools/selectorblankspill.py build/shiren_en.gb
 Automated status on 2026-09-01: **PASS** in normal, shuffled, and redirect-all layouts
 against normal ROM SHA-256
 `2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e`.
-Paging/sort has passed visual review; the entry/exit/re-entry portion below is the
-remaining focused visual acceptance for this candidate.
+The complete entry/paging/sort/exit/re-entry lifecycle passed visual review on
+2026-09-01.
 
 ```sh
 run_item_floor_case 14_moonlight_pages

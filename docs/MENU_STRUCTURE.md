@@ -24,9 +24,9 @@ The post-freeze Eat-last-item empty-overlay history and Moonlight Village screen
 entry/paging/sort/exit/re-entry lifecycle are now deterministic regressions. The complete
 normal, shuffled, and redirect-all release battery passed them with all prior routes on
 2026-09-01. The resulting normal candidate is SHA-256
-`2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e`;
-final visual acceptance of the newly added Moonlight entry/exit owners remains separate
-from the already accepted paging/sort check.
+`2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e`.
+The complete Moonlight entry/paging/sort/exit/re-entry lifecycle was visually accepted
+against this candidate on 2026-09-01.
 
 **Post-freeze amendment (2026-08-30):** the accepted hash above did not visually cover
 screen 5 with more than four seals. An all-nine-seal weapon exposed corrupted footer
