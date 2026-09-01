@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Prove that every real Item page can return to Status without a full-screen blank.
 
-The tracked 18-item SRAM supplies four pages, including a short final page.  Four
+The selected tracked SRAM supplies four pages. Dungeon screen 1's default fixture has a
+short final page; Moonlight screen 18's fixture has twenty items. Four
 independent boots leave Items from page 1, 2, 3, and 4 through the real B-button handler.
 For each route this test requires the exact root-Status/Items stack predecessor accepted
 by ``statusvwf``, an LCD-on status build, nine bounded VBlank uploads, and no rendered
@@ -73,7 +74,8 @@ def labels():
     return found
 
 
-def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=3500):
+def run_page(PyBoy, rom_path, ram_path, target, runtime, expected_screen=1,
+             expected_count=18, png_dir=None, frames=3500):
     problems = []
     with tempfile.TemporaryDirectory(prefix='itemexitspill-') as tmp:
         run_rom = os.path.join(tmp, 'itemexit.gb')
@@ -108,6 +110,8 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
                 status_dispatches.append(frame[0])
 
         def item_row(_ctx=None):
+            if pb.memory[0xC6A3] != expected_screen:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if shape != ITEM_SHAPE:
                 return
@@ -210,7 +214,8 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
         else:
             entry = status_entries[0]
             expected_entry = {
-                'stack': (0, 0, 1), 'mode': 0, 'count': 18,
+                'stack': (0, 0, expected_screen), 'mode': 0,
+                'count': expected_count,
                 'selector': EXPECTED_SELECTORS[target - 1],
                 'scroll': (0, 0), 'window': (0x80, 0x07),
             }
@@ -318,7 +323,8 @@ def run_page(PyBoy, rom_path, ram_path, target, runtime, png_dir=None, frames=35
         return result
 
 
-def run(rom_path, ram_path, png_dir=None, frames=3500):
+def run(rom_path, ram_path, expected_screen=1, expected_count=18,
+        png_dir=None, frames=3500):
     if png_dir:
         os.makedirs(png_dir, exist_ok=True)
     profile = menuspill.renderer_profile(rom_path)
@@ -326,7 +332,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3500):
         raise SystemExit('itemexitspill: requires the Dot proportional renderer')
     PyBoy = _import_pyboy()
     runtime = labels()
-    results = [run_page(PyBoy, rom_path, ram_path, page, runtime, png_dir, frames)
+    results = [run_page(PyBoy, rom_path, ram_path, page, runtime,
+                        expected_screen, expected_count, png_dir, frames)
                for page in range(1, 5)]
     problems = [problem for result in results for problem in result['problems']]
 
@@ -345,15 +352,17 @@ def run(rom_path, ram_path, png_dir=None, frames=3500):
                            (done[0], start[1], done[1], done[2])
                            for start, done in zip(result['upload_starts'],
                                                   result['uploads']))
-        print('itemexitspill: page %d B f%s -> Status f%s, entry f%s; %s; '
+        print('itemexitspill: screen %d page %d B f%s -> Status f%s, entry f%s; %s; '
               'LCD-off %d, white %d' %
-              (result['page'], result['b_at'], result['dispatch'], result['entry'],
+              (expected_screen, result['page'], result['b_at'], result['dispatch'],
+               result['entry'],
                uploads, result['lcd_off'], result['white']))
     for problem in problems:
         print('  ' + problem)
     if problems:
         raise SystemExit('itemexitspill: %d problem(s)' % len(problems))
-    print('itemexitspill: pages 1-4 remain visible until the owned Status redraw replaces them')
+    print('itemexitspill: screen %d pages 1-4 remain visible until the owned Status '
+          'redraw replaces them' % expected_screen)
 
 
 def main():
@@ -363,11 +372,13 @@ def main():
         ROOT, 'saves/shiren_en_item_menu.srm'))
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=3500)
+    parser.add_argument('--screen', type=int, choices=(1, 18), default=1)
+    parser.add_argument('--count', type=int, default=18)
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('itemexitspill: missing %s' % path)
-    run(args.rom, args.ram, args.png_dir, args.frames)
+    run(args.rom, args.ram, args.screen, args.count, args.png_dir, args.frames)
 
 
 if __name__ == '__main__':

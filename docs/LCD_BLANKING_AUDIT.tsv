@@ -97,19 +97,19 @@ LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete nati
 LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$42C2	ldh	explicit-off	translation	rankvwf.nativerestore	keep	native-font restoration retained for approved final Rankings/Pass exits, already-dark transactions, and rejected unknown callers; exact file-menu B returns bypass it through the S2R regional owner
-LCDC	53	$4702	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower regional owner
-LCDC	53	$470B	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$5A94	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$5B74	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$77ED	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$7A5D	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$4734	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower regional owner
+LCDC	53	$473D	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$5B0F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$5BEF	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$7868	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$7AD8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79AD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79B1	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	59	$406F	ldh	explicit-off	translation	normalending.install	keep	Normal-ending full-screen art installation
 LCDC	59	$40B3	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	60	$4082	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	60	$4222	ldh	explicit-off	translation	menuvwf.itemregion	replace-menu	rejected regional Item-row transaction retained for unknown callers; the canonical cursed/plated/fused equipment route is admitted regionally
-LCDC	60	$4338	ldh	explicit-off	translation	menuvwf.itempage	replace-menu	rejected Item/Pot transaction retained for unknown callers; exact screen-6 empty overlay plus screen-11/screen-14 candidate selectors are admitted regionally
+LCDC	60	$4337	ldh	explicit-off	translation	menuvwf.itempage	replace-menu	rejected Item/Pot transaction retained for unknown callers; exact screen-6 empty overlay plus screen-11/screen-14 candidate selectors are admitted regionally
 LCDC	62	$448B	ldh	explicit-off	translation	menuvwf.infolifecycle	replace-menu	legacy Item/Floor Info or seal whole-map fallback
 LCDC-shadow	0	$0180	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent
 LCDC-shadow	2	$40A2	res-[hl]	explicit-off	base	base ROM	native-observe	native/shared LCDC writer; runtime value is caller-dependent

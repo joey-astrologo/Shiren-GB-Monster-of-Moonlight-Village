@@ -102,7 +102,7 @@ TRANSLATION_OFF = {
         'canonical cursed/plated/fused equipment route is admitted regionally',
         'replace-menu',
     ),
-    (60, 0x4338): (
+    (60, 0x4337): (
         'menuvwf.itempage',
         'rejected Item/Pot transaction retained for unknown callers; exact screen-6 '
         'empty overlay plus screen-11/screen-14 candidate selectors are admitted '
@@ -144,18 +144,50 @@ MENU_BLANK_PATHS = (
          sites=(), origin='translation', stack='0,6',
          route='Status -> Items with an empty inventory -> No items held overlay',
          status='regional',
-         fixture='selectorblankspill.py + shiren_en_log3_empty_inventory.srm',
+         fixture='selectorblankspill.py empty + empty-after-eat; '
+                 'shiren_en_log3_empty_inventory.srm',
          evidence='exact screen-6/count-zero owner publishes only complete box-9 chrome '
-                  'before native text; fixture was generated through the real final-item '
-                  'Drop action and a clean reboot; zero LCD-off/uniform frames'),
+                  'before native text; clean reboot and the real Log-2 Eat-last-item '
+                  'history are independently driven; zero LCD-off/uniform frames'),
     dict(system='item', key='empty-items-return',
          sites=(), origin='translation', stack='0,6 -> 0',
          route='B from No items held overlay -> Status', status='regional',
-         fixture='selectorblankspill.py + shiren_en_log3_empty_inventory.srm',
-         evidence='exact stale child 6/count-zero pop prepublishes complete empty Status '
-                  'chrome before bounded Status fields; the regression requires exactly '
-                  'one prepublication and zero whole-map fallback/LCD-off/uniform frames; '
+         fixture='selectorblankspill.py empty + empty-after-eat; '
+                 'shiren_en_log3_empty_inventory.srm',
+         evidence='exact stale child 6/count-zero pop accepts only clean '
+                  '$C1B5/$C1B6=$00/$00 or the observed Eat history $20/$01, consumes '
+                  'the latter, and prepublishes complete empty Status chrome before '
+                  'bounded fields; both histories require exactly one prepublication '
+                  'and zero whole-map fallback/LCD-off/uniform frames; clean history '
                   'visually accepted 2026-09-01'),
+    dict(system='item', key='moonlight-status-to-items',
+         sites=(), origin='translation', stack='0,18',
+         route='Moonlight Village Status -> Items screen 18', status='regional',
+         fixture='itementryspill.py --screen 18 + '
+                 'shiren_en_log1_full_items_menu.srm',
+         evidence='mgbdis identifies screen 18 parallel clear at 4:$492A; exact root '
+                  'stack and all-zero Status marker admit four bounded BG-retirement '
+                  'VBlanks, complete Items chrome before rows, preserve Window, and '
+                  'produce zero LCD-off/white frames from every target-page history'),
+    dict(system='item', key='moonlight-item-paging',
+         sites=(), origin='translation', stack='0,18',
+         route='Moonlight Village Items screen 18 -> Right/Left pages and Start-sort',
+         status='regional', fixture='itempagespill.py --screen 18 + '
+                 'shiren_en_log1_full_items_menu.srm',
+         evidence='exact settled shadow marker rejects the entry owner without a VBlank '
+                  'wait, then box-14 corners admit only the page owner; four pages, '
+                  'reverse paging, Start-sort, indicators, '
+                  'visible cursor, normal pacing, and rapid pacing complete with zero '
+                  'regional decline/fallback/LCD-off/full-map blank'),
+    dict(system='item', key='moonlight-items-to-status',
+         sites=(), origin='translation', stack='0,18 -> 0',
+         route='B from Moonlight Village Items screen 18 -> Status', status='regional',
+         fixture='itemexitspill.py --screen 18 --count 20 + '
+                 'shiren_en_log1_full_items_menu.srm',
+         evidence='mgbdis identifies stale child $12 at the shared Status builder; '
+                  'all four carried pages remain visible through nine bounded Status '
+                  'uploads with zero fallback/LCD-off/white frames and identical final '
+                  'Status raster'),
     dict(system='item', key='sealed-item-info-final-return',
          sites=(), origin='translation', stack='0,1,2,5 -> 0,1',
          route='Items case-3/6 sealed equipment -> Info final-page A -> Items',
@@ -373,7 +405,7 @@ MENU_BLANK_PATHS = (
          status='dormant', fixture='itempagespill.py, floorpagespill.py',
          evidence='fallback remains in ROM; known paging/sort/Floor paths require zero'),
     dict(system='item', key='unknown-item-page-fallback',
-         sites=(('LCDC', 60, 0x4338),), origin='translation', stack='unknown Item/Pot',
+         sites=(('LCDC', 60, 0x4337),), origin='translation', stack='unknown Item/Pot',
          route='Any other rejected Item redraw or Pot-viewer replacement',
          status='dormant',
          fixture='itempagespill.py, potseespill.py, potreturnspill.py, '

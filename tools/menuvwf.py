@@ -3069,8 +3069,9 @@ fcfill18:
 
 
 # Bank 60 retains the safe whole-screen controller for Pot screens and for a regional
-# screen-1 attempt that has to fall back. Screen 1's LCD-on paging/Start-sort path is begun and
-# published by ITEM_REGION_SRC; state 1 plus screen 1 therefore means "regional", while
+# screen-1/screen-18 attempt that has to fall back. Their LCD-on paging/Start-sort path is
+# begun and published by ITEM_REGION_SRC; state 1 plus either Item screen therefore means
+# "regional", while
 # state 5 means that regional rendering encountered a fallback and the old atomic
 # whole-map publication must finish it; state 6 keeps initial/declined Items entry on
 # that same path. Mode 2 still supports the legacy short-page/Pot
@@ -3080,7 +3081,7 @@ itempage:
   and a
   jr z,pageblank
   dec a
-  jp z,pagepublish
+  jr z,pagepublish
   jr pageempty
 pageblank:
   xor a
@@ -3090,11 +3091,7 @@ pageblank:
   xor a
   rst $10
   db $%02X,$%02X
-  ld a,[$C6A3]
-  dec a
-  jr nz,pblegacy
-  ld a,[$C1B3]
-  cp $01
+  call pagescreen
   ret z
 pblegacy:
   ld a,[$C0D5]
@@ -3111,6 +3108,16 @@ pbwait:
   cp $90
   jr c,pbwait
 pbdisable:
+  ; Preserve the catalogued fallback writer at 60:$4337 even though pagescreen's
+  ; shared screen-1/screen-18 predicate is smaller than the duplicated checks.
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
   ldh a,[$FF40]
   res 7,a
   ldh [$FF40],a
@@ -3121,14 +3128,11 @@ pbdisable:
   ld [$C1B3],a
   ret
 pageempty:
-  ld a,$02
+  ; Entry mode two arrives here as one after itempage's dispatch decrement.
+  inc a
   rst $10
   db $%02X,$%02X
-  ld a,[$C6A3]
-  dec a
-  jr nz,pelegacy
-  ld a,[$C1B3]
-  cp $01
+  call pagescreen
   jr nz,pelegacy
   ld a,$01
   ld [$C0E7],a
@@ -3163,14 +3167,14 @@ pagepublish:
   ld a,$01
   rst $10
   db $%02X,$%02X
+  ; An idle state means the native caller is already publishing an intentional
+  ; whole-map/gameplay replacement. Do not route it through pagelegacy: that helper
+  ; re-enables the LCD after an admitted menu fallback and would expose the native
+  ; replacement half-complete.
   ld a,[$C1B3]
   and a
   ret z
-  ld a,[$C6A3]
-  dec a
-  jr nz,pagelegacy
-  ld a,[$C1B3]
-  cp $01
+  call pagescreen
   jr nz,pagelegacy
   ld a,[$C1B1]
   cp $04
@@ -3178,12 +3182,14 @@ pagepublish:
   ld a,[$C69D]
   cp $04
   ret nz
-  xor a
-  ld [$C1B7],a
   ld a,[$C6AC]
   inc a
-  jr nz,pagecomplete
+  jr z,pagefloor
+  xor a
+  jr pagelatch
+pagefloor:
   inc a
+pagelatch:
   ld [$C1B7],a
 pagecomplete:
   xor a
@@ -3227,6 +3233,26 @@ pagefinish:
   rst $10
   db $%02X,$%02X
   ret
+pagescreen:
+  ; Z means screen 1 with the regional transaction armed, or screen 18 with both
+  ; state and phase armed. Screen 1's standing-Floor shape legitimately reaches the
+  ; publisher with a different phase. Screen 18 uses phase two for same-screen paging
+  ; and phase four for the accepted Status-root replacement header. A rejected native
+  ; whole-map entry uses state one after pbdisable while leaving phase zero.
+  ld a,[$C1B3]
+  dec a
+  ret nz
+  ld a,[$C6A3]
+  dec a
+  ret z
+  sub $11
+  ret nz
+  ld a,[$C1B6]
+  ; Phases two and four become 1/3, whose only set bits are masked away. Phase zero
+  ; becomes $FF and remains nonzero, preserving the conservative native fallback.
+  dec a
+  and $FC
+  ret
 """ % (ACTION_BLANK_INDEX, ACTION_BLANK_BANK,
          ITEM_REGION_INDEX, ITEM_REGION_BANK,
          ITEM_REGION_INDEX, ITEM_REGION_BANK,
@@ -3235,10 +3261,13 @@ pagefinish:
          ITEM_PUBLISH_INDEX, ITEM_PUBLISH_BANK)
 
 
-# Screen 1's same-screen Left/Right and Start-sort transaction. Mode 0 runs after row 0
-# has composed but before any reused tile pixels upload. The native item count and its
-# synchronous redraw state prove this is a same-screen redraw rather than initial entry;
-# the visible page marker is transaction output, not an admission input. It then
+# Screen 1's and Moonlight screen 18's same-screen Left/Right and Start-sort transaction.
+# Mode 0 runs after row 0 has composed but before any reused tile pixels upload. The
+# native item count and synchronous redraw state prove screen 1 is a same-screen redraw.
+# Screen 18 lacks that allocator epoch, so its exact settled Items perimeter is checked
+# during VBlank; its independently admitted Status entry uses phase-four replacement
+# title composition before this narrow same-screen owner takes over.
+# The visible page marker is transaction output, not an admission input. It then
 # normalizes the five marker-coupled left-border cells and
 # blanks exactly the five raw status-marker cells plus the five 16-cell name interiors in
 # shadow WRAM and, during VBlank, in the visible BG map.
@@ -3256,12 +3285,22 @@ itemregion:
   jp z,irempty
   jp irfail
 irbegin:
-  ld a,[$C6A3]
-  dec a
-  ret nz
   ld a,[$C1B3]
   and a
   ret nz
+  ld a,[$C6A3]
+  dec a
+  jr z,irepoch
+  cp $11
+  ret nz
+  ; Bank 53 validates screen 18 through the exact settled visible Items perimeter.
+  ; Keeping that larger proof out of this byte-exact bank-60 slot preserves every
+  ; existing Action-pop address and screen 1's original fast local admission.
+  ld a,$04
+  rst $10
+  db $%02X,$%02X
+  ret nc
+irepoch:
   ld a,[$C1B1]
   dec a
   ret nz
@@ -3409,9 +3448,8 @@ ircheck:
   ld a,[$C1B3]
   dec a
   ret nz
-  ld a,[$C6A3]
-  dec a
-  ret nz
+  ; irbegin alone arms state one. Row rendering is synchronous, so the admitted
+  ; screen cannot change before ircheck consumes that ownership.
   ld a,[$C1B1]
   dec a
   ret nz
@@ -3492,9 +3530,7 @@ irfail:
   ld a,[$C1B3]
   dec a
   ret nz
-  ld a,[$C6A3]
-  dec a
-  jr nz,irfaillcd
+  ; As above, state one belongs to the already-admitted synchronous Item redraw.
   ld a,[$C1B1]
   dec a
   jr nz,irfaillcd
@@ -3536,6 +3572,9 @@ irnotzero:
   db $%02X,$%02X
   ret c
 irfaillcd:
+  ; Preserve the catalogued fallback writer at 60:$4222 after moving the larger
+  ; screen-18 ownership proof to bank 53.
+  nop
   ldh a,[$FF40]
   bit 7,a
   jr z,irfailed
@@ -3553,7 +3592,8 @@ irfailed:
   xor a
   ld [$C1B6],a
   ret
-""" % (ITEM_ROW_FAST_CLAMP_AT, FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK,
+""" % (POT_PUT_ENTRY_INDEX, POT_PUT_ENTRY_BANK,
+         ITEM_ROW_FAST_CLAMP_AT, FLOOR_CHROME_INDEX, FLOOR_CHROME_BANK,
          ITEM_ROW_FAST_AT, POT_PUT_ENTRY_INDEX, POT_PUT_ENTRY_BANK)
 
 
@@ -3665,7 +3705,7 @@ irclampset:
   ret
 
 ; The fast body publication precedes native 4:$4E2B's shadow cursor write. Publish the
-; known screen-1 cursor directly while this helper still owns the same safe VRAM phase;
+; known screen-1/screen-18 cursor directly while this helper still owns the same safe VRAM phase;
 ; the native writer immediately brings shadow into agreement afterward.
 ircursor:
   ld hl,$9882
@@ -3765,8 +3805,11 @@ itemreturn:
   and a
   jp nz,irtfail
   ld a,[$C6A3]
-  cp $01
+  dec a
+  jr z,irtscreen
+  cp $11
   jp nz,irtfail
+irtscreen:
   ld a,[$C1B1]
   cp $04
   jp nz,irtfail
@@ -3774,7 +3817,7 @@ itemreturn:
   cp $04
   jp nz,irtfail
   ld a,[$C534]
-  cp $01
+  dec a
   jp nz,irtfail
   ld a,[$C6A6]
   and a
@@ -3858,9 +3901,10 @@ irtshapeindicator:
   ld [$9882],a
   ei
 irtdone:
+  ld hl,$C1B5
   xor a
-  ld [$C1B5],a
-  ld [$C1B6],a
+  ld [hl+],a
+  ld [hl],a
   pop hl
   pop de
   pop bc
@@ -3868,9 +3912,10 @@ irtdone:
   scf
   ret
 irtfail:
+  ld hl,$C1B5
   xor a
-  ld [$C1B5],a
-  ld [$C1B6],a
+  ld [hl+],a
+  ld [hl],a
 irtlegacy:
   ; Call_004_4D7A range setup. Its caller continues into the original
   ; Call_004_44A2 map publisher when carry is clear.
@@ -11924,7 +11969,8 @@ def install(buf, notes=None, font=None):
                          'row independently; two- and three-log forms stay inside the '
                          'title transaction')
             notes.append('menuvwf: %d+%d+%d-byte item-page regional/fallback/publisher '
-                         'helpers in bank %d; screen-1 paging/Start-sort is old -> normal '
+                         'helpers in bank %d; screen-1 and settled Moonlight screen-18 '
+                         'paging/Start-sort are old -> normal '
                          'left borders + blank status/cursor/name cells -> '
                          'one complete body with LCD on; %d-byte body, %d-byte tile, and '
                          '%d-byte redraw-tail and %d-byte early-indicator helpers remove '

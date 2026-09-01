@@ -34,20 +34,23 @@ Screenshots from the current English build:
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **Full release battery passed — 2026-09-01** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The current normal, shuffled and redirect-all battery passed on 2026-09-01. All 43 curated
+The current normal, shuffled and redirect-all battery passed on 2026-09-01. All 44 curated
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
-1,226,765 text-visible containment frames had zero spill. The no-cheat shop route passed
+1,226,458 text-visible containment frames had zero spill. The no-cheat shop route passed
 proportional `Price`/`G`, both visible amounts, all four actions, item Info and the return to
 Floor under all three layouts. The hidden GameShark debug menu also passed both category
 pages, all ten item categories and every weapon enhancement value from 0 through 99.
+The exact Eat-last-item empty-overlay return and complete Moonlight Village screen-18
+Status entry, paging/sort, Status return, and re-entry lifecycle are also covered under
+normal, rapid-input, shuffled, and redirect-all layouts.
 Current release-candidate artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `b2e8f382c664cd59982d9cf43aae47d93f1cb15ad8b0a0b0de626946bc92dca9` |
-| `build/shiren_en_shuffle.gb` | `c0fa11bc177204ff71ba1b3b6de36aa907a4a041018d8cc20039b7595f06cb9f` |
-| `build/shiren_en_redirect_all.gb` | `8621ed99dd1cded851104c1308ea93bcbc992616f2bbe21a9a2d20fb7e274107` |
+| `build/shiren_en.gb` | `2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e` |
+| `build/shiren_en_shuffle.gb` | `17e12840a5e975efb94b488e6b66f56b291ab950b4407ee74f6018e061f190ad` |
+| `build/shiren_en_redirect_all.gb` | `289417d8cdd3d7c26b35cd85e865dd976a600bc81551be7cca48d3b3df88d54b` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

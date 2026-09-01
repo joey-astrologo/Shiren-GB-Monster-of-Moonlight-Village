@@ -118,6 +118,23 @@ if [ -f saves/shiren_en_item_menu.srm ]; then
   # reachable screen-29 weapon enhancement value 0..99 must remain plane-exact VWF.
   python3 tools/debugmenuspill.py build/shiren_en.gb
 fi
+if [ -f tests/fixtures/saves/shiren_en_log1_full_items_menu.srm ]; then
+  # Moonlight Village has a separate screen-18 Items handler. Its exact Status entry,
+  # every settled page replacement and Start-sort, and every page's Status return must
+  # use bounded regional transactions without widening screen 1's ownership proofs.
+  python3 tools/itementryspill.py build/shiren_en.gb \
+    --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm \
+    --screen 18
+  python3 tools/itempagespill.py build/shiren_en.gb \
+    --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm \
+    --screen 18 --no-wrap
+  python3 tools/itempagespill.py build/shiren_en.gb \
+    --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm \
+    --screen 18 --no-wrap --settle-frames 20
+  python3 tools/itemexitspill.py build/shiren_en.gb \
+    --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm \
+    --screen 18 --count 20
+fi
 if [ -f saves/shiren_en_item_menu_wood_arrow.srm ]; then
   # This save has four carried-item pages plus the special one-row standing-item Floor
   # page. Its retired rows must be structurally zero; B must return live to Status, while
@@ -175,8 +192,9 @@ if [ -f saves/shiren_en_log2_storage_pot_menu.srm ]; then
 fi
 # Screen 11 and screen 14 are shared candidate selectors, but their callers have five
 # distinct stacks: carried-Pot Put, direct/appended Floor Swap, and direct/appended
-# ground-Pot Put.  Screen 6's empty-inventory overlay is the sixth route.  All six must
-# stay LCD-live through entry/paging and every catalogued same-menu B return.
+# ground-Pot Put.  Screen 6's empty-inventory overlay is exercised from both a clean
+# empty save and the exact live history produced by eating the last item.  All seven
+# routes must stay LCD-live through entry/paging and every catalogued same-menu B return.
 if [ -f tests/fixtures/saves/shiren_en_log_1_dragons_maw.srm ] && \
    [ -f tests/fixtures/saves/shiren_en_item_menu_wood_arrow.srm ] && \
    [ -f tests/fixtures/saves/shiren_en_log1_floor_pot_selector.srm ] && \

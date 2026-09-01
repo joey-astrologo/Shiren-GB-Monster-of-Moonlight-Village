@@ -97,13 +97,15 @@ acceptance through the numbered routes below.
 ## 2026-09-01 empty/selector follow-up — all accepted
 
 The five reported regressions expand to six exact engine routes because Items-appended
-Floor -> Swap has a different stack from direct Floor -> Swap. Tests 2-6 were visually
+Floor -> Swap has a different stack from direct Floor -> Swap. The empty-overlay route
+now has two independently reproduced state histories, so automation drives seven cases.
+Tests 2-6 were visually
 accepted on 2026-09-01. Test 1's incoming overlay was accepted, but its B dismissal
 still exposed the outgoing-map replacement order. That exact child-6 return now
 prepublishes complete empty Status chrome before bounded Status fields. The focused
 accepted ROM is SHA-256
 `b2e8f382c664cd59982d9cf43aae47d93f1cb15ad8b0a0b0de626946bc92dca9`.
-`selectorblankspill.py` passes all six routes automatically with zero whole-map
+`selectorblankspill.py` passes all seven cases automatically with zero whole-map
 fallbacks, LCD-off frames, uniform frames, or CPU halts; Test 1 additionally requires
 exactly one Status-chrome prepublication. Test 1's corrected B dismissal and the five
 selector routes were all visually accepted on 2026-09-01.
@@ -124,6 +126,13 @@ There must be no full-screen white flash, partial border, stale message cell, or
 text appearing through the overlay.
 
 Visual status: **PASS, 2026-09-01**, including the corrected B dismissal.
+
+Exact live-history follow-up: reset the same case, but load Adventure -> Log 2. Open
+Status -> Items, select the only Big Onigiri, choose `Eat`, and dismiss the field
+messages. Reopen Status -> Items to show `No items held`, then press B. This real action
+leaves `$C1B5/$C1B6=$20/$01` rather than the clean fixture's `$00/$00`; both exact
+histories must prepublish Status once and produce no whole-LCD blank. This follow-up is
+covered automatically by `selectorblankspill.py --case empty-after-eat`.
 
 ### Selector test 2 — direct Floor -> Swap
 
@@ -219,6 +228,44 @@ Automated equivalent:
 
 ```sh
 python3 tools/selectorblankspill.py build/shiren_en.gb
+```
+
+## Moonlight Village screen-18 page follow-up
+
+Automated status on 2026-09-01: **PASS** in normal, shuffled, and redirect-all layouts
+against normal ROM SHA-256
+`2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e`.
+Paging/sort has passed visual review; the entry/exit/re-entry portion below is the
+remaining focused visual acceptance for this candidate.
+
+```sh
+run_item_floor_case 14_moonlight_pages
+```
+
+Load Adventure -> Log 1. In Moonlight Village open Status -> Items. Page Right and Left
+through all four carried pages, then press Start to sort and repeat the page changes,
+including rapid inputs. Press B to return to Status, reopen Items, and repeat one page
+change so entry, exit, and re-entry are all observed.
+
+Expected: Status -> Items, every same-screen page replacement and sort, and Items ->
+Status stay LCD-live. Entry retires only visible BG rows 0-15 and commits both boxes
+before text. Paging retires the old five rows regionally; the complete five-row box,
+correct page dot, rows, and cursor settle without corruption. Return keeps the outgoing
+page visible until bounded Status fields replace it. No part of entry, paging, exit, or
+re-entry may produce a whole-screen flash.
+
+Automated equivalents:
+
+```sh
+python3 tools/itementryspill.py build/shiren_en.gb \
+  --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm --screen 18
+python3 tools/itempagespill.py build/shiren_en.gb \
+  --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm --screen 18 --no-wrap
+python3 tools/itempagespill.py build/shiren_en.gb \
+  --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm --screen 18 \
+  --no-wrap --settle-frames 20
+python3 tools/itemexitspill.py build/shiren_en.gb \
+  --ram tests/fixtures/saves/shiren_en_log1_full_items_menu.srm --screen 18 --count 20
 ```
 
 ## Focused six-test recheck — all passed 2026-08-30

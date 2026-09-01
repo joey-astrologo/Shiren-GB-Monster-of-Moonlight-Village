@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Prove Status -> Items entry/re-entry and its first page change stay LCD-on.
 
-The real 18-item SRAM is exercised independently from each of its four Item pages:
+The selected multi-page SRAM is exercised independently from each of its four Item pages:
 leave to the root Status screen, reopen Items, then page once through carried pages
-direction.  The entry controller must retire only visible BG rows 0..15 over four
+direction. Dungeon screen 1 and Moonlight screen 18 share the same requirements. The
+entry controller must retire only visible BG rows 0..15 over four
 complete VBlanks, commit the empty header/list-box chrome before any item text, preserve
 the enabled two-row Window, and hand the incoming screen to the existing row/final-map
 publishers. The following page change must use the narrow five-row transaction and may
@@ -77,8 +78,8 @@ def white_frame(image):
     return len(set(image.convert('RGB').getdata())) == 1
 
 
-def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=None,
-             frames=3800):
+def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
+             expected_screen=1, png_dir=None, frames=3800):
     problems = []
     with tempfile.TemporaryDirectory(prefix='itementryspill-') as tmp:
         run_rom = os.path.join(tmp, 'itementry.gb')
@@ -116,6 +117,8 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
                 schedule[reopen_at[0]] = 'a'
 
         def item_row(_ctx=None):
+            if pb.memory[0xC6A3] != expected_screen:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if shape != ITEM_SHAPE or pb.register_file.D != 4:
                 return
@@ -202,7 +205,7 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
         else:
             _origin_at, origin, stack, screen, replay = entry_origins[0]
             done_at, done = entry_done[0]
-            if stack != (1, 0, 1) or screen != 1 or replay != 0:
+            if stack != (1, 0, expected_screen) or screen != expected_screen or replay != 0:
                 problems.append('page %d entry proof is stack=%s screen=%d replay=%d' %
                                 (target, stack, screen, replay))
             if not origin['lcdc'] & 0x80 or not done['lcdc'] & 0x80:
@@ -290,7 +293,7 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime, png_dir=No
         return result
 
 
-def run(rom, ram, png_dir=None, frames=3800):
+def run(rom, ram, expected_screen=1, png_dir=None, frames=3800):
     if png_dir:
         os.makedirs(png_dir, exist_ok=True)
     profile = menuspill.renderer_profile(rom)
@@ -301,15 +304,16 @@ def run(rom, ram, png_dir=None, frames=3800):
     _code, region_runtime = gbasm.assemble(menuvwf.ITEM_REGION_SRC,
                                            menuvwf.ITEM_REGION_AT)
     results = [run_page(PyBoy, rom, ram, page, status_runtime, region_runtime,
-                        png_dir, frames) for page in range(1, 5)]
+                        expected_screen, png_dir, frames) for page in range(1, 5)]
     problems = [problem for result in results for problem in result['problems']]
     for result in results:
         batches = ' '.join('f%d:$%02X' % event for event in result['batches'])
         chrome = ('missing' if result['chrome'] is None else
                   'f%d:$%02X' % result['chrome'])
-        print('itementryspill: page %d Status f%s -> Items f%s; batches %s; chrome %s; '
+        print('itementryspill: screen %d page %d Status f%s -> Items f%s; '
+              'batches %s; chrome %s; '
               'reentry/post %s/%s; regional/branch/write %d/%d/%d; LCD-off %d, white %d' %
-              (result['page'], result['status'], result['reopen'], batches,
+              (expected_screen, result['page'], result['status'], result['reopen'], batches,
                chrome,
                result['reentry'], result['post'], len(result['regional']),
                len(result['fallbacks']), len(result['regional_blanks']),
@@ -318,8 +322,8 @@ def run(rom, ram, png_dir=None, frames=3800):
         print('  ' + problem)
     if problems:
         raise SystemExit('itementryspill: %d problem(s)' % len(problems))
-    print('itementryspill: pages 1-4 re-enter through a chrome-first, '
-          'Window-preserving regional blank')
+    print('itementryspill: screen %d pages 1-4 re-enter through a chrome-first, '
+          'Window-preserving regional blank' % expected_screen)
 
 
 def main():
@@ -329,11 +333,12 @@ def main():
         ROOT, 'saves/shiren_en_item_menu.srm'))
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=3800)
+    parser.add_argument('--screen', type=int, choices=(1, 18), default=1)
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('itementryspill: missing %s' % path)
-    run(args.rom, args.ram, args.png_dir, args.frames)
+    run(args.rom, args.ram, args.screen, args.png_dir, args.frames)
 
 
 if __name__ == '__main__':

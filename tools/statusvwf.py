@@ -59,6 +59,8 @@ HOOK = (4, 0x4FDD)
 HOOK_OLD = bytes.fromhex('CF 11 1F')
 ITEM_ENTRY_HOOK = (4, 0x4951)
 ITEM_ENTRY_OLD = bytes.fromhex('21 00 C3 CD 0E 48')
+MOONLIGHT_ITEM_ENTRY_HOOK = (4, 0x492A)
+MOONLIGHT_ITEM_ENTRY_OLD = bytes.fromhex('21 00 C3 CD 0E 48')
 EMPTY_ITEMS_HOOK = (4, 0x4A50)
 EMPTY_ITEMS_OLD = bytes.fromhex('3E 09 CF 03 1F')
 
@@ -834,9 +836,10 @@ nameentryfontdone:
   ret
 
 itementry:
-  ; This replaces screen 1's native `ld hl,$C300 / call $480E`.  Preserve that
-  ; exact 20x18, stride-32 shadow clear after optionally retiring a direct Status
-  ; predecessor.  Unknown callers therefore retain byte-for-byte native semantics.
+  ; This replaces screen 1's and Moonlight screen 18's parallel native
+  ; `ld hl,$C300 / call $480E` clears. Preserve that exact 20x18, stride-32 shadow
+  ; clear after optionally retiring a direct Status predecessor. Unknown callers
+  ; therefore retain byte-for-byte native semantics.
   push af
   push bc
   push de
@@ -854,6 +857,15 @@ itementry:
   call itementryblank
   ld a,$01
   ld [$C1B3],a
+  ; Screen 18 reaches the shared page publisher with the same state as its native
+  ; same-screen redraw. Phase four marks a replacement header: unlike phase-two paging,
+  ; the incoming Items title must be composed because Status may have reused its planes.
+  ; A rejected native entry leaves phase zero and must still take pagelegacy.
+  ld a,[$C6A3]
+  cp $12
+  jr nz,itementryclear
+  ld a,$04
+  ld [$C1B6],a
   jr itementryclear
 itementryfloorname:
   call itementryfloorblank
@@ -882,9 +894,10 @@ itementryclearcell:
   ret
 
 itementrygate:
-  ; Exact direct Status-root -> Items stack and hardware proof.  Screen 1 paging
-  ; has the same logical stack, so the four cells that are unused on Status must
-  ; also be zero.  Drain the preceding Status publication before observing them.
+  ; Exact direct Status-root -> Items stack and hardware proof for dungeon screen 1
+  ; and Moonlight screen 18. Same-screen paging has the same logical stack, so the
+  ; four cells that are unused on Status must also be zero. Drain the preceding Status
+  ; publication before observing them; a settled Items marker rejects the entry owner.
   ld a,[$C1B3]
   cp $0D
   jp z,itementryname
@@ -893,47 +906,74 @@ itementrygate:
   cp $0F
   jp z,itementrynameerasedcancel
   and a
-  jr nz,itementrybad
+  jr nz,itementryreject
   ld a,[$C6A3]
+  cp $01
+  jr z,itementrystack1
+  cp $12
+  jr nz,itementryreject
+  ld a,[$C536]
+  cp $12
+  jr nz,itementryreject
+  jr itementrystackok
+itementrystack1:
+  ld a,[$C536]
   dec a
-  jr nz,itementrybad
+  jr nz,itementryreject
+itementrystackok:
   ld a,[$C6A6]
   and a
-  jr nz,itementrybad
+  jr nz,itementryreject
   ld a,[$C534]
   dec a
-  jr nz,itementrybad
+  jr nz,itementryreject
   ld a,[$C535]
   and a
   jr nz,itementrybad
-  ld a,[$C536]
-  dec a
-  jr nz,itementrybad
   ld a,[$C6AA]
   and a
-  jr z,itementrybad
+  jr z,itementryreject
   cp $15
-  jr nc,itementrybad
+  jr nc,itementryreject
   ld b,a
   ld a,[$C6AC]
   cp b
-  jr nc,itementrybad
+  jr nc,itementryreject
+  jr itementryhardware
+itementryreject:
+  jp itementrybad
+itementryhardware:
   ldh a,[$FF40]
   and $F8
   cp $E0
-  jr nz,itementrybad
+  jr nz,itementryreject
   ldh a,[$FF42]
   and a
-  jr nz,itementrybad
+  jr nz,itementryreject
   ldh a,[$FF43]
   and a
-  jr nz,itementrybad
+  jr nz,itementryreject
   ldh a,[$FF4A]
   cp $80
-  jr nz,itementrybad
+  jr nz,itementryreject
   ldh a,[$FF4B]
   cp $07
-  jr nz,itementrybad
+  jr nz,itementryreject
+  ; Unlike screen 1, screen 18 reaches this parallel hook on every page redraw. Its
+  ; settled shadow marker is already authoritative before the native clear, so reject
+  ; that hot path without waiting for VBlank; the later visible-map proof remains for
+  ; the all-zero direct Status predecessor. This keeps Moonlight paging latency intact.
+  ld a,[$C6A3]
+  cp $12
+  jr nz,itementrydrain
+  ld hl,$C36F
+  ld b,$04
+itementryshadowmarker:
+  ld a,[hl+]
+  and a
+  jr nz,itementryreject
+  dec b
+  jr nz,itementryshadowmarker
 itementrydrain:
   ld a,[$C11A]
   and a
@@ -1697,7 +1737,42 @@ potputentry:
   ; itemregion reaches this gate with the first rejected staging code still in A.
   cp $2F
   jp z,equipmentfixed
+  cp $04
+  jr z,potputtowncheck
   ld a,[$C6A3]
+  jr potputtownother
+potputtowncheck:
+  ; Screen 18 uses the screen-1 Items renderer in Moonlight Village, but its initial
+  ; entry and settled paging calls are otherwise WRAM-identical. Only a settled Items
+  ; page visibly owns all four invariant box-14 corners. Read them in VBlank so a denied
+  ; VRAM read can only reject. This first refusal shares the selector multiplexer because
+  ; bank 60 is byte-exact.
+  ldh a,[$FF40]
+  bit 7,a
+  jr z,potputtownbad
+potputtownwait:
+  ldh a,[$FF44]
+  cp $90
+  jr c,potputtownwait
+  ld a,[$9860]
+  cp $B8
+  jr nz,potputtownbad
+  ld a,[$9873]
+  cp $B9
+  jr nz,potputtownbad
+  ld a,[$99A0]
+  cp $BA
+  jr nz,potputtownbad
+  ld a,[$99B3]
+  cp $BB
+  jr nz,potputtownbad
+potputtowngood:
+  scf
+  ret
+potputtownbad:
+  and a
+  ret
+potputtownother:
   cp $06
   jp z,emptyoverlay
   push af
@@ -2038,6 +2113,8 @@ itemexit:
   ld a,[$C536]
   cp $01
   jp z,itemexititems
+  cp $12
+  jp z,itemexititems
   cp $06
   jp z,itemexitempty
   cp $07
@@ -2091,7 +2168,10 @@ itemexitempty:
   ; The no-items message is a one-box screen-6 overlay on Status.  Its text uses the
   ; menu pool, disjoint from every private Status field plane repainted by statusdraw.
   ; Accept only the exact post-pop 6 -> 0 replay so dismissing it never needs a
-  ; whole-LCD interval.
+  ; whole-LCD interval.  A clean-reboot empty inventory arrives idle.  Eating the
+  ; final carried item is the second real history: the retired one-row Item Action
+  ; leaves its packed record/selector and private-pool admission as $20/$01.  Consume
+  ; only that exact pair; a generic phase-one owner still belongs to an Action child.
   ld a,[$C6AA]
   and a
   jp nz,itemexitbad
@@ -2100,7 +2180,16 @@ itemexitempty:
   jp nz,itemexitbad
   ld a,[$C1B6]
   and a
+  jr z,itememptyphase
+  dec a
   jp nz,itemexitbad
+  ld a,[$C1B5]
+  cp $20
+  jp nz,itemexitbad
+  xor a
+  ld [$C1B5],a
+  ld [$C1B6],a
+itememptyphase:
   ld a,[$C1B7]
   and a
   jp nz,itemexitbad
@@ -2810,6 +2899,16 @@ def install(buf, notes=None, font=None):
     buf[item_entry_hook:item_entry_hook + len(ITEM_ENTRY_OLD)] = bytes(
         (0xD7, ITEM_ENTRY_INDEX, FAR_BANK, 0x00, 0x00, 0x00))
 
+    moonlight_item_entry_hook = _off(*MOONLIGHT_ITEM_ENTRY_HOOK)
+    if bytes(buf[moonlight_item_entry_hook:
+                 moonlight_item_entry_hook + len(MOONLIGHT_ITEM_ENTRY_OLD)]) != \
+            MOONLIGHT_ITEM_ENTRY_OLD:
+        raise SystemExit('statusvwf: Moonlight Item-entry hook at %d:$%04X changed' %
+                         MOONLIGHT_ITEM_ENTRY_HOOK)
+    buf[moonlight_item_entry_hook:
+        moonlight_item_entry_hook + len(MOONLIGHT_ITEM_ENTRY_OLD)] = bytes(
+            (0xD7, ITEM_ENTRY_INDEX, FAR_BANK, 0x00, 0x00, 0x00))
+
     empty_items_hook = _off(*EMPTY_ITEMS_HOOK)
     if bytes(buf[empty_items_hook:
                  empty_items_hook + len(EMPTY_ITEMS_OLD)]) != EMPTY_ITEMS_OLD:
@@ -2838,8 +2937,11 @@ def install(buf, notes=None, font=None):
                      'screen-20 Floor Name entries retire '
                      'only BG rows 0-15 and '
                      'restores its native keyboard planes in bounded VBlank batches; '
-                     'the exact count-zero screen-6 overlay stays regional and its return '
-                     'prepublishes complete Status chrome before bounded fields; '
+                     'the exact count-zero screen-6 overlay stays regional and its clean '
+                     'or Eat-last-item return prepublishes complete Status chrome before '
+                     'bounded fields; exact Moonlight screen-18 Status entry and return '
+                     'share the bounded screen-1 owners while its settled Items marker '
+                     'admits only page/sort redraws; '
                      'screen-11/screen-14 candidate selectors regionally own '
                      'entry and paging, with stack-specific Floor Action B replay; '
                      'unknown LCD-on returns retain the conservative path')

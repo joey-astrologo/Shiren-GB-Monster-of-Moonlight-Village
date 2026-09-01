@@ -117,7 +117,7 @@ can consume more of a pool bank later.
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
-| 53 | `$405A-$6897` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers, completed standing-Floor exit, screen-2 Action intermediate replay, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09` |
+| 53 | `$405A-$7AEC` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers (including Moonlight screen 18), completed standing-Floor exit, screen-2 Action intermediate replay, screen-6 empty-history and screen-18 settled-page gates, selector multiplexer, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09/$0B/$0D/$0F` |
 | 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 55 | `$405A-$40D7` | `tools/menuvwf.py`: shop `Price` / `G` private-raster stager and map writer | Exclusive, exact call-site guard |
 | 56 | `$405A-$40A0` | `tools/menuvwf.py`: exact shop amount-row VWF classifier | Exclusive, exact shape/source gate |
@@ -127,12 +127,12 @@ can consume more of a pool bank later.
 | 58-59 | `$4100-$7EFF` | `tools/endingcredits.py`: 22-card code, pointers, and packed graphics | Exclusive |
 | 59 | `$405A-$40FF`, `$7F00-$7FFF` | `tools/normalending.py`: conditional Normal-clear teaser helper and approved 1bpp English rows | Exclusive |
 | 60 | `$405A-$4084` | `tools/menuvwf.py`: shared 20x18 fallback publisher | Exclusive, far index `$05` |
-| 60 | `$4090-$422D` | `tools/menuvwf.py`: screen-1 Item paging/Start-sort/standing-Floor regional controller | Exclusive, far index `$07` |
+| 60 | `$4090-$422D` | `tools/menuvwf.py`: screen-1/screen-18 Item paging/Start-sort and standing-Floor regional controller | Exclusive, far index `$07` |
 | 60 | `$422E-$429E` | `tools/menuvwf.py`: carried-/Floor-Action B-pop proof and completed-parent direct-return dispatch | Exclusive, far index `$0D` |
 | 60 | `$4300-$43EE` | `tools/menuvwf.py`: Item entry/Pot/fallback controller | Exclusive, far index `$09` |
 | 60 | `$43F0-$444E` | `tools/menuvwf.py`: atomic five-row Item / one-row Floor body-map publisher | Exclusive, direct helper |
-| 60 | `$4480-$45A5` | `tools/menuvwf.py`: Item page/header/cursor fast return plus native range-selector continuation | Exclusive, far index `$0F` |
-| 60 | `$45A6-$45CE` | `tools/menuvwf.py`: final-body-row Items/Floor shape-phase marker and indicator dispatch | Exclusive, direct helper |
+| 60 | `$4480-$45B5` | `tools/menuvwf.py`: Item page/header/cursor fast return plus native range-selector continuation | Exclusive, far index `$0F` |
+| 60 | `$45B6-$45DE` | `tools/menuvwf.py`: final-body-row Items/Floor shape-phase marker and indicator dispatch | Exclusive, direct helper |
 | 60 | `$45E0-$46B0` | `tools/menuvwf.py`: scan-safe Item glyph-tile publisher | Exclusive, dispatched through far index `$0F` |
 | 60 | `$46B1-$46FF` | `tools/menuvwf.py`: native-equivalent page-indicator builder and VBlank publisher | Exclusive, direct from the completed-body path |
 | 60 | `$4700-$4FFF` | `tools/pool.py`: redirected English text | Pool-only; raised origin protects the menu controller arena |

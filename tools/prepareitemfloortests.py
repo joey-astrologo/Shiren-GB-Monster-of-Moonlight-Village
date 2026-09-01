@@ -44,6 +44,9 @@ CASES = (
      'Direct Floor and Items-appended Floor ground-Pot Put selector lifecycle.'),
     ('13_carried_pot_put', 'shiren_en_log_1_dragons_maw.srm', 'Log 1',
      'Full carried inventory and carried-Pot Put selector paging.'),
+    ('14_moonlight_pages', 'shiren_en_log1_full_items_menu.srm', 'Log 1',
+     'Four carried pages in Moonlight Village: screen-18 Status entry, paging/sort, '
+     'Status return, and re-entry.'),
 )
 
 

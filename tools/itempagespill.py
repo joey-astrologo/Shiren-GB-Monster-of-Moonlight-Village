@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Replay the multi-page item-menu transition from cartridge RAM.
 
-``saves/shiren_en_item_menu.srm`` contains one populated log with enough inventory for
-four carried pages plus the standing-item Floor page. This route boots that log normally, opens Menu -> Items, then pages
-right and left and invokes Start-sort through the real input handler. It records every
+The ordinary dungeon fixture contains four carried pages plus the standing-item Floor
+page.  A second tracked fixture contains four carried pages in Moonlight Village, whose
+Items handler is screen 18 rather than screen 1.  Each route boots normally, opens
+Menu -> Items, then pages right and left and invokes Start-sort through the real input
+handler. It records every
 item-row draw and audits the regional transaction at frame granularity: LCD-on ownership,
 old/blank/new row states,
 locked map cells, locked structural tile planes, and the fixed-width empty rows on the
@@ -169,7 +171,7 @@ def staged_row(pb, source, limit=32):
 
 
 def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
-        test_wrap=True):
+        test_wrap=True, expected_screen=1):
     profile = menuspill.renderer_profile(rom_path)
     if profile['mode'] != 'dot-proportional':
         raise SystemExit('itempagespill: requires the Dot proportional renderer')
@@ -228,6 +230,8 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 scheduled[frame[0] + 80] = 'a'
 
         def far_entry(_ctx=None):
+            if pb.memory[0xC6A3] != expected_screen:
+                return
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             if shape != ITEM_SHAPE:
                 return
@@ -369,9 +373,13 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                 pages[-1]['state_trace'].append((current_frame, snapshot['state']))
                 if not snapshot['lcd']:
                     pages[-1]['lcd_off_frames'].append(current_frame)
-                # Item row 0 begins at shadow $C380: border, equipped-marker cell,
-                # then the native cursor cell. Left/Right paging keeps selection at 0.
-                if pb.memory[0xFF40] & 0x80 and pb.memory[0xC382] == 0x81:
+                # Item row 0 begins at column 0: border, equipped-marker cell, then
+                # the native cursor cell. Screen 1 mirrors that cursor in shadow WRAM.
+                # Moonlight's screen-18 finalizer writes the cursor only to the visible
+                # BG map, leaving shadow $C382 clear; audit the owner each native handler
+                # actually maintains.
+                cursor_at = 0x9882 if expected_screen == 18 else 0xC382
+                if pb.memory[0xFF40] & 0x80 and pb.memory[cursor_at] == 0x81:
                     pages[-1]['cursor_seen'] = True
                 key = (transition, current_frame)
                 if png_dir and key not in captured:
@@ -395,6 +403,9 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
                             % len(unique))
         if not any(index == 0 for _at, index in dispatches):
             problems.append('real route never dispatched the in-dungeon main menu')
+        if not any(index == expected_screen for _at, index in dispatches):
+            problems.append('real route never dispatched expected Items screen %d'
+                            % expected_screen)
         if not page_presses:
             problems.append('real route never scheduled an item-page direction press')
         if not sort_presses:
@@ -443,9 +454,13 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
             if not samples:
                 problems.append('transition %d has no rendered-frame samples' % index)
                 continue
+            # Both initial entry owners and every same-screen redraw must leave a visible
+            # cursor. Screen 18 is checked at $9882 because its native finalizer does not
+            # mirror that cursor into the shadow map.
             if not page['cursor_seen']:
-                problems.append('transition %d never restores the row-0 cursor at $C382'
-                                % index)
+                cursor_at = 0x9882 if expected_screen == 18 else 0xC382
+                problems.append('transition %d never restores the row-0 cursor at $%04X'
+                                % (index, cursor_at))
 
             changes = []
             for at, _image, memory in samples:
@@ -755,12 +770,21 @@ def run(rom_path, ram_path, png_dir=None, frames=3900, settle_frames=90,
         # transaction deliberately changes the downstream VBlank/input phase from the
         # former LCD-off boot path; the same unchanged page redraw consequently has two
         # legal no-wrap ceilings, 13/17 and 14/18, depending on that phase.
-        visual_budget = 18 if test_wrap else 14
+        if expected_screen == 18:
+            # Moonlight has no screen-1 allocator epoch, so row 0 first proves the
+            # settled visible box-14 owner. Its regional 18/22-frame ceiling remains
+            # faster than the release baseline's measured 25/26-frame whole-map path.
+            visual_budget = 18
+        else:
+            visual_budget = 18 if test_wrap else 14
         # The standing-Floor boundary also clamps an invalid carried-row selector,
         # publishes the corrected cursor, and commits the replacement four-cell header.
         # Those correctness writes add at most two frames to the wrap-only route;
         # ordinary page-only redraws retain the lower budget.
-        return_budget = 25 if test_wrap else 18
+        if expected_screen == 18:
+            return_budget = 22
+        else:
+            return_budget = 25 if test_wrap else 18
         if visual_latencies and max(visual_latencies) > visual_budget:
             problems.append('page visual latency reached %d frames, budget is %d' %
                             (max(visual_latencies), visual_budget))
@@ -821,11 +845,13 @@ def main():
                         help='frames from row-4 completion to the next paging input')
     parser.add_argument('--no-wrap', action='store_true',
                         help='avoid the standing-Floor then page-1 two-input wrap')
+    parser.add_argument('--screen', type=int, choices=(1, 18), default=1,
+                        help='expected Items handler (1 in dungeon, 18 in Moonlight)')
     args = parser.parse_args()
     if not os.path.exists(args.ram):
         raise SystemExit('itempagespill: missing RAM fixture: %s' % args.ram)
     run(args.rom, args.ram, args.png_dir, args.frames, args.settle_frames,
-        not args.no_wrap)
+        not args.no_wrap, args.screen)
 
 
 if __name__ == '__main__':

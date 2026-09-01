@@ -11,7 +11,8 @@ The callers do not share a return stack.  In particular, the appended Floor page
 ``0,1,2,14``, ordinary direct Floor is ``0,20,14``, and direct ground-Pot Floor is
 ``0,7,14``.  This regression drives all five selector callers with real SRAM fixtures,
 pages Right and Left, and (except for the independently scoped carried-Pot return)
-presses B.  It also covers screen 6's empty-inventory overlay and dismissal.
+presses B.  It also covers screen 6's empty-inventory overlay and dismissal from
+both a clean empty save and the real history produced by eating the final item.
 
 All schedules after a menu opens are attached to actual row-completion hooks rather
 than guessed redraw delays.  The owned interval must keep LCDC.7 set, never expose a
@@ -53,6 +54,11 @@ BOOT_DRAGONS_MAW.update({2720: 'a', 2820: 'right', 2900: 'right',
 BOOT_EMPTY = {
     60: 'start', 120: 'start', 180: 'start', 240: 'start',
     300: 'a', 380: 'down', 460: 'down', 540: 'a', 700: 'a',
+    2600: 'b', 2700: 'a',
+}
+BOOT_LIVE_EMPTY = {
+    60: 'start', 120: 'start', 180: 'start', 240: 'start',
+    300: 'a', 380: 'down', 540: 'a', 700: 'a',
     2600: 'b', 2700: 'a',
 }
 
@@ -124,6 +130,13 @@ CASES = {
     'empty': {
         'ram': EMPTY,
         'schedule': BOOT_EMPTY,
+        'empty': True,
+    },
+    'empty-after-eat': {
+        'ram': EMPTY,
+        'schedule': BOOT_LIVE_EMPTY,
+        'empty': True,
+        'live_eat': True,
     },
 }
 
@@ -143,6 +156,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
         raise SystemExit('selectorblankspill: requires the approved proportional renderer')
     PyBoy = _import_pyboy()
     problems = []
+    empty_case = case.get('empty', False)
 
     with tempfile.TemporaryDirectory(prefix='selectorblankspill-') as tmp:
         work = os.path.join(tmp, label + '.gb')
@@ -158,6 +172,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
         selector_dispatches = []
         return_dispatches = []
         empty_dispatches = []
+        empty_state_pairs = []
         owned = [False]
         finished = [False]
         settle_after = [None]
@@ -181,11 +196,13 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
 
         def dispatch(_ctx=None):
             screen = pb.register_file.A
-            if label == 'empty':
+            if empty_case:
                 if screen == 6:
                     owned[0] = True
                     empty_dispatches.append((frame[0], screen, stack(pb),
                                              pb.memory[0xC6AA]))
+                    empty_state_pairs.append((pb.memory[0xC1B5],
+                                              pb.memory[0xC1B6]))
                     schedule[frame[0] + 160] = 'b'
                     event('empty-entry')
                 elif owned[0] and screen == 0:
@@ -212,6 +229,23 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
         def row(_ctx=None):
             shape = tuple(pb.memory[address] for address in range(0xC69A, 0xC69F))
             screen = pb.memory[0xC6A3]
+            if case.get('live_eat'):
+                if (screen == 1 and shape == ITEM_SHAPE and
+                        pb.register_file.D == 4 and not action_complete[0]):
+                    event('last-item-page')
+                    schedule[frame[0] + 70] = 'a'
+                    return
+                if (shape[:2] in ACTION_PREFIXES and screen == 2 and
+                        pb.register_file.D == shape[2] - 1 and
+                        not action_complete[0]):
+                    action_complete[0] = True
+                    event('eat-action-complete')
+                    schedule[frame[0] + 70] = 'a'
+                    schedule[frame[0] + 380] = 'a'
+                    schedule[frame[0] + 480] = 'a'
+                    schedule[frame[0] + 680] = 'b'
+                    schedule[frame[0] + 780] = 'a'
+                return
             if (shape[:2] in ACTION_PREFIXES and screen in (2, 7, 20) and
                     pb.register_file.D == shape[2] - 1 and not action_complete[0]):
                 action_complete[0] = True
@@ -264,7 +298,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
 
         page_labels, region_labels = menuvwf.item_transition_labels()
         pb.hook_register(4, 0x48AA, dispatch, None)
-        if label != 'empty':
+        if not empty_case or case.get('live_eat'):
             pb.hook_register(menuvwf.FAR_BANK, profile['entry'], row, None)
         pb.hook_register(menuvwf.ITEM_PAGE_BANK, page_labels['pbdisable'],
                          fallback(page_fallbacks), None)
@@ -290,7 +324,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
                 pb.button(button, PRESS_FRAMES)
             pb.tick()
 
-            if (trace and label == 'empty' and settle_after[0] is not None and
+            if (trace and empty_case and settle_after[0] is not None and
                     frame[0] <= settle_after[0] - POST_RETURN_FRAMES + 60):
                 crop = pb.screen.image.convert('RGB').crop((0, 0, 160, 128))
                 colors = crop.getcolors(maxcolors=160 * 128) or []
@@ -308,7 +342,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
                 if pb.register_file.PC == 0x0038:
                     halts.append(frame[0])
 
-                if label == 'empty':
+                if empty_case:
                     if (settle_after[0] is not None and frame[0] >= settle_after[0] and
                             len(empty_dispatches) >= 2 and pb.memory[0xC6A3] == 0 and
                             stack(pb) == (0,) and pb.memory[STATE] == 0):
@@ -335,7 +369,7 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
         }
         pb.stop(save=False)
 
-    if label == 'empty':
+    if empty_case:
         if [(screen, call_stack, count) for _at, screen, call_stack, count
                 in empty_dispatches] != [(6, (0, 6), 0), (0, (0,), 0)]:
             problems.append('screen-6 lifecycle was %s, expected entry (0,6) and '
@@ -344,6 +378,10 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
             problems.append('screen-6 dismissal published Status chrome %d times at '
                             '%s, expected exactly once before Status fields'
                             % (len(status_prepublications), status_prepublications))
+        expected_pair = (0x20, 0x01) if case.get('live_eat') else (0x00, 0x00)
+        if empty_state_pairs != [expected_pair]:
+            problems.append('screen-6 entry history pair was %s, expected [%s]'
+                            % (empty_state_pairs, expected_pair))
     else:
         expected_dispatch = (case['selector_screen'], case['selector_stack'])
         actual_dispatches = [(screen, call_stack) for _at, screen, call_stack, _selector
@@ -422,9 +460,9 @@ def run_case(rom, label, case, frames=FRAMES, trace=False):
                   'nonzero-map=%d' % values)
     print('selectorblankspill: %-18s pages=%s stack=%s -> %d/%s; '
           'fallbacks %d/%d/%d; prepublish %d; LCD-off %d, uniform %d; %d problem(s)'
-          % (label, '-' if label == 'empty' else
+          % (label, '-' if empty_case else
              '/'.join(str(value[1] // 5 + 1) for value in selector_rows),
-             '-' if label == 'empty' else case.get('selector_stack'),
+             '-' if empty_case else case.get('selector_stack'),
              final['screen'], final['stack'], len(page_fallbacks),
              len(region_fallbacks), len(status_fallbacks),
              len(status_prepublications), len(lcd_off), len(uniform),
