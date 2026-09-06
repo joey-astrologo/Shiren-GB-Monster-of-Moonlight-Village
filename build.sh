@@ -1,5 +1,5 @@
 #!/bin/sh
-# Full build: base ROM -> MBC3 -> 1 MiB -> font + script -> verified English ROM
+# Full build: base ROM -> MBC3 -> 1 MiB -> font + script -> verified ROM + IPS
 set -e
 
 # Verify every public SRAM regression and stage ignored links at the legacy saves/ paths
@@ -11,6 +11,10 @@ python3 tools/setmapper.py build/base.gb build/_m.gb --type 13 >/dev/null
 python3 tools/expand.py    build/_m.gb  build/_base_expanded.gb --size-code 5 >/dev/null
 python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en.gb \
         --report build/worklist.tsv --dot-font
+
+# Distribution artifact for the unmodified 512 KiB Japanese ROM. Creation
+# includes a byte-for-byte application check and fails if the IPS is not exact.
+python3 tools/ips.py create build/base.gb build/shiren_en.gb build/shiren_en.ips
 
 # Whole-LCD blanking is a governed resource. Catalogue hardware LCDC mutations and the
 # native $C110 shadow producers which VBlank later publishes. Keep separate caller-level

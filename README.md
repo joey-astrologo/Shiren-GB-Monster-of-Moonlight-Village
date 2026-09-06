@@ -32,9 +32,9 @@ Screenshots from the current English build:
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
 | Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
-| Release validation | **Full release battery passed — 2026-09-01** | Continue manual hardware and emulator playtesting before the final release tag. |
+| Release validation | **Full release battery passed — 2026-09-06** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The current normal, shuffled and redirect-all battery passed on 2026-09-01. All 44 curated
+The current normal, shuffled and redirect-all battery passed on 2026-09-06. All 44 curated
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
 1,226,458 text-visible containment frames had zero spill. The no-cheat shop route passed
@@ -48,9 +48,10 @@ Current release-candidate artifact hashes:
 
 | Build | SHA-256 |
 |---|---|
-| `build/shiren_en.gb` | `2aaf7ab9b9b7238c587489268eed3fe18519c59ffe634c3aa85e7b34b2e0049e` |
-| `build/shiren_en_shuffle.gb` | `17e12840a5e975efb94b488e6b66f56b291ab950b4407ee74f6018e061f190ad` |
-| `build/shiren_en_redirect_all.gb` | `289417d8cdd3d7c26b35cd85e865dd976a600bc81551be7cca48d3b3df88d54b` |
+| `build/shiren_en.gb` | `2eb5f44a67b2159d2bf17cf56de367004e64119dcbafccc15c7851a5e41cef7a` |
+| `build/shiren_en.ips` | `a88c45a76d43c37ab23fcc5193972b709824743b236714b41398e6b1f93db8bf` |
+| `build/shiren_en_shuffle.gb` | `7f182670a62890c8bfa9b9438a1a9ad0d0c4ae67020937a14f9a8d51d5ddd4c8` |
+| `build/shiren_en_redirect_all.gb` | `62f5dd81c921c1499beb223271cfb57ee26d00ee2c1909fa9319755ef466abd9` |
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,
@@ -86,8 +87,19 @@ sh build.sh
 ```
 
 The first extraction creates the ignored `script/script.json` and `script/script.tsv`
-from your ROM. The build creates the 1 MiB MBC3 ROM `build/shiren_en.gb` and should finish
-with `no problems: every supplied translation fit.`
+from your ROM. The build creates both the 1 MiB MBC3 ROM `build/shiren_en.gb` and the
+distribution patch `build/shiren_en.ips`. The IPS is for the exact unmodified Japanese
+ROM identified above. Patch creation reapplies it to `build/base.gb` and verifies that the
+result is byte-for-byte identical to `build/shiren_en.gb`; a mismatch fails the build.
+The translation step should finish with `no problems: every supplied translation fit.`
+
+The dependency-free IPS tool can also apply or independently verify the artifact:
+
+```sh
+python3 tools/ips.py apply "/path/to/Fuurai no Shiren GB (Japan).gb" \
+    build/shiren_en.ips build/shiren_en_from_patch.gb
+python3 tools/ips.py verify build/base.gb build/shiren_en.ips build/shiren_en.gb
+```
 
 Run `extract.py` again only when extraction changes. English rows are keyed by ROM address,
 so re-extraction does not overwrite the translations.
