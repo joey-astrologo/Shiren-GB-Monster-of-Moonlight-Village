@@ -9,6 +9,12 @@ complete VBlanks, commit the empty header/list-box chrome before any item text, 
 the enabled two-row Window, and hand the incoming screen to the existing row/final-map
 publishers. The following page change must use the narrow five-row transaction and may
 never reach the LCD-off fallback.
+
+``--stale-title-lifetime`` deterministically recreates the rare field report: restore
+the native Japanese `$C0-$C3` planes and poison the otherwise-idle Status predecessor
+with page phase two immediately before reopening Items. A correct direct-entry boundary
+must retire that stale phase and compose `Items`; treating it as a same-screen page flip
+leaves the native bar-and-fragment glyphs visible in the title box.
 """
 
 import argparse
@@ -78,8 +84,20 @@ def white_frame(image):
     return len(set(image.convert('RGB').getdata())) == 1
 
 
+def title_state(pb, profile):
+    """Return box 14's references and whether they resolve to exact `Items` pixels."""
+    expected = menuspill.compose(menuspill.encode('Items'), profile)
+    refs = tuple(pb.memory[0x9821 + index] for index in range(4))
+    pixels = []
+    for tile in refs:
+        at = menuspill.tile_data_addr(tile)
+        pixels.append(bytes(pb.memory[at:at + 16]))
+    return refs, tuple(pixels) == tuple(bytes(tile) for tile in expected)
+
+
 def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
-             expected_screen=1, png_dir=None, frames=3800):
+             expected_screen=1, png_dir=None, frames=3800, reopen_delay=120,
+             stale_title_lifetime=False):
     problems = []
     with tempfile.TemporaryDirectory(prefix='itementryspill-') as tmp:
         run_rom = os.path.join(tmp, 'itementry.gb')
@@ -87,6 +105,12 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
         shutil.copyfile(ram, run_rom + '.ram')
         pb = PyBoy(run_rom, window='null', cgb=True)
         pb.set_emulation_speed(0)
+        with open(rom, 'rb') as source:
+            rom_bytes = source.read()
+        native_title_planes = bytearray()
+        native_title_source = 13 * 0x4000 + (0x7C80 - 0x4000)
+        for value in rom_bytes[native_title_source:native_title_source + 32]:
+            native_title_planes += bytes((value, value))
 
         frame = [0]
         schedule = dict(BOOT)
@@ -113,7 +137,7 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
                 opened[0] = True
             elif screen == 0 and b_at[0] is not None and status_at[0] is None:
                 status_at[0] = frame[0]
-                reopen_at[0] = frame[0] + 120
+                reopen_at[0] = frame[0] + reopen_delay
                 schedule[reopen_at[0]] = 'a'
 
         def item_row(_ctx=None):
@@ -189,6 +213,9 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
         for frame[0] in range(frames):
             action = schedule.get(frame[0])
             if action:
+                if frame[0] == reopen_at[0] and stale_title_lifetime:
+                    pb.memory[0xC1B6] = 2
+                    pb.memory[0x8C00:0x8C40] = native_title_planes
                 pb.button(action, PRESS_FRAMES)
             pb.tick()
             if reopen_at[0] is not None and frame[0] >= reopen_at[0] - 2:
@@ -273,8 +300,15 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
             problems.append('page %d re-entry/page change produced all-white frames at %s' %
                             (target, ' '.join('f%d' % at for at in whites)))
 
+        title_refs, title_ok = title_state(pb, profile)
+        if not title_ok:
+            problems.append('page %d settled Items title refs %s do not resolve to `Items`' %
+                            (target, ' '.join('$%02X' % value for value in title_refs)))
+
         result = {
             'page': target,
+            'delay': reopen_delay,
+            'stale_title_lifetime': stale_title_lifetime,
             'status': status_at[0],
             'reopen': reopen_at[0],
             'batches': tuple(entry_batches),
@@ -287,13 +321,16 @@ def run_page(PyBoy, rom, ram, target, status_runtime, region_runtime,
             'regional_blanks': tuple(regional_blanks),
             'lcd_off': len(lcd_off),
             'white': len(whites),
+            'title_refs': title_refs,
+            'title_ok': title_ok,
             'problems': problems,
         }
         pb.stop(save=False)
         return result
 
 
-def run(rom, ram, expected_screen=1, png_dir=None, frames=3800):
+def run(rom, ram, expected_screen=1, png_dir=None, frames=3800,
+        reopen_delays=(120,), pages=(1, 2, 3, 4), stale_title_lifetime=False):
     if png_dir:
         os.makedirs(png_dir, exist_ok=True)
     profile = menuspill.renderer_profile(rom)
@@ -304,26 +341,36 @@ def run(rom, ram, expected_screen=1, png_dir=None, frames=3800):
     _code, region_runtime = gbasm.assemble(menuvwf.ITEM_REGION_SRC,
                                            menuvwf.ITEM_REGION_AT)
     results = [run_page(PyBoy, rom, ram, page, status_runtime, region_runtime,
-                        expected_screen, png_dir, frames) for page in range(1, 5)]
+                        expected_screen, png_dir, frames, delay,
+                        stale_title_lifetime)
+               for delay in reopen_delays for page in pages]
     problems = [problem for result in results for problem in result['problems']]
     for result in results:
         batches = ' '.join('f%d:$%02X' % event for event in result['batches'])
         chrome = ('missing' if result['chrome'] is None else
                   'f%d:$%02X' % result['chrome'])
-        print('itementryspill: screen %d page %d Status f%s -> Items f%s; '
+        print('itementryspill: screen %d delay %d page %d Status f%s -> Items f%s; '
               'batches %s; chrome %s; '
-              'reentry/post %s/%s; regional/branch/write %d/%d/%d; LCD-off %d, white %d' %
-              (expected_screen, result['page'], result['status'], result['reopen'], batches,
+              'reentry/post %s/%s; title %s %s; regional/branch/write %d/%d/%d; '
+              'LCD-off %d, white %d%s' %
+              (expected_screen, result['delay'], result['page'], result['status'],
+               result['reopen'], batches,
                chrome,
-               result['reentry'], result['post'], len(result['regional']),
+               result['reentry'], result['post'],
+               'ok' if result['title_ok'] else 'BAD',
+               '/'.join('$%02X' % value for value in result['title_refs']),
+               len(result['regional']),
                len(result['fallbacks']), len(result['regional_blanks']),
-               result['lcd_off'], result['white']))
+               result['lcd_off'], result['white'],
+               '; stale title lifetime retired'
+               if result['stale_title_lifetime'] else ''))
     for problem in problems:
         print('  ' + problem)
     if problems:
         raise SystemExit('itementryspill: %d problem(s)' % len(problems))
-    print('itementryspill: screen %d pages 1-4 re-enter through a chrome-first, '
-          'Window-preserving regional blank' % expected_screen)
+    print('itementryspill: screen %d page(s) %s re-enter through a chrome-first, '
+          'Window-preserving regional blank' %
+          (expected_screen, ','.join(str(page) for page in pages)))
 
 
 def main():
@@ -334,11 +381,30 @@ def main():
     parser.add_argument('--png-dir')
     parser.add_argument('--frames', type=int, default=3800)
     parser.add_argument('--screen', type=int, choices=(1, 18), default=1)
+    parser.add_argument('--reopen-delays', default='120',
+                        help='comma-separated frame delays after Status dispatch')
+    parser.add_argument('--pages', default='1,2,3,4',
+                        help='comma-separated prior Item pages to exercise')
+    parser.add_argument('--stale-title-lifetime', action='store_true',
+                        help='recreate stale phase/native C0-C3 title corruption')
     args = parser.parse_args()
     for path in (args.rom, args.ram):
         if not os.path.exists(path):
             raise SystemExit('itementryspill: missing %s' % path)
-    run(args.rom, args.ram, args.screen, args.png_dir, args.frames)
+    try:
+        reopen_delays = tuple(int(value, 0) for value in args.reopen_delays.split(','))
+    except ValueError:
+        raise SystemExit('itementryspill: --reopen-delays must be comma-separated integers')
+    if not reopen_delays or any(delay < 1 for delay in reopen_delays):
+        raise SystemExit('itementryspill: reopen delays must all be at least one frame')
+    try:
+        pages = tuple(int(value, 0) for value in args.pages.split(','))
+    except ValueError:
+        raise SystemExit('itementryspill: --pages must be comma-separated integers')
+    if not pages or any(page not in (1, 2, 3, 4) for page in pages):
+        raise SystemExit('itementryspill: pages must be in 1..4')
+    run(args.rom, args.ram, args.screen, args.png_dir, args.frames, reopen_delays,
+        pages, args.stale_title_lifetime)
 
 
 if __name__ == '__main__':

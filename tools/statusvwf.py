@@ -855,6 +855,13 @@ itementry:
   call itementrygate
   jr nc,itementryclear
   call itementryblank
+  ; This is a newly admitted Status-root replacement, never a same-screen page flip.
+  ; Retire any stale page phase before box 14 is reached: phase two tells menuvwf that
+  ; the visible $C0-$C3 title planes already contain `Items` and deliberately skips
+  ; their upload. If a preceding native-font lifetime restored those planes, that stale
+  ; phase exposes the four Japanese glyphs in the header instead of the English title.
+  xor a
+  ld [$C1B6],a
   ld a,$01
   ld [$C1B3],a
   ; Screen 18 reaches the shared page publisher with the same state as its native

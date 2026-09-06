@@ -113,6 +113,11 @@ if [ -f saves/shiren_en_item_menu.srm ]; then
   # visible BG rows 0-15 in four VBlanks, commit both empty box perimeters before item
   # text, retain the bottom Window, and keep the next page change regional.
   python3 tools/itementryspill.py build/shiren_en.gb
+  # Recreate the rare corrupted Items title deterministically: a dead phase-two page
+  # lifetime plus freshly restored native $C0-$C3 planes must be retired by the direct
+  # Status-entry boundary, forcing box 14 to compose its complete English title.
+  python3 tools/itementryspill.py build/shiren_en.gb \
+    --pages 1 --reopen-delays 30 --stale-title-lifetime
   # Apply the real hidden-menu GameShark writes only after Menu -> Items has borrowed
   # its low font planes. Both category pages, all screen-28 item lists, and every
   # reachable screen-29 weapon enhancement value 0..99 must remain plane-exact VWF.

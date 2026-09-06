@@ -1,7 +1,7 @@
 # Menu systems and regional-blanking ownership
 
 **Status:** Engineering map plus implemented Item/Floor and Start checkpoints, measured
-through 2026-09-01. The dispatcher, box catalogue, memory map, and fixture-backed routes below
+through 2026-09-06. The dispatcher, box catalogue, memory map, and fixture-backed routes below
 are established. Routes marked `outline` or `inferred` still need a real button-driven
 trace before later work depends on them. Checkpoints 1-3 are committed and visually
 accepted. Checkpoint 4 is visually accepted against ROM SHA-256
@@ -2276,6 +2276,24 @@ LY-`$94` blank batches, an exact chrome-first BG map completed inside VBlank bef
 first Item-row call, an unchanged Window and tile planes, zero LCD-off/all-white frames,
 and exactly one following five-row regional transaction with zero fallback. This covers
 re-entry after every prior page-selector lifetime, not only the first opening.
+
+A rare 2026-09-06 field capture showed box 14's four title references `$C0-$C3` resolving
+to a solid bar and small Japanese fragments instead of `Items`, while the box and all Item
+rows remained correct. Fresh `mgbdis` of the base ROM identifies those pixels exactly:
+the native font loader at `13:$763F` copies tiles `$80-$C3` from `13:$7A80`, so its final
+four sources are `13:$7C80-$7C9F`; their raster is byte-for-byte the captured corruption.
+The failure was therefore not an Item-data or border write. A dead `$C1B6=$02` page phase
+could survive into an otherwise valid direct entry; box 14 then classified the new screen
+as same-screen paging and intentionally reused `$C0-$C3` without composing its title.
+
+The accepted Status-root entry now clears `$C1B6` immediately after regional retirement
+and before arming `$C1B3=$01`. This boundary is definitionally a replacement, never a
+same-screen flip. Screen 18 subsequently installs its existing replacement-header phase
+four, and rejected callers retain native behavior. `itementryspill.py
+--pages 1 --reopen-delays 30 --stale-title-lifetime` restores the exact native
+`$C0-$C3` planes and injects phase two before entry; it then requires the settled four
+references to resolve plane-exactly to `Items`, along with the ordinary chrome, Window,
+regional-page, LCD-on, and no-white-frame contracts.
 
 ## Items-to-Status live exit (checkpoint 2, exit direction)
 
