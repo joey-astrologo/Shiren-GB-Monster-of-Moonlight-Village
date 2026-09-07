@@ -185,10 +185,9 @@
 31:$440B	No
 31:$4410	Yes
 31:$44F7	Rankings
-31:$4549	Kuyou
+# Abbreviated Kuyo Pass, using the same spelling as the story and route map.
+31:$4549	Kuyo
 31:$4552	Village Exit
-# "Kuyou Pass" would make this box 26 bytes, and the only 26-byte run in bank 31 is the
-# one box 33 needs. 26+24 into 26+23 does not fit however it is ordered.
 
 # ---- difficulty explanations (boxes 46/48/50) ----
 # Row 2 of each is centred by hand in the original; one leading space is re-added, the

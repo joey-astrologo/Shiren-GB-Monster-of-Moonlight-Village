@@ -90,7 +90,7 @@ CHECKPOINTS = {
 }
 FINAL_FRAME = max(CHECKPOINTS)
 
-SELECTOR_LABELS = ('Kuyou', 'Village Exit')
+SELECTOR_LABELS = ('Kuyo', 'Village Exit')
 RANK_NAME = 'Shiren'
 SELECTOR_REGION = {(row, col) for row in range(7, 12) for col in range(5, 17)}
 # The raw control's overlong fixed-cell second label leaves three text fragments in the

@@ -692,7 +692,7 @@ ROM_RANK_HEADER_BASE = 0x80
 ROM_RANK_HEADER_CAP = ROM_FEI_PROMPT_CAP
 
 # Rankings is one screen-scoped allocation shared with rankvwf.  Its two-row category
-# selector is the preceding temporal phase: $C0-$C3 for ``Kuyou`` and $C4-$CB for
+# selector is the preceding temporal phase: $C0-$C3 reserved for ``Kuyo`` and $C4-$CB for
 # ``Village Exit``.  The complete native font reload restores this exact borrowed slice
 # before the result map is revealed.  The helper lives in bank 46's prefix, formally
 # excluded from pool.py's redirected-text allocator.
