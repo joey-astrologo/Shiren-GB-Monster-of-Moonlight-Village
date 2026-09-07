@@ -933,7 +933,12 @@ boot into a real file and drive to a log; `build.sh` copies it automatically.
 **The scan sees BUILT addresses, the allowlist is keyed on ORIGINAL ones.** A relocated string
 appears at its new address, so 19 of the first 52 scanned entries matched no string at all --
 silently failing to allowlist the very strings the scan had just observed. `build.py` now
-writes `build/relocmap.tsv` (built address -> `loc`) and `gbrun.py` translates through it.
+writes a relocation map (built address -> `loc`) and `gbrun.py` translates through it.
+The original directory-wide `build/relocmap.tsv` was superseded on 2026-09-07 by
+`<rom>.relocmap.tsv`, verified against the ROM's SHA-256: building redirect-all beside a
+normal ROM had overwritten the normal map and caused three false unextracted entries.
+`tools/toolchaincheck.py --state saves/dungeon.state` freezes that live scan, together
+with build-failure output preservation and the preview/wrapper leading-space budget.
 
 ### So the gate is now evidence, not bank
 

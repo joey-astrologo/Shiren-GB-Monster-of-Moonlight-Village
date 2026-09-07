@@ -12,6 +12,9 @@ python3 tools/expand.py    build/_m.gb  build/_base_expanded.gb --size-code 5 >/
 python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en.gb \
         --report build/worklist.tsv --dot-font
 
+# Guard CLI failure semantics, per-ROM scan maps, and preview/wrapper byte budgets.
+python3 tools/toolchaincheck.py
+
 # Distribution artifact for the unmodified 512 KiB Japanese ROM. Creation
 # includes a byte-for-byte application check and fails if the IPS is not exact.
 python3 tools/ips.py create build/base.gb build/shiren_en.gb build/shiren_en.ips
@@ -365,7 +368,7 @@ if [ -f saves/shiren_en_log_1_orochi_symbol.srm ] ||
    [ -f saves/shiren_en_log2_about_to_die.srm ]; then
   python3 tools/build.py build/_base_expanded.gb script/en.tsv \
           build/orochisymbolspill_native_control.gb \
-          --dot-font --no-menuvwf
+          --dot-font --no-menuvwf --native-box-fallback
 fi
 if [ -f saves/shiren_en_ranking_repaired.srm ]; then
   python3 tools/build.py build/_base_expanded.gb script/en.tsv \

@@ -145,6 +145,9 @@ the edit. Change the draft.
   (`box_too_deep`). Split with `<end><brk>` instead; **extra boxes are free.**
 - Do not aim at a character count. A narrow 30-glyph line fits; a wide one runs out of
   pixels first. `wrap_en.py` fills to the real edge.
+- A native leading space costs one source glyph and its font advance. The builder,
+  preview and wrapper share that rule; the wrapper reserves the first-line indent without
+  writing it into the draft or doubling it in the output.
 - Text does **not** pixel-wrap at runtime. Anything past 144 painted pixels is clipped, and
   `line_too_long` fails the build rather than shipping it.
 - Keep boxes aligned to sentences the way the Japanese does.

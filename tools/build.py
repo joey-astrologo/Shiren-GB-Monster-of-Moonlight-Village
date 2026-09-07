@@ -19,11 +19,17 @@ still helps, because strings that shrink donate their space to strings that grow
 
 usage: build.py <rom> <translations.tsv> <out.gb> [--report FILE]
        translations.tsv:  id <TAB> english
+
+Collected translation/reference errors exit nonzero before either output is written.
+Successful builds write <out.gb>.relocmap.tsv with the ROM hash. Native menu controls
+may opt into --no-menuvwf --native-box-fallback for the known narrow ROM boxes only.
 """
 import sys, os, json, collections
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import codec
+import relocmap
+import textlayout
 import dis                    # this project's disassembler, NOT the stdlib one
 import dte_rom
 import dialogue_preview as dialogue     # source + pixel contracts for each text renderer
@@ -427,6 +433,12 @@ def main():
     # table.  Both depend on their dialogue renderer being installed, so --no-vwf still
     # implies the raw menu control.
     no_menuvwf = '--no-menuvwf' in a or no_vwf
+    # Native-renderer comparison ROMs deliberately keep Japanese in narrow boxes
+    # whose English requires the proportional scanner. This opt-in permits only
+    # that known source-budget fallback; all other build errors remain fatal.
+    native_box_fallback = '--native-box-fallback' in a
+    if native_box_fallback and not no_menuvwf:
+        raise SystemExit('--native-box-fallback requires --no-menuvwf')
     # Composite rows whose dynamic fields must remain at absolute cells. This layer needs
     # the Dot menu font and is separately switchable for a pixel-exact V3 control.
     no_structvwf = '--no-structvwf' in a or no_menuvwf or not dot_font
@@ -567,18 +579,6 @@ def main():
     notes.append('Path status values Easy/Normal/Hard right-aligned at column 18 '
                  '(4:$4FE6 padding 6/4/6)')
 
-    def renderer_layout(text):
-        """Preserve fixed cursor cells without changing the reviewed TSV text.
-
-        Dialogue selectors use ``$81`` in the first row and one blank source cell before
-        every unselected continuation row.  In the native renderer that cell is 8px;
-        Dot's proportional word space is 4px.  Compile those structural blanks as two
-        ordinary spaces so the game's 8px cursor cannot overwrite the first glyph.
-        """
-        if '<$81>' in text:
-            return text.replace('<br> ', '<br>  ')
-        return text
-
     selector_continuations = sum(
         text.count('<br> ') for text in trans.values() if '<$81>' in text)
     notes.append('dialogue selectors: %d continuation row(s) retain an 8px cursor cell '
@@ -605,9 +605,8 @@ def main():
                 problems.append((r, kind, detail))
             final[r['id']] = orig
             continue
-        lead = orig[:1] == bytes([EN_CODES[' ']])
         try:
-            data = encode_en((' ' if lead else '') + renderer_layout(en), r['bank'])
+            data = encode_en(textlayout.renderer_text(en, orig), r['bank'])
         except ValueError as exc:
             problems.append((r, 'encode', str(exc)))
             final[r['id']] = orig
@@ -904,11 +903,16 @@ def main():
                           if (dot_font and not no_menuvwf and
                               bid in menuvwf.ROM_LONG_SOURCE_BOXES) else w)
             if cells(plain[r['id']], r['bank']) > source_cap:
-                problems.append((r, 'box_too_wide',
-                                 'box %d row %d stages %d glyph cells, its measured '
-                                 'source scanner accepts %d'
-                                 % (bid, r['box']['row'],
-                                    cells(plain[r['id']], r['bank']), source_cap)))
+                detail = ('box %d row %d stages %d glyph cells, its measured '
+                          'source scanner accepts %d'
+                          % (bid, r['box']['row'],
+                             cells(plain[r['id']], r['bank']), source_cap))
+                if (native_box_fallback and bid in menuvwf.ROM_LONG_SOURCE_BOXES
+                        and cells(plain[r['id']], r['bank']) <= menuvwf.ROM_SOURCE_CAP):
+                    notes.append('diagnostic native fallback: %s; original Japanese '
+                                 'retained (--native-box-fallback)' % detail)
+                else:
+                    problems.append((r, 'box_too_wide', detail))
                 final[r['id']] = plain[r['id']] = bytes.fromhex(r['hex'])
 
     # ---- every dialogue LINE must fit its source staging and physical canvas
@@ -1854,6 +1858,24 @@ def main():
                              'resumes at +2 and would read the wrong two bytes'
                              % (buf[at], r['loc'])))
 
+    # All collected text/reference errors are fatal. Check before installing the
+    # renderers: a rejected row's Japanese fallback can otherwise mask its original
+    # error behind a later font guard. Neither output artifact is touched on failure.
+    if problems:
+        print("\n%d PROBLEM(S) -- build failed; ROM and relocation map were not written:"
+              % len(problems))
+        for r, kind, msg in problems[:20]:
+            print("   [%-9s] id=%-5d %-11s %s" % (kind, r['id'], r['loc'], msg))
+        if report_path:
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write("id\tloc\tkind\tdetail\tjp\ten\n")
+                for r, kind, msg in problems:
+                    f.write("%d\t%s\t%s\t%s\t%s\t%s\n"
+                            % (r['id'], r['loc'], kind, msg, r['jp'],
+                               trans.get(r['id'], '')))
+            print("   full worklist -> %s" % report_path)
+        return 1
+
     # ---- the DTE expander, its table bank, and the render hooks
     #
     # Written after the verifier, because the verifier follows string references and these
@@ -2059,9 +2081,8 @@ def main():
                 if row['id'] in trans:
                     checked += 1
                     original = bytes.fromhex(row['hex'])
-                    leading = original[:1] == bytes([EN_CODES[' ']])
                     audit_data = encode_en(
-                        (' ' if leading else '') + renderer_layout(trans[row['id']]),
+                        textlayout.renderer_text(trans[row['id']], original),
                         row['bank'])
                 else:
                     audit_data = final[row['id']]
@@ -2210,11 +2231,9 @@ def main():
     # this map every relocated string the scan observed was recorded under an address
     # that matches nothing, so it silently failed to be allowlisted -- and the whole
     # point of the scan is to decide what may be compressed.
-    mapname = os.path.join(os.path.dirname(out_path) or '.', 'relocmap.tsv')
-    with open(mapname, 'w', encoding='utf-8') as f:
-        f.write('# built address\toriginal loc -- generated by build.py, read by gbrun.py\n')
-        for r in strings:
-            f.write('%s\t%s\n' % (cpu_loc(placed.get(r['id'], r['offset'])), r['loc']))
+    relocmap.write(out_path, buf,
+                   ((cpu_loc(placed.get(r['id'], r['offset'])), r['loc'])
+                    for r in strings))
 
     # ---- report
     print("translations supplied : %d" % len(trans))
@@ -2297,29 +2316,14 @@ def main():
                             'hooked (script/build-inputs/reloc_ok.tsv).'
                             % ', '.join(str(b) for b in stuck)))
 
-    if problems:
-        print("\n%d PROBLEM(S) -- these strings kept their original text:" % len(problems))
-        for r, kind, msg in problems[:20]:
-            print("   [%-9s] id=%-5d %-11s %s" % (kind, r['id'], r['loc'], msg))
-        if report_path:
-            with open(report_path, 'w', encoding='utf-8') as f:
-                f.write("id\tloc\tkind\tdetail\tjp\ten\n")
-                for r, kind, msg in problems:
-                    f.write("%d\t%s\t%s\t%s\t%s\t%s\n"
-                            % (r['id'], r['loc'], kind, msg, r['jp'],
-                               trans.get(r['id'], '')))
-            print("   full worklist -> %s" % report_path)
-    else:
-        print("\nno problems: every supplied translation fit.")
-        # Remove a worklist left by an EARLIER build, rather than leaving it to be read as
-        # this one's. It is only written when there are problems, so a clean build used to
-        # leave the last failing build's file sitting there with a current-looking name --
-        # `build/worklist.tsv` still listed five BADPOOL strings hours after the pool fix
-        # landed, and docs/TEXT_REFERENCE.md §6 tells a translator to work from it.
-        if report_path and os.path.exists(report_path):
-            os.remove(report_path)
-            print("removed a stale %s from an earlier build" % report_path)
-    return 1 if any(k == 'no_space' for _, k, _ in problems) else 0
+    print("\nno problems: every supplied translation fit."
+          if not native_box_fallback else
+          "\nno errors: diagnostic native box fallback was explicitly enabled.")
+    # A successful build retires the previous failure's worklist.
+    if report_path and os.path.exists(report_path):
+        os.remove(report_path)
+        print("removed a stale %s from an earlier build" % report_path)
+    return 0
 
 
 if __name__ == '__main__':

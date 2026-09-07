@@ -13,6 +13,12 @@ For the mistakes behind them see [`TRAPS.md`](TRAPS.md).
   shuffled and redirect-all matrix.
 - Text must satisfy control-token parity, source staging, physical pixel width, temporary
   tile allocation and frame time. Passing one limit does not imply the others pass.
+- `build.py` exits nonzero on collected text/reference errors and preserves existing ROM
+  and map outputs. Native menu comparison builds use `--no-menuvwf --native-box-fallback`
+  to retain the known narrow boxes' Japanese source; that explicit diagnostic option
+  permits no other failures. `build.sh` and the release runner supply it to their control.
+- Every scan uses the matching `<rom>.relocmap.tsv` and verifies its ROM SHA-256.
+  A shared directory-wide map is unsafe when normal and hostile layouts coexist.
 - The redirect-all layout is a real timing gate. On 2026-08-13 it exposed a 160-scanline
   reveal-map pass that normal placement missed; the optimized direct-pointer builder now
   completes the same route within 143/154 scanlines and uploads byte-exact.

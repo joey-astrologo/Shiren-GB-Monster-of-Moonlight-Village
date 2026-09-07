@@ -2,6 +2,7 @@
 *.gb
 *.gbc
 *.sgb
+*.relocmap.tsv
 
 # Save files
 *.sav

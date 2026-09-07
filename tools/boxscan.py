@@ -14,6 +14,7 @@ observed exactly as any other allowlist entry is.
     boxscan.py <rom> --state saves/dungeon.state --page 0|1
 """
 import argparse, os, sys
+import relocmap as relocation
 
 def _import_pyboy():
     here = os.path.dirname(os.path.abspath(__file__))
@@ -36,20 +37,12 @@ ap.add_argument('--page', type=int, default=0)
 ap.add_argument('--png')
 args = ap.parse_args()
 
+relocmap = relocation.load(args.rom)
 PyBoy = _import_pyboy()
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
 import dte_rom
 _, labels = dte_rom.build_expander()
 sys.path[:] = [p for p in sys.path if os.path.abspath(p or '.') != os.path.join(ROOT, 'tools')]
-
-relocmap = {}
-mf = os.path.join(ROOT, 'build/relocmap.tsv')
-if os.path.exists(mf):
-    for line in open(mf, encoding='utf-8'):
-        t = line.split('#')[0].strip()
-        if '\t' in t:
-            built, orig = t.split('\t')[:2]
-            relocmap[built.strip()] = orig.strip()
 
 pb = PyBoy(args.rom, window='null')
 pb.set_emulation_speed(0)

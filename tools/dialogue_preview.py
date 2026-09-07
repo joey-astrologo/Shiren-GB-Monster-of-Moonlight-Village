@@ -98,6 +98,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import codec                                                        # noqa: E402
 import dotfont                                                      # noqa: E402
 from latinfont import EN_CODES                                      # noqa: E402
+import textlayout                                                  # noqa: E402
 
 # The Latin alphabet is written OVER the kana tiles in place, so a byte draws whichever
 # letter latinfont put at that index and codec.decode -- which is the Japanese table --
@@ -988,12 +989,12 @@ def main():
         if args.jp or loc not in trans:
             data = bytes.fromhex(r['hex'])
         else:
-            lead = bytes.fromhex(r['hex'])[:1] == b'\xb4'   # keep a leading-space indent
             try:
                 shown = trans[loc]
                 if args.player_text is not None:
                     shown = shown.replace('<name>', args.player_text)
-                data = B.encode_en((' ' if lead else '') + shown, r['bank'])
+                data = B.encode_en(textlayout.renderer_text(
+                    shown, bytes.fromhex(r['hex'])), r['bank'])
             except ValueError as exc:
                 print('%-11s encode error: %s' % (loc, exc))
                 bad += 1

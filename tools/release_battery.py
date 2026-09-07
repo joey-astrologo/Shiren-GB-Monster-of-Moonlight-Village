@@ -48,6 +48,7 @@ def main() -> int:
     run("sh", "build.sh")
 
     section("Offline translation and model tests")
+    py("toolchaincheck.py", "--state", "saves/dungeon.state")
     run(PYTHON, "-m", "compileall", "-q", "tools")
     py("dialogue_preview.py", "--check")
     py("dialogue_preview.py", "--selftest")
@@ -76,6 +77,7 @@ def main() -> int:
         "build/orochisymbolspill_native_control.gb",
         "--dot-font",
         "--no-menuvwf",
+        "--native-box-fallback",
     )
     py(
         "build.py",

@@ -23,6 +23,7 @@ import sys
 
 import codec
 import lcdblankaudit
+import relocmap as relocation
 
 
 LCD_TRACE_ENV = 'SHIREN_LCD_TRACE'
@@ -292,6 +293,7 @@ def dte_scan(rom, frames, presses=(), state=None, walk_seed=None):
     Whatever this reports is safe to compress. Whatever it does not report is not proven
     either way, and stays uncompressed.
     """
+    relocmap = relocation.load(rom)
     PyBoy = _import_pyboy()
     pb = PyBoy(rom, window='null')
     pb.set_emulation_speed(0)
@@ -306,15 +308,6 @@ def dte_scan(rom, frames, presses=(), state=None, walk_seed=None):
     # Translate built addresses back to the `loc` the allowlist is keyed on. The scan
     # watches the BUILT rom, so a relocated string appears at its new address; without
     # this map it gets recorded under an address that matches no string at all.
-    relocmap = {}
-    mapfile = os.path.join(os.path.dirname(os.path.abspath(rom)), 'relocmap.tsv')
-    if os.path.exists(mapfile):
-        for line in open(mapfile, encoding='utf-8'):
-            t = line.split('#')[0].strip()
-            if '\t' in t:
-                built, orig = t.split('\t')[:2]
-                relocmap[built.strip()] = orig.strip()
-
     def make(site, reg):
         def cb(ctx):
             src = _reg16(pb, reg)
@@ -456,21 +449,14 @@ def main():
             # the actual built records as well.  Exact record starts are still translated
             # back to canonical TSV locations by dte_scan's relocmap; only an interior
             # continuation remains under its built address and reaches this set.
-            mapfile = os.path.join(os.path.dirname(os.path.abspath(args.rom)),
-                                   'relocmap.tsv')
-            if os.path.exists(mapfile):
-                for line in open(mapfile, encoding='utf-8'):
-                    t = line.split('#')[0].strip()
-                    if '\t' not in t:
-                        continue
-                    built = t.split('\t', 1)[0].strip()
-                    bank_s, address_s = built.split(':$')
-                    bank, address = int(bank_s), int(address_s, 16)
-                    offset = bank * 0x4000 + address - (0x4000 if bank else 0)
-                    # A dialogue record cannot legitimately cross the bank boundary.
-                    end = min(len(rom_bytes), (bank + 1) * 0x4000)
-                    data = rom_bytes[offset:min(end, offset + 0x4000)]
-                    add_continuations(data, bank, address)
+            for built in relocation.load(args.rom, rom_bytes):
+                bank_s, address_s = built.split(':$')
+                bank, address = int(bank_s), int(address_s, 16)
+                offset = bank * 0x4000 + address - (0x4000 if bank else 0)
+                # A dialogue record cannot legitimately cross the bank boundary.
+                end = min(len(rom_bytes), (bank + 1) * 0x4000)
+                data = rom_bytes[offset:min(end, offset + 0x4000)]
+                add_continuations(data, bank, address)
 
         def control_only(loc):
             """Is this an untranslatable control record such as ``EC 84 FF``?"""

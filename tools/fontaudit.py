@@ -181,18 +181,18 @@ def load_translations(manifest, en_path, glossary_path):
 
 
 def encoded_translations(strings, translated):
-    """Encode with the same leading-space preservation rule as build.py."""
+    """Encode the same source indents and selector cursor cells as build.py."""
     import build
+    import textlayout
 
     encoded, errors = {}, []
     for row in strings:
         if row['id'] not in translated:
             continue
         original = bytes.fromhex(row['hex'])
-        lead = original[:1] == bytes([EN_CODES[' ']])
         try:
             encoded[row['id']] = build.encode_en(
-                (' ' if lead else '') + translated[row['id']], row['bank'])
+                textlayout.renderer_text(translated[row['id']], original), row['bank'])
         except ValueError as exc:
             errors.append((row, str(exc)))
     return encoded, errors

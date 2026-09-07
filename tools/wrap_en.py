@@ -52,6 +52,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import codec                                                        # noqa: E402
 import dialogue_preview as dialogue                                 # noqa: E402
 import dotfont                                                      # noqa: E402
+import textlayout                                                   # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -92,8 +93,9 @@ def _atoms(seg):
     return [w for w in seg.split(' ') if w]
 
 
-def wrap_segment(seg, width, first, widths, measure=None, pixel_limit=None):
-    """One unbroken run of prose -> [line, ...], each already carrying its indent."""
+def wrap_segment(seg, width, first, widths, measure=None, pixel_limit=None,
+                 first_indent=''):
+    """One prose run -> unindented lines, measured with their eventual indents."""
     lines, cur = [], None
 
     def fits(candidate):
@@ -106,7 +108,7 @@ def wrap_segment(seg, width, first, widths, measure=None, pixel_limit=None):
         return True
 
     for word in _atoms(seg):
-        indent = '' if (first and not lines) else ' '
+        indent = first_indent if (first and not lines) else ' '
         cand = word if cur is None else cur + ' ' + word
         if cur is not None and fits(indent + cand):
             cur = cand
@@ -135,7 +137,8 @@ def place_terminal_end(joined, suffix):
 
 
 def wrap(text, width=dialogue.WIDTH, per_box=dialogue.LINES_PER_BOX, widths=None,
-         want_end=True, terminal_end='', measure=None, pixel_limit=None):
+         want_end=True, terminal_end='', measure=None, pixel_limit=None,
+         first_indent=''):
     """Drafted prose -> the en.tsv string. -> (text, [(kind, detail), ...]).
 
     `<end>` IS A `WAIT HERE`, NOT A TERMINATOR, and the shipped Japanese settles both
@@ -167,7 +170,8 @@ def wrap(text, width=dialogue.WIDTH, per_box=dialogue.LINES_PER_BOX, widths=None
             if not seg:
                 continue
             first = not out_pages and not lines and i == 0
-            lines.extend(wrap_segment(seg, width, first, widths, measure, pixel_limit))
+            lines.extend(wrap_segment(seg, width, first, widths, measure, pixel_limit,
+                                      first_indent))
         if not lines:
             continue
         # A box holds three rows and there is no fourth; overflow becomes another box.
@@ -204,16 +208,17 @@ def wrap(text, width=dialogue.WIDTH, per_box=dialogue.LINES_PER_BOX, widths=None
     if terminal_end:
         joined = place_terminal_end(joined, terminal_end)
 
-    over = [(p + 1, i + 1, cells_of((' ' if (p or i) else '') + ln, widths))
+    # The first indent is added by the builder, so measure it without authoring it.
+    over = [(p + 1, i + 1, cells_of((' ' if (p or i) else first_indent) + ln, widths))
             for p, lines in enumerate(out_pages) for i, ln in enumerate(lines)
-            if cells_of((' ' if (p or i) else '') + ln, widths) > width]
+            if cells_of((' ' if (p or i) else first_indent) + ln, widths) > width]
     for box, row, n in over:
         notes.append(('unwrappable', 'box %d line %d still needs %d of %d cells -- one word '
                                      'or token is too wide to break' % (box, row, n, width)))
     if measure is not None and pixel_limit is not None:
         for p, lines in enumerate(out_pages):
             for i, ln in enumerate(lines):
-                shown = (' ' if (p or i) else '') + ln
+                shown = (' ' if (p or i) else first_indent) + ln
                 advance, extent = measure(shown)
                 if extent > pixel_limit:
                     notes.append(('unwrappable',
@@ -330,7 +335,9 @@ def main():
 
         try:
             wrapped, notes = wrap(text, width, per_box, widths, want_end, terminal_end,
-                                  measure=measure, pixel_limit=dialogue.LINE_PX)
+                                  measure=measure, pixel_limit=dialogue.LINE_PX,
+                                  first_indent=textlayout.source_indent(
+                                      bytes.fromhex(r['hex'])))
         except ValueError as exc:
             print('%-11s !! %s' % (loc, exc), file=sys.stderr)
             bad += 1
@@ -354,8 +361,8 @@ def main():
             width, per_box, buf = dialogue.geometry_for(r)
             widths = (dialogue.help_widths(cf0=cf0_cells)
                       if dialogue.is_help(r) else dialogue.production_widths())
-            lead = bytes.fromhex(r['hex'])[:1] == b'\xb4'
-            data = B.encode_en((' ' if lead else '') + wrapped, r['bank'])
+            data = B.encode_en(textlayout.renderer_text(
+                wrapped, bytes.fromhex(r['hex'])), r['bank'])
             print('\n%s  (bank %d dialogue)' % (loc, r['bank']), file=sys.stderr)
             print(dialogue.preview(data, widths, width=width, per_box=per_box,
                                    bank=r['bank']), file=sys.stderr)
