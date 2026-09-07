@@ -93,8 +93,9 @@ BUFFER_SEGMENTS = (
 )
 BUFFER_DEST = tuple(segments[0][1] for segments in BUFFER_SEGMENTS)
 
-# Shared scratch proved free by tools/wramfree.py.  The intro runs before the dialogue or
-# menu proportional renderers that use the same bytes.
+# Shared scratch proved free by tools/wramfree.py. The opening runs before the
+# dialogue/menu renderers, but the Moonlight Exit ending runs after them. Initialize
+# the cinematic upload state on every entry; gameplay leaves unrelated values here.
 S_SEQ = 0xC0CC
 S_LEFT = 0xC0CE
 
@@ -608,6 +609,10 @@ init:
         push bc
         push de
         push hl
+        xor a
+        ld [${S_SEQ:04X}],a
+        ld [${S_SEQ + 1:04X}],a
+        ld [${S_LEFT:04X}],a
         ld hl,$0010
         add hl,de
         ld a,[hl]

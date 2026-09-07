@@ -30,11 +30,11 @@ Screenshots from the current English build:
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel, name-entry and hidden debug-menu failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
-| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
+| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, Moonlight post-credit title, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **Full release battery passed — 2026-09-06** | Continue manual hardware and emulator playtesting before the final release tag. |
 
-The current normal, shuffled and redirect-all battery passed on 2026-09-06. All 44 curated
+The full normal, shuffled and redirect-all battery passed on 2026-09-06. All 44 curated
 save-backed fixtures and all four generated machine states passed; all 72 CPU-health
 seeds remained healthy; every completed renderer queue reached VBlank byte-exact; and
 1,226,458 text-visible containment frames had zero spill. The no-cheat shop route passed
@@ -44,7 +44,7 @@ pages, all ten item categories and every weapon enhancement value from 0 through
 The exact Eat-last-item empty-overlay return and complete Moonlight Village screen-18
 Status entry, paging/sort, Status return, and re-entry lifecycle are also covered under
 normal, rapid-input, shuffled, and redirect-all layouts.
-Current release-candidate artifact hashes:
+Artifact hashes from that 2026-09-06 release candidate:
 
 | Build | SHA-256 |
 |---|---|
@@ -52,6 +52,23 @@ Current release-candidate artifact hashes:
 | `build/shiren_en.ips` | `a88c45a76d43c37ab23fcc5193972b709824743b236714b41398e6b1f93db8bf` |
 | `build/shiren_en_shuffle.gb` | `7f182670a62890c8bfa9b9438a1a9ad0d0c4ae67020937a14f9a8d51d5ddd4c8` |
 | `build/shiren_en_redirect_all.gb` | `62f5dd81c921c1499beb223271cfb57ee26d00ee2c1909fa9319755ef466abd9` |
+
+The subsequent 2026-09-07 Moonlight Exit ending fix clears gameplay scratch before
+the final cinematic starts, removing corrupted graphics below the forest. Its two
+crowded dialogue lines now break earlier, and the post-credit card reuses the English
+opening title without PUSH START while retaining the native Fin symbol. The new
+45th SRAM fixture passes on DMG/CGB, including all six cinematic screens, all 22
+credits and the final title. The normal build gate passed, as did focused
+cinematic/ending/title checks under all three text layouts; the full release-battery
+record above predates these changes.
+
+The 46th SRAM fixture covers the two clear badges on the save summary. Difficulty
+text now has fixed spacing that keeps Expert and Normal clear of Keyaki; all four
+labels are checked after the badges appear and across Log, popup and Rankings returns.
+
+Rankings transitions after a dungeon save/quit now clear the stale alternate map.
+The regression reuses the Quit fixture and checks every complete transition frame
+and repeated Rankings entries against fresh boot on DMG/CGB.
 
 The latest low-level memory ownership and collision rules are maintained in
 [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md). Read it before placing or moving ROM code,

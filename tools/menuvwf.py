@@ -1311,6 +1311,14 @@ sasummary2:
   cp $09
   jr nc,sabad
   ld c,$02
+  ; Insert two fixed blank cells before the already-scanned proportional row.
+  ; Its native kana indent shrinks at 4px per English space; without this 16px
+  ; inset the second 16x16 clear badge overwrites Expert/Normal after we return.
+  ; Keep the complete source/next-row pointer: these cells are display padding.
+  ld a,c
+  ld [$C0D0],a
+  xor a
+  ld [$C0E1],a
   jr saselect
 sasummary1:
   ld a,[$C0D3]
@@ -7136,8 +7144,12 @@ stgeneric:
 stoff:
   ld [$C1B3],a
   ldh a,[$FF40]
-  bit 7,a
+  ; Native cold boot arrives as $05 with cleared VRAM. CP has the same timing as
+  ; the old BIT/JR fast return, preserving the frame phase of later gameplay.
+  cp $05
   jr z,stdone
+  bit 7,a
+  jr z,stblankmap
 stwait:
   ldh a,[$FF44]
   cp $90
@@ -7146,9 +7158,12 @@ stwait:
   res 7,a
 stdisable:
   ldh [$FF40],a
+stblankmap:
   ; The title owns the otherwise-unused $9C00 BG map as a guaranteed blank page.
   ; Rankings keeps the LCD/queue running by displaying this page while rebuilding
   ; $9800, then flips back only when the complete Rankings page is ready.
+  ; Quit enters with the LCD already off and gameplay data still in $9C00. Skip
+  ; only the VBlank wait/LCDC write in that case, never this map initialization.
   ld hl,$9C00
   ld bc,$0400
   ld d,$00
@@ -11863,6 +11878,9 @@ def install(buf, notes=None, font=None):
                              'at %d:$%04X; row pools are 9+11+8 tiles'
                              % (len(summary_helper_code), SUMMARY_HELPER_BANK,
                                 SUMMARY_HELPER_AT))
+                notes.append('menuvwf: save-summary difficulty has a 16px fixed inset '
+                             'before its proportional source; native Orochi/Keyaki '
+                             'badges and attempt-count positions retained')
             else:
                 notes.append('menuvwf: unsafe context-static ROM/title/summary pools '
                              'disabled; ROM rows use the original fixed-cell drawer')

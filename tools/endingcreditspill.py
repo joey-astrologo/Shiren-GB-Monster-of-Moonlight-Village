@@ -63,7 +63,7 @@ def _mapped_strip(tile_data, tile_base, top_map, bottom_map):
     return bytes(out)
 
 
-def run(rom, ram, png=None):
+def run(rom, ram, png=None, moonlight_exit=False):
     PyBoy = _import_pyboy()
     cards = endingcredits.graphics()
     source_cards = endingcredits.source_graphics()
@@ -79,17 +79,29 @@ def run(rom, ram, png=None):
         calls = []
         pending = []
         captures = []
+        moonlight_returns = []
+
+        def after_moonlight_credits(_ctx):
+            moonlight_returns.append(len(calls))
+
+        if moonlight_exit:
+            # The Expert clear returns to its story after the credits instead of
+            # holding Hard's plain End card. Observe that native continuation.
+            pb.hook_register(31, 0x7607, after_moonlight_credits, None)
 
         def upload_hook(base):
             def at_upload(_ctx=None):
                 index = base + pb.register_file.A
                 calls.append((frame_now[0], index))
-                # The uploader returns before the native palette fade has completed and
-                # before the second strip is visibly settled.  Capture in the long stable
-                # dwell, not merely when VRAM already contains the bytes.
-                pending.append((frame_now[0] + 80, index))
             return at_upload
 
+        def after_fade(_ctx):
+            # Hard and Moonlight use different native fade speeds ($D770 = 5/9).
+            # Wait for both strips' fade to finish, then render a complete frame.
+            if calls:
+                pending.append((frame_now[0] + 2, calls[-1][1]))
+
+        pb.hook_register(31, 0x7AD6, after_fade, None)
         for group, bank in enumerate(endingcredits.FAR_BANKS):
             pb.hook_register(bank, _far_entry(rom, bank),
                              upload_hook(group * endingcredits.CARDS_PER_BANK), None)
@@ -187,16 +199,22 @@ def run(rom, ram, png=None):
     colors = list(final.getdata())
     black = sum(color == (0, 0, 0) for color in colors)
     green = sum(color == (123, 255, 49) for color in colors)
-    if black < 22000 or not 150 <= green <= 1000:
+    if moonlight_exit:
+        if moonlight_returns != [endingcredits.CARD_COUNT]:
+            problems.append('Moonlight credits did not return after all 22 cards: %s' %
+                            moonlight_returns)
+    elif black < 22000 or not 150 <= green <= 1000:
         problems.append('post-credit screen did not reach native End state '
                         '(black=%d green=%d, PC b%02X:$%04X)' %
                         (black, green, final_pc[0], final_pc[1]))
 
     print('endingcreditspill: %d/%d translated cards in order; '
           '%d/%d uploaded and %d/%d displayed tile byte(s) exact; '
-          'six-row map exact; animated forest; native End reached; %d problem(s)' %
+          'six-row map exact; animated forest; %s; %d problem(s)' %
           (len(captures), endingcredits.CARD_COUNT, exact, total,
-           displayed_exact, displayed_total, len(problems)))
+           displayed_exact, displayed_total,
+           'Moonlight story resumed' if moonlight_exit else 'native End reached',
+           len(problems)))
     for problem in problems:
         print('  ' + problem)
     return 1 if problems else 0

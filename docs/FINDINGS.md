@@ -1814,6 +1814,97 @@ relocate them, and restore any safely borrowed offscreen planes before their map
 revealed. Transition blanking remains useful but cannot recreate overwritten planes.
 The canonical implementation record is recorded in `VWF_BUDGETS.md`.
 
+## Save/quit left dungeon graphics in the Rankings transition map — fixed 2026-09-07
+
+The real Log-1 Quit route in `shiren_en_log_1_quit_erase_copy_log_vwf.srm` returns
+to the title with LCDC=`$45`. Its alternate `$9C00-$9FFF` map still contains 152
+nonzero dungeon/window cells. The title initializer's LCD-off branch returned
+before clearing that map, so Rankings later selected stale data while building its
+page. A fresh boot hid this error because its map already contained zeroes.
+
+`menuvwf.starttransition` now branches directly to map initialization when the LCD
+is already off after gameplay. Native cold boot's exact LCDC=`$05` entry retains
+its original fast return: the maps are already cleared, and a same-cycle CP/JR
+replaces the old BIT/JR so later item paging keeps its frame phase. Other dark
+entries skip only the VBlank wait and hardware-disable write. The bank-41 helper
+grows by four bytes inside its existing reservation and adds no LCD-off interval.
+
+`quitrankspill.py` reuses the curated Quit fixture without runtime substitutions.
+It proves the dungeon route reaches the dirty, already-dark title initializer,
+checks all 1,024 alternate-map cells after initialization and whenever selected,
+and inspects every complete transition frame. The old ROM exposes 15 corrupt full
+frames across three Rankings entries on each of DMG/CGB. In normal placement the
+fixed route shows 25 clean full transition frames and fresh boot shows 18; their completed visible
+boards, pixels and BG display registers match exactly across all three entries.
+Both normal and rapid item-paging latency gates also pass.
+
+## Keyaki clear badge covered proportional difficulty text — fixed 2026-09-07
+
+`saves/shiren_en-moonlight-clear-icon.srm` opens Log 1 with both clear badges.
+Orochi owns map columns 5-6 and Keyaki columns 7-8 on rows 9-10, using native tiles
+`$CB-$D2`. Those planes were intact. The difficulty row's Japanese leading spaces
+had become 4px proportional spaces: Expert began at x=64 and Normal at x=68,
+inside Keyaki's x=56..71 footprint. The native badge writer replaced those text
+map cells after the generic VWF row-epilogue audit had already passed.
+
+The exact summary row-2 allocator now inserts two fixed blank display cells before
+the complete proportional payload. This adds 16px without changing source staging,
+the next-row pointer, badge positions, or the native attempt-count field. The
+existing eight-tile difficulty cap plus two display cells remains inside the
+fourteen-cell summary interior; no new tile pool or WRAM scratch is required.
+
+`summaryclearspill.py` fails the old ROM on Expert and Normal, including every
+returned summary. It verifies the complete displayed word beyond both badges,
+all eight native badge planes while selected, and the six-attempt count. The
+unmodified SRAM route covers Log cycling, Continue/B, Start-root return and three
+Rankings returns on DMG/CGB. Producer-level variants additionally cover all four
+difficulty labels. The fixture is the 46th curated SRAM regression.
+
+## Moonlight Exit cinematic inherited gameplay scratch — fixed 2026-09-07
+
+`saves/shiren_en-moonlight-ending.srm` reproduces this through Log 1, floor 49:
+walk Right onto the exit and choose Proceed. The forest's lower text panel contained
+garbled graphics before the first line, although the boot-time ending-variant test
+passed. That test started before gameplay had used the shared renderer scratch.
+
+At the real cinematic entry, `$C0CC-$C0CE` held `78 1E 01` from gameplay. The cinematic
+interpreted those bytes as its upload-sequence pointer and remaining-batch count, so
+its first delay tick serviced an upload that had never been armed. `intro.py` now
+zeros both fields in its initializer on every cinematic entry, preserving registers
+and using the existing LCD-off setup interval. Its existing cleanup still retires
+the upload state when the cinematic finishes.
+
+`moonlightendspill.py` fails the old ROM on both the stale state and visible panel,
+then passes the fixed ROM on DMG/CGB under normal, shuffled, and redirect-all text
+placement. It replays the SRAM without runtime overrides, checks the native forest
+map/planes, 233 fully faded pre-text frames, all six cinematic packs, 35 byte-exact
+VBlank uploads, and cleanup. It also replays all 22 credit cards through their native
+return to the Moonlight story. The credit test now captures after the real fade
+completion at `31:$7AD6`: Moonlight uses `$D770=9`, while Hard uses 5, so the old
+fixed 80-frame capture sampled Moonlight's name strip before its fade completed.
+
+## Moonlight post-credit title bypassed the opening overlay — fixed 2026-09-07
+
+After the final cinematic and credits, ending dispatcher case 3 invokes native
+title producer `30:$7F0C` directly from `31:$799B`. It bypasses both opening-title
+hooks, so the localized opening artwork did not reach the card bearing Fin.
+
+`titlelogo.py` now redirects that exact far call to its existing bank-62 uploader.
+Incoming A=3 selects the ending variant; both opening wrappers pass A=0 after
+checking that the LCD is off. The ending variant runs the original loader, saves
+its 16 Fin tiles beyond the English title's tile allocation, draws the approved
+opening raster, clears PUSH START, and remaps Fin to its original `(120,104)`
+position. No new raster asset or WRAM scratch is needed. The wrapper preserves
+registers and leaves the native fade, timed hold, input wait and continuation intact.
+
+`moonlighttitlespill.py` replays the existing floor-49 SRAM through the cinematic,
+credits and final card. Its control restores only the original native title call.
+The old ROM fails the English map, tile and full-screen pixel comparisons in both
+DMG/CGB modes. The localized card must match the opening asset plus native Fin,
+including identical Fin pixels, LCD-off installation, native return registers,
+display settings and hold duration within one frame. The input check waits an extra
+120 frames before pressing A and verifies the native continuation is reached.
+
 ## Ending-credit tiles are column-interleaved — fixed 2026-08-11
 
 The approved credit asset stores each 20x2 text strip in ordinary row-major order: all 20

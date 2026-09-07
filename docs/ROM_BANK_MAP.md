@@ -34,6 +34,7 @@ this map in the same commit whenever ownership changes.
 | 31 | `$6980-$6AD9` | Native actor/stat readers, including enemy reward construction | Never allocate |
 | 31 | `$6ADA-$74B2` | Native actor/stat data; includes all enemy-tier EXP arrays below | Never allocate |
 | 31 | `$767E-$76D6` | `tools/endingcredits.py`: exact replacement of native credit driver | Exclusive, SHA-guarded |
+| 31 | `$799B-$799D` | `tools/titlelogo.py`: Moonlight case-3 post-credit title producer | Guarded native far-call patch |
 | 31 | `$7B40-$7B51` | `tools/endingcredits.py`: credit tilemap builder patch | Exclusive, byte-guarded |
 
 ### Enemy EXP table — especially important
@@ -107,10 +108,11 @@ can consume more of a pool bank later.
 | 33 | `$4400-$7FFF` | `tools/pool.py`: redirected-string index | Exclusive |
 | 34-57 | `$4100-$7FFF` | `tools/pool.py`: redirected English text arena, subject to exclusions below | Pool-only; bank 46 begins at `$4400` |
 | 34-45 | `$405A-$40FF` when assigned | VWF carry/transition helpers | See per-module constants; otherwise reader-owned |
+| 35 | `$4060-$40EC` | `tools/menuvwf.py`: save-summary allocator, including fixed difficulty inset for both native clear badges | Exclusive within the existing prefix reservation; redirected text begins at `$4100` |
 | 37 | `$405A-$429F` | `tools/menuvwf.py`: carried-/Floor-/contained-Action live-layer admission/collision gate, exact visible top-verb preservation for direct Floor and screen 16, contained-item Info stack proof, and page-edge save dispatch | Exclusive, far indices `$05/$07`; redirected text begins at `$42A0` |
 | 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fei restore | Exclusive |
 | 40 | `$4068-$41D9` | `tools/menuvwf.py`: exact Start cancellation-return owner for popped file children 21..26 and Rank/Pass layers 30..32, including screen 31's bounded native `$CB` Orochi-plane restore | Exclusive, far index `$07`; redirected text begins at `$4200` |
-| 41 | `$405A-$40FF` | `tools/menuvwf.py`: Start title/file transition controller | Exclusive, far index `$05`; redirected text begins at `$4110` |
+| 41 | `$405A-$410B` | `tools/menuvwf.py`: Start title/file transition controller | Exclusive, far index `$05`; redirected text begins at `$4110` |
 | 46 | `$4060-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: saved-Log/category allocator, screen-22/26 regional owner, and rank-screen helpers | Exclusive; deliberate `$40F2-$40F4` and `$4179-$417F` guards |
 | 47 | `$405A-$40ED` | `tools/rankvwf.py`: `Village` / `Dragon` ranking rasters and uploader | Exclusive |
 | 48-49 | `$405A-$40FF` | `tools/menuvwf.py`: native fusion-count residue shifter plus `$8C-$94` glyph table/reader | Exclusive |
@@ -143,8 +145,30 @@ can consume more of a pool bank later.
 | 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
 | 62 | `$405A-$4429` | `tools/menuvwf.py`: carried-/Floor-Action box-6 parent, screen-1 machine-state restorer, and Action/Pot routing | Exclusive, far index `$07` |
 | 62 | `$4430-$547C`, `$5480-$548F` | `tools/menuvwf.py`: Item/Floor Info/seal/Pot regional lifecycle and fixed Floor/Pot return leaf | Exclusive, far indices `$09/$0B/$0D/$0F`; redirected text begins at `$5490` |
-| 62 | `$7000-$7F43` | `tools/titlelogo.py`: illustrated title screen | Exclusive tail |
+| 62 | `$7000-$7F7D` | `tools/titlelogo.py`: illustrated opening and Moonlight post-credit title screens | Exclusive tail |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |
+
+The cinematic initializer clears its shared `$C0CC-$C0CE` upload pointer/count on
+every entry. These bytes also belong to the gameplay dialogue/menu renderers between
+cinematics. The real Moonlight Exit clear must not interpret their residual state as
+a pending upload; `tools/moonlightendspill.py` covers that handoff from saved Log 1
+on both DMG and CGB, including the initial black panel and all six cinematic packs.
+
+The Start initializer guarantees a clean `$9C00-$9FFF` before Rankings can select
+it as a blank background. Native cold boot's exact LCDC=`$05` entry already has
+cleared VRAM and keeps its original fast-path timing. Save/quit reaches the
+initializer with the LCD already off
+and stale gameplay/window data in that map; the off branch must skip only the
+VBlank wait and hardware-disable write, not map initialization. The existing
+bank-41 owner and clear loop serve both entry states (`tools/quitrankspill.py`).
+
+The shared title uploader uses incoming A=0 for the two opening-title routes and
+A=3 for the guarded Moonlight post-credit producer. On the latter, it first runs
+the native loader and preserves the 16 Fin tiles from `$92D0-$93CF` in
+`$8D90-$8E8F` (signed tile IDs `$D9-$E8`), beyond the English title's 217 tiles.
+It removes PUSH START and restores Fin at map cells `(15,13)` through `(18,16)`.
+These extra VRAM tiles are owned only during the ending title; the native LCD-off
+setup, fade, hold and input routines retain control of the screen lifecycle.
 
 Banks 34-62 are addressable by the redirected-text allocator, but the graphics/helper tails
 listed above take precedence. Their installers assert the reserved spans are still untouched;

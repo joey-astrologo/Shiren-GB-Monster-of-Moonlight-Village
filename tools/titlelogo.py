@@ -6,7 +6,9 @@ canvas. The build embeds its deduplicated 2bpp tiles and complete visible map; i
 depend on a file outside the repo.
 
 The overlay runs after the native title map finishes loading with the LCD off. Fade,
-palette, PUSH START input and the transition into the file menu remain native.
+palette, PUSH START input and the transition into the file menu remain native. The
+Moonlight post-credit card reuses the same artwork, without PUSH START and with its
+native Fin tiles preserved at their original bottom-right position.
 """
 import base64
 import hashlib
@@ -30,6 +32,20 @@ MAP_AT = 0x9800
 TILE_COUNT = titlelogo_viewer.TILE_COUNT
 TILE_BYTES = TILE_COUNT * 16
 MAP_BYTES = MAP_WIDTH * MAP_HEIGHT
+
+# Only the Moonlight case-3 producer calls this entry with A=3. Both opening-title
+# routes in titlecard._uploader pass A=0 after their LCD-off check. The ending's
+# native loader supplies contiguous Fin tiles $2D-$3C at $92D0 and map (15,13)..(18,16).
+# Preserve them beyond the English title's $00-$D8 allocation before uploading it.
+ENDING_HOOK_BANK = 31
+ENDING_HOOK_AT = 0x799B
+ENDING_HOOK_OLD = bytes.fromhex('d7 0b 1e')
+FIN_SOURCE = 0x92D0
+FIN_TILE_BASE = TILE_COUNT
+FIN_TILE_COUNT = 16
+FIN_MAP_AT = MAP_AT + 13 * 32 + 15
+PROMPT_MAP_AT = MAP_AT + 15 * 32 + 6
+BLANK_TILE = 0x01
 
 # The SGB host colours the 160x144 Game Boy picture in 8x8-cell units.  The native
 # title's 90-byte ATTR_TRN file still followed the Japanese logo after the English
@@ -117,7 +133,7 @@ def compile_graphics(font=None):
     tile_blob = REFERENCE_PACK[:TILE_BYTES]
     tilemap = REFERENCE_PACK[TILE_BYTES:]
     # Signed BG tile mode splits sequential IDs at $7F/$80: IDs $00-$7F live at $9000,
-    # while $80-$9F live at $8800. Two contiguous copies reproduce all 160 tiles.
+    # while $80-$D8 live at $8800. Two contiguous copies reproduce all 217 tiles.
     groups = ((0x00, tile_blob[:0x80 * 16]),
               (0x80, tile_blob[0x80 * 16:]))
     tiles = {tile: tile_blob[tile * 16:(tile + 1) * 16]
@@ -135,18 +151,27 @@ def _uploader(code_org, groups, group_addresses, map_org):
         ld bc,$%04X
         call copy
 """ % (address, _vram_addr(tile), len(data)))
-    source = """
+    source = f"""
 upload:
         push af
         push bc
         push de
         push hl
-%s
-        ld hl,$%04X
-        ld de,$%04X
-        ld c,$%02X
+        cp $03
+        jr nz,draw_title
+        rst $10
+        db $0B,$1E
+        ld hl,${FIN_SOURCE:04X}
+        ld de,${_vram_addr(FIN_TILE_BASE):04X}
+        ld bc,${FIN_TILE_COUNT * 16:04X}
+        call copy
+draw_title:
+{''.join(calls)}
+        ld hl,${map_org:04X}
+        ld de,${MAP_AT:04X}
+        ld c,${MAP_HEIGHT:02X}
 map_row:
-        ld b,$%02X
+        ld b,${MAP_WIDTH:02X}
 map_cell:
         ld a,[hl+]
         ld [de],a
@@ -161,6 +186,32 @@ map_cell:
 map_next:
         dec c
         jr nz,map_row
+        db $F8,$07                  ; ld hl,sp+7: incoming A above saved HL/DE/BC/F
+        ld a,[hl]
+        cp $03
+        jr nz,done
+        ld hl,${PROMPT_MAP_AT:04X}
+        ld b,$08
+        ld a,${BLANK_TILE:02X}
+clear_prompt:
+        ld [hl+],a
+        dec b
+        jr nz,clear_prompt
+        ld hl,${FIN_MAP_AT:04X}
+        ld de,$001C
+        ld a,${FIN_TILE_BASE:02X}
+        ld c,$04
+fin_row:
+        ld b,$04
+fin_cell:
+        ld [hl+],a
+        inc a
+        dec b
+        jr nz,fin_cell
+        add hl,de
+        dec c
+        jr nz,fin_row
+done:
         pop hl
         pop de
         pop bc
@@ -176,7 +227,7 @@ copy:
         or c
         jr nz,copy
         ret
-""" % (''.join(calls), map_org, MAP_AT, MAP_HEIGHT, MAP_WIDTH)
+"""
     return gbasm.assemble(source, code_org)
 
 
@@ -188,6 +239,13 @@ def install(buf, font, titlecard_built, notes=None):
         raise SystemExit('titlelogo: titlecard wrapper was not built with logo dispatch')
 
     built = compile_graphics(font)
+    if FIN_TILE_BASE + FIN_TILE_COUNT > 0x100:
+        raise SystemExit('titlelogo: title leaves no private tiles for the native Fin')
+    if built['tiles'][BLANK_TILE] != bytes(16):
+        raise SystemExit('titlelogo: ending prompt clear requires blank title tile $01')
+    hook_at = _off(ENDING_HOOK_BANK, ENDING_HOOK_AT)
+    if bytes(buf[hook_at - 2:hook_at + 3]) != b'\x3E\x03' + ENDING_HOOK_OLD:
+        raise SystemExit('titlelogo: Moonlight case-3 native title producer changed')
     cursor = DATA_ORG
     group_addresses = []
     for _tile, data in built['groups']:
@@ -222,6 +280,7 @@ def install(buf, font, titlecard_built, notes=None):
     buf[map_at:map_at + len(built['map'])] = built['map']
     code_at = bank + code_org - 0x4000
     buf[code_at:code_at + len(code)] = code
+    buf[hook_at:hook_at + 3] = bytes((0xD7, FAR_UPLOAD, FAR_BANK))
 
     # Keep the native four SGB palettes and border, but align their per-cell assignment
     # with the English picture.  $44FA is referenced only by the native title/SGB setup
@@ -244,6 +303,10 @@ def install(buf, font, titlecard_built, notes=None):
            REFERENCE_SOURCE_SHA256[:12]),
         'titlelogo: English-aligned 20x18 SGB palette attributes at %d:$%04X; native '
         'palettes and border preserved' % (SGB_ATTR_BANK, SGB_ATTR_ADDR),
+        'titlelogo: Moonlight post-credit title reuses English artwork without PUSH '
+        'START; native 4x4 Fin retained at (120,104), tiles $%02X-$%02X; '
+        'native LCD-off load, palette, hold and input retained' %
+        (FIN_TILE_BASE, FIN_TILE_BASE + FIN_TILE_COUNT - 1),
     ]
     if notes is not None:
         notes.extend(out)

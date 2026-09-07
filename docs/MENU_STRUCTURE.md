@@ -205,7 +205,7 @@ The ten explicit translation-owned whole-LCD sites are:
 | Site | Owner and route | Policy |
 |---|---|---|
 | `38:$408F` | `structvwf.feirestore`: Fay's Puzzle composite/native fixed-tile reload | `keep` — user-approved independent-screen entry/B-exit; internal two-page puzzle paging stays LCD-live |
-| `41:$40F2` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `dormant` — all catalogued file, difficulty, and Rank/Pass choice-layer callers bypass it; rejected/unknown callers retain it |
+| `41:$40F6` | `menuvwf.starttransition`: title/file complete shadow-map fallback after exact regional admission | `dormant` — all catalogued file, difficulty, and Rank/Pass choice-layer callers bypass it; rejected/unknown callers retain it |
 | `43:$40B6` | `rankvwf.rankfinish`: completed Rankings whole-map publication | `keep` — user-approved independent Rankings display; entry, exit, and page changes may blank |
 | `44:$4066` | `name6.namerestore`: complete native font restore retained for Start naming and rejected screen-9 callers; exact carried Items, Items-appended screen-7 Floor, and screen-20 Floor are admitted before this fallback | `mixed` — keep the independent Start keyboard and unknown-caller fallback; proven Item/Floor callers are regional |
 | `46:$42C2` | `rankvwf.nativerestore`: native-font restoration after Rankings/Pass or a rejected caller | `keep` — approved final Rankings/Pass exits, already-dark transactions, and unknown callers; exact file-child B returns bypass it through S2R |
@@ -309,7 +309,7 @@ touches a personal save. That document records the accepted baseline, the implem
 ### Start-menu LCD-off catalogue
 
 The generated Start table has 22 caller rows. It names each visual path separately and
-keeps the rejected/unknown title-file fallback as its own dormant row at `41:$40F2`.
+keeps the rejected/unknown title-file fallback as its own dormant row at `41:$40F6`.
 
 A fresh `mgbdis` pass over both `build/base.gb` and `build/shiren_en.gb` established the
 native dispatcher and publisher before S1 was changed. Screen 23 is handler `4:$4C75`
@@ -399,6 +399,13 @@ six plane-exact No/Yes rows across Logs 1-3. This regression existed before S4 v
 testing; its isolated visual prerequisite is recorded in
 [`START_MENU_MANUAL_TEST.md`](START_MENU_MANUAL_TEST.md) and was visually accepted by
 Joey on 2026-08-31 against the accepted hash below.
+
+The 2026-09-07 Moonlight-clear fixture adds Keyaki beside Orochi on screen 23.
+Both native 16x16 badges occupy x=40..71/y=72..87. The summary difficulty allocator
+adds two fixed blank display cells before its proportional payload, keeping Expert
+and Normal clear of Keyaki after the native badge writer runs. The badge and attempt
+count positions are unchanged. `summaryclearspill.py` checks the final displayed
+labels and all eight badge planes across Log, Continue/B, root and Rankings returns.
 
 S3's exact screen-25 owner now occupies `61:$4240-$42B9`. Handler `4:$4CAB`
 combines box 29 at x=12..19/y=6..12 with explanation box 46, 48, or 50 at
@@ -1921,6 +1928,12 @@ accepted the natural sealed final-A routes, short-page cleanup, contained-Pot li
 shop Action/price preservation, direct-Floor exit/reopen behavior, and direct-Floor Name
 history matrix. The exact commands, SRAM isolation procedure, expected results, and final
 pass record are in [`ITEM_FLOOR_MANUAL_TEST.md`](ITEM_FLOOR_MANUAL_TEST.md).
+
+The Start initializer clears the alternate `$9C00-$9FFF` map even when save/quit
+returns with the LCD already off. That branch skips the VBlank wait and disable
+write while still preparing the blank page used during Rankings construction.
+`quitrankspill.py` checks this real dungeon/Quit route, every complete transition
+frame, and repeated Rankings entries against fresh boot on DMG/CGB.
 
 ## Current transition controller
 

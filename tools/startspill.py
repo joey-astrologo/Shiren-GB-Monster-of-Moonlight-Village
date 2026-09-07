@@ -231,6 +231,11 @@ class Audit:
             if value == 0xFF:
                 break
             cells.append(value)
+        if label == 'summary' and pb.register_file.D == 2:
+            # Two fixed blank display cells precede the complete logical row.
+            # These reserve the native badge area without consuming source bytes.
+            raw = 2
+            cells = [0, 0] + cells
         if label == 'summary' and pb.register_file.D == 1 and 0xB4 in cells:
             self.problems.append('f%d: summary floor row retained native $B4 instead of '
                                  'the English F glyph' % self.frame)

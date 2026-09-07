@@ -262,6 +262,9 @@ if [ -f saves/shiren_en_log_3_erase_copy_log_vwf.srm ] &&
    [ -f saves/shiren_en_log_1_quit_erase_copy_log_vwf.srm ]; then
   python3 tools/copylogspill.py build/shiren_en.gb
 fi
+if [ -f saves/shiren_en_log_1_quit_erase_copy_log_vwf.srm ]; then
+  python3 tools/quitrankspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_ground.srm ]; then
   python3 tools/groundspill.py build/shiren_en.gb
 fi
@@ -338,6 +341,9 @@ if [ -f saves/shiren_en_log_1_talk_to_koppa.srm ] &&
    [ -f saves/shiren_en_log1_moonlight_exit.srm ]; then
   python3 tools/savesummaryspill.py build/shiren_en.gb
 fi
+if [ -f saves/shiren_en-moonlight-clear-icon.srm ]; then
+  python3 tools/summaryclearspill.py build/shiren_en.gb
+fi
 if [ -f saves/shiren_en_rescue.srm ]; then
   python3 tools/rescuespill.py build/shiren_en.gb
 fi
@@ -379,6 +385,14 @@ fi
 if [ -f saves/shiren_en_log_1_trigger_ending.srm ]; then
   python3 tools/endingcreditspill.py build/shiren_en.gb
   python3 tools/normalendspill.py build/shiren_en.gb
+fi
+
+# The final Moonlight Exit cinematic inherits live gameplay renderer scratch, unlike
+# the boot-time cinematic variant tests. Guard its initial panel, complete uploads,
+# and the localized post-credit title with the original Fin and native hold.
+if [ -f saves/shiren_en-moonlight-ending.srm ]; then
+  python3 tools/moonlightendspill.py build/shiren_en.gb
+  python3 tools/moonlighttitlespill.py build/shiren_en.gb
 fi
 
 # `build/_base_expanded.gb` is KEPT, not deleted. It is the input every diagnostic build

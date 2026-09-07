@@ -113,6 +113,8 @@ def main() -> int:
         py("logicdiff.py", "build/_base_expanded.gb", rom)
         py("enemyexp.py", "build/_base_expanded.gb", rom)
         py("introspill.py", "build/_base_expanded.gb", rom)
+        py("moonlightendspill.py", rom)
+        py("moonlighttitlespill.py", rom)
         py("proptiming.py", rom, "--frames", "3000", "--seeds", "4")
         py("propupload.py", rom, "--frames", "3000", "--seeds", "4")
         py("crashscan.py", rom, "--seeds", "12")
@@ -198,6 +200,7 @@ def main() -> int:
             "build/orochisymbolspill_native_control.gb",
         )
         py("orochipopupspill.py", rom)
+        py("quitrankspill.py", rom)
         py(
             "deathrankspill.py",
             rom,
@@ -215,6 +218,7 @@ def main() -> int:
             "saves/shiren_en_ranking_repaired.srm",
         )
         py("savesummaryspill.py", rom)
+        py("summaryclearspill.py", rom)
 
     section("Release battery complete")
     print("All normal, shuffled, redirect-all, fixture, timing, upload, and containment tests passed.")
