@@ -8,6 +8,10 @@ rules — storage classes, the character set, the per-renderer pixel budgets, ev
 error, and what the build does not check. Read it once before a large batch. Come back
 here when you want to know "where do I change a monster's name".
 
+For prose, [Prose Studio](../site/prose/README.md) provides a browser editor and a validated
+changes-TSV importer. Run `python3 tools/prose_editor.py serve` from the repository root,
+then open **http://127.0.0.1:8765/**. The original files below remain the source of truth.
+
 ## The map
 
 | You want to change | Open | Section |

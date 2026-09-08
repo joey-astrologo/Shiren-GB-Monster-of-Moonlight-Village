@@ -494,17 +494,24 @@ incorrect. Consult the actual consuming path before changing a reviewed effect s
 
 ---
 
-## 8. Tooling that does not exist yet
+## 8. Translator tooling and remaining gaps
 
-Listed so nobody assumes it is there.
+**Implemented prose proof of concept:** [Prose Studio](../site/prose/README.md) has
+480 prose/reference records in 25 draft-derived event groups, including 436 editable
+ordinary drafts. It supports local Japanese-source import, font-aware wrapping/preview,
+control and fit checks, local saving, changes-TSV download and a Python project importer.
+The public catalogue excludes Japanese prose; structured/verbatim records remain read-only.
+`tools/prose_editor_check.py` and `site/prose/checks.html` check the browser model against
+the current Python wrapper and layout measurements, plus import and browser interactions.
+
+Remaining gaps:
 
 - **A translator export with budgets and context.** `script.tsv` gives you `bytes`, which is
   the wrong number for almost everything above. It should carry each path's source/pixel/
   tile contract, the storage class from §3, speaker/screen, and conversation ordering.
-- **A browser translation editor and changes-TSV importer.** The proposed workflow is a
-  shareable site with local editing/validation and a downloaded TSV for later project
-  use. Neither the site nor that unified import format is implemented. Existing prose,
-  glossary, ordinary-text and cinematic TSVs remain the build inputs.
+- **Editor coverage beyond prose.** Menus, items, glossary, cinematics and graphics need
+  separate editing models and validators. The prose-only TSV contract is documented with
+  the editor; the original translation files remain the build inputs.
 - **Runtime name substitution census.** Pixel-aware source staging is now 30 glyphs with a
   separate 144px painted-edge check, and the old `over_cap` decree is gone. Current item
   signed/`[NN]` variants are exhaustive; `<var>`/`<cE3>` producer scope remains open.

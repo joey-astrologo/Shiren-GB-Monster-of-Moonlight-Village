@@ -141,6 +141,11 @@ so re-extraction does not overwrite the translations.
 
 ## Edit the translation
 
+For a browser-based prose proof of concept, run `python3 tools/prose_editor.py serve`
+and open **http://127.0.0.1:8765/**. [Prose Studio](site/prose/README.md) provides Japanese
+reference, event groups, live text-fit checks, local draft saving and a changes-TSV
+download/import workflow. Structured prompts are reference-only in this first version.
+
 The ordinary translation is [`script/en.tsv`](script/en.tsv):
 
 ```text
