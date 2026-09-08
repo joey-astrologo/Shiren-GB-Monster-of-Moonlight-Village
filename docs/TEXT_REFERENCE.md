@@ -11,6 +11,26 @@ come to when you need the underlying measurement or the full error list.
 Section numbers are stable — other files cite `docs/TEXT_REFERENCE.md §4` and `§7` — so do
 not renumber them.
 
+**Current contract reviewed 2026-09-08.** Production uses **Thin Pixel-7 GB Compact**.
+The checks below use the same approved font as insertion; historical Dot Gothic and
+fixed-width measurements do not define current translation limits.
+
+| Subject | Implementation source |
+|---|---|
+| Encodable glyphs and approved pixels | `tools/latinfont.py:EN_CODES`, `tools/dotfont.py:load_approved`, `assets/fonts/thin_pixel_7_compact.json` |
+| Control syntax and argument counts | `tools/codec.py:arity_for`, `tools/build.py:encode_en` |
+| Token parity, close rules and glossary checks | `tools/lint_en.py` |
+| Native indents and selector spaces | `tools/textlayout.py` |
+| Prose wrapping and verbatim draft rows | `tools/wrap_en.py` |
+| Dialogue/help/seal source and pixel limits | `tools/dialogue_preview.py` |
+| Item/menu variants and shared tile budgets | `tools/fontaudit.py`, `tools/menuvwf.py`, `script/build-inputs/box_geometry.tsv` |
+| Storage eligibility, reserved text windows and fatal insertion errors | `tools/build.py`, `tools/pool.py`, `docs/ROM_BANK_MAP.md` |
+| Queued-fragment break prohibition | `tools/healfragmentspill.py` |
+
+Use these sources and their regression evidence when updating a rule or building an
+editor. A browser preview must distinguish a known failure from an unresolved runtime
+value; it cannot confer emulator or visual acceptance.
+
 ---
 
 ## 2. Character set
@@ -25,6 +45,9 @@ not renumber them.
 also cheaper than the Japanese `「...」` it replaces. An unavailable character is an `encode`
 error, never a silent substitution.
 
+This is the current ROM encoding, not general Unicode support. Additional languages may
+need glyph, encoding, input and renderer changes before their text can be built.
+
 ---
 
 ## 3. How much room you have — three storage classes
@@ -32,24 +55,26 @@ error, never a silent substitution.
 This is the part that matters. The same displayed line can be free, tight, or impossible
 depending on which class the string is in.
 
-### A. Redirected — **length is free** (pool-backed dialogue and runtime interior entries)
+### A. Redirected — **shared text pool** (approved readers and runtime interior entries)
 
 Village and story dialogue, plus most item and monster names and most of bank 13. If the
 English overruns its slot, `build.py` writes a 4-byte redirect record at the original
-address and puts the text in a free bank — automatically, with no action from you.
+address and puts the text in an approved text window — automatically, with no action from you.
 
-The pool is **483,840 bytes against a ~32 KiB finished script**, and as of 2026-08-03 every
-arena also fits at the **ratio-independent floor**: the case where every redirectable string
-is redirected, which does not depend on the 2.15x estimate being right. `sh build.sh` says
-so on the last line of its projection.
+The accepted translation has substantial pool headroom. Capacity is derived from
+`tools/pool.py:TEXT_WINDOWS`, including code/graphics exclusions recorded in
+[`ROM_BANK_MAP.md`](ROM_BANK_MAP.md). Use the current build report for allocation and
+projection figures; older aggregate sizes and bank-spare snapshots are not budgets for a
+new translation. `romtextcheck.py` verifies allocation across every reserved text window.
 
 > **Write ordinary, natural English. Do not abbreviate to fit a byte count.**
 
-> ### **Never trail `<end>` or resume printable dialogue after it. 2026-08-10**
+> ### **Dialogue: avoid extra final waits and printable text after `<end>`**
 >
-> A trailing `<end>` makes the composer draw the final box again, identically. Moving that
-> token earlier was not a complete fix: with the Dot reveal path, printable English after
-> `<end>` can disappear while the unchanged box still consumes a press. Joey caught the
+> Adding a trailing `<end>` where the source has no such ending makes the composer draw
+> the final box again, identically. Moving that token earlier was not a complete fix:
+> with the proportional reveal path, printable English after `<end>` can disappear while
+> the unchanged box still consumes a press. Joey caught the
 > concrete forms `He went to rescue<end> Fumi!` and `I'm not going up<end> there!`.
 >
 > In bank-11/14 dialogue, `<end>` may therefore be followed only by `<brk>` or by terminal
@@ -64,15 +89,15 @@ so on the last line of its projection.
 > box waits iff it holds an `<end>` and every `<brk>` carries one. **Measured head-on
 > afterwards, it is false**: a two-box and a one-box rendering of the same text, in the
 > same NPC, are both 1 wait and 2 presses. 22 strings were tightened on the strength of it
-> and have been reverted. `tools/boxcount.py` still reports the structural divergence — we
-> use 261 box breaks to the Japanese's 120 — but that is **pacing, your call**, not a cost.
+> and were reverted. That historical comparison counted 261 English box breaks to the
+> Japanese's 120; it is evidence about that route's pacing, not a current script count.
 >
 > So adding a `<brk>` really is free, as this section originally said. What is NOT free is
 > leaving an `<end>` last.
 
-You may add `<brk>` boxes freely — a translation may use more screens than the Japanese did,
-and natural English at ~2.15x usually needs to. What still binds is the **per-line cell
-budget** in §4, which is a display limit, not a storage one.
+Ordinary prose may use more boxes than the Japanese, subject to its source close behavior.
+The **source and pixel limits** in §4 still apply. Queued fragments and item descriptions
+have different break/page rules; do not apply prose pagination to them.
 
 > **Retracted event exception — `14:$5AFD`:** this was inferred while two bank-13 stair
 > loads were incorrectly repointed from bank 14's choice to Nagi text. Original-Japanese
@@ -85,68 +110,68 @@ budget** in §4, which is a display limit, not a storage one.
 > the native `$FF` close instead. `koppatalkspill.py` covers both its real town consumer
 > and a dungeon-context compatibility probe.
 
-### B. Still bank-local — **aggregate within their bank** (502 strings)
+### B. Bank-local — **aggregate within the verified bank arena**
 
-Menu labels (bank 11's `11:$52E0`, whose reader is the seven bytes the DTE expander already
-owns), menu box rows (bank 31), item verbs (bank 30), and the rest. These move, but only
-inside their own bank, because the reading code lives there. So the budget is a shared pool
-per bank: a string that shrinks donates to one that grows.
+Movable labels and menu rows can be repointed within their reader's bank. Sequential box
+rows move as a unit. Some attributed readers can also consume redirect records and move
+the text into class A; `build.py` derives that eligibility from the current reference
+allowlist and installed hooks. A bank number alone does not identify a storage class.
 
-**Every one of those banks currently projects positive** — re-measured 2026-08-05 after
-sessions 7 and 8b re-extracted 158 more strings into them: bank 11 **+840**, 13 **+4036**, 30
-**+1**, 31 **+82**, and the redirect pool +447,332. `bank_full` is not expected any more. If
-you see it, report it — it is an engineering task, not a translation error, and the fix is
-to hook one more reader.
-
-**Bank 30's +1 is not a typo and it is the one to watch.** 73 bytes held against 72 needed,
-so a single character added to an item verb overruns it. `build.sh`'s projection is the
-check; it is on screen every build.
+`bank_full` means the actual allocator could not place the bank's units. Report it for
+engineering review; do not impose an old bank-30 “one spare byte” limit on item verbs.
 
 ### C. Fixed in place — **same-or-shorter, in bytes**
 
-Anything `pinned`, and box rows whose geometry is fixed. Reported as `too_long` or
-`box_in_place`.
+Records without a safe relocation/redirect path retain their byte budget. Pinned box rows
+also have to preserve the following row's start. A pinned address may still contain an
+approved redirect, so `pinned` alone does not prove the translated body is byte-capped.
+Failures are reported as `too_long` or `box_in_place`.
 
 **How to tell which class a string is in:** don't guess and don't use `script.tsv`'s `bytes`
-column — it is the wrong number for the 902 in class A. Derive it from `build.py`'s
-`reloc_can` rule, or just write naturally and read `build/worklist.tsv`.
+column as an English limit. Check `build.py`'s placement and `reloc_can` rules together
+with `pool.eligible()`, or write naturally and inspect the current build diagnostics.
 
-**`build/worklist.tsv` only exists when there is something wrong with it.** A clean build
-deletes it, so its absence means "no problems", not "not run yet". It used to be left behind
-by whichever build last failed, which made a stale list of BADPOOL strings look current.
+**Rejected translations fail insertion.** Collected text/reference errors make `build.py`
+exit nonzero before writing the ROM or its relocation map. With `--report`, it writes the
+failure worklist; `sh build.sh` supplies `--report build/worklist.tsv`. Successful insertion
+removes a stale worklist. Missing reports cannot prove that the build ran, and later
+font/runtime gates may fail after insertion succeeded. Check the whole command's exit status.
 
 ---
 
-## 3a. Control tokens — the one thing that fails SILENTLY
+## 3a. Control tokens — parity and runtime meaning
 
 `<var>`, `<name>`, `<cE3>` (or dialogue `<cE3:xx>`) and `<cF0:xx>` inject runtime data: a monster name, the player's
-name, a table string. **A translation that drops one encodes cleanly, inserts cleanly, and
-passes every reference check and crash seed — and then prints "The  attacked!" on screen.**
+name, a table string. Dropping one may still encode, but loses runtime data. Token lint
+exists to catch this semantic failure before it can be shipped.
 
-`tools/lint_en.py` checks token parity against the Japanese and `build.py` fails the string
-rather than shipping it. Rules:
+`tools/lint_en.py` checks token parity against the Japanese and `build.py` fails insertion
+on a rejected translation. Rules:
 
 | token | rule |
 |---|---|
 | `<var>` `<name>` `<cE3>` / `<cE3:xx>` `<cE4>` `<cF0:xx>` `<cE0:xx>` `<cE7:xx>` `<cEC:xx>` `<mode0>` `<mode1>` `<cF1>` `<cF2>` `<cF3>` `<cF4>` | **must survive exactly** — same tokens, same arguments, same counts |
-| `<br>` `<brk>` `<end>` | **yours** — line breaks and pagination are a translation decision |
-| `<$XX>` | raw layout bytes; covered by `escape_is_dte_code`, not by parity |
+| `<br>` `<brk>` `<end>` | layout/close controls; follow the path-specific rules in §4, including help page counts and the queued-fragment break prohibition |
+| `<$XX>` | raw bytes; not protected by token parity; preserve approved structural/effect sequences and avoid DTE-code collisions |
 
-Order is deliberately **not** checked: `<var> dodged the blow` and `Shiren attacked <var>`
-are both fine. Only the multiset matters.
+The lint compares a **multiset**, not a sequence. This permits moving text around a token;
+it does not prove that changing substitution order or effect sequencing is safe. Preserve
+the producer/consumer contract. Two identical `<var>` tokens can consume different actors
+in order even though swapping their grammatical roles leaves the lint result unchanged.
 
-> ### `<cEC:xx>` IS THE ONE TOKEN WHOSE POSITION MATTERS: it must stay FIRST
+> ### A leading bank-11/14 `<cEC:xx>` must stay first
 >
 > It opens a signboard, a shop confirmation, a help menu or a road picker, and it is the
-> only token the ROM reads out of a fixed position rather than out of the stream:
+> dialogue prefix the ROM reads out of a fixed position rather than out of the stream:
 > `13:$67F3` tests the FIRST byte of the staged line for it, and `13:$6C73` then resumes
 > reading at "the message's own address, plus 2". So its two bytes have to be the first two
 > bytes at that address, and `build.py` writes the redirect record after them rather than
 > over them. Move it, and the message resumes inside the record and draws one stray glyph.
 >
-> `build.py`'s `ec_prefix_lost` fails the build if that happens, and `pool.head_bytes()`
+> `build.py`'s `ec_prefix_moved` / `ec_prefix_lost` fail the build if that happens, and `pool.head_bytes()`
 > refuses a translation whose `<cEC:xx>` is not leading. **Keep it where the Japanese has
-> it**, argument and all — the argument picks the box. See `ENGINEERING_RULES.md` session A1.
+> it**, argument and all. This prefix rule is scoped by `pool.starts_ec()`; bank 13 uses
+> a different control path.
 
 ```sh
 python3 tools/lint_en.py            # check script/en.tsv
@@ -208,22 +233,21 @@ handful of entries, the glossary has the wrong name in it and the exceptions are
 
 ## 4. Rendering budgets — pixels, source, tiles and runtime values
 
-Dot Gothic makes the old “one character equals one cell” rule obsolete. Byte counts are
+Thin Pixel-7 GB Compact makes the old “one character equals one cell” rule obsolete. Byte counts are
 still storage, not display, but a character count alone is no longer a display verdict
 either. Every path has four separate limits: physical pixels, the current source-staging
 loop, temporary composed tiles, and runtime suffix/substitution values. The measured
 register is [`VWF_BUDGETS.md`](VWF_BUDGETS.md).
 
-> **Do not shorten English merely because a source guard fires.** First ask whether the
-> physical Dot text fits. `Put down Accurate Sword-77` is the concrete example that drove
-> the reset: all 26 glyphs and 134 painted pixels now fit. Joey's final four-column `4`
-> and `7` make every formerly hostile Accurate Sword `±44/±47/±74/±77` Stepped
-> line an exact 144px edge fit. V4A still owns the complete runtime-value census.
+> **Both source and pixel limits must pass.** A physically fitting line can still exceed
+> its scanner. Re-wrap prose or review the measured source path before shortening a
+> runtime template; do not weaken a guard to accept it. Old font-specific examples are
+> historical evidence, not limits for the approved font.
 
 ### Dialogue: 144 pixels, 3 lines, up to 30 staged glyphs
 
 The composer owns 18 tiles = 144px per line and three lines per box. The uniform VWF first
-used a 6px pen and therefore expressed this as 24 characters. The current Dot renderer
+used a 6px pen and therefore expressed this as 24 characters. The current proportional renderer
 stages and typewriter-maps as many as **30**, then clips at the unchanged 144px edge. This
 is deliberately permissive: a narrow 30-glyph line can fit, while a wide line can run out
 of pixels much earlier. The build checks both limits using painted extent.
@@ -233,13 +257,16 @@ Innkeeper: Ah, you<br> are awake at last!<br> You were crying<end><brk>
 ```
 
 - `<br>` ends a line. Three lines fill a box.
-- `<brk>` ends a box and waits for the player.
-- `<end>` marks end of message. It is commonly paired with `<brk>`, but event-specific
-  ordering must match the measured caller; see the `$5AFD` stairs exception above.
-- A leading space on continuation lines is the ROM's own indent style. Keep it.
+- `<brk>` creates a page/window boundary; input behavior depends on the caller.
+- `<end>` sets the message wait/end flag. It is not the physical `$FF` string terminator.
+  Preserve source close behavior and the lint rules in §3/§3a; the former `$5AFD` stairs
+  exception is retracted.
+- The wrapper adds continuation indents. `textlayout.py` retains a native first-line
+  space and expands selector continuation spacing to preserve the cursor slot. Each
+  rendered space consumes source capacity and font advance; do not trim structural spaces.
 
 > **Text does not pixel-wrap at runtime.** The stager can insert an automatic source break
-> at 30 glyphs, but it cannot see Dot widths; anything beyond 144 painted pixels is clipped.
+> at 30 glyphs, but it cannot see proportional widths; anything beyond 144 painted pixels is clipped.
 > Prefer explicit `<br>` where a sentence should break. `dialogue_preview.py` and the
 > normal build enforce the 30-glyph and 144px limits together.
 
@@ -272,15 +299,15 @@ break them mid-clause.
 
 ### Item descriptions: 144 pixels, FOUR lines — a different renderer
 
-**The 122 strings reached through `13:$554A` are not composer dialogue.** They are staged
+**Descriptions reached through `13:$554A` are not composer dialogue.** They are staged
 by `13:$7E49` into `$C616` and drawn by bank 31 as box 7, whose descriptor is `x=0, y=3,
 5 rows, width 18`. Row 1 holds the item name, so the description gets **four 144px rows**.
 Menu VWF renders this path proportionally and its measured scanner accepts **21 source
-glyphs**. The production TSV now uses that real Dot contract; the 18-cell fixed-width
+glyphs**. The production TSV uses that proportional contract; the 18-cell fixed-width
 build remains a diagnostic control and no longer dictates English wording.
 
 `dialogue_preview.py <loc>` knows which geometry a string is on and checks both its
-21-glyph scanner and the Dot 144px painted edge.
+21-glyph scanner and the approved font's 144px painted edge.
 
 ```
     +------------------+          -Pickaxe-        <- the item name, row 1
@@ -298,41 +325,45 @@ build remains a diagnostic control and no longer dictates English wording.
 - **`<cF0:xx>` pastes one of 13 shared lines from `11:$55AC` inline** — real text, not a
   screen effect, and it spends its own source glyphs and pixels. `<cF0:00>` is `Raises attack.`
   Those 13 are ordinary script strings and are translated in `en.tsv` like anything else;
-  `<cF0:03>` (`Equip:`) is the only one that shares a line, leaving 15 of the current 21
-  staged glyphs plus the remaining pixel width for the rest.
+  the actual selected fragment, including any authored space, must be included in the
+  21-glyph and 144px measurements. Do not assign every `<cF0:xx>` a fixed placeholder cost.
 
-### The item list: 128 pixels, current 17-source-character guard
+Equipment seals use the same 144px/21-glyph row contract, but each seal gets **one row**.
+Clear-condition lists show **five** such rows. Validate the entire visible group against
+the shared tile allocator as well as measuring individual rows.
+
+### The item list: 128 pixels, 18-source-glyph guard
 
 The 18-tile inventory row has two raw cells before proportional text, leaving a **128px
-name payload**. The current source scanner accepts at most 17 glyphs. Runtime variants
+name payload**. The current source scanner accepts at most 18 glyphs. Runtime variants
 matter: weapons and shields can add any signed value from `-99` through `+99`; staffs and
 pots add `[1]` through `[99]` in ordinary play.
 
-After the approved compact-digit edits, `Accurate Sword-99` is exactly 17 source characters,
-advances 88px, paints 87px and needs 11 tiles. It deterministically represents the broad
-144-way tie at the signed two-digit suffix peak. It therefore fits with 41px of real slack.
-This is the measurement that disproved the old
-14-character equipment-name “visual limit.” The allocator regression at the first row of
-either page is also fixed; `menuspill --long` now packs five 11-tile item rows and four
-4-tile verbs into 71/72 temporary tiles.
+The 2026-09-08 font audit measures the widest current item variant, `Battle Counter-99`,
+at 17 source glyphs, 84 painted pixels and 11 tiles. Five widest current rows plus four
+4-tile verbs use 71/72 temporary tiles. These are measurements of the current glossary;
+a new name must pass its own suffix and allocation checks. Plating, curses, fusion counts,
+player-assigned names and shop prices also have dedicated runtime regressions.
 
 `lint_en.py` fails a staff/pot whose name plus ordinary two-digit counter crosses the real
-17-glyph scanner. `fontaudit.py` separately enumerates every current bare/signed/`[NN]`
+18-glyph scanner. `fontaudit.py` separately enumerates every current bare/signed/`[NN]`
 variant against both that source guard and the 128px painted payload.
 
 ### Menus: the box's own pixel width
 
-Each menu box has a width in `script/build-inputs/box_geometry.tsv`; approved raw cursor/prefix cells
-keep their full 8px and the remaining payload uses Dot advances. Current physical shapes:
+Each menu box starts with its extracted descriptor width and applies any override in
+`script/build-inputs/box_geometry.tsv`. Approved raw cursor/prefix cells keep their full
+8px; the remaining payload uses approved font advances. Current physical shapes:
 
 | box | text span |
 |---|---|
 | title / file menu | descriptor width minus one raw cursor tile |
 | difficulty | measured per approved ROM row |
 | places | measured per approved ROM row |
-| item action menu | 8 tiles = 64px — boxes 6 and 39 |
+| item action menu | five interior tiles (40px), including one 8px cursor cell; **32px text payload** — boxes 6 and 39 |
 
-`box_too_wide` protects the shared source geometry; `fontaudit.py`, `menuspill.py` and
+`box_too_wide` protects the measured source scanner; approved narrow proportional rows
+can scan beyond their descriptor's native cell count. `fontaudit.py`, `menuspill.py` and
 `menuromspill.py` protect physical rows and allocation.
 
 The 40 clear-condition labels at `14:$7C78-$7ED8` are a measured menu path of their own:
@@ -353,25 +384,26 @@ English is the small part:
 | `Defeated <var>!` | 10 | 20 |
 | `<var> is now Lv<cE4>!` | 11 | 19 minus the digits |
 
-**The old 14-character `<var>` and 16-character `<cE3>` reservations are under audit.**
-They were obtained by adding six characters to pre-VWF decrees, not by measuring Dot
-Gothic or enumerating each runtime producer. They are no longer glossary lint limits;
-`fontaudit.py` retains them only as labelled historical warnings while reporting real Dot
-pixels. The player name's six characters *are* a storage/input contract (`tools/name6.py`).
+**The old 14-character `<var>` and 16-character `<cE3>` reservations are historical warnings.**
+They are not glossary lint limits or proven producer maxima. `fontaudit.py` reports them
+separately from actual source/pixel failures. The player name's six characters are a
+measured storage/input contract (`tools/name6.py`).
 
 **This one is a warning, not a build failure, and the reason is worth knowing.** What lands
 in a `<var>` is a runtime value, and the Japanese itself does not respect the cap: `<var>は
 モンスターにかこまれた！` is 14 literal cells and leaves **4** for a monster name, so the
-original game truncates that line too. The build therefore fails a line only when it
-overruns with every substitution charged just **one** cell — an overrun no runtime value
-could rescue. Everything tighter is reported as headroom:
+original game truncates that line too. Unknown producers are checked at their minimum
+contribution. The settled player name reserves six glyphs and its widest approved pixel
+footprint; help fragments use their actual translated expansion. Additional audits cover
+known item variants and selected message families. A minimum-value pass alone does not
+prove every unresolved runtime substitution fits:
 
 ```sh
 python3 tools/dialogue_preview.py --selftest   # the tightest lines in the whole script
 ```
 
 Use the report to identify templates that need runtime census. The final name policy must
-combine each template's actual value class, source contract and Dot pixels; the tightest
+combine each template's actual value class, source contract and approved font pixels; the tightest
 unrelated line does not by itself define every name.
 
 ---
@@ -384,15 +416,15 @@ you can copy a token straight out of the Japanese.
 | token | meaning |
 |---|---|
 | `<br>` | end of line |
-| `<brk>` | end of box, wait for the player |
-| `<end>` | end of message |
+| `<brk>` | page/window boundary; caller-specific input behavior |
+| `<end>` | message wait/end flag; distinct from the `$FF` string terminator |
 | `<var>` | a name pulled from the message queue |
 | `<name>` | the player's name |
 | `<cE4>` | a number (level, damage, …) |
 | `<cE0:XX>` | sound trigger, argument in hex |
 
-`<$XX>` emits a raw byte verbatim. **It means "layout, reproduce exactly"** — a column
-divider, a border glyph — not text. Use a named token whenever one exists; a stray `<$XX>`
+`<$XX>` emits a raw byte verbatim. It can represent structural layout or a byte retained
+in a reviewed effect sequence. Use a named token whenever one exists; a stray `<$XX>`
 in the compression range is a build error (`escape_is_dte_code`), and getting it wrong once
 took the status screen to a white screen.
 
@@ -403,62 +435,62 @@ record, and the compression codes occupy part of `$92-$DF`. The build checks bot
 
 ## 6. Worklist errors, and what to do about each
 
+Insertion writes collected errors to the requested worklist. Standalone lint, font,
+cinematic and runtime checks also report their own diagnostics; this table covers the
+main translator-facing failures, not every installer assertion.
+
 | kind | meaning | what to do |
 |---|---|---|
-| `too_long` | in-place string over its byte budget | class C: shorten. Class A should never produce this — report it |
-| `line_too_long` | a line crosses the current source-character guard — the screen would discard the rest even if its Dot pixels fit | re-wrap ordinary prose; for a physically fitting runtime template, report the source path for engineering |
-| `line_too_wide_px` | staged text paints beyond the renderer's measured pixel edge | add an explicit `<br>` or revise the wording; source slack cannot recover clipped ink |
-| `box_too_deep` | more than 3 lines in one box — line 4 overwrites line 1 | split with `<end><brk>`; extra boxes are free |
-| `buffer_overrun` | one line stages more bytes than the composer clears at `$CF07` | shorten the line; you will hit `line_too_long` first in practice |
-| `box_too_wide` | more cells than the box width | shorten, or widen the box (`box_geometry.tsv`, an engineering change) |
-| `box_in_place` | pinned box row, and no English fits its byte count | **suspect the PIN first.** Three of the five pinned boxes were pinned by a `ld bc,nn` that reaches `0:$028B` — a bank-13 message push whose operand only *looked* like a pointer into bank 31. Fixed 2026-08-05; if you see this, check the load site before accepting it |
-| `end_lost` | the Japanese ends the message and the English does not — **the box never closes** | put `<end>` back. It costs one byte and is not optional, however tight the budget |
-| `bank_full` | the bank's shared arena ran out | not your fault — report it |
-| `pool_full` | the redirect pool ran out | not your fault — report it |
-| `encode` | a character with no glyph | see §2 |
-| `escape_is_dte_code` | a `<$XX>` inside the compression range | use a named token |
-| `BADREF` / `BADPLACE` | a string does not read back from the ROM | **a tool bug — stop and report** |
+| `too_long` | fixed string exceeds its byte budget | verify its storage class; revise wording or request an engineered relocation path |
+| `line_too_long` | source scanner would discard glyphs even if the pixels fit | re-wrap ordinary prose; review a runtime template's source path |
+| `line_too_wide_px` | painted text exceeds the pixel edge | re-wrap where breaks are legal, or revise wording |
+| `box_too_deep` | row count exceeds this renderer's geometry | prose can paginate; help must preserve page count and seals must stay on one row |
+| `buffer_overrun` | staged data reaches/exceeds the path's cleared buffer | inspect the reported scope and controls; revise or review the renderer |
+| `box_too_wide` | a menu row exceeds its measured source scanner | revise the row or engineer and verify a geometry/scanner change |
+| `box_in_place` | pinned box row cannot preserve the next row's start | verify the consuming reference and pin before accepting a byte limit |
+| `token_lost` / `token_added` | significant token count or argument differs | restore the source token contract |
+| `end_lost` | source has an end/wait flag but the translation has none | restore the source close behavior through the draft/wrapper or reviewed controls |
+| `end_trailing` | translation adds a final `<end>` absent from the source ending | remove the duplicate final wait; use a legal page boundary or structural terminal effect sequence |
+| `end_resumes_text` | printable bank-11/14 dialogue follows `<end>` without a page boundary | place the intended semantic pause at `<brk>` in the draft |
+| `end_before_terminal_brk` | terminal `<end><brk>` added to dialogue whose source has no `<end>` | preserve its native `$FF` close; do not add an empty final page |
+| `ec_prefix_moved` / `ec_prefix_lost` | required dialogue prefix no longer leads | restore the leading `<cEC:xx>` and its argument |
+| `counter_overflow` | item name plus two-digit counter exceeds 18 source glyphs | measure the full name/suffix in the item renderer |
+| `term_ignored`, `glossary_split`, `glossary_collision` | terminology differs from the reviewed glossary contract | correct the glossary/usage or record a justified exception |
+| `bank_full` / `pool_full` | allocator cannot place text in approved space | report for engineering review; inspect the current allocation report |
+| `encode` | unsupported character, token or argument form | use the current character set and bank-specific control syntax |
+| `escape_is_dte_code` | raw byte collides with compression codes | restore the approved byte/token; changing reservations requires engineering |
+| `dte_roundtrip`, `BADREF`, `BADPLACE`, `BADPOOL` | compression or inserted references do not reproduce the expected bytes | stop and investigate the toolchain/reference failure |
 
 ---
 
 ## 7. What the build does NOT check
 
-Be aware of these; they will not fail a build.
+Passing the implemented checks leaves these limits:
 
 1. **Whether every substitution variant fits.** The literal and minimum-value text are
    checked; the complete `<var>`/`<cE3>` producer-to-template census is still open. See §4
    and `VWF_BUDGETS.md`; legacy reservations are warnings, not final limits.
-2. **Whether the text is any good in context.** Nothing knows who is speaking.
-3. **That a screen was ever displayed.** There is no coverage report of which strings have
-   been seen rendered.
-4. **Tone and consistency** across 1,422 manifested records.
+2. **Meaning, speaker, tone and pacing.** Glossary lint checks selected terms; it cannot
+   establish that a scene reads correctly or that queued actors retain their intended roles.
+3. **Complete route coverage.** Static coverage, live scans and save-backed fixtures cover
+   known paths. They cannot prove that every event or interior entry has been discovered.
+   See the current README for the accepted release battery and remaining manual playtest.
 
-~~Dialogue line width.~~ **Closed 2026-07-31** — `line_too_long` fails the build, and
-`dialogue_preview.py` draws the box.
+Control decoding is path-specific, so a validator must pass the record's bank to
+`codec.arity_for(bank)`. The current encoded forms are:
 
-One decoding hazard, small but real, and **session 7's re-extraction roughly doubled it**:
-in banks 11 and 14 the codes `<cE3:xx>` (12 strings) and `<mode1>` (**33**, was 17) each take
-an **argument byte** that `script.tsv` prints as an ordinary character — a stray digit after
-`<cE3:xx>`, a stray kana after `<mode1>`. It is a pause length or an item selector, not text.
-**Leave it alone**; do not "tidy" a character that follows one of those two tokens.
-Engineering detail in `FINDINGS.md` → "The composer has TWO dispatch tables".
+| Control | Banks 11/14 dialogue | Default message path |
+|---|---|---|
+| Item substitution | `<cE3:xx>`; selector is already inside the token | `<cE3>` |
+| E7 / F0 | `<cE7>` / `<cF0>` | `<cE7:xx>` / `<cF0:xx>` |
+| F1–F4 | `<cF1>` through `<cF4>`, no arguments | not ordinary message-path controls |
 
-`<cF1>`-`<cF4>` are new in the token list as of 2026-08-05 and appear only in banks 11/14.
-They take no arguments. They exist because those banks dispatch through a table with 21
-entries where bank 13's has 17 — see `FINDINGS.md`. Treat them like `<mode0>`/`<mode1>`:
-carry them through untouched, in the same order.
-
-**`<cF0>` and `<cE7>` are written WITHOUT an argument in banks 11/14, and WITH one
-everywhere else.** That is not a style choice: on the dialogue path those two codes take no
-argument, so the byte after one is ordinary text. `codec.arity_for(bank)` decides, the
-`jp` column already shows the right form, and copying the token out of it is correct in
-both places. It was measured against the ROM's own staging loop on 2026-08-05 — before
-that, `<cF0:56>ギ` was hiding the ナ of `ナギ`. `FINDINGS.md` → "The arities are MEASURED".
-
-This is also why `dialogue_preview.py --selftest` reports eight bank-11/14 lines at 19–21
-cells and calls them KNOWN: the cell model charges that argument byte as a glyph, on
-purpose, because it keeps `codec.ARITY` so it measures the same bytes the inserter writes.
-Every one of those lines lands on exactly 18 once its `<mode1>` count comes off.
+The codec currently models `<mode1>` as zero-argument. Some reviewed translations retain
+an adjacent raw byte such as `<mode1><$3C>`; preserve that sequence. `codec.py` records a
+native skip-chain/handler discrepancy, so parity or encoder acceptance alone cannot
+authorize deleting, translating or moving the following byte. The former blanket rule
+that both `<cE3:xx>` and `<mode1>` always have an extra argument printed as text was
+incorrect. Consult the actual consuming path before changing a reviewed effect sequence.
 
 ---
 
@@ -469,10 +501,14 @@ Listed so nobody assumes it is there.
 - **A translator export with budgets and context.** `script.tsv` gives you `bytes`, which is
   the wrong number for almost everything above. It should carry each path's source/pixel/
   tile contract, the storage class from §3, speaker/screen, and conversation ordering.
-- ~~A dialogue preview / build check~~ — **built 2026-07-31**, `tools/dialogue_preview.py`.
-- ~~A lint mode that checks `en.tsv` without a full ROM build~~ — **built**:
-  `lint_en.py`, `dialogue_preview.py --check`, and `fontaudit.py`. The live emulator spill
-  tests still require a built ROM because allocation and VBlank behavior are runtime facts.
+- **A browser translation editor and changes-TSV importer.** The proposed workflow is a
+  shareable site with local editing/validation and a downloaded TSV for later project
+  use. Neither the site nor that unified import format is implemented. Existing prose,
+  glossary, ordinary-text and cinematic TSVs remain the build inputs.
 - **Runtime name substitution census.** Pixel-aware source staging is now 30 glyphs with a
   separate 144px painted-edge check, and the old `over_cap` decree is gone. Current item
   signed/`[NN]` variants are exhaustive; `<var>`/`<cE3>` producer scope remains open.
+
+Already available without a full ROM rebuild: `lint_en.py`, `dialogue_preview.py --check`
+and `fontaudit.py`, using the local extraction. Live emulator spill tests still require
+a built ROM because allocation and VBlank behavior are runtime facts.

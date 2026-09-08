@@ -149,8 +149,9 @@ The ordinary translation is [`script/en.tsv`](script/en.tsv):
 11:$548B	Strong vs Dragons
 ```
 
-Look up the Japanese source in the generated `script/script.tsv`, edit the English column,
-then run `sh build.sh`.
+Look up the Japanese source in the generated `script/script.tsv`. Edit ordinary labels
+and messages in `en.tsv`; for an address already in `prose_draft.tsv`, edit the draft and
+apply the wrapper so the next re-wrap retains your change. Then run `sh build.sh`.
 
 The prologue and ending cinematics use a separate VM and live in
 [`script/intro.tsv`](script/intro.tsv). Edit only its `english` column. The build checks the
@@ -173,7 +174,8 @@ runtime substitutions are separate limits. The canonical budgets are in
 [`script/README.md`](script/README.md), with the measured rules behind it in
 [`docs/TEXT_REFERENCE.md`](docs/TEXT_REFERENCE.md).
 
-Anything in angle brackets is executable data and must survive:
+Angle-bracket tokens carry runtime data or control layout. Significant tokens and their
+arguments must survive; line/page/close controls follow the specific renderer's rules:
 
 - `<name>` — player name
 - `<var>` — runtime actor/item substitution
@@ -181,11 +183,15 @@ Anything in angle brackets is executable data and must survive:
 - `<cE4>` — runtime numeric substitution
 - `<br>` — line break
 - `<brk>` — page/window break
-- `<end>` — message end
+- `<end>` — message wait/end flag, distinct from the physical string terminator
 
 Do not change a dynamic token's count or order just because the English preview fits. The
 native producer must supply exactly what the record consumes. See “Script-bank text is
 executable data” in [`docs/ROM_BANK_MAP.md`](docs/ROM_BANK_MAP.md).
+Token lint compares counts and arguments, so a passing lint alone does not prove that
+reordering queued substitutions or effect controls is safe. Ordinary prose can be
+re-wrapped; queued fragments cannot accept authored breaks, and item descriptions retain
+their source page count.
 
 ## Testing
 

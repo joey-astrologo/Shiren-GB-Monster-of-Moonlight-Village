@@ -28,17 +28,16 @@
 # differences live in script/term_uncertainties.tsv. The Shiren 2 fan-patch list is the
 # next authority when an exact official term does not exist.
 #
-# VWF BUDGET RESET IN PROGRESS (2026-08-09). See docs/VWF_BUDGETS.md.
+# CURRENT VWF RULES (reviewed 2026-09-08). See docs/VWF_BUDGETS.md.
 #
 #   class item, appearance -> legacy ITEM_CAP source/substitution guard: 16 chars
 #   class monster, npc     -> legacy NAME_CAP source/substitution guard: 14 chars
 #
-# These are NOT Dot Gothic pixel limits. A combat line and its runtime name still share a
-# 144px canvas, but the old 14/16 numbers were carried forward from fixed-width cells
-# without remeasuring every substitution path. `lint_en.py --glossary` keeps them as a
-# conservative engineering-review guard while that census is open. If a proposed name
-# crosses one, do not shorten it automatically: measure its menu suffix variants and every
-# runtime template, then widen/fix the source path or choose wording on actual evidence.
+# Those 14/16 values survive only as historical warning reservations in font audits;
+# they are not glossary lint limits. Production uses Thin Pixel-7 GB Compact. Measure
+# the complete name, suffix variants and consuming message families against their real
+# source, pixel and allocation limits. Unknown producers remain a separate review class;
+# do not shorten a name merely to clear a legacy reservation warning.
 #
 # THE CURRENT ITEM-LIST CONTRACT IS SEPARATE. The proportional payload owns 128px and its
 # source scanner currently accepts at most 18 glyphs, including runtime status suffixes.

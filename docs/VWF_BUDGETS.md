@@ -1,8 +1,10 @@
 # VWF budget register
 
-**Current 2026-08-11.** This is the canonical answer to “does this text fit?” after the
+**Current contract reviewed 2026-09-08.** This is the canonical answer to “does this text fit?” after the
 Thin Pixel-7 GB Compact migration. Cinematic text has its own completed VM/pack contract and
-is intentionally outside this reset.
+is intentionally outside this reset. Implementation sources for each rule are indexed in
+[`TEXT_REFERENCE.md`](TEXT_REFERENCE.md). Dated measurements below retain their original
+context; regenerate `fontaudit.py --details 4 --strict-unproven` for the current text.
 
 A single character count is not a fit verdict. Every non-cinematic renderer can have four
 independent constraints:
@@ -25,7 +27,7 @@ it, wrapping or wording must change.
 | Item list | 128px payload in an 18-tile row | **18 glyphs including suffix** | 72 allocator tiles in runs 57+11+4; each row needs 4, 8, 9–13 or 16 contiguous tiles | All 145 names and every signed/`[NN]` representative; exact plating/curse regressions; canonical fused counts 1–9 on two pages; all nine fusion glyphs at all eight pixel residues in Items and Info |
 | Item descriptions | 144px × 4 lines | **21 staged glyphs** | Shared `$C616` staging and overlapping queue pens | Real help plus synthetic-wide plane checks |
 | Equipment seals | 144px × 1 line per seal | **21 staged glyphs** | Up to four seal rows after one item name | All 20 seals photographed and plane-exact |
-| Clear-condition list | 144px × 5 visible rows | **21 staged glyphs per row** | 72 allocator tiles in runs 57+11+4; widest possible current five need 56 primary-run tiles | `conditionspill.py`: widest five plus exact 21-glyph edge, plane-exact |
+| Clear-condition list | 144px × 5 visible rows | **21 staged glyphs per row** | 72 allocator tiles in runs 57+11+4; current worst five use 57/57 primary-run tiles (2026-09-08 audit) | `conditionspill.py`: widest five plus exact 21-glyph edge, plane-exact |
 | Main/action/start/Ground menus | Descriptor width minus measured raw cells | Shape-specific; the shared staged scanner admits at most 18 glyphs | Shared menu allocator and context-specific pools; Ground box 5 has one raw cell | `menuspill`, real-save `groundspill`, `menuromspill`, `startspill` |
 | ROM menu rows | Descriptor width minus approved raw prefix | Ends at the row's actual ROM terminator | Deterministic per-box tile pools | Approved box census only; unknown shapes fall back native |
 | Rankings | Measured five-name slices | Six stored player-name characters | **COMPLETE:** one screen-scoped allocation with native restoration; VWF remains mandatory | `rankspill` plus the replacement `orochisymbolspill`; see the menu VWF implementation record below |
@@ -56,19 +58,23 @@ scanlines, reveal-map pass 92/154, with no unfinished pass. The build also prove
 current translated line selects the proportional path before pixel 72; the sole apparent exception
 is the already-calibrated non-rendered extraction false positive at `14:$7EE6`.
 
-The permissive 30-glyph source policy changes some automatic source-only box boundaries.
-The seeded message-duration run now sees 11 boxes versus the old 24-glyph build's 15. This
+The permissive 30-glyph source policy changed some automatic source-only box boundaries.
+The reset's seeded message-duration comparison saw 11 boxes versus the old 24-glyph build's 15. This
 is expected reflow, not memory corruption; visual review may restore authored `<br>` or
 `<brk>` where pacing benefits.
 
-One measured event is deliberately outside that ordinary pagination freedom. Runtime
-entry `14:$5AFD` displays one two-line stairs window and advances floor on A. Its verbatim
-contract is `line one<br>line two<end><brk>`; `rescuespill.py` checks the order and replays
-the supplied **Nagi** save. This is a control-flow constraint, not a font pixel budget,
-The separate save-backed Koppa/Nagi/Fumi stair regressions cover companion selection;
-that formerly open cross-bank bug is now fixed.
+**Retracted stairs exception — `14:$5AFD`:** this interior entry was reached while an
+ordinary-stair pointer was corrupt. Corrected Nagi, Koppa and Fumi stairs stage the shared
+bank-14 choice at `14:$46C1`. `rescuespill.py` verifies that the conservative interior
+records remain intact and are not staged by ordinary stairs. Retain their reviewed text
+and controls, but do not infer a universal terminal `<end><brk>` rule from them.
 
 ## Signed True Rapier census
+
+This is the retained fixture census from the font migration. The current glossary-wide
+audit is broader: on 2026-09-08 its widest item variant is `Battle Counter-99`, with
+17 source glyphs, 84 painted pixels and 11 allocator tiles; the five widest item rows
+plus four 4-tile verbs use 71/72 tiles.
 
 Thin Pixel-7 GB Compact gives several two-digit signed suffixes the same peak width. `-99` is the
 audit's deterministic representative, while `-77` remains a stable regression fixture:
@@ -174,85 +180,50 @@ fits, then correct concrete visual/pacing conflicts rather than preserving specu
 headroom. Do not extend that policy to an unmeasured renderer shape; measure its source,
 pixels and temporary storage first.
 
-## Roadmap and remaining work
+## Current status and remaining work
 
-1. **V4A — optional runtime research; no known fit failure:** the `<var>`/`<cE3>`
-   producer-to-template census may replace 28 historical warning labels with measured
-   classes, but current audits show zero definite failures and zero unproven translated
-   renderer classes. Do not modify translations to clear warnings; resume only by explicit
-   request or for a concrete failing playtest value/route.
-2. **V4B — concrete playtest/text intake; scope intentionally open:** place Joey's next
-   suggested work here when it concerns wording, authored line breaks, spacing, pacing or
-   reveal rhythm. There is no predeclared bulk rewrite. Preserve the approved Nagi
-   `$5AFD` one-window route contract without assuming it belongs to Koppa; any font metric
-   change invalidates fit assumptions until
-   every pixel, variant and allocator audit is rerun.
-3. **V4C — geometry (COMPLETE; visually approved 2026-08-10):** widened menu boxes were
-   re-measured and safely compacted together with their cursor/field coordinates. The
-   retained one-cell exceptions are documented at the top of `ENGINEERING_RULES.md`. The
-   independent fixed-cell name-grid cleanup is also complete: its 75 selectable cells are
-   intentional, both aliased page branches are verified, and box 12 is barred from DTE.
-4. **V4D — translated-text completeness audit (COMPLETE, 2026-08-10):** all ten
-   script-bank embedded/unframed candidates are proven non-text by their consuming code
-   and exact address+byte classified in `coverage.py`. Strict route scans remain part of
-   ongoing V4B playtest intake and the V6 freeze because static coverage cannot discover
-   an unknown entry inside already covered bytes.
-5. **V4E — starting-menu clearing and ownership (COMPLETE):** title, Log, difficulty,
-   Rank/Pass, Rankings and Fay transitions hide incomplete redraws. Rankings now uses a
-   screen-scoped allocation and restores borrowed native graphics, including the Orochi
-   badge, before an adjacent screen can reveal them. The former false-positive regression
-   was replaced by the R3 route described below.
-6. **V4F — item-menu clearing and paging:** the original whole-map implementation was
-   completed and visually approved 2026-08-10. On 2026-08-23 the narrower screen-1
-   paging/Start-sort checkpoint changed redraws to `old -> blank status/name cells ->
-   complete rows` with the LCD on. Manual review rejected the first four-page-only gate
-   and then exposed delayed equipped-marker remnants. Paging, sorting, and the regional
-   blank are visually accepted; the committed one-to-four-page matrix treats `$83/$84`
-   and `$85/$86` border/marker pairs atomically. The checkpoint-2 Items-to-Status half
-   now leaves independently from pages 1-4 with zero LCD-off/white frames and lets the
-   native Status publisher progressively replace the intact outgoing page. Direct
-   Status-to-Items entry/re-entry now retires visible BG rows 0-15 in four VBlanks while
-   retaining the bottom Window, then commits empty box-14/box-4 perimeters before any
-   Item row becomes visible; all four outgoing-page re-entry cycles and their next page
-   change are regression-covered. The 2026-08-24 review additionally corrected the
-   one-row standing-item Floor page after carried pages: four retired left borders now
-   become zero, its transition first commits complete one-row chrome, and both Right and
-   Left return through complete empty five-row chrome before Item text. An exact
-   completed-page latch also admits its live Status exit. Automated coverage passes;
-   manual acceptance is still pending. Action/Info, Gitan, Pot, and rejected contexts retain
-   the approved whole-map fallback. Box 14 still composes the complete `Items` word.
-7. **V5 — graphics — COMPLETE:** **V5A COMPLETE** pre-intro title/copyright card; **V5B COMPLETE**
-   illustrated title screen; **V5C COMPLETE** 12px-cap Poppins dungeon/town banners
-   (Moonlight Village and Forest 1 reference-exact; all 50 live floors regressed);
-   **V5D COMPLETE** all 22 native ending-credit cards in the approved Poppins style,
-   with the final Japanese end mark preserved. The completed `intro.tsv` cinematic
-   renderer remains frozen.
-8. **K1/K2 — Koppa rescue bugs (COMPLETE):** ordinary stairs retain their cross-bank
-   `Go down / Stay here` choice, and the shared final dungeon exit reaches Rankings.
-   Koppa, Nagi and Fumi save-backed routes preserve the controls.
-9. **R3 — Rankings VWF ownership — COMPLETE:** the replacement regression fails the
-   frozen known-bad ROM and preserves both ranking boards, repeated Adventure navigation,
-   the Orochi badge and LCD-off rescued-child results. See
-   recorded in `VWF_BUDGETS.md`.
-10. **V6 — release candidate validation:** freeze font/text/graphics/geometry; run all
-   normal/shuffled, crash-sweep, intro, screenshot, interaction and clean-playthrough
-   gates; then dry-run the documented external-translator TSV-to-ROM workflow and publish
-   final hashes/docs.
+The [repository README](../README.md) records accepted release hashes and battery results;
+[MENU_STRUCTURE.md](MENU_STRUCTURE.md) records exact menu routes and visual acceptance.
+The following reconciles the earlier V4–V6 worklist as of 2026-09-08:
 
-The session-level acceptance criteria and interruption policy are canonical in
-`ENGINEERING_RULES.md`. Cinematic text and its VM are complete and remain outside this work.
-The ROM's `$66` Blank Scroll name/object slot is classified unused: there is no reachable
-Write action or scribing screen, so it adds no localization or VWF task.
-K1/K2 and V5D are complete and save-regressed. V4B remains open intake, V4A remains
-optional, and V6 follows the broad playtest.
+- **V4A — optional runtime research:** the complete `<var>`/`<cE3>` producer-to-template
+  census remains open. The current strict font audit reports **zero definite physical/source
+  failures, 27 legacy line-reservation warnings and zero unproven translated geometries**.
+  Do not shorten translations to clear historical warnings; investigate a concrete failing
+  value/route or an explicitly requested census.
+- **V4B — playtest and text intake:** wording, spacing, pacing and newly reached routes
+  remain open to review. Ordinary companion stairs use `14:$46C1`; the former `$5AFD`
+  one-window stairs contract is retracted. Any font metric change requires renewed pixel,
+  variant and allocator checks.
+- **V4C/D — geometry and static completeness:** known paths are complete. Current box
+  geometry and retained width exceptions live in `script/build-inputs/box_geometry.tsv`.
+  Static coverage cannot prove every dynamic event entry has been discovered.
+- **V4E/F — Start and Item/Floor rendering:** the catalogued same-menu regional work,
+  checkpoints 1–4, Start S1–S4 and follow-up findings IFR-01–IFR-09 are implemented,
+  regression-covered and visually accepted. Dormant fallbacks are distinct from remaining
+  route work. Follow `MENU_STRUCTURE.md` for the exact admission boundaries.
+- **V5 — graphics and cinematics:** known routes are complete. Production VWF uses
+  Thin Pixel-7 GB Compact; arrival labels use approved source rasters and ending credits
+  use Inter SemiBold. Cinematics retain their separate `intro.tsv` VM/pack contract.
+- **K1/K2 and R3 — companion stairs/exits and Rankings:** the known defects are fixed
+  and covered by real-save regressions. Conservative interior records remain manifested
+  and isolated from the ordinary stairs route.
+- **V6 — release:** the full normal, shuffled and redirect-all battery passed on
+  2026-09-07, including the clean-checkout artifact reproduction recorded in the README.
+  Continue manual hardware/emulator playtesting before the final release tag. A new
+  translation or renderer change must pass the applicable gates again.
+
+The ROM's `$66` Blank Scroll name/object slot remains classified unused: no reachable
+Write action or scribing screen is known. It adds no current localization task.
 
 ## Menu VWF implementation record
 
-`tools/menuvwf.py`'s docstring is the authority for the implementation; this is the
-measured delta that shaped it.
+**Historical implementation record:** these are the measured deltas that shaped the
+renderer, including superseded shapes and allocation stages. Current contracts are in
+the table above; current implementation is in `tools/menuvwf.py`, and memory ownership
+is in `ROM_BANK_MAP.md`.
 
-The implementation of record: `tools/menuvwf.py`'s docstring is the authority; this is
-the delta. Rows are allocated by a WATERMARK ALLOCATOR over pool `$43-$7B` (57 tiles),
+The initial rows were allocated by a WATERMARK ALLOCATOR over pool `$43-$7B` (57 tiles),
 records keyed by SHADOW DEST at `$C163-$C1B2` (16 × 5: key, base, cap, raw cells),
 reset by a far-call hook on the font upload `13:$7643` (far index 9). Tile 12 of a
 13-tile row composes into `$C12C-$C13B` — the `$C006` queue's flat space holds exactly

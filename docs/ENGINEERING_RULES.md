@@ -24,10 +24,21 @@ For the mistakes behind them see [`TRAPS.md`](TRAPS.md).
 - The redirect-all layout is a real timing gate. On 2026-08-13 it exposed a 160-scanline
   reveal-map pass that normal placement missed; the optimized direct-pointer builder now
   completes the same route within 143/154 scanlines and uploads byte-exact.
-- Preserve all `<...>` control tokens and their ordering. Never infer that `<end>`, `<brk>`
-  or a mode argument is decorative.
-- Space is not a translation constraint. Relocation is complete and has large headroom;
-  write natural English, then wrap it with the measured renderer tools.
+- Preserve significant control tokens, arguments, producer substitution order and effect
+  sequencing. Token lint checks a multiset, so passing it does not prove that a reordered
+  sequence is safe. Layout edits follow the actual renderer: prose may re-wrap, queued
+  fragments may not gain `<br>`/`<brk>`, and item descriptions retain their page count.
+  Never infer that an end/wait flag, structural space or raw effect byte is decorative.
+- ROM storage and visible whitespace are separate constraints. Approved relocation has
+  substantial headroom; use the current allocator report instead of old per-bank spare
+  counts. Fixed records retain their measured byte limits. Rendered spaces consume source
+  glyphs and font advance; `textlayout.py` owns native indents and selector spacing.
+- Translation documentation must follow the current implementation and regression
+  evidence. `TEXT_REFERENCE.md` indexes the rule sources; update it, `VWF_BUDGETS.md`,
+  `script/README.md` and relevant TSV comments together when a contract changes. Label
+  superseded checkpoint records explicitly. A future editor must use the approved font,
+  bank-specific codec and renderer rules, and distinguish static validation from runtime
+  or visual acceptance.
 - Rankings must remain VWF. Do not fall back to fixed-width text or weaken the Orochi,
   repeated-navigation, native-control or hostile-layout regressions.
 - A green model is not visual approval. Photograph or inspect the actual emulator route

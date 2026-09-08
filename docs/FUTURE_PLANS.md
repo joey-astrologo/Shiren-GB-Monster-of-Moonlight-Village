@@ -2,58 +2,24 @@
 
 ## Regional blanking for proportional Item pages
 
-**Status:** Checkpoints 1-3 are committed, regression-complete, and visually accepted.
-Checkpoint 2 keeps pages 1-4 live on Items-to-Status, while Status-to-Items blanks only
-the replaceable BG above the persistent Window and commits empty box chrome before item
-text. It is frozen at commit `3489572` on 2026-08-23. Checkpoint 3 is frozen at commit
-`34a20ec` on 2026-08-25. Its accepted scope includes carried-page paging and sorting, the
-real appended standing-item Floor page in both paging directions, live Floor-to-Status,
-the initial Adventure cursor, and screen-2 Action B-cancel over carried Items pages 1-4
-and the settled standing-item Floor page. B-cancel replaces the outgoing Action box with
-the reconstructed Item/Floor parent and restores the retained screen-1 input state
-directly. The unpublished Status/Items replay is skipped, eliminating both shared-tile
-contamination and the former 40-frame input stall. Checkpoint 4 is now a partial automated
-review candidate, not frozen: it covers exact screen-1, screen-7, and screen-20
-Item/Floor -> Action -> Info/seal -> same-parent lifecycles plus carried-Pot screen-12/13 `See` ->
-Items return. After failed visual review, screen-20 Info entry/page redraw was revised
-from a 9-14-frame empty hold to Action-box-to-chrome-plus-row-zero entry and whole-row
-old/new replacement. The reported carried screen-5
-seal return now retains the complete seal page through the disposable Status replay and
-hands the parent to the bounded Item-page regional renderer instead of taking an LCD-off
-fallback. Visual acceptance is still pending.
-Checkpoints 5-6 remain deferred.
+**Current status — 2026-09-08:** the catalogued same-menu Item/Floor and Start work is
+implemented, regression-covered and visually accepted. This includes Item checkpoints
+1–4, Start S1–S4, the post-freeze seal footer amendment and IFR-01–IFR-09. The complete
+normal, shuffled and redirect-all release battery passed on 2026-09-07. Manual full-game
+playtesting remains open before a final release tag.
 
-The behavior-neutral whole-LCD audit is now implemented. `tools/lcdblankaudit.py`
-compares every `$FF40` writer in the Japanese and English ROMs and makes every explicit
-translation-added bit-7 clear a manifested build decision. The first census found 45
-base writers and 78 English writers, including ten explicit English blankers: four
-complete-screen/tile-reload sites currently kept, two complete-screen menu sites awaiting
-policy review, three same-menu fallbacks marked for replacement, and one mixed site. The
-mixed Item-page instruction is required exactly once when entering complete Pot viewer
-screen 12/13 but is prohibited for ordinary Items paging and sorting. Each same-menu site
-is connected to an exact execution hook in its paging, Status-return, Pot, or Info
-fixtures; visual playtesting is no longer the primary detector for those known fallbacks.
+Use [MENU_STRUCTURE.md](MENU_STRUCTURE.md) for current route admission, fallback
+classification and visual acceptance, and the [repository README](../README.md) for
+release status and hashes. The original 45/78 direct-writer census was superseded by the
+full display-mutator census described there, including native shadow publication. Name,
+Info and Floor-Pot routes previously described here as the next regional candidates have
+since acquired their own accepted owners.
 
-The audit also made the remaining debt reproducible. The unidentified-Pot Floor parent is
-dispatcher screen 7, despite sharing a handler with screen 20. Its exact `0,7,4,0,7`
-Info route is now an independent zero-blank regional lifecycle: entry restores the
-underlying full-width title before Info, and return carries state `$0B` through disposable
-screen 0 before rebuilding box 5 plus the y=1 seven-row box 6. Item Action -> Name -> End
--> Items still executes the Status blanker once during its disposable screen-0
-reconstruction and is now the next same-menu regional-removal candidate. The
-rejected Item-row blanker at `60:$4222` has no observed exact execution; it remains a
-zero-execution fixture invariant until a real caller proves otherwise.
-
-The review gate now includes the reported five-row `Egg / Egg / Happy Bracer /
-Fusion Pot / Manji Kabura` inventory. That case proved screen 12 can legitimately retain
-either zero or one private-Action admission latch; requiring one caused the LCD-off,
-box-late, mixed-title return. The corrected exact proof accepts both screen-12 producers,
-and the fixture chains five standing-Floor Info pages through carried-Pot See and back.
-It also includes the exact `mesen_spawn_fusion_kit.lua` history. The injected records
-were not themselves the blanking trigger: a gameplay-bound carried Action could leave
-the private admission byte at one after its BG owner disappeared. The independent
-screen-20 `0,20,4/5` route now admits idle or that stale-one value, clears it before
-publication, and continues to reject active Item transaction phases two through four.
+**Historical design record:** the checkpoint sections below preserve the narrower scope
+and observations at each stage. Their addresses, exclusions and pending-review language
+are historical, not current allocation permissions or an outstanding worklist. Current
+memory placement is governed by [ROM_BANK_MAP.md](ROM_BANK_MAP.md). Any new route still
+needs its own ownership proof and regression.
 
 ### Motivation
 
@@ -63,8 +29,8 @@ pixels still used by the outgoing page.
 
 The English VWF instead paints packed text into reusable tile-data slots. Repainting a
 slot while the visible tilemap still refers to it makes the outgoing text mutate into
-new letters, missing glyphs, or border graphics. The current robust workaround disables
-the LCD while the page is rebuilt, but that produces a conspicuous full-screen white
+new letters, missing glyphs, or border graphics. Before the regional checkpoints, the
+workaround disabled the LCD while the page was rebuilt, producing a full-screen white
 flash that is not present in the Japanese Item-page transition.
 
 Full double-buffering is not a practical default. A worst-case Item page needs five

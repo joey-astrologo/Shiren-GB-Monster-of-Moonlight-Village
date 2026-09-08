@@ -12,10 +12,16 @@ onboarding — start with the repository [README](../README.md), and if you are 
 | [ROM_BANK_MAP.md](ROM_BANK_MAP.md) | Memory ownership | **Before** placing or moving ROM code, tables, text or graphics |
 | [ENGINEERING_RULES.md](ENGINEERING_RULES.md) | How to work here | Before changing anything: the gates a change must pass, fixtures, and how to verify a render-path change |
 | [TRAPS.md](TRAPS.md) | Mistakes that cost time | You are about to trust a measurement, a bisect, a scan, or a green build |
-| [FUTURE_PLANS.md](FUTURE_PLANS.md) | Staged engineering plans | You are reviewing the Item regional-blanking checkpoint or another deliberately postponed design |
+| [FUTURE_PLANS.md](FUTURE_PLANS.md) | Regional-blanking design history | You need the original checkpoint rationale; use MENU_STRUCTURE.md for current route status |
 | [MENU_STRUCTURE.md](MENU_STRUCTURE.md) | Menu navigation and display ownership | You are changing menu transitions, screen/box drawing, tile lifetimes, or regional blanking |
 
 ## A note on provenance
+
+Current translation rules were reconciled with the toolchain on **2026-09-08**.
+`TEXT_REFERENCE.md` indexes the implementation sources; `VWF_BUDGETS.md` summarizes
+renderer contracts, and `script/README.md` gives the editing workflow. When those rules
+change, update all affected guides and TSV header comments together. A historical count,
+font measurement or checkpoint restriction must not silently become a current limit.
 
 These files absorbed the project's engineering handoffs. The handoffs recorded work
 session by session, which meant a fact's home was whenever it was discovered rather than

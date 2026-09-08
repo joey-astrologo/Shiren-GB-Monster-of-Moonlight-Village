@@ -2,21 +2,24 @@
 # the `<br>`-carrying rows in `script/en.tsv`.
 #
 # WHY THIS FILE EXISTS. `<br>` is authored data, so renderer changes do not re-flow old
-# text automatically. Production dialogue now uses modified Dot Gothic with independent
+# text automatically. Production dialogue uses Thin Pixel-7 GB Compact with independent
 # 30-source-glyph and 144-painted-pixel limits. Drafts live here so a measured geometry or
 # approved-font change can be applied in one command:
 #
 #     python3 tools/wrap_en.py script/prose_draft.tsv --apply
 #
-# WHAT GOES IN A ROW. `loc <TAB> english`, and the English is SENTENCES. No `<br>`, no
-# `<end>`, no leading-space indents — the wrapper owns all three, and the `<end>` rule it
-# applies is measured off the shipped Japanese (see wrap_en.wrap).
+# WHAT GOES IN A ROW. `loc <TAB> english`, written as sentences without manual `<end>`
+# or leading-space indents. Authored `<br>` and `<brk>` are preserved; the wrapper owns
+# the remaining wrapping, continuation indents and generated page-end controls.
+# A value starting with `=` is verbatim: the wrapper removes `=` and copies its layout.
+# Existing verbatim rows still require token, close, source and pixel validation.
 #
 # What you DO write:
-#   <brk>          a page break you want for pacing. Put them where the Japanese does.
+#   <brk>          a page break you want for pacing; review the source close behavior.
+#   <br>           an intentional line break which automatic wrapping must preserve.
 #   <name> <var>   substitution tokens. lint_en checks these survive; the wrapper leaves
-#   <cE3:05>       room for what it expands to. The selector inside <cE3:xx> and the <$XX>
-#   <mode1><$3C>   after <mode1> are ARGUMENT BYTES, not text — see docs/TEXT_REFERENCE.md §7.
+#   <cE3:05>       room for what it expands to; the selector is already inside the token.
+#   <mode1><$3C>   preserve reviewed effect/raw-byte sequences; see TEXT_REFERENCE.md §7.
 #
 # SPEAKER TAGS are the short form for the five compounds Joey ruled on 2026-08-05:
 # Kinji / Masa / Chief / Gon / Priest. `Fumi's Mom` is her whole name and stays.
@@ -281,7 +284,7 @@
 11:$5B87	Koppa: ...So then, hic.<brk>I thought, <name>'s in danger!<brk>So I slashed Yoshizota with my sword! Swish!
 11:$5BD1	Gon: Wa-ha-ha-haaa!<brk>You're pretty good at telling jokes!
 
-# ============ bank 11 — the farewells (mode1 args are PAUSE lengths, keep exactly) ============
+# ============ bank 11 — the farewells (preserve reviewed mode1/raw-byte sequences) ============
 11:$6275	Koppa:<mode1><$14> Let's go, <name>!<mode1><$78><mode0>
 11:$628A	Masa:<mode1><$14> See you.<mode1><$28><mode0>
 11:$629E	Rokuro:<mode1><$14> Thanks for everything.<mode1><$28><mode0>

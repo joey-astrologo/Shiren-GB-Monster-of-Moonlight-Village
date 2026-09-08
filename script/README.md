@@ -13,6 +13,7 @@ here when you want to know "where do I change a monster's name".
 | You want to change | Open | Section |
 |---|---|---|
 | An item name | `glossary.tsv` | [Item names](#item-names) |
+| An item description or equipment seal | `en.tsv` | [Descriptions and seals](#descriptions-and-seals) |
 | A monster or NPC name | `glossary.tsv` | [Monster and NPC names](#monster-and-npc-names) |
 | A menu entry, button, label | `en.tsv` | [Menu strings](#menu-strings) |
 | Village or story dialogue | `prose_draft.tsv` | [Prose and story](#prose-and-story) |
@@ -21,6 +22,8 @@ here when you want to know "where do I change a monster's name".
 
 `build-inputs/` and `evidence/` are not translation files — ignore them. `script.json` and
 `script.tsv` are generated from your own ROM by `tools/extract.py` and are not in the repo.
+For any address already in `prose_draft.tsv`, edit that draft even when the row is help
+or menu text; the wrapper owns its generated `en.tsv` value.
 
 ## Two rules that apply everywhere
 
@@ -28,14 +31,15 @@ here when you want to know "where do I change a monster's name".
 offset, so an id-keyed edit silently retranslates the wrong string. The build refuses
 numeric keys for exactly this reason.
 
-**A failed translation never corrupts the ROM.** Anything that cannot be inserted is
-reported and the original Japanese is kept for that one string, so the build always boots.
-Failures appear *only* in `build/worklist.tsv` — a green build is not proof you read it. A
-clean build deletes that file, so "no such file" means nothing failed.
+**A rejected translation fails the build.** `tools/build.py` exits nonzero on collected
+text/reference errors before writing its ROM or relocation map, preserving any previous
+outputs. `sh build.sh` requests the detailed `build/worklist.tsv` report. Successful
+insertion removes a stale worklist; a later build gate can still fail, so check the command's
+exit status and output. The absence of a worklist alone does not prove a successful run.
 
 ```sh
 sh build.sh              # build + every check
-cat build/worklist.tsv   # what did not fit
+# If insertion failed, inspect build/worklist.tsv and the command output.
 ```
 
 ---
@@ -59,13 +63,13 @@ a glossary term, its English **must** use the frozen rendering. Deliberate excep
 
 ### Limits
 
-- **The inventory row gives you a 128px payload and the source scanner accepts 17 glyphs.**
-  Not 17 *letters of the base name* — the runtime suffix counts. Weapons and shields can
+- **The inventory row gives you a 128px payload and the source scanner accepts 18 glyphs,**
+  including the runtime suffix. Weapons and shields can
   carry any signed value from `-99` to `+99`; staffs and pots carry `[1]` to `[99]`.
-- `Accurate Sword-99` is exactly 17 source characters and paints 87px, so it fits with real
-  slack. That measurement is what disproved the old "14 character" rule of thumb.
+- The 2026-09-08 font audit measures `Battle Counter-99` at 17 source glyphs and 84px,
+  requiring 11 allocator tiles. A character count alone does not establish a visual fit.
 - `lint_en.py` **fails** a staff or pot whose name plus an ordinary two-digit counter
-  crosses the 17-glyph scanner (`counter_overflow`).
+  crosses the 18-glyph scanner (`counter_overflow`).
 - Item *descriptions* are a different renderer: four rows of 144px, not three.
 
 ```sh
@@ -73,6 +77,16 @@ grep こんぼう script/glossary.tsv       # what is this thing called
 python3 tools/lint_en.py               # glossary + token checks
 python3 tools/fontaudit.py --details 4 # every bare/signed/[NN] variant, in real pixels
 ```
+
+## Descriptions and seals
+
+**File:** `en.tsv`. Item descriptions have four 144px rows per page and a 21-glyph
+source limit per row. Preserve the Japanese description's page count: the item selector
+uses those boundaries. Equipment seals have one 144px, 21-glyph row per seal.
+
+`<cF0:xx>` expands a shared help fragment; its actual translated text spends glyphs and
+pixels in the containing row. Run `dialogue_preview.py --check` and `fontaudit.py` after
+editing either a description or a shared fragment. A seal cannot borrow another seal's row.
 
 ## Monster and NPC names
 
@@ -111,29 +125,40 @@ style comments.
 
 ### Limits
 
-- **Every menu box has its own pixel width**, recorded in `build-inputs/box_geometry.tsv`.
-  There is no single character budget — the item action menu is 8 tiles (64px), while a
+- **Every menu box has its own pixel width**, derived from the extracted descriptor and
+  the approved overrides in `build-inputs/box_geometry.tsv`.
+  There is no single character budget — the item action menu has a 32px text payload
+  after its 8px cursor cell (boxes 6/39 have five interior tiles), while a
   title-menu row is the descriptor width minus one cursor tile.
-- `box_too_wide` fails the build if a string overruns its box's measured geometry.
+- `box_too_wide` fails insertion when a row exceeds its measured source scanner.
+  `fontaudit.py` separately checks physical pixels; live menu regressions check allocation.
 - The 40 clear-condition labels at `14:$7C78` are five 144px rows, up to 21 source glyphs
   each, checked individually *and* as the worst possible group of five.
 - **The font has no percent glyph.** Write `Max Belly 200`, not a raw native tile.
 
 ## Prose and story
 
-**File:** `prose_draft.tsv` — *not* `en.tsv`. Village and story dialogue only.
+**File:** `prose_draft.tsv` for rows already drafted there. It primarily contains village
+and story dialogue, plus a few explicitly grouped wrapped help/menu records. Edit those
+rows in the draft so a later wrap keeps the change.
 
-Write **sentences**: `loc <TAB> english`, with no `<br>`, no `<end>`, and no leading
-indents. Then:
+Write **sentences**: `loc <TAB> english`, without manual `<end>` or leading indents.
+Use `<brk>` for an authored page/pacing break and `<br>` when a deliberate line break
+matters; the wrapper handles the remaining wrapping. Then:
 
 ```sh
 python3 tools/wrap_en.py script/prose_draft.tsv --preview   # see the lines it will make
 python3 tools/wrap_en.py script/prose_draft.tsv --apply     # write them into en.tsv
 ```
 
-`wrap_en.py` owns the line breaks, the indents, and `<end>` placement — it puts `<end>`
-exactly where the shipped Japanese does. You place `<brk>` where the pacing wants a new
-page. It reports `auto_split` when a drafted page needed more than one box.
+`wrap_en.py` preserves authored breaks, adds continuation indents, balances overflowing
+pages, and places `<end>` before generated page boundaries. It preserves structural
+source endings before terminal effect controls. It reports `auto_split` when a drafted
+page needed more than one box; review the pacing and source close behavior afterward.
+
+An existing value starting with `=` is a verbatim row: the wrapper removes `=` and copies
+the rest unchanged. It receives no automatic wrapping or indent repair. Preserve its
+reviewed controls and run the same validation as for direct `en.tsv` edits.
 
 Editing the generated dialogue rows in `en.tsv` by hand means your next re-wrap discards
 the edit. Change the draft.
@@ -147,9 +172,10 @@ the edit. Change the draft.
   pixels first. `wrap_en.py` fills to the real edge.
 - A native leading space costs one source glyph and its font advance. The builder,
   preview and wrapper share that rule; the wrapper reserves the first-line indent without
-  writing it into the draft or doubling it in the output.
+  writing it into the draft or doubling it in the output. Selector rows have their own
+  cursor-spacing transformation in `tools/textlayout.py`; do not normalize their spaces.
 - Text does **not** pixel-wrap at runtime. Anything past 144 painted pixels is clipped, and
-  `line_too_long` fails the build rather than shipping it.
+  `line_too_wide_px` fails insertion. `line_too_long` independently protects the source scanner.
 - Keep boxes aligned to sentences the way the Japanese does.
 
 ```sh
@@ -185,7 +211,7 @@ Word each fragment so it reads correctly under **every** substitution. English w
 will not always match the Japanese fragment boundaries, and some sentences need their
 fragments restructured rather than translated one-to-one.
 
-### Never add a `<br>` to a queued fragment
+### Never add a `<br>` or `<brk>` to a queued fragment
 
 **This is the most dangerous edit in the entire script, and it breaks gameplay, not
 layout.**
@@ -233,12 +259,14 @@ Where a break *is* legal, there is still a trap worth knowing. A `<br>` fixes th
 one point in a sentence whose real width is not known until runtime: break `<var> hit
 <var>` where it reads well for `Rat` and it is wrong for `Lantern Puffer`.
 
-The overflow check is deliberately permissive here. The build fails a line only when it
-overruns **with every substitution charged just one cell** — an overrun no runtime value
-could rescue. Everything tighter is reported as headroom. So a break that is fine for short
-names and broken for long ones passes every check and ships.
+Unknown runtime values are checked at their minimum contribution. The settled `<name>`
+producer instead reserves all six player-name glyphs and their widest approved pixels;
+shared help fragments use their actual translations. Known item suffixes and selected
+message families receive additional variant audits. A passing minimum-value check does
+not prove every remaining actor/item substitution fits.
 
-`tools/varaudit.py` reports these as `REVIEW` rather than failing them. It is worth reading:
+`tools/varaudit.py` reports unresolved combinations as `REVIEW`. For example, a historical
+report had this form; regenerate the report for the current font and glossary:
 
 ```
 REVIEW 13:$4B66  [combat-actor ; combat-target]: 449/15246 candidates overflow;
@@ -248,18 +276,19 @@ REVIEW 13:$4B66  [combat-actor ; combat-target]: 449/15246 candidates overflow;
 ### Tokens must survive exactly
 
 `<var>`, `<name>`, `<cE3>`/`<cE3:xx>`, `<cE4>`, `<cF0:xx>` and friends inject runtime data.
-**A translation that drops one encodes cleanly, inserts cleanly, passes every reference
-check and crash seed — and then prints "The  attacked!" on screen.**
+Dropping one can encode successfully while losing runtime data. Token lint catches that
+semantic error and makes insertion fail.
 
 | token | rule |
 |---|---|
 | `<var>` `<name>` `<cE3>` `<cE4>` `<cF0:xx>` … | must survive exactly: same tokens, same arguments, same counts |
-| `<br>` `<brk>` `<end>` | yours — but see the warning above |
-| `<cEC:xx>` | **must stay first.** The ROM reads it from a fixed position, not from the stream |
+| `<br>` `<brk>` `<end>` | follow the renderer's wrapping, page-count and close rules above |
+| leading `<cEC:xx>` in bank-11/14 source | **must stay first**, with its argument; the dialogue path reads its prefix at a fixed position |
 
-Order is not checked otherwise — `<var> dodged the blow` and `Shiren attacked <var>` are
-both fine. Only the multiset matters. `lint_en.py` reports `token_lost` / `token_added` and
-the build fails the string rather than shipping it.
+`lint_en.py` compares the multiset of significant tokens, including arguments, rather
+than their sequence. Passing parity does not establish that reordering is safe: preserve
+the producer's substitution order and effect/control sequence unless the actual route
+proves a change. Identical `<var>` tokens can still refer to different queued actors.
 
 ---
 
@@ -269,7 +298,9 @@ the build fails the string rather than shipping it.
 python3 tools/lint_en.py                     # tokens, glossary, <end> placement
 python3 tools/dialogue_preview.py --check    # every dialogue line, drawn
 python3 tools/fontaudit.py --details 4       # physical pixels, item variants
-sh build.sh                                  # everything, then read build/worklist.tsv
+sh build.sh                                 # normal build and runtime gates
 ```
 
-`docs/TEXT_REFERENCE.md` §6 lists every worklist error and what to do about each.
+These checks use the local extraction in `script/script.json`. On insertion failure,
+read `build/worklist.tsv`; other gate failures are reported by the command that failed.
+`docs/TEXT_REFERENCE.md` §6 lists the main diagnostics and how to address them.

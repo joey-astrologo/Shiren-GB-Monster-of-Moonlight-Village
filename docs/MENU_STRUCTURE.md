@@ -103,11 +103,11 @@ This document answers two separate questions:
 The second question is why this map exists. Japanese menu text refers to immutable glyph
 tiles. English VWF rows refer to a small set of reusable tile-data slots. If an incoming
 row repaints one of those slots while an outgoing visible cell still refers to it, the old
-text changes underneath the player. The current translation prevents this by disabling
-the LCD and rebuilding the whole 20x18 map. That is safe, but creates translation-only
-full-screen white flashes.
+text changes underneath the player. Before the regional checkpoints, the translation
+prevented this by disabling the LCD and rebuilding the whole 20x18 map. That avoided
+tile reuse corruption but created translation-only full-screen white flashes.
 
-Regional blanking is the intended replacement where ownership is provable: remove all
+The accepted regional routes now replace that behavior where ownership is proven: remove all
 visible references in the region being replaced, then recycle its tile slots, render the
 new pixels, and publish only complete rows. Native blanks used when entering gameplay,
 Map, dialogue, or another genuinely new screen are not targets.
