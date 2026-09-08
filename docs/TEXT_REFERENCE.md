@@ -410,6 +410,12 @@ unrelated line does not by itself define every name.
 
 ## 5. Control tokens
 
+The website's [control code reference](../site/controls/index.html) explains every named
+control, raw structural bytes and cinematic page tokens, with examples and rules by
+editor. It distinguishes dialogue, queued messages and item-description handlers and
+marks effects whose visible behavior is not fully mapped. Every editor links to it;
+required codes beside an entry link directly to their explanation.
+
 Write them as `<name>`. They round-trip with what `script.tsv` prints in the `jp` column, so
 you can copy a token straight out of the Japanese.
 
@@ -421,7 +427,7 @@ you can copy a token straight out of the Japanese.
 | `<var>` | a name pulled from the message queue |
 | `<name>` | the player's name |
 | `<cE4>` | a number (level, damage, …) |
-| `<cE0:XX>` | sound trigger, argument in hex |
+| `<cE0:XX>` | likely sound/effect trigger, argument in hex; exact mapping not fully mapped |
 
 `<$XX>` emits a raw byte verbatim. It can represent structural layout or a byte retained
 in a reviewed effect sequence. Use a named token whenever one exists; a stray `<$XX>`

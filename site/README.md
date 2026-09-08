@@ -6,6 +6,11 @@ at `/prose/`, and [subject workbenches](workbench/README.md) at
 for the whole extracted script plus the separately stored cinematic text. Links and
 assets are relative, including browser tests under a repository Pages path.
 
+The [control code reference](controls/index.html) at `/controls/` explains all named
+controls, cinematic tokens and known structural bytes. The home page and every editor
+link to it; required codes beside an entry open the matching explanation in a new tab.
+The guide follows the current codec and renderer evidence and marks uncertain meanings.
+
 Public address: **https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/**
 
 ## Local preview
@@ -49,7 +54,7 @@ The workflow checks out the repository, runs `python3 tools/build_site.py` and
 has `pages: write` and `id-token: write`; package validation only needs `contents: read`.
 No custom token, npm install, third-party Python packages or ROM extraction is needed in CI.
 
-The packaging helper uses an explicit list of 16 public assets plus `.nojekyll`,
+The packaging helper uses an explicit list of 19 public assets plus `.nojekyll`,
 including the complete original TSV at `data/script.tsv` and cinematic TSV at
 `data/intro.tsv`. It checks page links, catalogue integrity, current rule hashes,
 translation baselines, source hashes and exactly-once coverage of all extracted entries.

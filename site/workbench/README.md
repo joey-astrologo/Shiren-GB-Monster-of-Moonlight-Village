@@ -1,5 +1,9 @@
 # Translation workbenches
 
+The [control code reference](../controls/index.html) explains code meanings, examples
+and differences between rendering paths. It is linked from every editor, and required
+codes beside an entry open their explanation in a new tab.
+
 Open [Shiren GB Translation](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
 and choose a subject. The Japanese TSVs and current English translation load automatically.
 All 1,424 extracted entries have a primary workbench; 12 additional entries come from

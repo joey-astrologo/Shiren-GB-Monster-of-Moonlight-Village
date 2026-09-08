@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#253c34">
+  <meta name="description" content="Meanings, examples and editing rules for Shiren GB translation control codes, including differences between dialogue, messages and item descriptions.">
+  <title>Control code reference · Shiren GB</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to control code reference</a>
+  <header class="masthead"><div class="header-inner"><a class="brand" href="../"><span class="moon" aria-hidden="true"></span><span>SHIREN GB<small>Translation tools</small></span></a><a class="project-link" href="../">All workbenches →</a></div></header>
+  <main id="content" class="control-reference" tabindex="-1">
+    <div class="eyebrow">TRANSLATION GUIDE</div>
+    <h1>Control code reference</h1>
+    <p class="lead">Control codes insert names and numbers, control page layout, or trigger game behavior. Translate the surrounding words and keep the controls required by the entry.</p>
+    <nav class="reference-nav" aria-label="Control code sections"><a href="#layout">Breaks and pages</a><a href="#values">Names and numbers</a><a href="#effects">Choices and effects</a><a href="#raw-bytes">Raw bytes</a><a href="#cinematic">Cinematic text</a><a href="#editor-rules">Rules by editor</a></nav>
+
+    <section class="reading-note" aria-labelledby="reading-title">
+      <h2 id="reading-title">Reading a code</h2>
+      <p>In <code>&lt;cF0:03&gt;</code>, <code>cF0</code> identifies the operation and <code>03</code> is its parameter. Parameters are hexadecimal bytes: <code>0A</code> is ten, for example. <code>XX</code> below is a placeholder for the entry’s existing value; do not type <code>XX</code> into a translation.</p>
+      <p>The same code can behave differently depending on how the game reads the text. An address such as <code>14:$541F</code> starts with the bank number. The editor selects the appropriate rules from the entry’s bank and rendering path. Keep the exact spelling and parameter shown in that entry.</p>
+      <p><strong>Examples explain meaning, not permission to add a code.</strong> The editors preserve the reviewed sequence of controls. Some effects are only partly understood; those entries say <span class="uncertain">Not fully mapped</span>.</p>
+    </section>
+
+    <section id="layout" aria-labelledby="layout-title">
+      <h2 id="layout-title">Breaks and pages</h2>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">What it does</th><th scope="col">Editing guidance</th></tr></thead><tbody>
+        <tr id="br"><th scope="row"><code>&lt;br&gt;</code></th><td>Starts a new line.</td><td><code>Hello.&lt;br&gt;Come in.</code> places “Come in.” on the next line. Prose and descriptions allow line-break edits; structured dialogue and queued messages retain their explicit layout.</td></tr>
+        <tr id="brk"><th scope="row"><code>&lt;brk&gt;</code></th><td>Starts a new page/window. Whether the game waits for input depends on the calling code and the other controls.</td><td>In an ordinary prose draft, <code>Hello.&lt;brk&gt;Come in.</code> requests a page break. The prose wrapper supplies the associated close controls. Other workbenches retain the existing page boundaries.</td></tr>
+        <tr id="end"><th scope="row"><code>&lt;end&gt;</code></th><td>Sets the message wait/end flag. It does not itself split a line and is distinct from the stored string’s terminator.</td><td>The prose wrapper places this code; do not type it into an ordinary prose draft. Keep it as required in explicit-layout entries. Adding one at the end of dialogue can repeat the final box; resuming text after it without a page boundary can hide text.</td></tr>
+      </tbody></table></div>
+      <p class="note">A literal Enter/newline in a TSV field is not a game line break. Use the editor’s supported tokens or insertion buttons.</p>
+    </section>
+
+    <section id="values" aria-labelledby="values-title">
+      <h2 id="values-title">Names, numbers and shared text</h2>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">What it does</th><th scope="col">Example or context</th></tr></thead><tbody>
+        <tr id="name"><th scope="row"><code>&lt;name&gt;</code></th><td>Inserts the player’s entered name.</td><td><code>Hello, &lt;name&gt;!</code> could display “Hello, Shiren!” The current name-entry system accepts up to six glyphs, which the editor reserves in its measurements.</td></tr>
+        <tr id="var"><th scope="row"><code>&lt;var&gt;</code></th><td>Inserts a name supplied by the message queue, such as a monster or character.</td><td>In <code>&lt;var&gt; hit &lt;var&gt;</code>, the two occurrences can consume different actors in order. Preserve their roles and order when translating; they are not two copies of one fixed name.</td></tr>
+        <tr id="ce3"><th scope="row"><code>&lt;cE3&gt;</code><br><code>&lt;cE3:XX&gt;</code></th><td>Inserts an item name or item-related text. The message path can include a count prefix.</td><td>Gameplay messages use <code>&lt;cE3&gt;</code>, as in <code>Consumed the &lt;cE3&gt;</code>. Banks 11/14 dialogue use a selector inside the token, for example <code>&lt;cE3:09&gt;</code>. Keep that selector; it is not printable text.</td></tr>
+        <tr id="ce4"><th scope="row"><code>&lt;cE4&gt;</code></th><td>Inserts a runtime number, such as a level or damage value. This numeric formatter can produce up to three digits.</td><td><code>Lv&lt;cE4&gt;</code> could become “Lv12”. The value is supplied by the game.</td></tr>
+        <tr id="ce5"><th scope="row"><code>&lt;cE5&gt;</code></th><td>Inserts a runtime number using the formatter that allows up to seven digits.</td><td>A reviewed shop prompt begins <code>&lt;cEC:08&gt;&lt;cE5&gt; Gitan.</code> Keep this numeric code and its surrounding spaces.</td></tr>
+        <tr id="ce6"><th scope="row"><code>&lt;cE6&gt;</code></th><td>Inserts a runtime number through a separate producer/formatter path, with up to three digits.</td><td>Used in a reviewed selling-price prompt. It is not interchangeable with <code>&lt;cE4&gt;</code>, even though their digit limits match.</td></tr>
+        <tr id="cf0"><th scope="row"><code>&lt;cF0:XX&gt;</code><br><code>&lt;cF0&gt;</code></th><td><strong>Item descriptions:</strong> <code>&lt;cF0:XX&gt;</code> inserts one of thirteen shared text fragments at the current position. <strong>Ordinary dialogue:</strong> <code>&lt;cF0&gt;</code> is a screen effect, not shared text.</td><td>In descriptions, <code>&lt;cF0:00&gt;</code> currently inserts “Raises attack.” and <code>&lt;cF0:03&gt;</code> inserts “When equipped:”. Edit these in <a href="../workbench/?subject=fragments">Shared help text</a>; consumers are remeasured. The ordinary bank-13 message handler also accepts an argument but calls an effect routine. The exact effect mapping is <span class="uncertain">not fully mapped</span>.</td></tr>
+      </tbody></table></div>
+      <p class="note">The number of characters in a token is not its displayed width. Shared help fragments are measured using their actual text, and known item variants are checked with their suffixes. Other runtime producers may still use a minimum-size estimate; the editor reports that limitation.</p>
+    </section>
+
+    <section id="effects" aria-labelledby="effects-title">
+      <h2 id="effects-title">Choices, timing and effects</h2>
+      <p>These codes can affect input, drawing, sound or timing without adding visible text. Keep their parameters, order and required leading positions.</p>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">What is established</th><th scope="col">What to preserve</th></tr></thead><tbody>
+        <tr id="cec"><th scope="row"><code>&lt;cEC:XX&gt;</code></th><td><strong>Banks 11/14 dialogue:</strong> a leading prefix used by special windows and choices, including signs, confirmations and road selectors. <strong>Default message path:</strong> repeats a frame-wait operation using its parameter.</td><td>A dialogue entry beginning <code>&lt;cEC:08&gt;</code> must keep that prefix first, with <code>08</code> unchanged. Its position is part of how the game resumes the entry. Do not interpret all <code>cEC</code> parameters as a dialogue delay.</td></tr>
+        <tr id="ce0"><th scope="row"><code>&lt;cE0:XX&gt;</code></th><td>Conditionally calls an effect routine with one parameter; documented as a likely sound trigger. <span class="uncertain">Exact effect/sound mapping not fully mapped.</span></td><td>For example, <code>&lt;cE0:2B&gt;</code> appears before a gale announcement. Keep the original parameter and position; changing it is not a wording edit.</td></tr>
+        <tr id="ce1"><th scope="row"><code>&lt;cE1&gt;</code></th><td>Calls an effect routine with a fixed value. It does not insert printable text. <span class="uncertain">Visible effect not fully mapped.</span></td><td>No parameter follows inside this token. Preserve it where it occurs.</td></tr>
+        <tr id="ce7"><th scope="row"><code>&lt;cE7:XX&gt;</code><br><code>&lt;cE7&gt;</code></th><td>The default message handler stores its parameter in a control flag. Banks 11/14 dialogue use <code>&lt;cE7&gt;</code> without a parameter and set a different flag. <span class="uncertain">Visible behavior not fully mapped.</span></td><td>Keep the form used by the entry. On the dialogue path the byte after <code>&lt;cE7&gt;</code> is not a parameter and must not be swallowed into the token.</td></tr>
+        <tr id="mode0"><th scope="row"><code>&lt;mode0&gt;</code></th><td>The default message handler clears an engine mode flag. <span class="uncertain">The complete visible meaning of this mode is not fully mapped.</span></td><td>Preserve the reviewed effect sequence. This is not a translation-language or editor display setting.</td></tr>
+        <tr id="mode1"><th scope="row"><code>&lt;mode1&gt;</code></th><td>The default message handler sets the flag paired with <code>&lt;mode0&gt;</code>. Some reviewed dialogue sequences carry a following raw byte associated with timing. <span class="uncertain">Handler/skip-path interpretation remains unresolved.</span></td><td>The current codec writes <code>&lt;mode1&gt;</code> with no parameter inside it. Preserve an existing sequence such as <code>&lt;mode1&gt;&lt;$3C&gt;</code> exactly. Do not delete the raw byte or turn the pair into <code>&lt;mode1:3C&gt;</code>.</td></tr>
+        <tr id="cf1"><th scope="row"><code>&lt;cF1&gt;</code></th><td>Dialogue-only effect that sets two internal state values. <span class="uncertain">Player-visible purpose not fully mapped.</span></td><td>No parameter. Preserve it; it is not an ordinary bank-13 message-path control.</td></tr>
+        <tr id="cf2"><th scope="row"><code>&lt;cF2&gt;</code></th><td>Dialogue-only effect that calls a tilemap routine three times. <span class="uncertain">Complete screen effect not fully mapped.</span></td><td>No parameter. Keep its place in the effect sequence.</td></tr>
+        <tr id="cf3"><th scope="row"><code>&lt;cF3&gt;</code></th><td>Dialogue-only effect that clears an internal flag paired with <code>&lt;cF4&gt;</code>. <span class="uncertain">Visible purpose not fully mapped.</span></td><td>No parameter. Preserve the paired sequence as authored.</td></tr>
+        <tr id="cf4"><th scope="row"><code>&lt;cF4&gt;</code></th><td>Dialogue-only effect that sets the flag paired with <code>&lt;cF3&gt;</code>. <span class="uncertain">Visible purpose not fully mapped.</span></td><td>No parameter. Preserve the paired sequence as authored.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="raw-bytes" aria-labelledby="raw-title">
+      <h2 id="raw-title">Raw bytes and structural tiles</h2>
+      <p><code>&lt;$XX&gt;</code> preserves one byte exactly. Its meaning depends on the entry: it may be a tile, padding or part of a reviewed effect sequence. It is not a general way to add a character the font does not support.</p>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">Known use</th><th scope="col">Editing guidance</th></tr></thead><tbody>
+        <tr id="cursor"><th scope="row"><code>&lt;$81&gt;</code></th><td>The selected-choice cursor in the reviewed choice layouts.</td><td>In <code>&lt;$81&gt;Yes&lt;br&gt; No</code>, the cursor precedes the first label and the next row retains its leading space. Keep the cursor before its label and preserve the structural spaces. The renderer supplies additional native cursor spacing.</td></tr>
+        <tr id="divider"><th scope="row"><code>&lt;$B6&gt;</code></th><td>A divider tile in the fixed status fields.</td><td>Those composite rows are references in the website. Their field positions require a renderer change as well as text edits.</td></tr>
+        <tr id="nop"><th scope="row"><code>&lt;nop&gt;</code><br>byte <code>$E9</code></th><td>The native message handler does nothing, but the translated build uses this byte to mark redirected text.</td><td>Reserved for the build machinery; do not add it to a translation.</td></tr>
+        <tr id="terminator"><th scope="row">byte <code>$FF</code></th><td>Terminates a stored string. It is distinct from <code>&lt;end&gt;</code>.</td><td>The build supplies string termination. Do not insert <code>&lt;$FF&gt;</code> in editor text.</td></tr>
+      </tbody></table></div>
+      <p class="note">The build also reserves compression codes. Preserve existing raw bytes and use the named token already shown by the entry. A raw byte that encodes successfully is not automatically safe to change.</p>
+    </section>
+
+    <section id="cinematic" aria-labelledby="cinematic-title">
+      <h2 id="cinematic-title">Opening cinematic</h2>
+      <p>The <a href="../workbench/?subject=cinematic">cinematic editor</a> uses a separate text format. It accepts only <code>&lt;br&gt;</code> and <code>&lt;page&gt;</code>; dialogue substitutions and effects do not apply.</p>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Code</th><th scope="col">What it does</th><th scope="col">Example or rule</th></tr></thead><tbody>
+        <tr><th scope="row"><code>&lt;br&gt;</code></th><td>Forces a line break within the current cinematic page.</td><td>Words also wrap automatically at 152 pixels. Each page must fill exactly the event’s occupied line slots; lines cannot be empty.</td></tr>
+        <tr id="page"><th scope="row"><code>&lt;page&gt;</code></th><td>Separates the event’s predefined cinematic pages.</td><td><code>Look, over there!&lt;page&gt;There's Mount Sasara!</code> illustrates two pages. Keep the event’s page count.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section id="editor-rules" aria-labelledby="editor-title">
+      <h2 id="editor-title">Which rules apply in my editor?</h2>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Workbench</th><th scope="col">Control and layout rules</th></tr></thead><tbody>
+        <tr><th scope="row"><a href="../prose/">Prose</a></th><td>Ordinary drafts wrap automatically. You can request <code>&lt;br&gt;</code> and <code>&lt;brk&gt;</code>; the wrapper supplies indents and <code>&lt;end&gt;</code>. Preserve required substitutions, effects and their order.</td></tr>
+        <tr><th scope="row"><a href="../workbench/?subject=choices">Choices and structured dialogue</a></th><td>Keep explicit breaks, leading controls, cursor positions and structural spaces. Use the entry’s bank-11/14 token forms.</td></tr>
+        <tr><th scope="row"><a href="../workbench/?subject=messages">Gameplay messages</a></th><td>Preserve the queued-fragment layout and control sequence. Do not add line or page breaks to a fragment that has none. These messages use the bank-13 forms.</td></tr>
+        <tr><th scope="row"><a href="../workbench/?subject=descriptions">Item descriptions</a></th><td>Line breaks may move within the existing pages. Preserve all other controls and page boundaries. Here <code>&lt;cF0:XX&gt;</code> inserts shared text and uses its full measured space.</td></tr>
+        <tr><th scope="row"><a href="../workbench/?subject=items">Items</a>, <a href="../workbench/?subject=names">names</a>, <a href="../workbench/?subject=menus">menus</a>, <a href="../workbench/?subject=verbs">actions</a>, <a href="../workbench/?subject=seals">seals</a>, <a href="../workbench/?subject=fragments">shared help</a> and <a href="../workbench/?subject=conditions">conditions</a></th><td>These are labels, rows or fragments with their own geometry. Preserve any existing controls and structural spaces; do not add dialogue tokens to obtain wrapping or extra room.</td></tr>
+        <tr><th scope="row"><a href="../workbench/?subject=cinematic">Opening cinematic</a></th><td>Only <code>&lt;br&gt;</code> and <code>&lt;page&gt;</code>. Fill the exact line/page slots shown by the event.</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="reference-sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Sources and limits</h2>
+      <p>This guide follows the current <a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/tools/codec.py">codec and argument counts</a>, <a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/tools/dialogue_preview.py">renderer measurements</a>, <a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/tools/intro.py">cinematic layout</a> and <a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/docs/TEXT_REFERENCE.md#5-control-tokens">project text reference</a>. Older investigation notes contain superseded interpretations.</p>
+      <p>The editor checks the established text contract. Unknown effect meanings and unmeasured runtime values still need investigation and game testing; a successful text check does not establish their complete behavior.</p>
+    </section>
+  </main>
+  <footer class="footer"><a href="../">← All workbenches</a><a href="#content">Back to top ↑</a></footer>
+</body>
+</html>

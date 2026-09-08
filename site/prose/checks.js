@@ -67,6 +67,8 @@ try {
   frame.src = "index.html";
   await until(() => frame.contentDocument?.body.dataset.ready === "true", "initial editor load");
   let doc = frame.contentDocument, win = frame.contentWindow;
+  assert(doc.querySelector(".control-guide-link a")?.href === new URL("../controls/", location.href).href, "Prose links to the control reference under the project path");
+  assert(!!doc.querySelector('.required a[target="_blank"][rel="noopener"]'), "Prose required controls link to their explanations");
   assert(doc.querySelector("#source-status").textContent.includes("loaded"), "Bundled Japanese loads without file import");
   assert(doc.querySelector("#source-description").textContent.includes("included script"), "Included source identified in the UI");
   assert(doc.querySelector('.source-actions a[download]').href === new URL("../data/script.tsv", location.href).href, "Original TSV download uses project-relative URL");

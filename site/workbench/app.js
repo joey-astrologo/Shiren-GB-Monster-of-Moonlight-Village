@@ -1,4 +1,5 @@
 import {validateAll, exportEdits, importEdits, verifySources, describeRules} from "./rules.js";
+import {controlReferenceLink} from "../controls/links.js";
 const $ = s => document.querySelector(s), STORAGE = "shiren-workbenches-v1", PAGE_SIZE = 10;
 let data, records, results, edits = {}, subject, page = 0, stale = null, ready = false, timer;
 const cards = new Map();
@@ -112,7 +113,7 @@ function makeCard(row, first) {
     const reference = node("details", "reference"); reference.append(node("summary", "", "Current English reference"), node("p", "current", row.current)); right.append(reference);
   } else right.append(node("p", "current", row.current || "No approved translation."));
   const contract = node("p", "contract", describeRules(row)); right.append(contract);
-  if (row.controls.length) {const required = node("div", "required", "Controls in order: "); for (const token of row.controls) required.append(node("code", "", token)); right.append(required);}
+  if (row.controls.length) {const required = node("div", "required", "Keep in order · select a code for its meaning: "); for (const token of row.controls) required.append(controlReferenceLink(token)); right.append(required);}
   if (row.spaces.some(pair => pair.some(Boolean))) right.append(node("p", "contract", "Leading and trailing spaces are structural and must remain in place. The native source indent is supplied separately."));
   const notes = node("details", "rules-detail"); notes.append(node("summary", "", "Source context"), node("p", "", row.refs.join(" · ") || "No extracted pointer references.")); right.append(notes);
   const messages = node("div", "feedback-messages"); messages.id = `${card.id}-feedback`; messages.setAttribute("aria-live", "polite");

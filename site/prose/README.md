@@ -1,5 +1,9 @@
 # Prose editor
 
+The [control code reference](../controls/index.html) explains code meanings, examples
+and differences between rendering paths. It is linked from every editor, and required
+codes beside an entry open their explanation in a new tab.
+
 A static browser editor for Shiren GB prose. It contains **480 records in 25 event
 groups**: 436 ordinary prose drafts are editable, and 44 structured/verbatim records are
 read-only reference. Clear-condition and file-menu labels are excluded.

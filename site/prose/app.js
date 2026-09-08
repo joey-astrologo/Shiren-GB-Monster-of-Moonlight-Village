@@ -1,4 +1,5 @@
 import {validateDraft, exportEdits, importEdits, importJapanese, MAX_TEXT} from "./rules.js";
+import {controlReferenceLink} from "../controls/links.js";
 
 const $ = selector => document.querySelector(selector);
 const STORAGE = "shiren-prose-studio-v1";
@@ -247,8 +248,8 @@ function makeCard(row, first) {
     });
     tools.append(inserts, reset); right.append(input, tools);
     if (row.sequence.length) {
-      const required = node("div", "required", "Keep in order: ");
-      for (const token of row.sequence) required.append(node("code", "", token));
+      const required = node("div", "required", "Keep in order · select a code for its meaning: ");
+      for (const token of row.sequence) required.append(controlReferenceLink(token));
       right.append(required);
     }
     const reference = node("details", "reference");
