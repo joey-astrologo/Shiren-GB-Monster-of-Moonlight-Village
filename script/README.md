@@ -8,7 +8,7 @@ rules — storage classes, the character set, the per-renderer pixel budgets, ev
 error, and what the build does not check. Read it once before a large batch. Come back
 here when you want to know "where do I change a monster's name".
 
-For prose, [Prose Studio](../site/prose/README.md) provides a browser editor and a validated
+For prose, the [prose editor](../site/prose/README.md) provides a browser editor and a validated
 changes-TSV importer. Run `python3 tools/prose_editor.py serve` from the repository root,
 then open **http://127.0.0.1:8765/**. The original files below remain the source of truth.
 
@@ -25,7 +25,9 @@ then open **http://127.0.0.1:8765/**. The original files below remain the source
 | The opening/ending cinematic | `intro.tsv` | its own header |
 
 `build-inputs/` and `evidence/` are not translation files — ignore them. `script.json` and
-`script.tsv` are generated from your own ROM by `tools/extract.py` and are not in the repo.
+`script.tsv` are generated working files from `tools/extract.py` and remain ignored.
+The complete Japanese TSV is also published as a tracked snapshot at
+[`site/data/script.tsv`](../site/data/script.tsv), which the browser editor loads automatically.
 For any address already in `prose_draft.tsv`, edit that draft even when the row is help
 or menu text; the wrapper owns its generated `en.tsv` value.
 

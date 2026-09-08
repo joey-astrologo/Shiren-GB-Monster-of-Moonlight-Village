@@ -57,7 +57,7 @@ try {
   assert(!validateDraft(selected, selected.draft.replace("<cE3:05>", "<cE3:04>"), data).valid, "Selector argument protected");
   const locked = data.records.find(row => !row.editable);
   assert(!validateDraft(locked, "Edited", data).valid, "Structured text protected");
-  const sourceText = await fetch("local-source.tsv").then(r => r.text());
+  const sourceText = await fetch("../data/script.tsv").then(r => { if (!r.ok) throw new Error("Bundled source TSV is missing."); return r.text(); });
   const source = await importJapanese(sourceText, data);
   assert(Object.keys(source).length === 480, "Japanese source matched");
   await rejectsAsync(() => importJapanese(sourceText.replace(source[loc], "Wrong source"), data), "Wrong source rejected");
@@ -67,7 +67,9 @@ try {
   frame.src = "index.html";
   await until(() => frame.contentDocument?.body.dataset.ready === "true", "initial editor load");
   let doc = frame.contentDocument, win = frame.contentWindow;
-  assert(doc.querySelector("#source-status").textContent.includes("loaded"), "Local Japanese loaded in the UI");
+  assert(doc.querySelector("#source-status").textContent.includes("loaded"), "Bundled Japanese loads without file import");
+  assert(doc.querySelector("#source-description").textContent.includes("included script"), "Included source identified in the UI");
+  assert(doc.querySelector('.source-actions a[download]').href === new URL("../data/script.tsv", location.href).href, "Original TSV download uses project-relative URL");
   assert(doc.querySelector(`[data-loc="${loc}"] .jp`).textContent.includes(source[loc].split("<")[0]), "Japanese displayed beside its matching entry");
   let input = doc.querySelector(`[data-loc="${loc}"] textarea`);
   assert(!!input, "Prose is editable");
@@ -86,6 +88,7 @@ try {
   await until(() => frame.contentWindow.location.search === "?reload=1" && frame.contentDocument?.body.dataset.ready === "true", "reload saved draft");
   doc = frame.contentDocument; win = frame.contentWindow;
   assert(doc.querySelector(`[data-loc="${loc}"] textarea`).value === text, "Draft survives reload");
+  assert(doc.querySelector("#source-status").textContent.includes("loaded"), "Japanese reloads automatically on a later visit");
   const search = doc.querySelector("#search");
   search.value = loc; search.dispatchEvent(new win.Event("input", {bubbles: true}));
   assert(doc.querySelectorAll(".record").length === 1, "Search finds exact address");
@@ -109,6 +112,29 @@ try {
   assert(win.matchMedia("(max-width: 760px)").matches, "Mobile media query applies");
   assert(win.getComputedStyle(doc.querySelector(".record-body")).gridTemplateColumns.split(" ").length === 1, "Mobile source and translation stack");
   assert(win.getComputedStyle(doc.querySelector("#rules-mobile")).display !== "none", "Mobile guide remains accessible");
+  // Simulate a missing or mismatched bundled file, then recover using the file input.
+  const appHTML = await fetch("index.html").then(r => r.text());
+  for (const [status, payload] of [[404, "Missing source"], [200, sourceText.replace(source[loc], "Wrong source")]]) {
+    const stub = `<base href="${new URL("./", location.href).href}"><script>
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = (url, options) => url === "../data/script.tsv"
+        ? Promise.resolve(new Response(${JSON.stringify(payload).replaceAll("<", "\\u003c")}, {status: ${status}}))
+        : originalFetch(url, options);
+      <\/script>`;
+    frame.srcdoc = appHTML.replace("<head>", "<head>" + stub);
+    await until(() => frame.contentWindow.location.href === "about:srcdoc" && frame.contentDocument?.body.dataset.ready === "true" &&
+      frame.contentDocument.querySelector("#source-status").textContent === "Japanese source unavailable", "source failure state");
+    doc = frame.contentDocument; win = frame.contentWindow;
+    assert(!doc.querySelector("#import-source").disabled, "Missing/mismatched source offers manual recovery");
+    assert(!doc.querySelector("#notice").hidden && !doc.querySelector('.jp').textContent.includes(source[loc].split("<")[0]), "Invalid source is reported without displaying it");
+    const sourceTransfer = new win.DataTransfer();
+    sourceTransfer.items.add(new win.File([sourceText], "script.tsv", {type: "text/tab-separated-values"}));
+    const sourceInput = doc.querySelector("#source-file"); sourceInput.files = sourceTransfer.files;
+    sourceInput.dispatchEvent(new win.Event("change", {bubbles: true}));
+    await until(() => doc.querySelector("#source-status").textContent.includes("loaded"), "manual source recovery");
+    assert(doc.querySelector(`[data-loc="${loc}"] .jp`).textContent.includes(source[loc].split("<")[0]), "Matching local source restores Japanese");
+  }
+  frame.removeAttribute("srcdoc");
   // Catalogue drift must preserve recovery data and prevent accidental overwrite.
   const stale = JSON.stringify({rules: "old", edits: {[loc]: "An older saved translation"}, bases: {}});
   localStorage.setItem(STORAGE, stale);
@@ -126,6 +152,7 @@ try {
   result.textContent = JSON.stringify({status: "FAIL", checks, error: error.stack}, null, 2);
   document.body.dataset.status = "fail";
 } finally {
+  frame.removeAttribute("srcdoc");
   frame.src = "about:blank";
   if (saved === null) localStorage.removeItem(STORAGE); else localStorage.setItem(STORAGE, saved);
 }

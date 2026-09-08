@@ -10,6 +10,7 @@ import re
 import tempfile
 
 import build
+import build_site
 import dialogue_preview as dialogue
 import dotfont
 import prose_editor as editor
@@ -49,7 +50,22 @@ def line_oracle(record, compiled, native, font):
 def main():
     data = editor.catalogue()
     assert json.loads(editor.CATALOG.read_text()) == json.loads(json.dumps(data)), 'Regenerate catalog.json first'
-    assert not re.search('[\u3040-\u30ff\u4e00-\u9fff]', json.dumps(data, ensure_ascii=False)), 'Japanese leaked into the published catalogue'
+    assert not re.search('[\u3040-\u30ff\u4e00-\u9fff]', json.dumps(data, ensure_ascii=False)), 'Japanese belongs in the separate source TSV'
+    public = {name: (build_site.SOURCE / name).read_bytes() for name in build_site.PUBLIC_FILES}
+    source_tsv = public[build_site.SOURCE_TSV]
+    assert source_tsv == (editor.ROOT / 'script/script.tsv').read_bytes(), 'Refresh the bundled source TSV'
+    build_site.validate(public)
+    lines = source_tsv.decode('utf-8').splitlines()
+    source_line = next(line for line in lines if '\t14:$5037\t' in line)
+    bad = dict(public)
+    for label, replacement in [
+        ('missing source', ''),
+        ('missing prose row', '\n'.join(line for line in lines if line != source_line)),
+        ('duplicate source row', source_tsv.decode('utf-8') + source_line + '\n'),
+        ('wrong Japanese source', source_tsv.decode('utf-8').replace(source_line, source_line.replace(source_line.split('\t')[3], 'Wrong source'))),
+    ]:
+        bad[build_site.SOURCE_TSV] = replacement.encode('utf-8')
+        expect_failure(lambda: build_site.validate(bad), f'Packager accepted {label}')
     assert len(data['records']) == 480 and sum(row['editable'] for row in data['records']) == 436
     assert {loc for event in data['events'] for loc in event['locs']} == {row['loc'] for row in data['records']}
     native = editor.read_manifest()
@@ -136,7 +152,7 @@ def main():
     destination = editor.ROOT / 'build/prose-editor-oracle.json'
     destination.parent.mkdir(exist_ok=True)
     destination.write_text(json.dumps(oracle, ensure_ascii=False))
-    print(f'PASS: catalogue privacy, {len(baseline)} baseline records, {len(wrapping)} editable drafts, '
+    print(f'PASS: bundled source integrity, {len(baseline)} baseline records, {len(wrapping)} editable drafts, '
           'changed-row import, glossary/fit/token rejection, conflict handling and isolated apply.')
     print('Browser oracle: build/prose-editor-oracle.json. Open /prose/checks.html on the test preview.')
 

@@ -496,11 +496,13 @@ incorrect. Consult the actual consuming path before changing a reviewed effect s
 
 ## 8. Translator tooling and remaining gaps
 
-**Implemented prose proof of concept:** [Prose Studio](../site/prose/README.md) has
+**Implemented prose proof of concept:** the [prose editor](../site/prose/README.md) has
 480 prose/reference records in 25 draft-derived event groups, including 436 editable
-ordinary drafts. It supports local Japanese-source import, font-aware wrapping/preview,
+ordinary drafts. It loads the included Japanese source TSV automatically and supports
+optional replacement from a matching local file, font-aware wrapping/preview,
 control and fit checks, local saving, changes-TSV download and a Python project importer.
-The public catalogue excludes Japanese prose; structured/verbatim records remain read-only.
+Japanese text is published separately at `site/data/script.tsv` and verified against the
+catalogue's source hashes. Structured/verbatim records remain read-only.
 `tools/prose_editor_check.py` and `site/prose/checks.html` check the browser model against
 the current Python wrapper and layout measurements, plus import and browser interactions.
 

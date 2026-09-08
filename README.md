@@ -10,7 +10,8 @@ components remain subject to the notices under [`licenses/`](licenses/).
 
 This repository contains an English translation toolchain for **Fushigi no Dungeon:
 Fuurai no Shiren GB — Tsukikage Mura no Kaibutsu** (風来のシレンGB 月影村の怪物),
-Chunsoft, Game Boy, 1996. It does not contain the game ROM or extracted Japanese script.
+Chunsoft, Game Boy, 1996. It includes the original Japanese source TSV for the browser
+editor. It does not contain the game ROM.
 
 ## Showcase
 
@@ -146,7 +147,9 @@ and choose **Open prose editor**, or run `python3 tools/prose_editor.py serve` a
 **http://127.0.0.1:8765/** for the local site. The [prose editor](site/prose/README.md) provides Japanese
 reference, event groups, live text-fit checks, local draft saving and a changes-TSV
 download/import workflow. Structured prompts are reference-only in this first version.
-The hosted version loads your extracted Japanese TSV locally in the browser.
+The original Japanese TSV is included and loads automatically on the hosted and local
+sites. **Download source TSV** saves a copy; **Replace source** optionally loads a matching
+local extraction.
 The [Pages workflow](.github/workflows/pages.yml) publishes the website on site changes
 to `main` or a manual run; see [deployment and preview instructions](site/README.md).
 
@@ -494,8 +497,9 @@ layout and graphics changes should add the narrowest relevant emulator regressio
 screenshot when appearance matters. Font/art submissions must identify their source and
 license and use the audition workflow above.
 
-Do not commit ROMs, extracted Japanese, generated machine states or `build/`. `.gitignore`
-blocks them; if game-derived data bypasses the ignore rules, treat that as a bug.
+Do not commit ROMs, local extraction JSON, generated machine states or `build/`.
+The website's original Japanese TSV snapshot at `site/data/script.tsv` is intentionally
+tracked and published. Refresh it with `python3 tools/build_site.py --refresh-source`
+after extraction changes; the packager verifies it against the prose catalogue.
 
-*Distributed as tools and a translation only. You must supply your own original cartridge
-dump.*
+*Building or playing the translation requires your own original cartridge dump.*

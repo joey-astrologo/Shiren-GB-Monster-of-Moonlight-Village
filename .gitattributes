@@ -1,0 +1,2 @@
+# The original TSV has an empty final English field; its trailing tabs are required.
+site/data/script.tsv text eol=lf whitespace=-blank-at-eol

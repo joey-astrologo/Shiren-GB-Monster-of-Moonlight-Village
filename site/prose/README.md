@@ -13,16 +13,19 @@ python3 tools/prose_editor.py serve
 ```
 
 Open **http://127.0.0.1:8765/** and choose **Open prose editor**, or go directly to
-**http://127.0.0.1:8765/prose/**. The preview binds only to localhost and supplies the
-Japanese column from your existing, ignored `script/script.tsv`. It does not accept writes.
-If extraction is missing, generate it using the repository's normal extraction command,
-or use **Load Japanese TSV** to select a matching extraction in the browser.
+**http://127.0.0.1:8765/prose/**. The preview binds only to localhost. The Japanese
+column loads automatically from the included `site/data/script.tsv`, just as on GitHub
+Pages. No source-file import is needed on first load or on later visits.
 
 The checked-in `catalog.json` contains English drafts, accepted English layouts, event
-groups, approved glyph pixels/advances, control contracts and hashes. It contains no
-Japanese prose or ROM bytes. A publicly hosted copy asks visitors to load `script.tsv`
-locally; no file is uploaded. The Japanese source must match every catalogue record's
-hash. Source text stays in memory and must be loaded again on a later visit.
+groups, approved glyph pixels/advances, control contracts and hashes. The complete
+original Japanese TSV is published separately at `site/data/script.tsv`. The packager
+and browser verify every prose record's source hash before using it.
+
+**Download source TSV** saves the included original. **Replace source** optionally loads
+a matching local extraction without uploading it. If the included file is unavailable
+or mismatched, the editor reports the problem and offers **Load source TSV** for recovery.
+Local replacements apply to the current visit; the included source loads on the next visit.
 
 ## Editing and downloading
 
@@ -106,7 +109,7 @@ menus, graphics and glossary editing are outside this first version.
 
 ## Regenerate and check
 
-Generation needs the normal Python dependencies and local extraction. Serving the
+Catalogue generation needs the normal Python dependencies and local extraction. Serving the
 already generated site needs only Python's standard library plus the repository's
 installed tool dependencies for the preview helper; a generic static host needs neither.
 
@@ -120,7 +123,8 @@ python3 tools/prose_editor.py serve --test
 Open **http://127.0.0.1:8765/prose/checks.html** for browser differential and interaction checks.
 The Python command writes its oracle under ignored `build/`. Tests cover baseline layout,
 wrapping, pixel/source boundaries, controls, source integrity, TSV rejection/round trips,
-file-input import, downloads, autosave, reload and stale-draft recovery. The browser
+automatic source loading, missing/mismatched-source recovery, file-input import, downloads,
+autosave, reload and stale-draft recovery. The browser
 harness restores any pre-existing local draft afterward; an isolated browser profile is
 recommended for automated runs.
 
@@ -130,7 +134,8 @@ The [home page](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-
 links to the [prose editor](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/prose/).
 The [Pages workflow](../../.github/workflows/pages.yml) packages the landing page and
 public editor assets in `build/pages`, then deploys on site changes to `main` or a
-manual run. Visitors need only a browser. Japanese source is loaded from a local file.
+manual run. Visitors need only a browser; the original Japanese source is included
+and loads automatically.
 
 See [website deployment instructions](../README.md) for the initial GitHub Pages
 setting, artifact preview and publication details. Test pages and fixtures are excluded

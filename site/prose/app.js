@@ -100,7 +100,7 @@ function sourceContent(container, row) {
   const jp = state.japanese[row.loc];
   if (jp === undefined) {
     container.className = "jp jp-placeholder";
-    container.textContent = "Load Japanese TSV to display the source text.";
+    container.textContent = "Japanese source is not loaded yet.";
     return;
   }
   container.className = "jp";
@@ -300,11 +300,11 @@ function render() {
   counts();
 }
 
-async function loadSource(text) {
+async function loadSource(text, bundled = false) {
   const source = await importJapanese(text, data);
   state.japanese = source;
   $("#source-status").textContent = "Japanese source loaded";
-  $("#source-description").textContent = `${Object.keys(source).length} entries matched to this catalogue. Read locally in your browser.`;
+  $("#source-description").textContent = `${Object.keys(source).length} entries matched. ${bundled ? "Loaded from the included script." : "Loaded from your file."}`;
   $("#import-source").textContent = "Replace source ↗";
   for (const [loc, element] of elements) sourceContent(element.querySelector(".jp"), records.get(loc));
 }
@@ -368,12 +368,17 @@ async function initialize() {
     if (!confirm("Start fresh? Download the recovery file first if you need the older edits.")) return;
     state.stale = null; state.edits = {}; $("#recovery").hidden = true; validateAll(); save(); render();
   });
-  // Only the localhost helper provides this endpoint. Public hosting asks for a file.
-  if (["127.0.0.1", "localhost", "[::1]"].includes(location.hostname)) {
-    try {
-      const source = await fetch("local-source.tsv");
-      if (source.ok) await loadSource(await source.text());
-    } catch (error) { notify("Local Japanese source could not be matched: " + error.message, true); }
+  try {
+    const source = await fetch("../data/script.tsv");
+    if (!source.ok) throw new Error(`Source download failed (HTTP ${source.status}).`);
+    await loadSource(await source.text(), true);
+  } catch (error) {
+    $("#source-status").textContent = "Japanese source unavailable";
+    $("#source-description").textContent = "Reload the page or choose a matching source TSV.";
+    $("#import-source").textContent = "Load source TSV";
+    notify("Could not load the included Japanese source: " + error.message, true);
+  } finally {
+    $("#import-source").disabled = false;
   }
   document.body.dataset.ready = "true";
 }
