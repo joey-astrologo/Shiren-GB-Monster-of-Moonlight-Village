@@ -1,6 +1,6 @@
-# Translation Workshop
+# Shiren GB Translation
 
-The GitHub Pages website has a workshop home at `/` and [Prose Studio](prose/README.md)
+The GitHub Pages website has a home page at `/` and a [prose editor](prose/README.md)
 at `/prose/`. Links and assets are relative so both work under a repository Pages path.
 
 Public address: **https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/**
@@ -11,7 +11,7 @@ Public address: **https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonligh
 python3 tools/prose_editor.py serve
 ```
 
-Open **http://127.0.0.1:8765/** and choose **Open Prose Studio**. The Studio loads
+Open **http://127.0.0.1:8765/** and choose **Open prose editor**. The editor loads
 Japanese from the ignored local extraction automatically. This helper requires the
 project's normal Python tool dependencies.
 
@@ -47,7 +47,7 @@ No custom token, npm install, Python packages or ROM extraction is needed in CI.
 The packaging helper uses an explicit list of eight public assets plus `.nojekyll`.
 It checks page links, catalogue integrity and allowed record fields, then replaces the
 generated artifact. Test pages, documentation and all local source files are excluded.
-Add new public assets to `PUBLIC_FILES` in `tools/build_site.py` as studios grow.
+Add new public assets to `PUBLIC_FILES` in `tools/build_site.py` when adding editors.
 
 ## Updating the prose catalogue
 
@@ -62,4 +62,4 @@ python3 tools/prose_editor_check.py
 python3 tools/build_site.py
 ```
 
-See the [Studio guide](prose/README.md) for browser checks and TSV import instructions.
+See the [editor documentation](prose/README.md) for browser checks and TSV import instructions.

@@ -1,4 +1,4 @@
-# Prose Studio — proof of concept
+# Prose editor — proof of concept
 
 A static browser editor for Shiren GB prose. It contains **480 records in 25 event
 groups**: 436 ordinary prose drafts are editable, and 44 structured/verbatim records are
@@ -12,7 +12,7 @@ From the repository root:
 python3 tools/prose_editor.py serve
 ```
 
-Open **http://127.0.0.1:8765/** and choose **Open Prose Studio**, or go directly to
+Open **http://127.0.0.1:8765/** and choose **Open prose editor**, or go directly to
 **http://127.0.0.1:8765/prose/**. The preview binds only to localhost and supplies the
 Japanese column from your existing, ignored `script/script.tsv`. It does not accept writes.
 If extraction is missing, generate it using the repository's normal extraction command,
@@ -126,13 +126,13 @@ recommended for automated runs.
 
 ## GitHub Pages
 
-The [workshop home](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
-links to [Prose Studio](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/prose/).
+The [home page](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
+links to the [prose editor](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/prose/).
 The [Pages workflow](../../.github/workflows/pages.yml) packages the landing page and
-public Studio assets in `build/pages`, then deploys on site changes to `main` or a
+public editor assets in `build/pages`, then deploys on site changes to `main` or a
 manual run. Visitors need only a browser. Japanese source is loaded from a local file.
 
-See [workshop deployment instructions](../README.md) for the initial GitHub Pages
+See [website deployment instructions](../README.md) for the initial GitHub Pages
 setting, artifact preview and publication details. Test pages and fixtures are excluded
 from the public artifact.
 

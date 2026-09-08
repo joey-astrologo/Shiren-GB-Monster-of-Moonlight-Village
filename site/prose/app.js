@@ -100,7 +100,7 @@ function sourceContent(container, row) {
   const jp = state.japanese[row.loc];
   if (jp === undefined) {
     container.className = "jp jp-placeholder";
-    container.textContent = "The original will appear here when you load your Japanese script.";
+    container.textContent = "Load Japanese TSV to display the source text.";
     return;
   }
   container.className = "jp";
@@ -281,8 +281,8 @@ function render() {
   state.page = Math.min(state.page, Math.max(0, Math.ceil(found.length / PAGE_SIZE) - 1));
   const event = data.events.find(event => event.id === state.event);
   $("#event-title").textContent = state.query ? "Search results" : event?.name || "All dialogue";
-  $("#event-kicker").textContent = state.query ? "FIND YOUR PLACE" : "STORY EVENT";
-  $("#event-description").textContent = "Read the original on the left. Make the words your own on the right.";
+  $("#event-kicker").textContent = state.query ? "SEARCH" : "EVENT";
+  $("#event-description").textContent = "Japanese source is shown alongside each translation.";
   $("#row-count").textContent = `${found.length} entries`;
   const container = $("#records"); container.replaceChildren(); elements.clear();
   const slice = found.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE);
@@ -379,7 +379,7 @@ async function initialize() {
 }
 
 initialize().catch(error => {
-  notify(error.message, true); $("#event-title").textContent = "The manuscript could not be opened.";
+  notify(error.message, true); $("#event-title").textContent = "Could not load dialogue.";
   $("#event-description").textContent = "Check the catalogue and serve the editor over HTTP.";
   document.body.dataset.failed = "true";
 });
