@@ -44,10 +44,9 @@ the translator writes proposed wording in the initially empty **`edited_en`** co
   keyboard rows can also require renderer changes; an editable spreadsheet cell does not
   establish that a row can be imported safely. Artwork such as titles and credits is
   separate from this text dump.
-- **`edited_en`** is for review. This six-column file is not the website's changes-TSV
-  format and cannot be passed directly to its importers or the ROM builder. Keep control
-  codes and significant spaces while editing; proposed changes still need routing and
-  the appropriate validation before application.
+- **`edited_en`** holds proposals for the separate full-script importer described below.
+  This six-column file has its own import command; the website download formats retain
+  their existing commands. Keep control codes and significant spaces while editing.
 
 Generate or refresh the spreadsheet from the repository root after normal extraction:
 
@@ -60,6 +59,56 @@ The exporter preserves existing `edited_en` values when their reference rows are
 If a reference changes underneath an edit, it stops without overwriting the spreadsheet.
 Use `--output /path/to/script_full.tsv` to create another copy. The extraction files and
 translation inputs remain separate from this review spreadsheet.
+
+### Validate and insert a completed spreadsheet
+
+Run from the repository root with the normal extraction, Python dependencies and
+`build/base.gb` available. For `--apply`, the [game-test setup](../README.md#testing)
+must also be ready, including the local emulator states used by the build's regressions
+(`saves/dungeon.state` is required by the shop check). The default run validates the complete spreadsheet and its
+proposed edits, prints the project-file diff, and changes no translation files or ROMs:
+
+```sh
+python3 tools/script_insert.py /path/to/script_full.tsv
+```
+
+After reviewing that result, import the changes and run the complete normal build gate:
+
+```sh
+python3 tools/script_insert.py /path/to/script_full.tsv --apply
+```
+
+- Leave `edited_en` empty to retain the current translation. Copying `en` into it
+  unchanged is also a no-op. A whitespace-only proposal is rejected; empty cells never
+  delete translations. Spreadsheet row order may change, but keep every row and all
+  five reference columns intact. Stale or modified references are rejected.
+- Copy `en` into `edited_en` and revise the wording, preserving its required controls
+  and spaces. The importer removes exactly the renderer-supplied first indent and
+  selector spacing before updating the project TSVs. Ordinary prose is converted back
+  into a draft and rewrapped: `<end><brk>` becomes a draft page break, and the wrapper
+  restores its close controls. Misplaced `<end>` codes are rejected. Other subjects
+  use their established explicit-layout rules; cinematic text retains its fixed slots.
+  Use tokens such as `<br>` rather than literal newlines inside a spreadsheet cell.
+- The importer reuses the existing Python prose and workbench validators, full glossary
+  lint and font audit. Edits spanning names and prose are checked together. It merges
+  accepted edits into `en.tsv`, `prose_draft.tsv`, `glossary.tsv` and/or `intro.tsv`;
+  fixed/extraction references remain protected. The submitted spreadsheet is retained.
+- `--apply` runs `sh build.sh`, including when the sheet has no effective changes.
+  Success produces `build/shiren_en.gb`, `build/shiren_en.ips` and the ROM's relocation
+  map. If a build gate fails, the importer returns an error and restores the previous
+  translation files and ROM/IPS/map/ROM-save outputs; newly created release outputs
+  are removed. Build diagnostics remain available. Any restoration error is reported
+  explicitly. The default validation run does not test ROM placement or emulator paths.
+
+Review the changed text in-game after a successful build. Then follow the
+[website refresh instructions](../site/README.md#updating-the-catalogues) when accepting
+the translation. An imported spreadsheet has the previous English baseline; use
+`python3 tools/script_dump.py --output /path/to/script_full_next.tsv` for a fresh
+spreadsheet if the existing one contains proposals against that older baseline.
+
+`python3 tools/script_insert_check.py` exercises the real text validators and isolated
+success/failure import transactions without changing project translations. Its small
+build fixtures do not replace the full build and game checks performed by `--apply`.
 
 ## The map
 

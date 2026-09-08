@@ -222,6 +222,19 @@ translator writes proposals in `edited_en`. See the [spreadsheet guide](script/R
 for regeneration, reference-only rows and how this review format differs from website
 downloads.
 
+Validate a completed spreadsheet, then import it and build the ROM with the separate
+full-script importer:
+
+```sh
+python3 tools/script_insert.py /path/to/script_full.tsv
+python3 tools/script_insert.py /path/to/script_full.tsv --apply
+```
+
+The first command validates and shows a diff. `--apply` updates the appropriate project
+TSVs and runs `sh build.sh`; a failed build restores the previous translation and release
+outputs. See the [spreadsheet import rules](script/README.md#validate-and-insert-a-completed-spreadsheet)
+for spaces, prose wrapping, stale references and protected rows.
+
 The ordinary translation is [`script/en.tsv`](script/en.tsv):
 
 ```text
