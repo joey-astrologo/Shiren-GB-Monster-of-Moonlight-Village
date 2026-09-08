@@ -154,6 +154,67 @@ The original Japanese TSVs are included and load automatically on both sites.
 The [Pages workflow](.github/workflows/pages.yml) publishes the website on site changes
 to `main` or a manual run; see [deployment and preview instructions](site/README.md).
 
+### Import downloaded website edits
+
+The workflow is **download → validate → apply → build → review in-game**. Run the
+commands below from the repository root after completing the normal build setup above.
+
+1. In the website, resolve validation errors and select **Download changes**. Prose
+   downloads `shiren-prose-changes.tsv`. The other workbenches share one download,
+   `shiren-workbench-edits.tsv`, containing their edited entries across subjects.
+   Preserve the file's metadata comments and spaces.
+2. Validate with the matching importer. This checks the changes without modifying
+   project files:
+
+   ```sh
+   # For a prose download:
+   python3 tools/prose_editor.py import ~/Downloads/shiren-prose-changes.tsv
+
+   # For a download from the other workbenches:
+   python3 tools/workbench.py import ~/Downloads/shiren-workbench-edits.tsv
+   ```
+
+3. When validation succeeds, rerun the matching command with `--apply`:
+
+   ```sh
+   python3 tools/prose_editor.py import ~/Downloads/shiren-prose-changes.tsv --apply
+
+   # Or, for the other workbenches:
+   python3 tools/workbench.py import ~/Downloads/shiren-workbench-edits.tsv --apply
+   ```
+
+   The importer merges edited entries into the appropriate `script/` TSVs and wraps
+   ordinary prose automatically. Incompatible rules, changed entry baselines and invalid
+   text are rejected. Unrelated rows and comments are preserved.
+4. Review the diff, then run the complete build and its checks:
+
+   ```sh
+   git diff -- script
+   sh build.sh
+   ```
+
+   Wait for the whole command to succeed. The outputs are `build/shiren_en.gb` and
+   `build/shiren_en.ips`. Review the affected dialogue or menus in-game for wording,
+   layout and pacing before accepting the changes.
+5. Follow the [website refresh instructions](site/README.md#updating-the-catalogues)
+   to regenerate and verify the catalogues and browser fixtures. Commit those generated
+   files with the accepted translation changes; pushing to `main` publishes the updated
+   website defaults through GitHub Pages.
+
+For a terminology change that affects both a workbench and ordinary prose, validate both
+downloads together so the glossary checks see the complete change:
+
+```sh
+python3 tools/workbench.py import ~/Downloads/shiren-workbench-edits.tsv \
+  --prose-edits ~/Downloads/shiren-prose-changes.tsv
+```
+
+Add `--apply` after that validation succeeds. Detailed formats and destination rules are
+in the [prose import guide](site/prose/README.md#use-a-downloaded-tsv-in-the-project) and
+[workbench import guide](site/workbench/README.md#download-and-project-import).
+
+### Edit TSV files directly
+
 The ordinary translation is [`script/en.tsv`](script/en.tsv):
 
 ```text
