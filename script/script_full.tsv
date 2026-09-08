@@ -1,0 +1,1437 @@
+﻿id	loc	bytes	jp	en	edited_en
+0	3:$4E4F	4	ゃす<name>６		
+1	4:$4AFE	3	おかね	Gld	
+2	11:$4012	5	こんぼう	Club	
+3	11:$4018	5	ながまき	Nagamaki	
+4	11:$401E	7	しんきぶき3	New Weapon 3	
+5	11:$4026	3	カタナ	Katana	
+6	11:$402A	9	ドラゴンキラー	Dragonkiller	
+7	11:$4034	6	どうたぬき	Doutanuki	
+8	11:$403B	8	マンジカブラ	Manji Kabura	
+9	11:$4044	10	じょうぶつのカマ	Sickle	
+10	11:$404F	4	つるはし	Pickaxe	
+11	11:$4054	8	ひっちゅうのけん	True Rapier	
+12	11:$405D	9	ミノタウロスのおの	Minotaur Axe	
+13	11:$4067	9	ヨウトウかまいたち	Kama Itachi	
+14	11:$4071	8	ひとつめゴロシ	Cyclops Bane	
+15	11:$407A	10	ドレインバスター	Drain Slayer	
+16	11:$4085	9	かじんフウマとう	Kajin Fuuma	
+17	11:$408F	11	ひけんカブラステギ	Kabura Sutegi	
+18	11:$409B	6	マムルのけん	Mamel Sword	
+19	11:$40A2	7	しんきぶき2	New Weapon 2	
+20	11:$40AA	5	かわのたて	Leather Shield	
+21	11:$40B0	10	せいどうこうのたて	Bronze Shield	
+22	11:$40BB	7	もっこうのたて	Wooden Shield	
+23	11:$40C3	7	てっこうのたて	Iron Shield	
+24	11:$40CB	11	ドラゴンシールド	Dragon Shield	
+25	11:$40D7	6	フウマのたて	Fuuma Shield	
+26	11:$40DE	9	バトルカウンター	Battle Counter	
+27	11:$40E8	9	じゅうそうのたて	Heavy Shield	
+28	11:$40F2	8	やまびこのたて	Echo Shield	
+29	11:$40FB	6	みきりのたて	Evasion Shield	
+30	11:$4102	7	ヒャッキのたて	Hyakki Shield	
+31	11:$410A	8	つかいすてのたて	One-Use Shield	
+32	11:$4113	11	じらいナバリのたて	Blast Shield	
+33	11:$411F	6	トドのたて	Walrus Shield	
+34	11:$4126	9	らせんフウマのたて	Rasen Fuuma	
+35	11:$4130	6	マムルのたて	Mamel Shield	
+36	11:$4137	6	しんきたて2	New Shield 2	
+37	11:$413E	8	つうかのうでわ	Passage Bracer	
+38	11:$4147	9	ねぎりのうでわ	Bargain Bracer	
+39	11:$4151	11	ハラヘラズのうでわ	No-Hunger Bracer	
+40	11:$415D	9	ハラヘリのうでわ	Hunger Bracer	
+41	11:$4167	9	かいふくのうでわ	Healing Bracer	
+42	11:$4171	10	サビよけのうでわ	Rustproof Bracer	
+43	11:$417C	9	かいしんのうでわ	Critical Bracer	
+44	11:$4186	9	つうこんのうでわ	Pain Bracer	
+45	11:$4190	10	のろいよけのうでわ	No-Curse Bracer	
+46	11:$419B	9	えんとうのうでわ	Throwing Bracer	
+47	11:$41A5	9	しあわせのうでわ	Happy Bracer	
+48	11:$41AF	11	たれながしのうでわ	Leaky Bracer	
+49	11:$41BB	8	とうしのうでわ	Insight Bracer	
+50	11:$41C4	11	こんらんよけのうでわ	Clarity Bracer	
+51	11:$41D0	10	しきべつのうでわ	ID Bracer	
+52	11:$41DB	8	しんきうでわ1	New Bracer 1	
+53	11:$41E4	8	しんきうでわ2	New Bracer 2	
+54	11:$41ED	3	きのや	Wood Arrow	
+55	11:$41F1	4	てつのや	Iron Arrow	
+56	11:$41F6	5	ぎんのや	Silver Arrow	
+57	11:$41FC	5	おにぎり	Onigiri	
+58	11:$4202	9	おおきいおにぎり	Big Onigiri	
+59	11:$420C	9	くさったおにぎり	Rotten Onigiri	
+60	11:$4216	11	きょだいなおにぎり	Huge Onigiri	
+61	11:$4222	4	たまご	Egg	
+62	11:$4227	10	しんきしょくりょう1	New Food 1	
+63	11:$4232	4	やくそう	Medical Herb	
+64	11:$4237	7	おとぎりそう	Otogiriso	
+65	11:$423F	6	しあわせそう	Happy Herb	
+66	11:$4246	7	めぐすりそう	Vision Herb	
+67	11:$424E	8	ドラゴンそう	Dragon Herb	
+68	11:$4257	5	むてきそう	Invincible Herb	
+69	11:$425D	6	てんしのたね	Angel Seed	
+70	11:$4264	7	ふっかつのくさ	Revival Herb	
+71	11:$426C	6	クネクネそう	Wriggle Herb	
+72	11:$4273	6	ふこうのたね	Unlucky Seed	
+73	11:$427A	9	ちょうふこうのたね	Cursed Seed	
+74	11:$4284	8	ものわすれのくさ	Amnesia Herb	
+75	11:$428D	6	いのちのくさ	Life Herb	
+76	11:$4294	9	いかくちょうのたね	Expansion Seed	
+77	11:$429E	10	いしゅくしょうのたね	Shrink Seed	
+78	11:$42A9	8	すばやさのたね	Swift Herb	
+79	11:$42B2	6	ちからのたね	Strength Herb	
+80	11:$42B9	7	どくけしそう	Antidote Herb	
+81	11:$42C1	5	どくそう	Poison Herb	
+82	11:$42C7	6	こんらんそう	Confusion Herb	
+83	11:$42CE	6	すいみんそう	Sleep Herb	
+84	11:$42D5	5	ざっそう	Weed	
+85	11:$42DB	7	たかとびそう	Warp Herb	
+86	11:$42E3	6	しんきくさ1	New Herb 1	
+87	11:$42EA	9	おはらいのまきもの	Purify Scroll	
+88	11:$42F4	10	しきべつのまきもの	Identify Scroll	
+89	11:$42FF	8	あかりのまきもの	Light Scroll	
+90	11:$4308	14	つぼぞうだいのまきもの	Big Pot Scroll	
+91	11:$4317	12	しんくうぎりのまきもの	Air Slash Scroll	
+92	11:$4324	9	くちなしのまきもの	Silence Scroll	
+93	11:$432E	10	ひきあげのまきもの	Return Scroll	
+94	11:$4339	11	こまったときのまきもの	Crisis Scroll	
+95	11:$4345	12	てきばいそくのまきもの	Fast Foe Scroll	
+96	11:$4352	10	バクスイのまきもの	Slumber Scroll	
+97	11:$435D	13	パワーアップのまきもの	Power-Up Scroll	
+98	11:$436B	10	ぜんめつのまきもの	Wipeout Scroll	
+99	11:$4376	10	じばくのまきもの	Detonate Scroll	
+100	11:$4381	10	おおべやのまきもの	Big Room Scroll	
+101	11:$438C	13	モンスターハウスのまきもの	Ambush Scroll	
+102	11:$439A	9	こんらんのまきもの	Confusion Scroll	
+103	11:$43A4	13	ジェノサイドのまきもの	Removal Scroll	
+104	11:$43B2	8	はくしのまきもの	Blank Scroll	
+105	11:$43BB	9	まいごのまきもの	Lost Scroll	
+106	11:$43C5	12	てんのめぐみのまきもの	Heaven Scroll	
+107	11:$43D2	11	ちのめぐみのまきもの	Earth Scroll	
+108	11:$43DE	8	メッキのまきもの	Plating Scroll	
+109	11:$43E7	10	すいだしのまきもの	Extract Scroll	
+110	11:$43F2	10	ひろえずのまきもの	No-Pickup Scroll	
+111	11:$43FD	9	コロコロのまきもの	Rolling Scroll	
+112	11:$4407	8	しんきまきもの1	New Scroll 1	
+113	11:$4410	8	しんきまきもの2	New Scroll 2	
+114	11:$4419	7	ふういんのつえ	Sealing Staff	
+115	11:$4421	9	ふきとばしのつえ	Gust Staff	
+116	11:$442B	7	しあわせのつえ	Happy Staff	
+117	11:$4433	6	ふこうのつえ	Unlucky Staff	
+118	11:$443A	8	みがわりのつえ	Decoy Staff	
+119	11:$4443	10	ばしょがえのつえ	Swap Staff	
+120	11:$444E	6	しんきつえ2	New Staff 2	
+121	11:$4455	7	まどうのつえ	Sorcery Staff	
+122	11:$445D	9	かなしばりのつえ	Stun Staff	
+123	11:$4467	11	いちじしのぎのつえ	Stopgap Staff	
+124	11:$4473	8	いたみわけのつえ	Sharing Staff	
+125	11:$447C	6	しんきつえ1	New Staff 1	
+126	11:$4483	8	ほぞんのツボ	Storage Pot	
+127	11:$448C	10	やりすごしのツボ	Hiding Pot	
+128	11:$4497	9	ぶんれつのツボ	Dividing Pot	
+129	11:$44A1	8	きょうかのツボ	Upgrade Pot	
+130	11:$44AA	9	しきべつのツボ	ID Pot	
+131	11:$44B4	7	せなかのツボ	Heal Pot	
+132	11:$44BC	7	そうこのツボ	Warehouse Pot	
+133	11:$44C4	9	じゃくかのツボ	Weakening Pot	
+134	11:$44CE	8	そこぬけのツボ	Endless Pot	
+135	11:$44D7	8	まもののルツボ	Monster Pot	
+136	11:$44E0	8	へんげのツボ	Change Pot	
+137	11:$44E9	9	ごうせいのツボ	Fusion Pot	
+138	11:$44F3	7	トドのツボ	Walrus Pot	
+139	11:$44FB	7	しんきツボ1	New Pot 1	
+140	11:$4503	8	おうごんのはね	Golden Feather	
+141	11:$450C	7	しあわせのはこ	Happy Box	
+142	11:$4514	7	きみょうなはこ	Strange Box	
+143	11:$451C	7	イェンダー1	Yendor Amulet 1	
+144	11:$4524	7	イェンダー2	Yendor Amulet 2	
+145	11:$452C	4	ギタン	 Gitan	
+146	11:$4531	5	かさタヌキ	Kasa Tanuki	
+147	11:$4673	9	ダイヤのうでわ	Diamond Bracer	
+148	11:$467D	9	パールのうでわ	Pearl Bracer	
+149	11:$4687	9	ルビーのうでわ	Ruby Bracer	
+150	11:$4691	10	サファイアのうでわ	Sapphire Bracer	
+151	11:$469C	9	サンゴのうでわ	Coral Bracer	
+152	11:$46A6	11	エメラルドのうでわ	Emerald Bracer	
+153	11:$46B2	11	アメジストのうでわ	Amethyst Bracer	
+154	11:$46BE	10	オパールのうでわ	Opal Bracer	
+155	11:$46C9	8	ヒスイのうでわ	Jade Bracer	
+156	11:$46D2	8	コハクのうでわ	Amber Bracer	
+157	11:$46DB	11	トパーズのうでわ	Topaz Bracer	
+158	11:$46E7	8	メノウのうでわ	Agate Bracer	
+159	11:$46F0	10	クリスタルのうでわ	Crystal Bracer	
+160	11:$46FB	11	ガーネットのうでわ	Garnet Bracer	
+161	11:$4707	11	アクアマリンのうでわ	Aqua Bracer	
+162	11:$4713	9	ガラスのうでわ	Glass Bracer	
+163	11:$471D	10	プラチナのうでわ	Platinum Bracer	
+164	11:$472C	5	あかいくさ	Red Herb	
+165	11:$4732	5	あおいくさ	Blue Herb	
+166	11:$4738	6	きいろいくさ	Yellow Herb	
+167	11:$473F	7	みどりのくさ	Green Herb	
+168	11:$4747	5	しろいくさ	White Herb	
+169	11:$474D	5	くろいくさ	Black Herb	
+170	11:$4753	7	つちいろのくさ	Umber Herb	
+171	11:$475B	8	かっしょくのくさ	Russet Herb	
+172	11:$4764	7	むらさきのくさ	Purple Herb	
+173	11:$476C	7	ちゃいろのくさ	Brown Herb	
+174	11:$4774	7	はいいろのくさ	Gray Herb	
+175	11:$477C	8	みずいろのくさ	Aqua Herb	
+176	11:$4785	7	しゅいろのくさ	Scarlet Herb	
+177	11:$478D	7	こんいろのくさ	Navy Herb	
+178	11:$4795	9	ピンクいろのくさ	Pink Herb	
+179	11:$479F	10	オレンジいろのくさ	Orange Herb	
+180	11:$47AA	8	はだいろのくさ	Peach Herb	
+181	11:$47B3	9	クリームいろのくさ	Cream Herb	
+182	11:$47BD	9	ベージュのくさ	Beige Herb	
+183	11:$47C7	10	こげちゃいろのくさ	Sepia Herb	
+184	11:$47D2	8	レモンいろのくさ	Lemon Herb	
+185	11:$47DB	8	バラいろのくさ	Rose Herb	
+186	11:$47E4	9	こがねいろのくさ	Golden Herb	
+187	11:$47EE	9	おうどいろのくさ	Ochre Herb	
+188	11:$47F8	11	ネズミのえのまきもの	Mouse Scroll	
+189	11:$4804	9	ウシのえのまきもの	Cow Scroll	
+190	11:$480E	9	トラのえのまきもの	Tiger Scroll	
+191	11:$4818	11	ウサギのえのまきもの	Rabbit Scroll	
+192	11:$4824	10	リュウのえのまきもの	Dragon Scroll	
+193	11:$482F	10	ヘビのえのまきもの	Snake Scroll	
+194	11:$483A	9	ウマのえのまきもの	Horse Scroll	
+195	11:$4844	11	ヒツジのえのまきもの	Sheep Scroll	
+196	11:$4850	9	サルのえのまきもの	Monkey Scroll	
+197	11:$485A	11	ニワトリのえのまきもの	Rooster Scroll	
+198	11:$4866	9	イヌのえのまきもの	Dog Scroll	
+199	11:$4870	11	イノシシのえのまきもの	Boar Scroll	
+200	11:$487C	9	ネコのえのまきもの	Cat Scroll	
+201	11:$4886	9	シカのえのまきもの	Deer Scroll	
+202	11:$4890	10	カエルのえのまきもの	Frog Scroll	
+203	11:$489B	11	トカゲのえのまきもの	Lizard Scroll	
+204	11:$48A7	10	ゾウのえのまきもの	Elephant Scroll	
+205	11:$48B2	10	キリンのえのまきもの	Giraffe Scroll	
+206	11:$48BD	9	クマのえのまきもの	Bear Scroll	
+207	11:$48C7	9	カメのえのまきもの	Turtle Scroll	
+208	11:$48D1	9	ツルのえのまきもの	Crane Scroll	
+209	11:$48DB	11	スズメのえのまきもの	Sparrow Scroll	
+210	11:$48E7	11	ライオンのえのまきもの	Lion Scroll	
+211	11:$48F3	9	サイのえのまきもの	Rhino Scroll	
+212	11:$48FD	12	コンドルのえのまきもの	Condor Scroll	
+213	11:$490A	9	ワニのえのまきもの	Gator Scroll	
+214	11:$4914	10	キツネのえのまきもの	Fox Scroll	
+215	11:$491F	6	さくらのつえ	Cherry Staff	
+216	11:$4926	5	うめのつえ	Plum Staff	
+217	11:$492C	5	まつのつえ	Pine Staff	
+218	11:$4932	5	たけのつえ	Bamboo Staff	
+219	11:$4938	6	すぎのつえ	Cedar Staff	
+220	11:$493F	7	やなぎのつえ	Willow Staff	
+221	11:$4947	5	くりのつえ	Hazel Staff	
+222	11:$494D	5	きんのつえ	Gold Staff	
+223	11:$4953	6	ぎんのつえ	Silver Staff	
+224	11:$495A	6	どうのつえ	Copper Staff	
+225	11:$4961	5	てつのつえ	Iron Staff	
+226	11:$4967	5	いしのつえ	Stone Staff	
+227	11:$496D	6	ほそいツボ	Thin Pot	
+228	11:$4974	6	まるいツボ	Round Pot	
+229	11:$497B	7	しかくいツボ	Square Pot	
+230	11:$4983	8	さんかくのツボ	Triangle Pot	
+231	11:$498C	10	でこぼこのツボ	Bumpy Pot	
+232	11:$4997	6	ふといツボ	Fat Pot	
+233	11:$499E	9	ほしがたのツボ	Star Pot	
+234	11:$49A8	11	たまごがたのツボ	Egg Pot	
+235	11:$49B4	6	あさいツボ	Shallow Pot	
+236	11:$49BB	6	ふかいツボ	Deep Pot	
+237	11:$49C2	9	ゆがんだツボ	Warped Pot	
+238	11:$49CC	8	くびれたツボ	Pinched Pot	
+239	11:$49D5	12	みかづきがたのツボ	Crescent Pot	
+240	11:$49E2	9	ひしがたのツボ	Diamond Pot	
+241	11:$4B2C	3	マムル	Mamel	
+242	11:$4B30	5	しのつかい	Death Reaper	
+243	11:$4B36	6	ギャザー	Gather	
+244	11:$4B3D	5	ボウヤー	Bowboy	
+245	11:$4B43	4	ガマラ	Froggo	
+246	11:$4B48	6	デブータ	Porky	
+247	11:$4B4F	6	きりせんにん	Fog Hermit	
+248	11:$4B56	4	ミドロ	Mudkin	
+249	11:$4B5B	6	ぬすっトド	Thiefwalrus	
+250	11:$4B62	7	くねくねハニー	Twisty Hani	
+251	11:$4B6A	8	エーテルもどき	Air Devil	
+252	11:$4B73	8	アイアンヘッド	Metalhead	
+253	11:$4B7C	9	おばけダイコン	Ghost Radish	
+254	11:$4B86	5	すすりムシ	Leech Worm	
+255	11:$4B8C	6	セルアーマー	Cell Armor	
+256	11:$4B93	4	タウロス	Taur	
+257	11:$4B98	7	いやしウサギ	Fluffy Bunny	
+258	11:$4BA0	6	きめんむしゃ	Evil Soldier	
+259	11:$4BA7	8	ぼうれいむしゃ	Dead Soldier	
+260	11:$4BB0	7	マスターチキン	Master Hen	
+261	11:$4BB8	3	チキン	Hen	
+262	11:$4BBC	8	こぞうてんぐ	Baby Tengu	
+263	11:$4BC5	5	ぴーたん	Egg Thing	
+264	11:$4BCB	6	シューベル	Schubell	
+265	11:$4BD2	7	とおせんりゅう	Floor Dragon	
+266	11:$4BDA	8	パコレプキン	Pumphantasm	
+267	11:$4BE3	8	オヤジせんしゃ	Popster Tank	
+268	11:$4BEC	8	にぎりへんげ	Nigiri Morph	
+269	11:$4BF5	6	ノロージョ	Curse Girl	
+270	11:$4BFC	9	ガイコツまどう	Skull Mage	
+271	11:$4C06	5	ゲイズ	Gazer	
+272	11:$4C0C	8	コドモせんしゃ	Baby Tank	
+273	11:$4C15	8	ちょうちんふぐ	Lantern Puffer	
+274	11:$4C1E	6	ヤミウッチー	Dark Eye	
+275	11:$4C25	8	ばくだんウニ	Explochin	
+276	11:$4C2E	5	モラビー	Morabee	
+277	11:$4C34	6	にらみヘビ	Glare Snake	
+278	11:$4C3B	8	ねずみこぶん	Mouse Minion	
+279	11:$4C44	7	カラスてんぐ	Crow Tengu	
+280	11:$4C4C	9	かっとびイノシシ	Dash Boar	
+281	11:$4C56	5	かさタヌキ	Kasa Tanuki	
+282	11:$4C5C	7	カラカイおさる	Teasing Monkey	
+283	11:$4C64	4	チンタラ	Chintala	
+284	11:$4C69	3	オロチ	Orochi	
+285	11:$4C6D	8	あなぐらマムル	Pit Mamel	
+286	11:$4C76	9	じごくのししゃ	Hell Reaper	
+287	11:$4C80	9	キラーギャザー	Killer Gather	
+288	11:$4C8A	8	クロスボウヤー	Crossbowboy	
+289	11:$4C93	7	ガマグッチ	Froggucchi	
+290	11:$4C9B	7	デブーチョ	Porko	
+291	11:$4CA3	6	みのせんにん	Haze Hermit	
+292	11:$4CAA	5	ゲドロ	Muddy	
+293	11:$4CB0	7	みどりトド	Greenwalrus	
+294	11:$4CB8	7	くねくねハニー	Twisty Hani	
+295	11:$4CC0	8	エーテルもどき	Air Devil	
+296	11:$4CC9	8	チェインヘッド	Thrashead	
+297	11:$4CD2	9	めまわしダイコン	Daze Radish	
+298	11:$4CDC	8	きゅういんちゅう	Leech Bug	
+299	11:$4CE5	7	クロムアーマー	Metal Armor	
+300	11:$4CED	6	ミノタウロス	Minotaur	
+301	11:$4CF4	7	いやしウサギ	Fluffy Bunny	
+302	11:$4CFC	7	はんにゃむしゃ	Evil Veteran	
+303	11:$4D04	8	ぼうれいむしゃ	Dead Soldier	
+304	11:$4D0D	8	グレートチキン	Great Hen	
+305	11:$4D16	7	カラスてんぐ	Crow Tengu	
+306	11:$4D1E	8	にげピータン	Running Egg	
+307	11:$4D27	6	メンベルス	Menbell	
+308	11:$4D2E	10	ドラゴンヘッド	Dragon Head	
+309	11:$4D39	9	パコレプキーナ	Pumpanshee	
+310	11:$4D43	8	ガンコせんしゃ	Dadster Tank	
+311	11:$4D4C	8	にぎりおやかた	Nigiri Boss	
+312	11:$4D55	9	ノロージョのあね	Curse Sis	
+313	11:$4D5F	9	ガイコツまじん	Skull Wizard	
+314	11:$4D69	10	スーパーゲイズ	Super Gazer	
+315	11:$4D74	6	ちびタンク	Mini Tank	
+316	11:$4D7B	8	あんどんフグ	Lamp Puffer	
+317	11:$4D84	6	フイウッチー	Hidden Eye	
+318	11:$4D8B	8	ばくだんウニ	Explochin	
+319	11:$4D94	5	ワラビー	Warabee	
+320	11:$4D9A	9	ギョロつきヘビ	Goggle Snake	
+321	11:$4DA4	9	ねずみおやぶん	Mouse Boss	
+322	11:$4DAE	9	ハヤブサてんぐ	Falcon Tengu	
+323	11:$4DB8	9	げきとつイノシシ	Ram Boar	
+324	11:$4DC2	7	からかさタヌキ	Parasol Tanuki	
+325	11:$4DCA	7	チャカシおさる	Mocking Monkey	
+326	11:$4DD2	7	ちゅうチンタラ	Mid Chintala	
+327	11:$4DDA	3	オロチ	Orochi	
+328	11:$4DDE	8	どうくつマムル	Cave Mamel	
+329	11:$4DE7	5	しにがみ	Soul Reaper	
+330	11:$4DED	8	ヘルギャザー	Hell Gather	
+331	11:$4DF6	6	ボウヤー3	Bowyer 3	
+332	11:$4DFD	6	ガマゴン	Froggon	
+333	11:$4E04	7	デブートン	Porkon	
+334	11:$4E0C	7	かすみせんにん	Mist Hermit	
+335	11:$4E14	4	オドロ	Mudster	
+336	11:$4E19	7	アイアントド	Ironwalrus	
+337	11:$4E21	7	くねくねハニー	Twisty Hani	
+338	11:$4E29	8	エーテルもどき	Air Devil	
+339	11:$4E32	8	ギガヘッド	Megahead	
+340	11:$4E3B	8	ねむりダイコン	Sleep Radish	
+341	11:$4E44	8	がぶのみムシ	Leech Fly	
+342	11:$4E4D	7	チタンアーマー	Steel Armor	
+343	11:$4E55	7	メガタウロス	Megataur	
+344	11:$4E5D	7	いやしウサギ	Fluffy Bunny	
+345	11:$4E65	6	しょうぐん	Evil General	
+346	11:$4E6C	8	ぼうれいむしゃ	Dead Soldier	
+347	11:$4E75	8	てんぐししょう	Tengu Chief	
+348	11:$4E7E	8	とびぴーたん	Flying Egg	
+349	11:$4E87	8	ベルトーベン	Bellthoven	
+350	11:$4E90	9	スルードラゴン	Dragon Pit	
+351	11:$4E9A	10	パコレプキング	Pumplich	
+352	11:$4EA5	8	イッテツせんしゃ	Oldster Tank	
+353	11:$4EAE	9	にぎりもとじめ	Nigiri Honcho	
+354	11:$4EB8	9	ノロージョのはは	Curse Mom	
+355	11:$4EC2	8	ガイコツまおう	Skullmancer	
+356	11:$4ECB	10	ハイパーゲイズ	Hyper Gazer	
+357	11:$4ED6	6	ちびタンク	Mini Tank	
+358	11:$4EDD	7	かんてらフグ	Torch Puffer	
+359	11:$4EE5	8	ダマシウッチー	Trick Uchi	
+360	11:$4EEE	8	ばくだんウニ	Explochin	
+361	11:$4EF7	5	タカビー	Takabee	
+362	11:$4EFD	8	ガンたれヘビ	Leer Snake	
+363	11:$4F06	8	ねずみくろまく	Mouse Don	
+364	11:$4F0F	8	イヌワシてんぐ	Eagle Tengu	
+365	11:$4F18	8	かいめつイノシシ	Ruin Boar	
+366	11:$4F21	7	たんたんタヌキ	Tantan Tanuki	
+367	11:$4F29	8	ミクダシおさる	Scorn Monkey	
+368	11:$4F32	6	おおチンタラ	Big Chintala	
+369	11:$4F39	3	オロチ	Orochi	
+370	11:$4F3D	8	とうぞくばん	Sheriff	
+371	11:$4F46	5	ばんけん	Guard Dog	
+372	11:$4F4C	4	てんしゅ	Shopkeeper	
+373	11:$4F51	4	コッパ	Koppa	
+374	11:$4F56	5	フミのはは	Fumi's Mom	
+375	11:$4F5C	2	フミ	Fumi	
+376	11:$4F5F	3	ポチ	Pochi	
+377	11:$4F63	4	むらおさ	Village Chief	
+378	11:$4F68	3	ナギ	Nagi	
+379	11:$4F6C	4	ニワトリ	Rooster	
+380	11:$4F71	4	かんぬし	Shrine Priest	
+381	11:$4F76	8	ぱしりのゴン	Gon the Gofer	
+382	11:$4F7F	3	おかみ	Innkeeper	
+383	11:$4F83	3	ケヤキ	Keyaki	
+384	11:$4F87	7	だいくのマサ	Builder Masa	
+385	11:$4F8F	9	だいくのキンジ	Builder Kinji	
+386	11:$4F99	4	ロクロウ	Rokuro	
+387	11:$4F9E	7	こどもマムル	Baby Mamel	
+388	11:$4FA6	8	うらないババ	Old Seer	
+389	11:$4FAF	4	タンモモ	Tanmomo	
+390	11:$4FB4	4	タグラ	Tagura	
+391	11:$4FB9	6	ヨシゾウタ	Yoshizota	
+392	11:$4FC0	3	つぼ	Pot	
+393	11:$5330	10	 ぼうけんにでる	 Adventure	
+394	11:$533B	8	 にっきをつくる	 New Log	
+395	11:$5344	8	 にっきをうつす	 Copy Log	
+396	11:$534D	7	 にっきをけす	 Erase Log	
+397	11:$5355	8	 なまえをかえる	 Rename	
+398	11:$535E	15	 ばんづけ／パスワード	 Rank/Pass	
+399	11:$536E	5	 かいそう	 Replay	
+400	11:$5374	10	 フェイのもんだい	 Fay's Puzzles	
+401	11:$537F	7	：ふうらいの 	: Log:<$00>	
+402	11:$5387	16	  をけしてもよろしいですか？	 Erase log?	
+403	11:$5398	8	 ふうらいにっき	 Log	
+404	11:$53A1	4	やさしい	Easy	
+405	11:$53A6	3	ふつう	Normal	
+406	11:$53AA	6	むずかしい	Hard	
+407	11:$53B1	7	ツキカゲむら	Moonlight	
+408	11:$53B9	7	へんげのもり	Shift Forest	
+409	11:$53C1	9	コマシラどうくつ	Koma Cave	
+410	11:$53CB	8	けしんのいわば	Avatar's Crag	
+411	11:$53D4	7	クヨウとうげ	Kuyo Pass	
+412	11:$53DC	8	りゅうのあぎと	Dragon's Maw	
+413	11:$53E5	7	オロチのまくつ	Orochi's Den	
+414	11:$53ED	12	ツキカゲむらでぐち	Moonlight Exit	
+415	11:$53FA	6	 どうぐ	 Item	
+416	11:$5401	5	 あしもと	 Floor	
+417	11:$5407	3	 わな	 Trap	
+418	11:$540B	6	 かいだん	 Stairs	
+419	11:$5412	5	 マップ	 Map	
+420	11:$5418	5	 とじる	 Close	
+421	11:$541E	6	 でぐち	 Exit	
+422	11:$5425	4	 おわる	 Quit	
+423	11:$542A	4	 おりる	 Down	
+424	11:$542F	5	 あがる	 Up	
+425	11:$5435	4	 すすむ	 Proceed	
+426	11:$543A	5	 そのまま	 Stay	
+427	11:$5440	3	 ふむ	 Trigger	
+428	11:$5444	7	 ばんづけ	 Rank	
+429	11:$544C	8	 パスワード	 Pass	
+430	11:$5459	9	もっとむずかしい	Expert	
+431	11:$548B	17	ドラゴンけいモンスターにつよい	Strong vs Dragons	
+432	11:$549D	16	ゴーストけいモンスターにつよい	Strong vs Ghosts	
+433	11:$54AE	13	ひとつめモンスターにつよい	Strong vs One-Eyes	
+434	11:$54BC	19	ステータスをうばうモンスターにつよい	Strong vs drainers	
+435	11:$54D0	4	「にく」	[Meat]	
+436	11:$54D5	7	かべをほれる	Can dig walls	
+437	11:$54DD	15	かならずこうげきがあたる	Attacks never miss	
+438	11:$54ED	15	かいしんのいちげきがでる	Lands criticals	
+439	11:$54FD	21	まえ3ほうこう 1どにこうげきできる	Hits all 3 ahead	
+440	11:$5513	10	おなかがへりにくい	Get hungry slower	
+441	11:$551E	10	おなかがへりやすい	Get hungry faster	
+442	11:$5529	5	さびない	Never rusts	
+443	11:$552F	5	「どく」	[Poison]	
+444	11:$5535	19	ドラゴンのほのおのちからをよわめる	Cuts dragon fire	
+445	11:$5549	16	うけたダメージを はねかえす	Counters damage	
+446	11:$555A	14	まほうこうげきをはねかえす	Reflects magic	
+447	11:$5569	16	てきのこうげきがあたりにくい	Foes often miss	
+448	11:$557A	22	こうげきをうけるたびにつよさがさがる	Weakens when hit	
+449	11:$5591	19	ばくはつのダメージをすくなくする	Cuts blast damage	
+450	11:$55A5	6	ぬすまれない	Can't be stolen	
+451	11:$55C6	23	そうびするとこうげきりょくがあがるぞ	Raises attack.	
+452	11:$55DE	17	おおきなダメージをあたえるぞ	Deals big damage.	
+453	11:$55F0	24	そうびするとぼうぎょりょくがあがるぞ	Raises defense.	
+454	11:$5609	7	そうびすると	When equipped:	
+455	11:$5611	17	なげて つかうこともできるぞ	Can be thrown too.	
+456	11:$5623	15	なげても こうかがあるぞ	Works when thrown.	
+457	11:$5633	11	とおくからモンスターを	Attack monsters	
+458	11:$563F	20	そうびすれば セレクトをおしながら	Equip, hold Select	
+459	11:$5654	16	Aボタンで やを うてるぞ	press A to fire.	
+460	11:$5665	17	カベになげてわれば なかみを	Break it on a wall	
+461	11:$5677	8	とりだせるぞ	to get them out.	
+462	11:$5680	14	なかまにも きいてしまうぞ	Allies feel it too	
+463	11:$568F	14	モンスターにむかって ふると	Wave at a monster:	
+464	11:$56C3	23	フミ「・・・おかあさん<end><br> おかあさーん！！」	Fumi: ...Mom.<end><brk> Mooom!!	
+465	11:$56DB	12	フミのはは「ああ・・・」	Fumi's Mom: Ahh...	
+466	11:$56E8	54	ナギ「フミちゃん ケガないかい？<br> つらかっただろうに・・・けど<br> よかったよ ぶじで・・・」	Nagi: Fumi, are you hurt? It<br> must've been awful...<end><brk> I'm just glad you're safe.	
+467	11:$571F	33	むらおさ「オ、オロチを・・・<br> オロチを ついに たおしたのか！」	Chief: Y-you... You finally<br> defeated Orochi!	
+468	11:$5741	11	キンジ「やったあ！」	Kinji: We did it!	
+469	11:$574D	34	マサ「もう こどもたちを いけにえに<br> しなくても すむんだ！」	Masa: Now we won't have to<br> sacrifice any more children!	
+470	11:$5770	133	ロクロウ「こんなメデタイことは<br> ないぜ。さあ こんやはえんかいだ！<end><brk> おっと しんぱいしなくてもいいぜ。<br> きょうは くもっているだろうから<br> へんしんは たぶん しねえぜ。<end><brk> さあ みんな！ <name>さんを<br> かこんで ドンチャンやろうぜ！」	Rokuro: Nothing could make me<br> happier! Tonight, we feast!<end><brk> Oh, don't worry. It should be<br> cloudy tonight.<end><brk> So we probably won't<br> transform.<end><brk> Come on, everyone! Gather<br> around <name> and let's<br> celebrate!	
+471	11:$57F6	12	みんな「おおーーっ！！」	Everyone: Yeah!!	
+472	11:$5803	179	おかみ「きょうは わたしのおごり<br> だからね ジャンジャンのんで<br> おくれ<end>・・・と、<end><brk> ・・・あんた よくみたら にもつ<br> いっぱいもっていて それじゃ<br> くつろげないわね。<end><brk> たいせつな もちものは いまのうち<br> そうこに しまっておいたほうが<br> いいんじゃ ないかしら。<end><brk> よっぱらって なくしちゃうと<br> いけないし・・・」	Innkeeper: Drinks are on me<br> tonight, so have as much as<br> you like!<end><brk> ...Hold on. You're carrying a<br> ton of stuff.<end><brk> You can't relax like that.<end><brk> You should put anything<br> important in the Warehouse<br> now.<end><brk> Wouldn't want to get drunk<br> and lose it...	
+473	11:$58B7	45	おかみ「たいせつな もちものは<br> いまのうちに そうこへ しまった<br> ほうが いいわよ」	Innkeeper: You should put<br> anything important in the<br> Warehouse now.	
+474	11:$58E5	18	ロクロウ「はは・・・ゆかい ゆかい」	Rokuro: Ha ha... This is<br> great!	
+475	11:$58F8	71	かんぬし「あのオロチを たおすとは<br> さすがじゃのう。<end><brk> はっきりいって いろいろアドバイス<br> した わしのおかげじゃがのう」	Priest: Defeating Orochi is no<br> small feat. Impressive.<end><brk> Though frankly, it's all<br> thanks to my expert advice.	
+476	11:$5940	98	だいくのマサ「もちものは なくすと<br> いけないから そうこに しまって<br> おいたほうが いいぜ。<end><brk> あのそうこは あんたのものなんだ<br> からよ。これからも じゆうに<br> つかってくれよ」	Masa: Put your things in the<br> Warehouse.<end><brk> You don't want to lose them.<end><brk> That Warehouse belongs to<br> you. Use it whenever you<br> like.	
+477	11:$59A3	41	うらないオババ「こんなに おおさわぎ<br> するのも なんねんぶりだろねえ」	Old Seer: How many years has<br> it been since we had a<br> celebration like this?	
+478	11:$59CD	84	ナギ「にいちゃん ありがとな。<br> おれ フミちゃんの かおをみれた<br> ときは もう・・・うれしくてさ。<end><brk> フミちゃんも だいぶおちついてきた<br> みたいだよ」	Nagi: Thanks, big bro.<end><brk> When I saw Fumi again, I was<br> just... so happy.<end><brk> She seems a lot calmer now,<br> too.	
+479	11:$5A22	45	フミ「・・・おにいちゃん<br> ・・・わたし・・・まだ・・<br> ドキドキしちゃって・・・」	Fumi: ...Mister... I... My<br> heart's still pounding...	
+480	11:$5A50	35	タグラ「また さんにんで<br> あそべるんだね。わーい わーい！」	Tagura: Now the three of us<br> can play together again!<br> Hooray!	
+481	11:$5A74	92	フミのはは「<name>さんの おふとん<br> を しいているんです。つかれたら<br> ここでやすんで くださいね。<end><brk> さっ これがおわったら わたしも<br> おかみさんを てつだわなきゃ！」	Fumi's Mom: I'm making a bed<br> for <name>.<end><brk> If you're tired, please rest<br> here.<end><brk> Once I'm done, I need to help<br> the Innkeeper!	
+482	11:$5AD1	20	ぱしりのゴン「うわっはっはっはー！」	Gon: Wa-ha-ha-haaa!	
+483	11:$5AE6	160	だいくのキンジ「さっき こんなカミが<br> おちてたんだけど・・・<end><brk> 『もちものを もちださずにクリアー<br> しても、パスワードはふえる・・・<end><brk> ほかにも いろんなことをすれば<br> パスワードは ふえていくぞ・・・』<end><brk> ・・・なんのことだか さっぱり<br> わからないけど <name>さん<br> わかる？」	Kinji: I found this piece of<br> paper just now...<end><brk> It says clearing without<br> bringing any items earns<br> another password...<end><brk> And doing all kinds of other<br> things earns even more...<end><brk> ...I have no idea what that<br> means. Do you, <name>?	
+484	11:$5B87	73	コッパ「・・んでさぁ ヒック<end><brk> そのとき <name>があぶない！ と<br> おもったから オイラは ヨシゾウタ<br> を けんで バシュッと・・」	Koppa: ...So then, hic.<end><brk> I thought, <name>'s in<br> danger!<end><brk> So I slashed Yoshizota with<br> my sword! Swish!	
+485	11:$5BD1	49	ぱしりのゴン「うわっはっはっはー！<end><br> おめえ なかなかジョウダンが<br> うめえなーっ！」	Gon: Wa-ha-ha-haaa!<end><brk> You're pretty good at telling<br> jokes!	
+486	11:$5C03	49	だいくのキンジ「このイタチ<br> よっぱらうと ホラまで ふくだ！<br> うわっはっはっはー！」	Kinji: Get this weasel drunk<br> and he starts telling tall<br> tales!<end><brk> Wa-ha-ha-ha!	
+487	11:$5C35	34	コッパ「ぬ、ぬわにぃ・・・ヒック<br> オ、オイラはなあ・・・ん？<end><mode0>	Koppa: Wh-whaaat...? Hic. I'll<br> have you know... Hm?<end><mode0>	
+488	11:$5C58	45	 <name> どこいくんだ？ ヒック<end><brk> ああ オシッコか・・・<br> いってらっさーい ヒック」	 <name>, where're you<br> going? Hic.<end><brk> Oh, gotta pee? Off you go!<br> Hic.	
+489	11:$5C86	75	コッパ「ヒック ええっと どこまで<br> はなしたっけ・・・そうだ そうだ<end><brk> そして オイラは じゅうそうのたて<br> を そうびした・・・」	Koppa: Hic. Now, where was I?<br> Oh, right.<end><brk> So then I equipped the Heavy<br> Shield...	
+490	11:$5CD2	15	みんな「うわっはっはっはー！」	Everyone: Wa-ha-ha-ha!	
+491	11:$5CE2	425	むらおさ「なに？・・クヨウとうげの<br> かいぶつたちについてじゃと？<br> ・・・ふむ」<cE1><mode1>ぇ<cE0:1A><end><brk>むらおさ「<name>さんも おきづき<br> かとおもうが、じつは あそこにいる<br> かいぶつどもは みな、<end><brk> いけにえにされた こどもたち<br> なんですじゃ。<end>しかし たおした<br> ことを くいるひつようは ない。<end><brk> もとにもどれず ヨシゾウタの<br> いいなりに さまようよりは・・・<end><brk> いっそのこと じょうぶつしてあげた<br> ほうが あのコらもラクじゃろうて。<end><br> だからあそこを クヨウとうげと<end><brk> なづけたのじゃよ・・・<end><brk> ・・・ケヤキのことは しんぱい<br> せんでもよい。なんにちか まてば<br> かならず もどってきますじゃ。<end><brk> わがいちぞくの たいしつがある<br> いじょう ここいがいに すめる<br> ばしょは ないのです」<end><brk>むらおさ「さあ みんな まっておる。<br> はやく もどりましょう」	Chief: What? You mean the<br> monsters at Kuyo Pass?<end><brk> ...Hmm.<cE1><mode1><$3C><cE0:1A><end><brk> Chief: You may have already<br> realized this, <name>,<end><brk> but all of those monsters<br> were once children offered as<br> sacrifices.<end><brk> But you need not regret<br> defeating them.<end><brk> It's better than wandering<br> forever at Yoshizota's<br> command,<end><brk> unable to return to normal.<end><brk> Sending them to their final<br> rest is kinder.<end><brk> That's why we named it Kuyo<br> Pass, where the lost find<br> rest.<end><brk> ...You don't need to worry<br> about Keyaki.<end><brk> Wait a few days and she'll<br> always return.<end><brk> As long as our clan carries<br> this trait,<end><brk> there is nowhere else we can<br> live.<end><brk> Chief: Come, everyone is<br> waiting. Let's go back.	
+492	11:$5E8C	62	<cF2><cF0><cF1><cF4>こうして シキタリをたちきったむらの<br>うたげが よどおし おこなわれた。<br>そして つぎのあさ・・・<mode1><$C8><mode1>モ<mode0>	<cF2><cF0><cF1><cF4>And so the village celebrated<br> all night, its old custom<br> finally broken.<end><brk> The next morning...<mode1><$C8><mode1><$64><mode0>	
+493	11:$5ECB	55	おかみ<mode1>こ「なにも きのうのきょう<br> でていかなくても・・・<mode1>Fもうすこし<br> ゆっくりしていったら？」<mode1><$C8><mode0>	Innkeeper:<mode1><$14> Do you really have<br> to leave the very next<br> day...?<mode1><$B4><end><brk> Wouldn't you like to stay a<br> little longer?<mode1><$C8><mode0>	
+494	11:$5F03	92	コッパ<mode1>こ「オイラも ふつかよいだから<br> そうしたいところなんだけど<br> アイボウがさあ・・・<mode1>F<brk> けど<name>さあ、ケヤキちゃんって<br> コのこと ほんとにいいのかい？」<mode1>F<mode0>	Koppa:<mode1><$14> I'm hungover, so I'd<br> be happy to stay,<end><brk> but my partner here...<mode1><$B4><end><brk> Still, <name>... What about<br> Keyaki?<end><brk> Are you really okay leaving<br> her?<mode1><$B4><mode0>	
+495	11:$5F60	85	フミのはは<mode1>こ「おかげさまで ほんとうに<br> ありがとうございました。<mode1>F<brk> すこしずつですが コトバのほうも<br> もどってきているみたいで・・」<mode1>F<mode0>	Fumi's Mom:<mode1><$14> Thank you so<br> much for everything.<mode1><$B4><end><brk> Her speech seems to be<br> coming back, little by<br> little...<mode1><$B4><mode0>	
+496	11:$5FB6	47	フミ<mode1>こ「おにいちゃん・・・<mode1>と<br> たすけてくれて ありがとう・・・<mode1>ぇ<br> チュッ！」<mode1>と<mode0>	Fumi:<mode1><$14> Mister...<mode1><$1E> thank you<br> for saving me...<mode1><$3C> Mwah!<mode1><$1E><mode0>	
+497	11:$5FE6	18	ロクロウ<mode1>こ「たっしゃでな」<mode1>モ<mode0>	Rokuro:<mode1><$14> Take care.<mode1><$64><mode0>	
+498	11:$5FF9	28	ナギ<mode1>こ「にいちゃんたち<br> カッコよかったぜ」<mode1>F<mode0>	Nagi:<mode1><$14> You two were<br> amazing!<mode1><$B4><mode0>	
+499	11:$6016	33	だいくのマサ<mode1>こ「こんどきたら ウチを<br> たててやらあ」<mode1>F<mode0>	Masa:<mode1><$14> Come back sometime<br> and I'll build you a house.<mode1><$B4><mode0>	
+500	11:$6038	30	かんぬし<mode1>こ「これっ！<mode1>ぇ<br> おそいではないかっ！」<mode1>F<mode0>	Priest:<mode1><$14> Hey!<mode1><$3C> You're late!<mode1><$B4><mode0>	
+501	11:$6057	25	ぱしりのゴン<mode1>こ「すみません・ハアハア」<mode1>F<mode0>	Gon:<mode1><$14> Sorry... Pant, pant.<mode1><$B4><mode0>	
+502	11:$6071	34	むらおさ<mode1>こ「それでは げんきでな<br> ・・・<mode1>ぇん？」<mode1>ソ<cE7><mode0>	Chief:<mode1><$14> Well then, take<br> care...<mode1><$3C> Hm?<mode1><$50><cE7><mode0>	
+503	11:$6094	15	ネコ<mode1>こ「ニャア・・・」<mode1>ッ<mode0>	Cat:<mode1><$14> Meow...<mode1><$78><mode0>	
+504	11:$60A4	19	だいくのマサ<mode1>こ「ノラネコ？」<mode1>F<mode0>	Masa:<mode1><$14> A stray cat?<mode1><$B4><mode0>	
+505	11:$60B8	67	おかみ<mode1>こ「あれ じんじゃにいたノラネコ<br> でしょ？<mode1>モ さいきん みかけなかった<br> けど・・・<mode1>ぇかえってきたんだ」<mode1><$DC><mode0>	Innkeeper:<mode1><$14> Isn't that the<br> stray cat from the shrine?<mode1><$64><end><brk> We haven't seen her<br> lately...<mode1><$3C> She came back.<mode1><$DC><mode0>	
+506	11:$60FC	65	ぱしりのゴン<mode1>こ「うーっ<mode1>と そういえば<br> さっき じんじゃで ノラネコの<br> こえが きこえてたような・・・」<mode1><$DC><mode0>	Gon:<mode1><$14> Urgh...<mode1><$1E><end><brk> Come to think of it, I<br> thought I heard a stray cat<br> at the shrine earlier...<mode1><$DC><mode0>	
+507	11:$613E	24	コッパ<mode1>こ「<name>！<mode1>ぇ もしかしたら！」<mode1>モ<cE7><mode0>	Koppa:<mode1><$14> <name>!<mode1><$3C> Could it<br> be?!<mode1><$64><cE7><mode0>	
+508	11:$6157	20	おかみ<mode1>こ「ケヤキちゃん・・・」<mode1>F<cE7><mode0>	Innkeeper:<mode1><$14> Keyaki...<mode1><$B4><cE7><mode0>	
+509	11:$616C	144	ケヤキ<mode1>こ「やっぱり もういちど<br> あいたくて<mode1>と・<mode1>と・<mode1>と・<mode1>モ<br> もう いっちゃうんでしょ？<mode1>F<brk> <name>さんは フウライニンだもン<br> ね。<mode1>とつぎのぼうけんが まっているン<br> だものね。<mode1>ッだから<mode1>モ・・・」<mode1><$C8><brk>ケヤキ<mode1>こ「・・・あの<mode1>と これ あげる！」<mode1>モ<mode0>	Keyaki:<mode1><$14> I just had to see you<br> one more time<mode1><$1E>.<mode1><$1E>.<mode1><$1E>.<mode1><$64><end><brk> You're leaving now, aren't<br> you?<mode1><$B4><end><brk> <name>, you're a<br> Wanderer, after all.<mode1><$1E><end><brk> Your next adventure is<br> waiting for you.<mode1><$78> That's<br> why<mode1><$64>...<mode1><$C8><end><brk> Keyaki:<mode1><$14> ...Um<mode1><$1E>, take this!<mode1><$64><mode0>	
+510	11:$61FD	17	<name>は やくそうを もらった。<mode1>F<mode0>	<name> received a Medical<br> Herb.<mode1><$B4><mode0>	
+511	11:$620F	101	ケヤキ<mode1>こ「たしか さいしょにあげたのも<br> やくそう だったよね。<mode1>F<brk> あたらしい たびだちだから<br> これがいいとおもって・・・<mode1>ッ<br> じゃ<mode1>と・<mode1>と・<mode1>と・<mode1>とおげんきで！」<mode1>F<mode0>	Keyaki:<mode1><$14> The first thing I<br> gave you was a Medical Herb<br> too,<end><brk> wasn't it?<mode1><$B4><end><brk> Since you're starting a new<br> journey, I thought it would<br> be fitting...<mode1><$78><end><brk> Well<mode1><$1E>.<mode1><$1E>.<mode1><$1E>.<mode1><$1E> take care of<br> yourself!<mode1><$B4><mode0>	
+512	11:$6275	20	コッパ<mode1>こ「いこうぜ！ <name>！」<mode1>ッ<mode0>	Koppa:<mode1><$14> Let's go, <name>!<mode1><$78><mode0>	
+513	11:$628A	19	だいくのマサ<mode1>こ「じゃあな」<mode1>ほ<mode0>	Masa:<mode1><$14> See you.<mode1><$28><mode0>	
+514	11:$629E	17	ロクロウ<mode1>こ「ありがとよ」<mode1>ほ<mode0>	Rokuro:<mode1><$14> Thanks for<br> everything.<mode1><$28><mode0>	
+515	11:$62B0	18	ナギ<mode1>こ「げんきでね！」<mode1>ほ<mode0>	Nagi:<mode1><$14> Take care!<mode1><$28><mode0>	
+516	11:$62C3	17	むらおさ<mode1>こ「きをつけてな」<mode1>ほ<mode0>	Chief:<mode1><$14> Take care out there.<mode1><$28><mode0>	
+517	11:$62D5	32	<mode1>ぇケヤキ<mode1>こ「つぎのぼうけんも<br> がんばってね！<mode1>◀<mode0>	<mode1><$3C>Keyaki:<mode1><$14> Good luck on your<br> next adventure!<mode1><$82><mode0>	
+518	11:$62F6	26	<cF2><cF0><cF1><br> たびのかみクロンの おいかぜを！<mode1><$C8><mode0>	<cF2><cF0><cF1>May Kron, god of travelers,<br> grant you fair winds!<mode1><$C8><mode0>	
+519	11:$6311	27	<cF4>ケヤキ<mode1>こ「・・・あの<mode1>と これ あげる！」<mode1>モ<mode0>	<cF4>Keyaki:<mode1><$14> ...Um<mode1><$1E>, take this!<mode1><$64><mode0>	
+520	11:$632D	18	ロクロウ「おっ、よそモンだ・・・」	Rokuro: Oh, an outsider...	
+521	11:$6340	24	タグラ「おにいちゃん どっから<br> きたの？」	Tagura: Mister, where'd ya<br> come from?	
+522	11:$6359	55	ぱしりのゴン「コッパ？ しらねえな。<end><br> うーーーっ このむらで おちあう<br> ことになってたのかい？」	Gon: Koppa? Never heard of<br> him.<end><brk> Urgh... Were you supposed to<br> meet him in this village?	
+523	11:$6391	13	ポチ「ワン！ ワワン！」	Pochi: Woof! Woof woof!	
+524	11:$639F	39	フミのはは「シキタリとはいえ・・・<end><br> なんだって うちのむすめが・・・」	Fumi's Mom: I know it's<br> tradition, but...<end><brk> Why does it have to be my<br> daughter...?	
+525	11:$63C7	37	むらおさ「かわいそうだが フミちゃん<br> のことは あきらめるんじゃ」	Chief: It pains me, but you<br> must give up on Fumi.	
+526	11:$63ED	39	だいくのキンジ「オロチには だれも<br> かなわねえ。どうしようもないよ」	Kinji: No one stands a chance<br> against Orochi. There's<br> nothing we can do.	
+527	11:$6415	11	ナギ「ちくしょう！」	Nagi: Damn it!	
+528	11:$6421	15	むらおさ「あっ！ ナギ！！」	Chief: Ah! Nagi!!	
+529	11:$6431	51	だいくのキンジ「あいつも つらいよな<end><br> フミちゃんとは いちばん なかが<br> よかったからな」	Kinji: This is hard on him,<br> too.<end><brk> He and Fumi were best<br> friends.	
+530	11:$6465	13	フミのはは「ううう・・・」	Fumi's Mom: Ohhh...	
+531	11:$6473	38	だいくのキンジ「くそっ オロチさえ<br> いなけりゃ こんなことには・・・」	Kinji: Damn it, if it weren't<br> for Orochi, none of this<br> would have happened...	
+532	11:$649A	83	むらおさ「このむらは オロチという<br> かいぶつに しはいされておる。<end><brk> ねんにいちど おさないこどもを<br> いけにえに ささげなければ ならぬ<br> のじゃ」	Chief: This village is ruled<br> by a monster called Orochi.<end><brk> Once a year we must offer<br> up a young child as a<br> sacrifice.	
+533	11:$64EE	11	ニワトリ「コケーッ！」	Rooster: Cock-a-doodle-doo!	
+534	11:$64FA	76	おかみ「あらっ おきゃくさん？<end><brk> えっ ちがうの。いやね よそからの<br> きゃくなんて めったに こないから<br> はっきりいって ヒマでヒマで・・」	Innkeeper: Oh, a guest?<end><brk> Oh, you're not? What a<br> shame. We almost never get<br> visitors from outside.<end><brk> To be honest, I'm bored out<br> of my mind...	
+535	11:$6547	51	うらないオババ「オロチは<br>『クヨウとうげ』に すんでおる。<br> てしたの かいぶつとともにな」	Old Seer: Orochi lives at Kuyo<br> Pass,<end><brk> along with the monsters that<br> serve him.	
+536	11:$657B	176	だいくのマサ「このさきは<br> 『クヨウとうげ』っていってな<br> とてもキケンなところなんだ。<end><brk> どうしてもというのなら いくまえに<br> じんじゃによりな。かんぬしさまが<br> いろいろ おしえてくれるぜ。<end><brk> あと クヨウとうげは、みちが<br> 3つに わかれているんだ。<end><brk> そこのカンバンのちずを みれば<br> みちを えらべるぜ」	Masa: Up ahead is a<br> dangerous place called Kuyo<br> Pass.<end><brk> If you're determined to go,<br> stop at the shrine first.<end><brk> The Shrine Priest can teach<br> you a few things.<end><brk> Kuyo Pass also splits into<br> three roads.<end><brk> Check the map on that sign<br> to choose one.	
+537	11:$662C	122	だいくのマサ「そとにでるまえに<br> もうすこし むらびとたちに はなし<br> かけたほうが いいぜ。<end><brk> あと クヨウとうげは、みちが<br> 3つに わかれているんだ。<end><brk> そこのカンバンのちずを みれば<br> みちを えらべるぜ」	Masa: Before heading out,<br> you should talk to a few<br> more villagers.<end><brk> Kuyo Pass splits into three<br> roads.<end><brk> Check the map on that sign<br> to choose one.	
+538	11:$66A7	18	ロクロウ「た、たいへんだーっ！！」	Rokuro: W-we've got trouble!!	
+539	11:$66BA	54	ロクロウ「ナギがっ！ ナギが<br> いねえんだっ！<end> どこさがしても<br> みあたらないんだよ！！」	Rokuro: Nagi! Nagi's gone!<end><brk> I've looked everywhere, but I<br> can't find him!	
+540	11:$66F1	33	だいくのマサ「あれ？ さっきここで<br> みかけたけどな・・・」	Masa: Huh? I saw him here just<br> a minute ago...	
+541	11:$6713	49	ロクロウ「まさか・・・<end>いや<br> まちがいない！<end> あいつ<br> フミちゃんをたすけにいったんだ！」	Rokuro: No way... Wait, I'm<br> sure of it!<end><brk> He went to rescue Fumi!	
+542	11:$6745	98	むらおさ「ムチャじゃ！ かいぶつども<br> のエジキになるのがオチだわい！<end><brk> まだそんなにとおくまで いっとりゃ<br> せん！ いますぐ おいかければ<br> まにあうとおもうが・・・」	Chief: Foolish boy! He'll only<br> become monster food!<end><brk> He can't have gone very far<br> yet!<end><brk> If someone goes after him<br> now, they may still catch<br> him...	
+543	11:$67A8	59	だいくのマサ「や、やだよ オレは・・<end><br> ナギが むらおさの マゴとはいえ<br> あんなとこ いきたかねえよ！」	Masa: N-not me...<end><brk> Even if Nagi is the Village<br> Chief's grandson,<end><brk> I'm not going up there!	
+544	11:$67E4	65	ロクロウ「あそこで かいぶつに<br> やられでもしたら さいご、<br> にどと かえってこれねえ。<end><brk> あきらめるしか ねえよ」	Rokuro: If the monsters get<br> him up there, it's over.<end><brk> He'll never come back.<end><brk> There's nothing we can do<br> but give up.	
+545	11:$6826	47	おかみ「まったく このむらには<br> おとこってやつが いないのかねえ！<br> だらしのないっ！」	Innkeeper: Honestly, doesn't<br> this village have any real<br> men?!<end><brk> You're all pathetic!	
+546	11:$6856	30	おかみ「あ、あんた！ ナギを<br> たすけに いくのかい？！」	Innkeeper: Y-you! Are you<br> going to rescue Nagi?!	
+547	11:$6875	37	だいくのマサ「わるいことはいわねえ。<br> やめておいたほうが いいぜ」	Masa: Take my advice. You'd<br> better not.	
+548	11:$689B	115	ロクロウ「おい、いきてえってヤツを<br> ムリにとめることは ないだろ？<br> いかして やれよ。<end><brk> まっ、よそもンはいいよな。<br> たとえ かいぶつにやられても<br> ここに もどされるだけだし・・・<end><brk> オレたちと ちが・・・	Rokuro: Hey, if the guy wants<br> to go, why stop him?<end><brk> Let him go.<end><brk> Must be nice being an<br> outsider.<end><brk> Even if a monster gets him,<br> he'll just be sent back<br> here...<end><brk> Unlike us...	
+549	11:$690F	17	むらおさ「こらっ！ ロクロウ！！」	Chief: That's enough, Rokuro!!	
+550	11:$6921	9	ロクロウ「・・・」	Rokuro: ...	
+551	11:$692B	16	おかみ「フウライニンさん・・・」	Innkeeper: Wanderer...	
+552	11:$693C	29	むらおさ「ロクロウ。<br> ・・・しゃべりすぎじゃぞ」	Chief: Rokuro... You've said<br> too much.	
+553	11:$695A	8	ノラネコ「ミー」	Stray Cat: Mew.	
+554	11:$6963	72	ケヤキ「あ・・・<end>たびのかた ですか？<end><br> やどでしたら、ここを おりた<br> ところに ありますわ。<end><brk> 『ととや』という おみせです」	Keyaki: Um... are you a<br> traveler?<end><brk> If you need a place to stay,<br> there's one just down the<br> road.<end><brk> It's called the Totoya.	
+555	11:$69AC	13	ケヤキ「あ、あの！・・・」	Keyaki: Um, excuse me!...	
+556	11:$69BA	29	ケヤキ「・・・い、いえ いいんです。<br> ごめんなさい」	Keyaki: ...N-no, never mind.<br> I'm sorry.	
+557	11:$69D8	105	おかみ「おはよう。<end>ずいぶん<br> ぐっすり ねむってたわよ。<br> よっぽど つかれてたんだね。<end><brk> ところで あんたに きゃくだよ。<end><br> おきたら よんでくれって。<br> ほら あそこにいる おとこ」	Innkeeper: Good morning.<end><brk> You were sleeping like a log.<br> You must've been exhausted.<end><brk> By the way, you have a<br> visitor.<end><brk> He asked me to get him when<br> you woke up. See that man<br> over there?	
+558	11:$6A42	62	ヨシゾウタ「あんた クヨウとうげから<br> かえってきたんだって？<end> すげえじゃ<br> ねえか。まあ いっぱい やりな」	Yoshizota: I heard you made it<br> back from Kuyo Pass. That's<br> pretty impressive.<end><brk> Come on, have a drink with<br> me.	
+559	11:$6A81	21	<name>は みしらぬオトコと はなし<br>こんだ。	<name> got to talking with<br> the stranger.	
+560	11:$6A97	108	ヨシゾウタ「おれのなは ヨシゾウタ。<br> クスリうりながら ぜんこくを<br> たびしている。<end><brk> このむらにも ときどき よるんだ。<br> なあ あんた。このあとは やっぱり<br> フミを たすけにいくんだろ？」	Yoshizota: Name's Yoshizota.<end><brk> I travel the country selling<br> medicine.<end><brk> I stop by this village now<br> and then.<end><brk> So, you're going to rescue<br> Fumi next, right?	
+561	11:$6B04	54	ヨシゾウタ「オロチは てごわいって<br> きくけど あんたなら なんとか<br> しそうだ。がんばれよ！」	Yoshizota: I hear Orochi's a<br> tough one, but I bet you'll<br> find a way.<end><brk> Good luck!	
+562	11:$6B3B	45	ヨシゾウタ「おれ あんたのこと<br> きにいっちまったよ。<br> こんど また のもうぜ！」	Yoshizota: I've really taken a<br> liking to you. Let's grab<br> another drink sometime!	
+563	11:$6B69	13	フミのはは「ううう・・・」	Fumi's Mom: Ohhh...	
+564	11:$6B77	58	ナギ「おばさん だいじょうぶだよ。<br> このにいちゃんが きっと たすけて<br> くれるって！<end> なっ！」<mode0>	Nagi: It will be all<br> right, missus.<end><brk> This fellow here will<br> save her, I know it!<br> Right!<end><mode0>	
+565	11:$6BB2	44	むらおさ「ありがとうございます。<br> まさか ナギに いきて<br> あえるとは・・・」	Chief: Thank you so much. I<br> never thought I'd see Nagi<br> alive again...	
+566	11:$6BDF	36	むらおさ「えっ ヨシゾウタ？<end><br> や、やつが むらに いるのか？！」	Chief: What? Yoshizota?<end><brk> H-he's here in the village?!	
+567	11:$6C04	16	むらおさ「・・・・・・・・・・」	Chief: ..........	
+568	11:$6C15	168	ぱしりのゴン「な、なんだ コッパって<br> イタチのことだったのかい？！<br> それなら みただよ。<end><brk> あんたがくる なんにちか まえだ。<br> いかにも くさそうなイタチが めの<br> まえを とおりすぎたんだ。<end><brk> あれっきりだが イタチがむかってた<br> ほうこう・・・ありゃ クヨウとうげ<br> のほうだな。うーーっ」	Gon: W-what? Koppa's a<br> weasel?! Then I did see him.<end><brk> A few days before you<br> arrived.<end><brk> A weasel that looked like he<br> stank walked right past me.<end><brk> That's the only time, but he<br> was heading...<end><brk> toward Kuyo Pass. Urgh...	
+569	11:$6CBE	37	ロクロウ「ケッ！ ナギひとりたすけた<br> ぐらいで いいきになるなよ」	Rokuro: Tch! Don't get cocky<br> just because you saved<br> Nagi.	
+570	11:$6CE4	32	タグラ「ねえ とうちゃん。<br> ナギって どこいってたの？」	Tagura: Papa, where did Nagi<br> go?	
+571	11:$6D05	37	だいくのマサ「あんた・・・なかなか<br> やるな。ちょっと みなおしたぜ」	Masa: You... You're pretty<br> good. I have to admit, I'm<br> impressed.	
+572	11:$6D2B	201	うらないオババ「ツキカゲむらから<br> 15ちけいぐらい はなれたばしょが<br> 『りゅうのあぎと』とよばれておる。<end><brk> オロチは、さらにさきの 6ちけい、<end><br> つまりツキカゲむらより 21ちけい<br> ぐらいさきに、いるといわれておる。<end><brk> ・・・なんで わしが こんなことを<br> おしえるのかと いうことじゃが、<end><brk> おぬしが なんとかしてくれそうな、<br> きがしてきてのう・・・」	Old Seer: About 15 floors from<br> Moonlight Village<end><brk> lies a place called Dragon's<br> Maw.<end><brk> Orochi is another 6 floors<br> beyond that.<end><brk> In other words, about 21<br> floors from the village.<end><brk> You're wondering why I'm<br> telling you this?<end><brk> I'm starting to think you<br> might actually do something<br> about it...	
+573	11:$6DF5	10	ケヤキ「<name>さーん！」	Keyaki: <name>! Wait!	
+574	11:$6E00	32	ケヤキ「こんどは いよいよ<br> フミちゃんね。<end> はい これ！」	Keyaki: Now it's finally time<br> to save Fumi.<end><brk> Here, take this!	
+575	11:$6E21	12	<name>は<br><cE3:07>を もらった。	<name> received <cE3:07>.	
+576	11:$6E2E	19	ケヤキ「がんばってね！・・・あっ」	Keyaki: Good luck! ...Oh.	
+577	11:$6E42	21	だいくのキンジ「おい<end> これもってけ」	Kinji: Hey.<end><brk> Take this.	
+578	11:$6E58	11	<name>は <cE3:04>を<br>もらった	<name> received <cE3:04>.	
+579	11:$6E64	47	だいくのキンジ「オレのバンメシ<br> だかんな。あんちゃんたちには<br> ナイショだかんな」	Kinji: It's my dinner, okay?<br> Don't tell the others.	
+580	11:$6E94	36	ケヤキ「キンジさんも・・おうえんして<br> くれるんだ・・・<end>うれしい」	Keyaki: Even Kinji's cheering<br> you on...<end><brk> That makes me happy.	
+581	11:$6EB9	138	むらおさ「・・ナ、ナギは？<end><br> ・・・やはり ムリかのぉ。<end><brk> こどものあしだと、いまごろは<br> ここから 10ちけいぐらい さきに<br> いっているような きがするが・・・<end><brk> あそこらへんの かいぶつは<br> おそろしいから・・・<br> おお、しんぱいだわい・・・」	Chief: N-Nagi? ...No luck<br> after all?<end><brk> At a child's pace, he must be<br> about 10 floors in by now...<end><brk> The monsters around there<br> are fearsome...<end><brk> Oh, I'm so worried...	
+582	11:$6F44	70	ぱしりのゴン「うーーっ<end><br> やっぱり みてねえだよ。<br> コッパなんてヤツ。<end><brk> べつのむらに いっちまったんじゃ<br> ねえか？」	Gon: Urgh... No, I haven't<br> seen him.<end><brk> This Koppa fellow.<end><brk> Maybe he went to another<br> village?	
+583	11:$6F8B	58	ロクロウ「ケッ！ もどされたンか！<br> やっぱり ダメじゃねえか！<end><br> あんなとこ いくだけムダだぜ」	Rokuro: Tch! Got sent back,<br> huh? I knew you couldn't do<br> it!<end><brk> Going up there is a waste of<br> time.	
+584	11:$6FC6	30	タグラ「ねえ フミちゃんって どこ<br> いっちゃったの？」	Tagura: Hey, where did Fumi<br> go?	
+585	11:$6FE5	60	だいくのマサ「ナギをたすけることが<br> できなくても だれも あんたを<br> とがめやしねえ。よそもンだからな」	Masa: No one will blame you if<br> you can't save Nagi.<end><brk> You're an outsider, after<br> all.	
+586	11:$7022	26	だいくのキンジ「ばあちゃん<br> ハラへったよォ」	Kinji: Graaan, I'm hungry!	
+587	11:$703D	52	うらないオババ「あんた さっきたべた<br> ばかりじゃないか！ バンメシまで<br> がまんしな」	Old Seer: You just ate! Wait<br> until dinner.	
+588	11:$7072	41	うらないオババ「このむらは<br> のろわれた うんめいを<br> せおっているんじゃ」	Old Seer: This village is<br> burdened with a cursed fate.	
+589	11:$709C	180	ロクロウ「あんた・・・なんだって<br> こんなこと くりかえしてンだ？<br> じぶんの トクになるワケじゃなし。<end><brk> ・・・まあ、どうしても いくって<br> いうのなら とめねえけど、<br> ひとつだけ おしえといて やらあ。<end><brk> クヨウとうげは みちが<br> 3つに わかれているんだ。<end><brk> そこのカンバンのちずを みれば<br> みちを えらべるぜ」	Rokuro: You... Why do you<br> keep doing this?<end><brk> There's nothing in it for<br> you.<end><brk> ...Well, if you're determined<br> to go, I won't stop you.<end><brk> But I'll tell you one thing.<end><brk> Kuyo Pass splits into three<br> roads.<end><brk> Check the map on that sign<br> to choose one.	
+590	11:$7151	44	だいくのキンジ「ケヤキちゃんって<br> かわいいよな・・・<br> おれは・・・おれは・・・」	Kinji: Keyaki's so cute...<br> I... I...	
+591	11:$717E	53	だいくのマサ「おまえ ケヤキちゃんが<br> しんせつにしてくれるからって<br> いいきになるんじゃないぜ」	Masa: Just because Keyaki's<br> nice to you,<end><brk> don't get the wrong idea.	
+592	11:$71B4	41	うらないオババ「どだい オロチに<br> さからうなど ムリな はなしじゃ」	Old Seer: Defying Orochi was<br> impossible from the start.	
+593	11:$71DE	55	だいくのキンジ「あんちゃん<br> ほっさ だいじょうぶかい？・・・<br> まだ くるしそうにみえるけど」	Kinji: Are you okay after that<br> fit?...<end><brk> You still look like you're in<br> pain.	
+594	11:$7216	47	だいくのマサ「・・・・・・<end><br> だ、だいじょうぶだ。ようやく<br> おさまってきたよ」	Masa: ......<end><brk> I-I'm fine. It's finally<br> passing.	
+595	11:$7246	16	フミのはは「あの・・これを」<end><mode0>	Fumi's Mom: Um... take<br> this.<end><mode0>	
+596	11:$7257	12	<name>は <cE3:09>をもらった<end><mode0>	<name> received<br> <cE3:09>.<end><mode0>	
+597	11:$7264	27	フミのはは「フミを・・・<br> フミを おねがいします」	Fumi's Mom: Please... Please<br> save Fumi.	
+598	11:$7280	77	むらおさ「あなたのいう イタチなら<br> わしも みたことがありますぞ。<end><brk> じんじゃのかいだんを かけぬけて<br> そのまま クヨウとうげへ・・・」	Chief: I have seen the weasel<br> you describe.<end><brk> He ran up the shrine steps<br> and continued toward Kuyo<br> Pass...	
+599	11:$72CE	62	ぱしりのゴン「うーーっ このあいだの<br> くさそうなイタチ<end> あれは あんたの<br> ともだち だったのか。<end>うーーっ」	Gon: Urgh... That smelly<br> weasel from the other day...<end><brk> So he's a friend of yours.<br> Urgh...	
+600	11:$730D	30	ロクロウ「フン！ おれは・・・<br> おれは みとめねえからな」	Rokuro: Hmph! I... I still<br> don't accept you.	
+601	11:$732C	51	だいくのマサ「おお あんたかい！<end><br> ・・・ゴメンよ。いま だいじな<br> はなしを してんだ」	Masa: Oh, it's you!<end><brk> ...Sorry. We're discussing<br> something important.	
+602	11:$7360	30	だいくのキンジ「じつはよ<br> あんたを おどろ・・・」	Kinji: Actually, we're going<br> to surpri...	
+603	11:$737F	14	だいくのマサ「コラッ！！」	Masa: Hey!!	
+604	11:$738E	33	だいくのキンジ「やべえ。<br> ナイショだった。へへへ・・・」	Kinji: Whoops. It was supposed<br> to be a secret. Heh heh<br> heh...	
+605	11:$73B0	16	だいくのマサ「へへへへ・・・」	Masa: Heh heh heh heh...	
+606	11:$73C1	35	だいくのマサ「ほら！ キンジ！<br> チンタラしてんじゃねえぞ！」	Masa: Come on, Kinji! Quit<br> slacking!	
+607	11:$73E5	55	だいくのキンジ「いそいで<br> つくらなきゃ！<end> けど、ハラへって<br> ちからが でねえよ。あんちゃん」	Kinji: We have to hurry and<br> finish it!<end><brk> But I'm starving! I don't<br> have any strength left, bro.	
+608	11:$741D	117	うらないオババ「うんめい<end>、サダメ、<end><br> シキタリ・・・<end>それらが いま<br> くつがえされようとしておる。<end><brk> たしかにオロチは てごわい・・<end>が、<br> おぬしの かがやきは それいじょう<br> に かんじられるんじゃ」	Old Seer: Destiny, fate,<br> tradition...<end><brk> All of it is about to be<br> overturned.<end><brk> Orochi is formidable, yes...<end><brk> but the light I sense in you<br> shines brighter still.	
+609	11:$7493	161	ナギ「にいちゃん！ やっぱり おれも<br> いきたいんだ！ ついていくよ！<br> やだっていっても ダメだぜ！<end><brk> ・・・と おもったけど きゅうに<br> モレそうに なっちゃったから<br> さきに いっててーーっ！<end><brk> ・・・と おもったけど これが<br> でそうで でなくなっちゃった。<br> うーん どうしよ？」	Nagi: Big bro! I still want to<br> come with you!<end><brk> I'm going! You can't say no!<end><brk> ...Or so I thought, but<br> suddenly I have to pee really<br> bad!<end><brk> Go on ahead!<end><brk> ...Or so I thought, but now I<br> feel like I have to go, but I<br> can't.<end><brk> Hmm... What do I do?	
+610	11:$7535	41	おかみ「ケヤキちゃん まだ もどって<br> こないのよ。どうしちゃったんだろ」	Innkeeper: Keyaki still hasn't<br> come back.<end><brk> I wonder what happened.	
+611	11:$755F	21	フミのはは「<name>さん・・・<br> あの これを」	Fumi's Mom: <name>... Um,<br> take this.	
+612	11:$7575	11	<name>は <cE3:03>をもらった。	<name> received <cE3:03>.	
+613	11:$7581	49	フミのはは「このぐらいのことしか<br> できなくて すみません。けど<br> どうか フミを・・・」	Fumi's Mom: I'm sorry this is<br> all I can do. But please...<br> save Fumi.	
+614	11:$75B3	45	キンジ「ケヤキちゃんが いなく<br> なっちゃったんだって？<end><br> うおおおおーーーっ！」	Kinji: Keyaki's gone missing?<end><brk> Nooooooo!!	
+615	11:$75E1	58	ぱしりのゴン「ケヤキちゃん どこ<br> いっちゃったんだろー？<end> うーーっ<br> おれも ひそかにねらっていたのに」	Gon: Where could Keyaki have<br> gone?<end><brk> Urgh... And I secretly had my<br> eye on her, too.	
+616	11:$761C	28	ロクロウ「なあ <name>さん<br> これ やくにたつかなあ？」<end><mode0>	Rokuro: Say <name>,<br> would this be of use?<end><mode0>	
+617	11:$7639	14	<name>は <cE3:01>を<br>もらった。<end><mode0>	<name> received<br> <cE3:01>.<end><mode0>	
+618	11:$7648	57	ロクロウ「うらやまに おちてたんで<br> ひろったんだ。おれがもってても<br> つかいみちないんで やるわ それ」	Rokuro: I found it lying in<br> the hills out back.<end><brk> It's no use to me, so you can<br> have it.	
+619	11:$7682	33	タグラ「がんばってね！<br> きっと フミちゃんをたすけてね！」	Tagura: Good luck! You have<br> to save Fumi!	
+620	11:$76A4	257	むらおさ「なんと！ まきものが<br> ないとな！<end> きのうまでは<br> たしかに あったんじゃが・・・<end><brk> そういえば ゆうべ だれかから<br> 『りゅうの あぎと』へ むかう<br> ひとかげを みたときいたぞ。<end><brk> なんでも 『やさしい』みちは<br> とおらず『ふつう』か『むずかしい』<br> のほうへ はいっていったそうな。<end><brk> 『ふつう』か『むずかしい』を<br> とおって あんたらも いってみては<br> どうじゃ？ なんとかなるような・・<end><brk> すまん・・・すごくムセキニンな<br> いいかたじゃった・・・」	Chief: What! The scroll is<br> gone?<end><brk> It was definitely there<br> yesterday...<end><brk> Come to think of it, I heard<br> someone saw a figure last<br> night,<end><brk> heading toward Dragon's<br> Maw.<end><brk> Apparently they avoided the<br> Easy road and took Normal<br> or Hard.<end><brk> Why don't you try taking<br> Normal or Hard too?<end><brk> Maybe you'll find<br> something...<end><brk> Forgive me... That was<br> terribly irresponsible of me<br> to suggest...	
+621	11:$77A6	92	ナギ「このあいだ かわべで へんな<br> たてが おちてたんだけどさ、<end><brk> おれ もれそうだったんで とらずに<br> かえってきちゃったんだ。<br> こんど とってくるよ」	Nagi: I saw a weird shield by<br> the river the other day,<end><brk> but I had to pee so bad that<br> I went home without it.<end><brk> I'll grab it next time.	
+622	11:$7803	91	うらないオババ「むらびとたちのなかに<br> はじめて キボウというものが<br> うまれてきておる。<end><brk> おぬしのおかげで このむらにも<br> ヒカリが あたりつつあるのじゃ」	Old Seer: For the first time,<br> hope is growing<end><brk> among the villagers.<end><brk> Thanks to you, light is<br> finally beginning to reach<br> this village.	
+623	11:$785F	150	だいくのマサ「そうこに アイテムを<br> おいとけば ぼうけんの とちゅうで<br> ちからつきても なくならないぜ。<end><brk> ただし ツボのなかみは すべて<br> きえるから きをつけな。<end><brk> あと ぼうけんには アイテムを<br> 5こしかもっていけないぜ。ツボは<br> なかみが きえちゃうからな」	Masa: Leave items in the<br> Warehouse and you won't<br> lose them if you collapse.<end><brk> But everything inside a Pot<br> disappears, so be careful.<end><brk> You can only bring 5 items<br> on an adventure.<end><brk> Remember, Pots lose their<br> contents.	
+624	11:$78F6	109	ぱしりのゴン「もしかしたら<br> ケヤキちゃんって・・・<end><brk> <name>さんに かいぶつになった<br> じぶんのスガタを みられたく<br> なかっただかなあ・・・<end><brk> うーーっ それで かくれちゃった<br> んだなあ・・・」	Gon: Maybe Keyaki...<end><brk> didn't want <name> to see<br> her looking like a monster...<end><brk> Urgh... So that's why she's<br> hiding...	
+625	11:$7964	51	だいくのキンジ「ケヤキちゃんは<br> たぶん <name>さんのことが・・・<end><br> くっ うらやましい・・・」	Kinji: I think Keyaki might<br> have feelings for <name>...<end><brk> Ugh, I'm so jealous...	
+626	11:$7998	51	おかみ「ケヤキちゃん きっともどって<br> くるわよ。なにごともなかったように<br> カラリとわらってさ」	Innkeeper: I'm sure Keyaki<br> will come back.<end><brk> She'll smile like nothing<br> ever happened.	
+627	11:$79CC	29	フミのはは「おねがいします。<br> どうか フミを・・・」	Fumi's Mom: Please... Please<br> save Fumi.	
+628	11:$79EA	20	ロクロウ「オロチなんかに<br> まけるなよ」	Rokuro: Don't you lose to<br> Orochi.	
+629	11:$79FF	36	ナギ「あっ きのういってた たてを<br> ひろってきたんだ。これだよ」	Nagi: Hey, I picked up that<br> shield I told you about<br> yesterday. Here.	
+630	11:$7A24	12	<name>は <cE3:00>を<br>もらった。	<name> received <cE3:00>.	
+631	11:$7A31	32	ナギ「やくにたつか わからないけど<br> とにかく あげるよ」	Nagi: I'm not sure it'll help,<br> but you can have it.	
+632	11:$7A52	143	だいくのマサ「あっ <name>さん。<br> きのう キンジとふたりで<br> そうこを ぞうちくしたんだ。<end><brk> これで アイテムが もっと<br> おけるように なったぜ。<end><brk> あと ぼうけんには アイテムを5こ<br> しかもっていけないし ツボはなかみ<br> がきえちゃうから、ちゅういしてな」	Masa: Hey, <name>.<end><brk> Kinji and I expanded the<br> Warehouse yesterday.<end><brk> Now you can store a lot more<br> items.<end><brk> Remember, you can only<br> bring 5 items on an<br> adventure,<end><brk> and Pots lose their contents,<br> so be careful.	
+633	11:$7AE2	51	おかみ「ケヤキちゃん きっともどって<br> くるわよ。なにごともなかったように<br> カラリとわらってさ」	Innkeeper: I'm sure Keyaki<br> will come back.<end><brk> She'll smile like nothing<br> ever happened.	
+634	11:$7B16	37	ぱしりのゴン「ケヤキちゃん・・・<br> かわいいコだったなあ うーーっ」	Gon: Keyaki... What a sweet<br> girl. Urgh...	
+635	11:$7B3C	27	ナギ「ああ おれが もっと<br> つよければ・・・」	Nagi: If only I were<br> stronger...	
+636	11:$7B58	38	だいくのキンジ「ばあちゃん おれ<br> シツレンしちまった。<end>メシ・・・」	Kinji: Gran, I got my heart<br> broken.<end><brk> Food...	
+637	11:$7B7F	53	うらないオババ「こーゆーとき ふつう<br> なにも のどに とおらないもンなん<br> じゃ ないのかねえ」	Old Seer: At a time like this,<end><brk> aren't you normally too<br> upset to eat?	
+638	11:$7BB5	43	だいくのキンジ「・・・ケヤキちゃぁん<br> うえーんっ<end> がつがつがつがつ！」	Kinji: ...Keyakiii! Waaaaah!<end><brk> Chomp chomp chomp chomp!	
+639	11:$7BE1	84	だいくのマサ「おい キンジ！<br> いつまでも ヤケぐいしてねえで<br> しごとを てつだえよ！<end><brk> おれたちには まだ やることが<br> のこってんだから！」	Masa: Hey, Kinji! Stop<br> stress-eating<end><brk> and help me work!<end><brk> We still have things to do!	
+640	11:$7C36	211	だいくのマサ「よう <name>さん！<br> これが おれにできる さいごの<br> しごとだ。<end><brk> そうこを ひろげられるだけ<br> ひろげたからよ。<br> まっ これがげんかいだな。<end><brk> ぼうけんに もっていける<br> アイテムすうは あいかわらず<br> 5こまでだし、<end><brk> ツボも もっていこうとすると<br> なかみが きえちゃうけど・・・<end><brk> あとは <name>さん！<br> あんたの うでしだいだ。<br> たのんだぜ！」	Masa: Hey, <name>! This is<br> the last thing I can do for<br> you.<end><brk> I expanded the Warehouse as<br> far as it'll go.<end><brk> That's the limit.<end><brk> You can still only bring 5<br> items on an adventure,<end><brk> and Pots lose their contents<br> if you try to take them...<end><brk> The rest is up to you,<br> <name>!<end><brk> It all comes down to your<br> skill. We're counting on you!	
+641	11:$7D0A	69	だいくのキンジ「がつがつがつがつ！<end><br> がつがつがつががつ！！<end><br> がつがつがつががつがつがつ！！！」	Kinji: Chomp chomp chomp<br> chomp!<end><brk> Chomp chomp chomp chomp!!<end><brk> Chomp chomp chomp chomp<br> chomp!!!	
+642	11:$7D50	40	うらないオババ「けっきょく あんたは<br> たべてばかりナンだねえ・・・」	Old Seer: In the end, all you<br> do is eat...	
+643	11:$7D79	82	ロクロウ「じつは <name>さんに<br> わたしたいものがあるんだけど・・・<end><brk> <name>さん もちものを 5コ<br> いじょうもっていて わたせないから<br> よしとくわ・・・」	Rokuro: Truth is, I have<br> something for you,<br> <name>...<end><brk> But <name>, you're<br> carrying 5 items or more,<end><brk> so I can't give it to you.<br> Forget it...	
+644	11:$7DCC	89	ナギ「あっ きのういってた たてを<br> ひろってきたんだ。これだよ。<end><brk> ・・・と、おもったけど にいちゃん<br> 5コいじょう もちものをもっている<br> から わたせないや」	Nagi: Hey, I picked up that<br> shield I told you about<br> yesterday.<end><brk> Here it is.<end><brk> ...Or it would be, but you're<br> carrying 5 items or more.<end><brk> So I can't give it to you.	
+645	13:$4571	13	<cE0:2B>とっぷうだ！！<cE7:A0>	<cE0:2B>A sudden gale!!<cE7:A0>	
+646	13:$457F	11	……かぜはおさまった	...the wind has died down	
+647	13:$458B	14	……さっきよりつよいぞ<cE7:3C>	...stronger than before!<cE7:3C>	
+648	13:$459A	19	<cE0:20><cEC:6E>からだをささえきれない！<cE7:B4>	<cE0:20><cEC:6E>Can't stand!<cE7:B4>	
+649	13:$45AE	13	<cE0:2C>とっぷうだ！！<cE7:3C>	<cE0:2C>A sudden gale!!<cE7:3C>	
+650	13:$45BC	14	<cE0:88>おなかが へってきた…	<cE0:88>Getting hungry	
+651	13:$45CB	19	<cE0:88>ハラペコで めがまわってきた	<cE0:88>Dizzy with hunger	
+652	13:$45DF	19	<cE0:88>だめだ もう たおれそうだ！	<cE0:88>Ready to collapse	
+653	13:$45F3	16	<cE0:88>はやく…なにかたべないと…	<cE0:88>Need food fast	
+654	13:$4604	15	<cE0:88>うえじに してしまう！！	<cE0:88>Starving now!	
+655	13:$4614	5	<cE3>をおいて	Put down <cE3>	
+656	13:$461A	9	<cE1><cE0:4C><cE3>をひろった	<cE1><cE0:4C>Got <cE3>	
+657	13:$4624	8	<cE0:4C><cE3>をひろった	<cE0:4C>Got <cE3>	
+658	13:$462D	7	<cE1><cE3>をひろった	<cE1>Got <cE3>	
+659	13:$4635	9	ここには おけない	You can't put it here.	
+660	13:$463F	10	なにも おちていない	There's nothing here.	
+661	13:$464A	19	もちものが いっぱいで もてない	Your pack is full.	
+662	13:$465E	7	<cE0:46><cE3>をもった	<cE0:46>Equipped <cE3>	
+663	13:$4666	7	<cE0:48><cE3>をつけた	<cE0:48>Equipped <cE3>	
+664	13:$466E	9	<cE0:47><cE3>をはずした	<cE0:47>Removed <cE3>	
+665	13:$4678	9	<cE0:49><cE3>をはずした	<cE0:49>Removed <cE3>	
+666	13:$4682	10	<cE0:4E>のろわれていた！	<cE0:4E>It was cursed!	
+667	13:$468D	18	<cE0:4E>のろわれていて はずれなかった	<cE0:4E>Cursed! It won't come off.	
+668	13:$46A0	5	<cE3>にのった	Stepped on <cE3>	
+669	13:$46A6	5	<cE3>をおいた	Put down <cE3>	
+670	13:$46AC	2	<cE3>を	Consumed the <cE3>	
+671	13:$46AF	10	くすりにしてのんだ	as medicine.	
+672	13:$46BA	6	<cE3>をたべた	Ate <cE3>	
+673	13:$46C1	6	<cE3>をよんだ	Read <cE3>	
+674	13:$46C8	16	みせの アイテムは いれられない	You can't put shop goods in.	
+675	13:$46D9	5	<cE3>をふった	Waved <cE3>	
+676	13:$46DF	5	<cE3>をおした	Pushed <cE3>	
+677	13:$46E5	5	<cE3>のなかに	Into the <cE3> went	
+678	13:$46EB	5	<cE3>をいれた	the <cE3>.	
+679	13:$46F1	4	はいった	you.	
+680	13:$46F6	6	<cE3>のなかから	Out of the <cE3>	
+681	13:$46FD	8	<cE3>をだした<cE7:05>	came the <cE3>.<cE7:05>	
+682	13:$4706	18	ツボのなかに ツボはいれられない	A Pot can't go in a Pot.	
+683	13:$4719	16	ツボのなかには もうはいらない	The Pot is full.	
+684	13:$472A	6	<cE3>がわれた	<cE3> shattered!	
+685	13:$4731	2	<cE3>は	The <cE3>	
+686	13:$4734	6	<var>にあたった	hit <var>.	
+687	13:$473B	8	じめんにおちた	fell to the ground.	
+688	13:$4744	17	おちて つかいものにならなくなった	fell and is now useless.	
+689	13:$4756	8	ここは ほれない	You can't dig here.	
+690	13:$475F	7	<cE3>は こわれた	<cE3> broke.	
+691	13:$4767	15	しかし うでわのまりょくで	But the Bracer's magic	
+692	13:$4777	7	サビなかった	kept it from rusting.	
+693	13:$477F	8	のろわれなかった	warded off the curse.	
+694	13:$4788	9	こんらんしなかった	kept you from confusion.	
+695	13:$4792	14	おなかがいっぱいになった	Your belly is full!	
+696	13:$47A1	14	すこし おなかが ふくれた	You feel a little fuller.	
+697	13:$47B0	10	おなかはふくれたが	You feel fuller, but	
+698	13:$47BB	17	<cE0:85>HPが<cE4>ポイントさがった	<cE0:85>HP fell by <cE4>.	
+699	13:$47CD	13	うごきが おそくなった	Slowed down.	
+700	13:$47DB	6	<cE3>をおとした	Dropped <cE3>	
+701	13:$47E2	12	つえ のこうかで <var>に	Magic hit <var>	
+702	13:$47EF	16	<cE0:86>まっすぐあるけなくなった！	<cE0:86>You can't walk straight!	
+703	13:$4800	19	<cE0:87>もうれつに ねむくなってきた・・・	<cE0:87>You're terribly sleepy...	
+704	13:$4814	16	ちからが<cE4>ポイントさがった	Strength fell by <cE4>.	
+705	13:$4825	21	ひろうだけで しきべつかのうになった	Items are identified on pickup	
+706	13:$483B	16	ちからを さげられなくなった！	Strength can't be lowered!	
+707	13:$484C	21	たまごのこうかで ちからはさがらない	The egg guards Strength.	
+708	13:$4862	14	ふみんじょうたいになった！	You can no longer sleep!	
+709	13:$4871	20	しかしたまごのこうかでねむらなかった	But the egg kept you awake.	
+710	13:$4886	12	はらがへらなくなった！	You won't get hungry!	
+711	13:$4893	15	モンスターをおこさなくなった！	You no longer wake monsters!	
+712	13:$48A3	17	<cE0:6A>HPが<cE4>ポイントあがった	<cE0:6A>HP rose by <cE4> points.	
+713	13:$48B5	21	<cE0:6B>みえないものが みえるようになった！	<cE0:6B>You can see the unseen!	
+714	13:$48CB	15	<cE0:6D>むてきじょうたいになった	<cE0:6D>You are invincible!	
+715	13:$48DB	11	むてきではなくなった	Invincibility wore off.	
+716	13:$48E7	15	<cE0:6E>しかし アイテムをつかって	<cE0:6E>But an item activated	
+717	13:$48F7	7	ふっかつした！	and revived you!	
+718	13:$48FF	22	<cE0:6F>さいだいHPが<cE4>ポイントあがった	<cE0:6F>Max HP rose by <cE4>.	
+719	13:$4916	19	しきべつしたものをわすれてしまった！	You forgot all item IDs!	
+720	13:$492A	16	まんぷくどのさいだいちが	Max fullness	
+721	13:$493B	8	<cE0:70><cE6>％になった	<cE0:70>is now <cE6>.	
+722	13:$4944	8	<cE0:71><cE6>％になった	<cE0:71>is now <cE6>.	
+723	13:$494D	18	<cE0:73>ちからが<cE4>ポイントあがった	<cE0:73>Strength rose by <cE4>.	
+724	13:$4960	14	<cE0:73>ちからのさいだいちが	<cE0:73>Max Strength rose	
+725	13:$496F	11	<cE4>ポイントあがった	by <cE4> points.	
+726	13:$497B	13	<cE0:72>ちからがかいふくした	<cE0:72>Strength recovered.	
+727	13:$4989	10	<cE0:86><var>はこんらんした	<cE0:86><var> is confused!	
+728	13:$4994	13	しかし なにもおきなかった	But nothing happened.	
+729	13:$49A2	2	<cE3>の	The <cE3>'s	
+730	13:$49A5	9	のろいがとけた！	curse was lifted!	
+731	13:$49AF	6	なんと！<cE3>は	What! The <cE3>	
+732	13:$49B6	5	<cE3>だった	was a <cE3>!	
+733	13:$49BC	7	これは<cE3>だ！	This is a <cE3>!	
+734	13:$49C4	5	ラッキー！	Lucky!	
+735	13:$49CA	20	すべてのアイテムがしきべつされた！	All items were identified!	
+736	13:$49DF	20	ダンジョンがみわたせるようになった	The floor map was revealed.	
+737	13:$49F4	12	<cE0:56>おおきさが<cE4>ふえた	<cE0:56>Size increased by <cE4>.	
+738	13:$4A01	15	<cE0:58>くちがつかえなくなった！	<cE0:58>Your mouth is sealed!	
+739	13:$4A11	12	くちがつかえない！<cE7:0A>	Your mouth is sealed!<cE7:0A>	
+740	13:$4A1E	22	<cE0:68>まわりのモンスターのうごきがとまった	<cE0:68>Nearby foes froze!	
+741	13:$4A35	16	アイテムをひろえるようになった！	You can pick up items!	
+742	13:$4A46	17	HPがかいふくするようになった！	Your HP now recovers!	
+743	13:$4A58	17	まっすぐ あるけるようになった！	You can walk straight!	
+744	13:$4A6A	21	<cE0:5A>モンスターのはやさが2ばいになった	<cE0:5A>Monster speed doubled!	
+745	13:$4A80	15	かべがくずれてしまった！	The wall broke!	
+746	13:$4A90	11	<var>はでてこなくなった	<var> won't appear.	
+747	13:$4A9C	18	このまきものはよまずになげること	Throw this scroll unread	
+748	13:$4AAF	17	するとそのてきがでてこなくなる	to banish that species.	
+749	13:$4AC1	16	<cE0:60>マップをわすれてしまった！	<cE0:60>You forgot the map!	
+750	13:$4AD2	3	<cE3>が	The <cE3>	
+751	13:$4AD6	5	<cE3>になった	became a <cE3>!	
+752	13:$4ADC	20	そうびに きんのメッキが なされた！	Gear is now gold-plated!	
+753	13:$4AF1	11	なかみを すいだした	Sucked out the contents.	
+754	13:$4AFD	20	<cE0:62>アイテムをひろえなくなってしまった！	<cE0:62>You can't pick up items!	
+755	13:$4B12	12	アイテムがひろえない！	You can't pick up items!	
+756	13:$4B1F	14	しかし なにもぬすめなかった	But nothing was stolen.	
+757	13:$4B2E	14	やが そうびされていない	No arrows are equipped.	
+758	13:$4B3D	13	<cE0:74><var>は すばやくなった	<cE0:74><var> got faster!	
+759	13:$4B4B	9	なんと！<cE3>だった	What! A <cE3>!	
+760	13:$4B59	12	  うりね：<cE5>ギタン<end>	   Buy: <cE5> Gitan<end>	
+761	13:$4B66	4	<var>は<var>に	<var> hit <var>	
+762	13:$4B6B	18	<cE4>ポイントのダメージをあたえた	for <cE4> damage!	
+763	13:$4B7E	3	<var>から	<var> hit you	
+764	13:$4B82	17	<cE4>ポイントのダメージをうけた	for <cE4> damage!	
+765	13:$4B94	7	<var>をやっつけた	Defeated <var>!	
+766	13:$4B9C	10	<cE5>のけいけんちをえた	Gained <cE5> Exp.	
+767	13:$4BA7	12	<var>のこうげきをかわした	You dodged <var>!	
+768	13:$4BB4	13	<var>のこうげきははずれた	<var> missed!	
+769	13:$4BC2	15	<var>はレベル<cE4>にあがった<cE0:23>	<var> is now Lv<cE4>!<cE0:23>	
+770	13:$4BD2	15	<var>はレベル<cE4>にさがった<cE0:89>	<var> fell to Lv<cE4>!<cE0:89>	
+771	13:$4BE2	15	<var>はレベルがあがって<cE0:24>	<var> leveled up<cE0:24>	
+772	13:$4BF2	15	<var>はレベルがさがって<cE0:89>	<var> leveled down<cE0:89>	
+773	13:$4C02	5	<var>になった	into a <var>!	
+774	13:$4C08	12	<var>はようすをみている<cE7:05>	<var> is watching.<cE7:05>	
+775	13:$4C15	8	<var>はねむっている	<var> dozes.	
+776	13:$4C1E	14	かいしんのいちげき！<cE7:14><mode0>	A critical hit!<cE7:14><mode0>	
+777	13:$4C2D	13	<var>は ちからつきた…<cE7:1E><mode1>	<var> fell...<cE7:1E><mode1>	
+778	13:$4C3B	6	<var>は <var>から	<var> robbed <var>	
+779	13:$4C42	7	<cE3>をぬすんだ	of <cE3>!	
+780	13:$4C4A	13	へんなじゅもんをとなえた	with a strange spell.	
+781	13:$4C58	14	<var>は くさったえき をはいた	<var> spat rotten fluid.	
+782	13:$4C67	14	けんが サビてしまった！	Your sword rusted!	
+783	13:$4C76	14	たてが サビてしまった！	Your shield rusted!	
+784	13:$4C85	11	しかし <cE3>はサビない	<cE3> is safe.	
+785	13:$4C91	19	しかし そうびした けんはサビない	Sword won't rust.	
+786	13:$4CA5	19	しかし そうびした たてはサビない	Shield won't rust.	
+787	13:$4CB9	19	しかしメッキされたたてはサビなかった	Shield plating held.	
+788	13:$4CCD	19	しかしメッキされたけんはサビなかった	Sword plating held.	
+789	13:$4CE1	17	けんのメッキがはげてしまった！	Sword plating peeled!	
+790	13:$4CF3	17	たてのメッキがはげてしまった！	Shield plating peeled!	
+791	13:$4D05	18	けんのごうせいがとけてしまった！	Sword fusion undone!	
+792	13:$4D18	18	たてのごうせいがとけてしまった！	Shield fusion undone!	
+793	13:$4D2B	19	くねくねハニーはクネクネーをおどった	Twisty Hani did its twist!	
+794	13:$4D3F	13	<var>はレベル<cE4>にさがった	<var> fell to Lv<cE4>	
+795	13:$4D4D	11	<var>はちからをすいとった	<var> drained Str.	
+796	13:$4D59	18	ちからのさいだいちが<cE4>さがった	Max Strength fell by <cE4>.	
+797	13:$4D6C	16	<cE0:E6>つうこんのいちげき！<cE7:14><mode0>	<cE0:E6>A painful blow!<cE7:14><mode0>	
+798	13:$4D7D	10	いやしウサギは<var>に	Fluffy Bunny healed <var>	
+799	13:$4D88	15	かいふくのじゅもんをとなえた	with a spell.	
+800	13:$4D98	7	のりうつった！	It possessed them!	
+801	13:$4DA0	9	<var>は ワープした	<var> warped away.	
+802	13:$4DAA	11	<var>は なかまをよんだ	<var> got help!	
+803	13:$4DB6	19	おおきいおにぎりにかわってしまった！	You became a Big Onigiri!	
+804	13:$4DCA	14	のろいのじゅもんをとなえた	with a curse.	
+805	13:$4DD9	19	そうびちゅうのたてが のろわれた！	Your shield was cursed!	
+806	13:$4DED	14	そうびちゅうのアイテムが	Your equipped items	
+807	13:$4DFC	11	もっていたアイテムが	The items you held	
+808	13:$4E08	11	すべて のろわれた！	were all cursed!	
+809	13:$4E14	15	<var>は ようじゅつをかけた<cE7:05>	<var> cast a hex.<cE7:05>	
+810	13:$4E24	10	なんと！ アイテムは	What! The item	
+811	13:$4E2F	11	なんと！ かいだんは	What! The stairway	
+812	13:$4E3B	10	モンスターだった！	was a monster!	
+813	13:$4E46	18	しかし モンスターは しょうめつした	The monster vanished.	
+814	13:$4E59	12	<var>はハラヘリーをとなえた	<var> cast Hunger!	
+815	13:$4E66	18	まんぷくどが <cE6>％になった<cE0:71>	Fullness is now <cE6>.<cE0:71>	
+816	13:$4E79	10	<var>は ぶんれつした	<var> split in two!	
+817	13:$4E84	17	おとしあなに あしを ふみいれた！	A Pitfall Trap!	
+818	13:$4E96	13	しかし おちずにすんだ	But you didn't fall in.	
+819	13:$4EA4	17	トラバサミに ひっかかった！<cE0:75>	In a Bear Trap!<cE0:75>	
+820	13:$4EB6	15	トラバサミに ひっかかった！	In a Bear Trap!	
+821	13:$4EC6	18	トラバサミが はずれない！<cE0:75>	The Bear Trap won't let go!<cE0:75>	
+822	13:$4ED9	10	やっと はずれた！	You finally broke free!	
+823	13:$4EE4	13	しかし スルリとすりぬけた	But you slipped right through.	
+824	13:$4EF2	11	バネのうえにのった！	A Spring!	
+825	13:$4EFE	17	しかし しかけは うごかなかった	It didn't go off.	
+826	13:$4F10	17	どくやのワナをふんでしまった！	A Poison Arrow Trap!	
+827	13:$4F22	13	どくやがとんできた！	A poison arrow flew out!	
+828	13:$4F30	15	スイッチをふむ おとがした！	A switch clicked!	
+829	13:$4F40	14	たてが サビてしまった！	Shield rusted!	
+830	13:$4F4F	18	サビるものをそうびしていなかった	Nothing equipped can rust.	
+831	13:$4F62	15	スイッチをふむ おとがした！	Switch clicked!	
+832	13:$4F72	22	じめんから しろいガスがふきだした！	White gas burst out!	
+833	13:$4F89	12	<var>は ねむってしまった！	<var> fell asleep!	
+834	13:$4F96	14	…ねむくて なにもできない	...too sleepy to do anything.	
+835	13:$4FA5	11	やっと めがさめた！	You finally woke up!	
+836	13:$4FB1	17	じめんにデッパリがあった！	You hit a bump in the floor!	
+837	13:$4FC3	17	つまずいて ころんでしまった！	You tripped and fell!	
+838	13:$4FD5	16	しかし たいしたことは なかった	But you weren't badly hurt.	
+839	13:$4FE6	18	けいほうスイッチをふんでしまった！	You hit an Alarm Trap!	
+840	13:$4FF9	18	ねてるモンスターをおこしてしまった！	All sleeping monsters woke up!	
+841	13:$500C	21	しょうかんスイッチをふんでしまった！<cE7:0F>	You hit a Summoning Trap!<cE7:0F>	
+842	13:$5022	15	<var>は モンスターにかこまれた！	<var> was surrounded!	
+843	13:$5032	15	かいてんばんのうえにのった！	A Spinning Trap!	
+844	13:$5042	11	<var>は めがまわった！	<var> got confused!	
+845	13:$504E	17	へんなそうちを ふんでしまった！	A strange device!	
+846	13:$5060	18	<cE0:88>グゥッ…おなかがなっている！	<cE0:88>Grrr... your stomach growls!	
+847	13:$5073	18	しかし とくに かわりはないようだ	But nothing changed.	
+848	13:$5086	15	ぬるまゆがふきだしてきた！	Lukewarm water gushed out!	
+849	13:$5096	16	おにぎりがぬるまゆをあびて	Onigiri got soaked	
+850	13:$50A7	15	デロデロになってしまった！	and turned to mush!	
+851	13:$50B7	21	すべてのそうびがはずれてしまった！	All your gear came off!	
+852	13:$50CD	18	しかし なにもそうびしていなかった	But nothing was equipped.	
+853	13:$50E0	19	きょだいながんせきがおちてきた！	A huge boulder fell!	
+854	13:$50F4	15	<var>はうごきがおそくなった！	<var> slowed down!	
+855	13:$5104	14	ふつうのはやさに もどった	Back to normal speed.	
+856	13:$5113	19	おおがたじらいをふんでしまった！	A Big Landmine Trap!	
+857	13:$5127	21	おおがたじらいは ばくはつしなかった	But it didn't explode.	
+858	13:$513D	14	じらいをふんでしまった！	A Landmine Trap!	
+859	13:$514C	20	しかし じらいは ばくはつしなかった	But it didn't explode.	
+860	13:$5161	14	モンスターハウスだ！！<cE7:14>	A Monster House!!<cE7:14>	
+861	13:$5170	15	どろぼうハウスだ！！<cE7:14>	A Thief House!!<cE7:14>	
+862	13:$5180	14	ドレインハウスだ！！<cE7:14>	A Drain House!!<cE7:14>	
+863	13:$518F	13	ひとつめハウスだ！！<cE7:14>	A One-Eye House!!<cE7:14>	
+864	13:$519D	14	ゴーストハウスだ！！<cE7:14>	A Ghost House!!<cE7:14>	
+865	13:$51AC	13	パワーハウスだ！！<cE7:14>	A Power House!!<cE7:14>	
+866	13:$51BA	13	ばんけんたいだ！！<cE7:14>	A Guard Dog Squad!!<cE7:14>	
+867	13:$51C8	15	ドラゴンハウスだ！！<cE7:14>	A Dragon House!!<cE7:14>	
+868	13:$51D8	10	どろぼう！！<cE7:14>	Thief!!<cE7:14>	
+869	13:$51E3	21	<cE0:22><cE7:5A>このままスイッチをきってください	<cE0:22><cE7:5A>You may switch off now.	
+870	13:$51F9	21	つぎに「ぼうけんにでる」をえらぶと	Select Adventure to	
+871	13:$520F	17	このつづきから はじめられます	resume from here.	
+872	13:$5684	5	<cF0:00><br> <end>	A crude wooden club.<br>Simple, but it gets<br>the job done.<br><cF0:00><end>	
+873	13:$568A	25	つかのながい なぎなたのようなけんだ<br><end><cF0:00>	A long-hafted blade<br>like a naginata.<br><end><cF0:00>	
+874	13:$56A4	28	ふうらいにんに<br>ひろくあいようされているけん<br><cF0:00><br> <end>	A reliable sword<br>used by wanderers.<br><cF0:00><br> <end>	
+875	13:$56C1	37	ドラゴンけいモンスターに<br>だいダメージをあたえるぞ<br><cF0:00><br> <end>	Deals heavy damage<br>to Dragons.<br><cF0:00><br> <end>	
+876	13:$56E7	30	てんかの めいとう<br>どうたぬき ゲンマさく。<br><cF0:00><br> <end>	The famed Doutanuki,<br>forged by Genma.<br><cF0:00><br> <end>	
+877	13:$5706	47	てんさいとうこうしカブラがつくった<br>まぼろしともいえる きだいのごうけん<br><cF0:00><br> <end>	A legendary blade<br>forged by the genius<br>smith Kabura.<br><cF0:00><end>	
+878	13:$5736	22	ゴーストけいモンスターに<br><cF0:01><br><cF0:00><br> <end>	Against Ghosts, it<br><cF0:01><br><cF0:00><end>	
+879	13:$574D	69	そうびして かべをほることができるし<br>こうげきりょくも あがるぞ<br>しかし かべを なんかいか ほると<br>こわれてしまうぞ<end>	Use it to dig walls.<br>It boosts attack.<br>It breaks after<br>several digs.<end>	
+880	13:$5793	21	かならずこうげきがあたるぞ<br><end><cF0:00>	Normal attacks never<br>miss.<br><end><cF0:00>	
+881	13:$57A9	21	かいしんのいちげきがでるぞ<br><end><cF0:00>	Often lands critical<br>hits.<br><end><cF0:00>	
+882	13:$57BF	34	ぜんぽう3ほうこうを<br>1どにこうげきできるぞ<br><cF0:00><br> <end>	Attacks all three<br>spaces in front.<br><cF0:00><br> <end>	
+883	13:$57E2	19	ひとつめモンスターに<br><cF0:01><br><cF0:00><br> <end>	Against one-eyed<br>monsters, it<br><cF0:01><br><cF0:00><end>	
+884	13:$57F6	25	ステータスをすいとるモンスターに<br><cF0:01><br><cF0:00><br> <end>	Against foes that<br>drain stats, it<br><cF0:01><br><cF0:00><end>	
+885	13:$5810	22	カタナをきたえぬいてできたけんだ<br><end><cF0:00>	A Katana forged to<br>its ultimate form.<br><end><cF0:00>	
+886	13:$5827	33	ごうけんマンジカブラをきたえぬいて<br>できたけん<br><cF0:00><br> <end>	The ultimate form of<br>Manji Kabura.<br><cF0:00><br> <end>	
+887	13:$5849	89	むかし マムルのごせんぞさまが<br>つよくなるために つくったといわれる<br>でんせつのごうけん<br> <brk>しかし マムルたちには そうび<br><end>できなかったので あきらめたらしい	Mamel ancestors are<br>said to have forged<br>this legendary sword<br>to become stronger.<brk>But no Mamel could<br>equip it, so they<end><br>gave up.	
+888	13:$58A3	20	サビないし おなかもへりにくい<br><end><cF0:02>	Never rusts. Slows<br>Fullness loss.<br><end><cF0:02>	
+889	13:$58B8	20	せいどうで つくられた たて<br><end><cF0:02>	A shield forged from<br>bronze.<br><end><cF0:02>	
+890	13:$58CD	11	<cF0:02><br>サビないぞ<end>	<cF0:02><br>Never rusts.<end>	
+891	13:$58D9	17	てつで つくられた たて<br><end><cF0:02>	A shield forged from<br>iron.<br><end><cF0:02>	
+892	13:$58EB	41	<cF0:02><br>ドラゴンの ほのおから うける<br>ダメージが すくなくなるぞ<br> <end>	<cF0:02><br>Reduces damage from<br>Dragon fire.<br> <end>	
+893	13:$5915	42	フウマてつから つくられた<br>ひじょうに ぼうぎょりょくの<br>たかいたて。<br><end><cF0:02>	Forged from Fuuma<br>iron. Its defense is<br>exceptionally high.<br><end><cF0:02>	
+894	13:$5940	38	モンスターからの こうげきを<br>カウンターで はねかえす たて<br><cF0:02><br> <end>	Counters monster<br>attacks.<br><cF0:02><br> <end>	
+895	13:$5967	43	ぼうぎょりょくは たかいが<br>おもいせいか おなかが へりやすいぞ<br><cF0:02><br> <end>	High defense, but<br>its weight speeds up<br>Fullness loss.<br><cF0:02><end>	
+896	13:$5993	20	まほうこうげきをはねかえすぞ<br><end><cF0:02>	Reflects magical<br>attacks.<br><end><cF0:02>	
+897	13:$59A8	25	てきのこうげきが あたりにくくなるぞ<br><end><cF0:02>	Makes enemy attacks<br>miss more often.<br><end><cF0:02>	
+898	13:$59C2	55	ひゃっぴきのオニからも まもると<br>いいつたえられてる ひじょうに<br>ぼうぎょりょくの たかいたて<br><end><cF0:02>	Said to repel one<br>hundred demons. Its<br>defense is immense.<br><end><cF0:02>	
+899	13:$59FA	49	こうぼうぎょだが こうげきをうける<br>たびに せいのうがさがっていくたて<br><cF0:02><br> <end>	High defense, but it<br>weakens whenever you<br>are hit.<br><cF0:02><end>	
+900	13:$5A2C	26	ばくはつのダメージを すくなくするぞ<br><end><cF0:02>	Reduces damage from<br>explosions.<br><end><cF0:02>	
+901	13:$5A47	23	アイテムや おかねを ぬすまれないぞ<br><end><cF0:02>	Prevents monsters<br>from stealing items<br>or Gitan.<br><end><cF0:02>	
+902	13:$5A5F	28	フウマのたてを きたえぬいて<br>できた たて<br><cF0:02><br> <end>	The ultimate form of<br>the Fuuma Shield.<br><cF0:02><br> <end>	
+903	13:$5A7C	86	むかし マムルのごせんぞさまが<br>つよくなるために つくったといわれる<br>でんせつのたて<br> <brk>しかし マムルたちには そうび<br><end>できなかったので あきらめたらしい	Mamel ancestors are<br>said to have forged<br>a legendary shield<br>to become stronger.<brk>But no Mamel could<br>equip it, so they<end><br>gave up.	
+904	13:$5AD3	23	<cF0:03> みずのうえを<br>あるけるようになるぞ<end>	<cF0:03><br>you walk on water.<end>	
+905	13:$5AEB	24	<cF0:03> みせで ねぎることが<br>できるぞ<end>	<cF0:03><br>you can haggle in<br>shops.<end>	
+906	13:$5B04	16	<cF0:03><br>おなかが へらないぞ<end>	<cF0:03><br>Fullness never falls.<end>	
+907	13:$5B15	19	<cF0:03><br>おなかが へりやすくなるぞ<end>	<cF0:03><br>Fullness drops fast.<end>	
+908	13:$5B29	45	<cF0:03> HPのかいふくが<br>はやくなるぞ しかし<br>そのあいだ はらへりもはやいぞ<br> <end>	<cF0:03><br>HP recovers faster,<br>but Fullness also<br>falls faster.<end>	
+909	13:$5B57	21	<cF0:03><br>けんも たても サビなくなるぞ<end>	<cF0:03><br>weapons and shields<br>do not rust.<end>	
+910	13:$5B6D	26	<cF0:03><br><end>かいしんのいちげきが でやすくなるぞ	<cF0:03><br><end>critical hits occur<br>more often.	
+911	13:$5B88	25	<cF0:03> つうこんのいちげきを<br>うけやすくなるぞ<end>	<cF0:03><br>you take critical<br>hits more often.<end>	
+912	13:$5BA2	33	<cF0:03> もっているものに<br><end>のろいをかけられることが なくなるぞ	<cF0:03><br><end>carried items cannot<br>be cursed.	
+913	13:$5BC4	26	<cF0:03> なげたものがすべて<br>かんつう するぞ<end>	<cF0:03><br>thrown items pierce<br>through creatures<br>and walls.<end>	
+914	13:$5BDF	33	<cF0:03> てきを たおしたときの<br>けいけんちが すこし ふえるぞ<end>	<cF0:03><br>you gain more Exp<br>from defeated foes.<end>	
+915	13:$5C01	24	<cF0:03> もっているアイテムを<br>おとしてしまうぞ<end>	<cF0:03><br>you may drop carried<br>items.<end>	
+916	13:$5C1A	27	<cF0:03> モンスターと<br>アイテムの いちが わかるぞ<end>	<cF0:03><br>you sense monsters<br>and item locations.<end>	
+917	13:$5C36	16	<cF0:03><br>こんらん しなくなるぞ<end>	<cF0:03><br>you cannot become<br>confused.<end>	
+918	13:$5C47	26	<cF0:03> ひろったアイテムが<br>しきべつできるぞ<end>	<cF0:03><br>picked-up items are<br>identified.<end>	
+919	13:$5C62	21	<cF0:06><br>こうげきできるぞ<brk><cF0:07><br><end><cF0:08>	<cF0:06><br>from a distance.<brk><cF0:07><br><end><cF0:08>	
+920	13:$5C78	25	<cF0:06><br>かんつうこうげきできるぞ<brk><cF0:07><br><end><cF0:08>	<cF0:06><br>and pierce them.<brk><cF0:07><br><end><cF0:08>	
+921	13:$5C92	24	たべると すこしおなかが ふくれるぞ<br> <end>	Eating this restores<br>a little Fullness.<br> <end>	
+922	13:$5CAB	21	たべると おなかが ふくれるぞ<br> <end>	Eating this restores<br>Fullness.<br> <end>	
+923	13:$5CC1	43	たべると おなかが すこしふくれるが<br>どくで からだをこわしてしまうぞ<end>	Restores a little<br>Fullness, but its<br>poison harms you.<end>	
+924	13:$5CED	52	たべると おなかが いっぱいになるぞ<br>さいだいまんぷくども すこしだけ<br>ふえるぞ<br> <end>	Completely restores<br>Fullness and also<br>raises Max Fullness.<br> <end>	
+925	13:$5D22	51	たべると すこしおなかが ふくれるぞ<br>とくべつなちからを みにつけられる<br>こともあるぞ<br> <end>	Restores a little<br>Fullness. It may<br>grant a special<br>ability.<end>	
+926	13:$5D56	24	のむと HPがすこし かいふくするぞ<br><end><cF0:04>	Using this restores<br>a little HP.<br><end><cF0:04>	
+927	13:$5D6F	46	のむと HPがたくさんかいふくするぞ<br>とくしゅな じょうたいも なおるぞ<br><cF0:04><br> <end>	Using this restores<br>lots of HP and cures<br>status ailments.<br><cF0:04><end>	
+928	13:$5D9E	21	のむと レベルが あがるぞ<br><end><cF0:04>	Raises your level<br>by 1.<br><end><cF0:04>	
+929	13:$5DB4	22	のむと ワナが はっけんできるぞ<br> <end>	Reveals hidden traps<br>on this floor.<br> <end>	
+930	13:$5DCB	35	のむと くちから ひをふくぞ<br>とおくまで とどくぞ<br><cF0:04><br> <end>	Using this makes you<br>breathe fire in a<br>straight line.<br><cF0:04><end>	
+931	13:$5DEF	21	のむと しばらく むてきになるぞ<br> <end>	Grants invincibility,<br>preventing damage and<br>status ailments for a<br>short while.<end>	
+932	13:$5E05	23	のむと レベルが5つ あがるぞ<br><end><cF0:04>	Raises your level<br>by 5.<br><end><cF0:04>	
+933	13:$5E1D	55	もっていると 1どだけ いきかえる<br>ことができるぞ<br>ツボのなかにいれていると ダメだぞ<br> <end>	Holding this revives<br>you once when you<br>collapse. It will not<br>work inside a Pot.<end>	
+934	13:$5E55	25	のむと レベルが さがってしまうぞ<br><end><cF0:04>	Lowers your level<br>by 1.<br><end><cF0:04>	
+935	13:$5E6F	26	のむと レベルが3つさがってしまうぞ<br><end><cF0:04>	Lowers your level<br>by 3.<br><end><cF0:04>	
+936	13:$5E8A	30	のむと レベルもHPも<br>1に なってしまうぞ<br><cF0:04><br> <end>	Reduces your level<br>and HP to 1.<br><cF0:04><br> <end>	
+937	13:$5EA9	25	のむと しきべつしたものを<br>わすれてしまうぞ<end>	Makes you forget all<br>identified items.<end>	
+938	13:$5EC3	23	のむと さいだいHPが あがるぞ<br> <end>	Using this increases<br>Max HP.<br> <end>	
+939	13:$5EDB	26	のむと さいだいまんぷくどが<br>あがるぞ<end>	Using this increases<br>Max Fullness.<end>	
+940	13:$5EF6	26	のむと さいだいまんぷくどが<br>さがるぞ<end>	Using this decreases<br>Max Fullness.<end>	
+941	13:$5F11	38	のむと すこしのあいだ<br>すばやく うごけるように なるぞ<br><cF0:04><br> <end>	Lets you move faster<br>for a short while.<br><cF0:04><br> <end>	
+942	13:$5F38	59	のむと ちからが あがるぞ<br>ちからが マンタンなときに のむと<br>ちからのさいだいちが 1あがるぞ<br> <end>	Restores 1 Strength.<br>At full Strength, it<br>raises Max Strength<br>by 1.<end>	
+943	13:$5F74	34	のむと ちからが さいだいちまで<br>かいふくするぞ<br><cF0:04><br> <end>	Restores Strength to<br>its maximum.<br><cF0:04><br> <end>	
+944	13:$5F97	44	のむと ちからとHPがさがってしまい<br>うごきも おそくなってしまうぞ<br><cF0:04><br> <end>	Lowers HP, Strength,<br>and movement speed.<br><cF0:04><br> <end>	
+945	13:$5FC4	19	のむと こんらんしてしまうぞ<br><end><cF0:04>	Makes you confused.<br><end><cF0:04>	
+946	13:$5FD8	23	のむと しばらく ねむってしまうぞ<br><end><cF0:04>	Puts you to sleep<br>for a short while.<br><end><cF0:04>	
+947	13:$5FF0	36	ただの ざっそうだぞ<br><end>のめば すこしは はらのたしになるぞ	A plain weed with no<br><end>special effect. It<br>restores a little<br>Fullness.	
+948	13:$6015	27	のむと どこかへ とぶことができるぞ<br><end><cF0:04>	Warps you to another<br>spot on this floor.<br><end><cF0:04>	
+949	13:$6031	27	よむと そうびしているものの<br>のろいがとけるぞ<end>	Reading this removes<br>curses from equipped<br>items.<end>	
+950	13:$604D	25	よむと アイテムが しきべつできるぞ<br> <end>	Identifies one item.<br> <end>	
+951	13:$6067	44	よむと いまいるばしょの ちけいと<br>モンスターやアイテムの いちが<br>わかるぞ<br> <end>	Reveals the map and<br>shows every monster<br>and all items.<br> <end>	
+952	13:$6094	20	よむと ツボがおおきくなるぞ<br> <end>	Makes a Pot larger.<br> <end>	
+953	13:$60A9	42	よむと へやにいる すべての<br>モンスターに ダメージをあたえるぞ<br><cF0:0B><br> <end>	Damages all monsters<br>in the room.<br><cF0:0B><end>	
+954	13:$60D4	30	よむと いまいる ちけいでは<br>くちがつかえなくなるぞ<end>	Stops mouth-based<br>actions for the rest<br>of this floor.<end>	
+955	13:$60F3	99	よむと そうびひんを もったまま<br>ツキカゲむらへ かえれるぞ<br>ただし ふたりどうじには ムリだぞ<br> <brk>コッパは、シレンの にもつのなかに<br><end>かくれるので いっしょに かえれるぞ	Returns you to<br>Moonlight Village<br>with your equipment.<br>Only one may return.<brk>Koppa hides inside<br><end>Shiren's pack, so he<br>comes along too.	
+956	13:$6157	23	こまったときに よむと<br>いいことがあるぞ<end>	Helps you out of a<br>dangerous situation.<end>	
+957	13:$616F	27	よむと モンスターのうごきが<br>2ばいになるぞ<end>	Monsters move at<br>double speed.<end>	
+958	13:$618B	67	よむと へやにいる すべての<br>モンスターが しばらく ねむって<br>しまうぞ<brk>ねむりからさめると ばいそくになるぞ<br><cF0:0B><br> <end>	Puts all monsters in<br>the room to sleep<br>for a short while.<brk>They awaken at<br>double speed.<br><cF0:0B><end>	
+959	13:$61CF	45	よむと いまいる ちけいでは<br>モンスターに あたえる ダメージが<br>ふえるぞ<br> <end>	You deal more damage<br>on the current floor.<br> <end>	
+960	13:$61FD	28	へやにいるすべてのモンスターが<br>しょうめつするぞ<end>	Makes every monster<br>in the room vanish.<end>	
+961	13:$621A	92	よむと すさまじい しょうげきはで<br>ちかくにいるすべてのモンスターが<br>こなごなに ぶんかいするぞ<br> <brk>じぶんは たおれないが<br>うけたダメージは おおきいぞ<end>	Creates a shock wave<br>that destroys nearby<br>monsters.<br> <brk>It cannot defeat you<br>but hurts you badly.<end>	
+962	13:$6277	22	よむと おおべやに なってしまうぞ<br> <end>	Turns the floor into<br>one large room.<br> <end>	
+963	13:$628E	24	よむと モンスターハウスが できるぞ<br> <end>	Creates a Monster<br>House in the room.<br> <end>	
+964	13:$62A7	56	よむと へやにいる すべての<br>モンスターが しばらく こんらんして<br>まっすぐ あるけなくなるぞ<br><end><cF0:0B>	Confuses monsters<br>in the room, so<br>they move randomly.<br><end><cF0:0B>	
+965	13:$62E0	38	モンスターになげると そのしゅるいの<br>モンスターは でてこなくなるぞ<end>	Throw at a monster<br>to banish its kind<br>from the dungeon.<end>	
+966	13:$6307	22	よむと マップを わすれてしまうぞ<br> <end>	Makes you forget the<br>current floor map.<br> <end>	
+967	13:$631E	35	よむと そうびしている けんが<br>つよくなり のろいも とけるぞ<end>	Strengthens your<br>equipped weapon and<br>removes its curse.<end>	
+968	13:$6342	35	よむと そうびしている たてが<br>つよくなり のろいも とけるぞ<end>	Strengthens your<br>equipped shield and<br>removes its curse.<end>	
+969	13:$6366	51	よむと そうびしている けんとたてが<br>メッキされて サビなくなるぞ<br>のろいも とけるぞ<br> <end>	Plates your equipped<br>weapon and shield to<br>stop rust. It also<br>removes both curses.<end>	
+970	13:$639A	24	よむと ツボのなかみを とりだせるぞ<br> <end>	Removes everything<br>from a Pot.<br> <end>	
+971	13:$63B3	32	よむと いまいる ちけいでは<br>アイテムを ひろえなくなるぞ<end>	Prevents you from<br>picking up items on<br>this floor.<end>	
+972	13:$63D4	28	<cF0:0C><br>ふつうのこうげきしか しなくなるぞ<br><cF0:05><br> <end>	<cF0:0C><br>it can only make<br>normal attacks.<br><cF0:05><end>	
+973	13:$63F1	29	<cF0:0C><br>モンスターをとおくへ ふっとばせるぞ<br><cF0:05><br> <end>	<cF0:0C><br>it flies far away.<br><cF0:05><br> <end>	
+974	13:$640F	31	<cF0:0C><br>モンスターのレベルがあがってしまうぞ<br><cF0:05><br> <end>	<cF0:0C><br>its level rises.<br><cF0:05><br> <end>	
+975	13:$642F	29	<cF0:0C><br>モンスターのレベルを さげられるぞ<br><cF0:05><br> <end>	<cF0:0C><br>its level falls.<br><cF0:05><br> <end>	
+976	13:$644D	31	<cF0:0C><br>モンスターをじぶんのみがわりにするぞ<br><cF0:05><br> <end>	<cF0:0C><br>it becomes a decoy.<br><cF0:05><br> <end>	
+977	13:$646D	33	<cF0:0C><br>モンスターと じぶんの いちが<br>いれかわるぞ<br><end><cF0:05>	<cF0:0C><br>you and it swap<br>places.<br><end><cF0:05>	
+978	13:$648F	24	<cF0:0C><br>いろいろなことが おきるぞ<br><cF0:05><br> <end>	<cF0:0C><br>it causes a random<br>effect.<br><cF0:05><end>	
+979	13:$64A8	59	<cF0:0C><br>モンスターを かなしばりにするぞ<br>こうかは ずっとつづくが たたいたり<br>すると おきるぞ<brk><cF0:05><br> <end>	<cF0:0C><br>it is stunned until<br>you attack it.<br> <brk><cF0:05><br> <end>	
+980	13:$64E4	44	<cF0:0C><br>モンスターを でぐちのところへ<br>ワープさせて かなしばりにするぞ<brk><end><cF0:05>	<cF0:0C><br>it warps to the exit<br>and is held there.<br> <brk><end><cF0:05>	
+981	13:$6511	43	<cF0:0C><br>じぶんの いたみをモンスターにも<br>かんじさせることができるぞ<br><end><cF0:05>	<cF0:0C><br>it also takes any<br>damage you receive.<br><end><cF0:05>	
+982	13:$653D	23	ツボに アイテムを<br>だしいれできるぞ<end>	Items can be freely<br>stored and removed.<end>	
+983	13:$6555	58	じぶんが ツボのなかに はいれて<br>モンスターから かくれることが<br>できるぞ<br>なげても つかえるぞ<end>	Climb inside to hide<br>from monsters.<br>Throw it to trap a<br>monster inside.<end>	
+984	13:$6590	28	ツボにいれたアイテムを ふやせるぞ<br><cF0:09><br><cF0:0A><br> <end>	Copies items inside.<br><cF0:09><br><cF0:0A><br> <end>	
+985	13:$65AD	61	けんやたてを しばらく いれたままに<br>しておいて つよくできるぞ<br>つえは かいすうが ふえるぞ<brk><cF0:09><br><cF0:0A><br> <end>	Leave weapons or<br>shields inside to<br>strengthen them.<br>Staves gain uses.<brk><cF0:09><br><cF0:0A><br> <end>	
+986	13:$65EB	31	ツボにいれたアイテムを<br>しきべつできるぞ<br><cF0:09><br><end><cF0:0A>	Identifies items put<br>inside.<br><cF0:09><br><end><cF0:0A>	
+987	13:$660B	23	おすと ステータスが かいふくするぞ<br> <end>	Push it to restore<br>HP, Strength, and<br>status.<br> <end>	
+988	13:$6623	28	ツボにいれた アイテムが<br>そうこに おくられるぞ<end>	Sends inserted items<br>to storage.<end>	
+989	13:$6640	42	しばらく いれたままに しておくと<br>アイテムを よわくしてしまうぞ<br><cF0:09><br><end><cF0:0A>	Leave an item inside<br>to weaken it.<br><cF0:09><br><end><cF0:0A>	
+990	13:$666B	24	ツボにいれた アイテムが なくなるぞ<br> <end>	Items put inside<br>vanish forever.<br> <end>	
+991	13:$6684	15	これはモンスターだ！！<br> <end>	This is a monster!!<br> <end>	
+992	13:$6694	30	ツボにいれたアイテムが へんかするぞ<br><cF0:09><br><cF0:0A><br> <end>	Alters its contents.<br><cF0:09><br><cF0:0A><br> <end>	
+993	13:$66B3	183	けん たて つえ をごうせいできるぞ<brk>けんを つづけていれると すべて<br>さいしょのけんに のうりょくや ＋の<br>つよさが ごうせいされるぞ<brk>だから いれるじゅんばんには<br>きをつけたほうが いいぞ<br>たても けんと おなじだぞ<brk>つえは おなじしゅるいを つづけて<br>いれれば つえを ふるかいすうが<br>ごうせいされるぞ<brk><cF0:09><br><end><cF0:0A>	Combines weapons,<br>shields, and staves.<brk>Insert weapons one<br>after another. Their<br>powers and bonuses<br>merge into the base.<brk>Insertion order<br>matters. Shields act<br>the same way.<brk>Insert like staves<br>to combine uses.<brk><cF0:09><br><end><cF0:0A>	
+994	13:$676B	19	ぬすっトドが はいってるぞ<br> <end>	A Thiefwalrus is<br>hiding inside.<br> <end>	
+995	13:$677F	1	 		
+996	13:$6781	46	これは おかねだ<br>モンスターに なげても きくぞ<br>やはり よのなか かねしだい・・・	Money that can be<br>thrown at a monster.<br>It makes the world<br>go round...	
+997	13:$67B0	36	これは かさタヌキだ<br>まだ バレてないと おもっている<br>ようだ<end>	A Kasa Tanuki.<br>It thinks its trick<br>is still working.<end>	
+998	13:$73BB	6	ア↓イ2アF		
+999	13:$73C2	4	イまアF		
+1000	13:$73C7	4	ウてアF		
+1001	13:$73CC	4	エぅアF		
+1002	13:$73D1	6	イミイまアF		
+1003	13:$73D8	6	イ…イまアF		
+1004	14:$4031	16	てんしゅ「いらっしゃいませ」<cE0:15>	Shopkeeper: Welcome!<cE0:15>	
+1005	14:$4042	20	てんしゅ「ありがとうございました」	Shopkeeper: Thank you!	
+1006	14:$4057	55	てんしゅ「おきゃくさんがおかいあげ<br> になったアイテムのだいきんとして<br> <cE5>ギタンいただきます」<end><mode0>	Shopkeeper: For the items<br> you've purchased,<end><brk> that will be <cE5> Gitan.<end><mode0>	
+1007	14:$408F	28	<cEC:08><cE5>ギタンでよろしいですか？<br>▶かう<br> かわない	<cEC:08><cE5> Gitan. Buy it?<br><$81>Buy<br>  Cancel	
+1008	14:$40AC	28	<cEC:08><cE4>ギタンでよろしいですか？<br>▶かう<br> かわない	<cEC:08><cE4> Gitan. Buy it?<br><$81>Buy<br>  Cancel	
+1009	14:$40C9	50	てんしゅ「そうですか、それでは、<br> <cE4>ギタンにまけておきます。<br> これでよろしいですか？」	Shopkeeper: I see.<end><brk> Then I'll lower the price to<br> <cE4> Gitan.<end><brk> Does that work for you?	
+1010	14:$40FC	46	てんしゅ「おきゃくさんがみせのなかに<br> おいたアイテムを、<br> <cE6>ギタンでかいとります」	Shopkeeper: For the items you<br> left in the shop,<end><brk> I'll pay you <cE6> Gitan.	
+1011	14:$412B	28	<cEC:08><cE6>ギタンでよろしいですか？<br>▶うる<br> うらない	<cEC:08><cE6> Gitan. Sell it?<br><$81>Sell<br>  Cancel	
+1012	14:$4148	17	てんしゅ「それはザンネンです」	Shopkeeper: That's too bad.	
+1013	14:$415A	27	てんしゅ「おきゃくさん、おかねが<br> たりませんよ！」	Shopkeeper: You don't have<br> enough money!	
+1014	14:$4176	47	てんしゅ「たいへんだ！<br>      おおべやだ！<br>       かいだんへいそげ！」	Shopkeeper: Oh no!<end><brk> It's a Monster House!<end><brk> Hurry to the stairs!	
+1015	14:$41A6	18	<cEC:04>てんしゅは、ねむっている。<br> <br>	<cEC:04>Shopkeeper is asleep.<br> <br>	
+1016	14:$41C2	24	<cEC:04>「 『ツキカゲむら いりぐち』  」<br><br>	<cEC:04>  Moonlight Village<br>      Entrance<br>	
+1017	14:$41DB	38	<cEC:04>「    やど と しょくじ<br>       『ととや』     」<br>	<cEC:04>   Lodging and Meals<br>       The Totoya<br>	
+1018	14:$4202	24	<cEC:04>「  『なきりゅうじんじゃ』   」<br><br>	<cEC:04>   Dragon's Cry Shrine<br><br>	
+1019	14:$421B	57	<cEC:00>「   『りゅうの あぎと』<br> りゅう なきさけぶとき そのくち<br>    はじめて ひらくべし   」	<cEC:00>    Dragon's Maw<br> When the dragon cries,<br> its maw first opens	
+1020	14:$4255	94	     『ごみツボ』<br> すてたいアイテムは みぎがわの<br>  ごみツボに なげいれるべし。<end><brk> ただし いちど すてると にどと<br>  とりだせないので ちゅうい！	       The Rubbish Pot<br> Throw unwanted items<br> into the pot on the right.<end><brk> Once thrown away,<br> it is gone for good.	
+1021	14:$42B7	54	かんぬし「わしは、たびするものに<br> いつも じょげんをあたえておる。<br> なにについて ききたい？」<end><mode0>	Priest: I give advice to<br> travelers. What would you<br> like to know?<end><mode0>	
+1022	14:$42EE	20	かんぬし「なにについて ききたい？」<end><mode0>	Priest: What would you like to<br> know?<end><mode0>	
+1023	14:$4303	37	<cEC:09>▶1：うごきかたについて<br> 2：「どうぐ」について<br> 3：そのた	<cEC:09><$81>1: About moving<br>  2: About Items<br>  3: Other	
+1024	14:$4329	55	<cEC:09>▶1：ダッシュしたいときは？<br> 2：ナナメにだけ あるくときは？<br> 3：むきだけを かえたいときは？	<cEC:09><$81>1: How do I dash?<br>  2: How do I move diagonally?<br>  3: How do I turn in place?	
+1025	14:$4361	81	かんぬし「Bボタンを おしながら<br> <$A7>じボタンで ダッシュじゃ。<end><brk> また、Bボタンを おしながらだと<br> アイテムのうえにのることもできる」	Priest: Hold B and press the<br> D-Pad to dash.<end><brk> Holding B also lets you step<br> onto an item.	
+1026	14:$43B3	43	かんぬし「スタートを おしながら<br> <$A7>じボタンで ナナメにだけ<br> あるける」	Priest: Hold Start and press<br> the D-Pad to walk only<br> diagonally.	
+1027	14:$43DF	61	かんぬし「スタートをチョンッとおせば<br> <$AA>マークがでる。あとは <$A7>じボタン<br> で ほうこうを かえればよい」	Priest: Tap Start to display a<br> marker. Then use the D-Pad<br> to change direction.	
+1028	14:$441D	51	<cEC:09>▶1：アイテムを えらびたいときは？<br> 2：せいとんしたいときは？<br> 3：やを うちたいときは？	<cEC:09><$81>1: How do I select items?<br>  2: How do I sort items?<br>  3: How do I fire arrows?	
+1029	14:$4451	132	かんぬし「Bボタンをチョンッとおして<br> 『どうぐ』をえらべば よい。<end><brk> <$A7>じボタンの さゆうで ページも<br> きりかわる。<end><brk> あと、アイテムの つかいかたは、<br> アイテムをえらんで Aボタンをおし<br> せつめいを みれば かいてあるぞ」	Priest: Tap B and choose<br> Items.<end><brk> Press left or right on the<br> D-Pad to change pages.<end><brk> To use an item, choose it and<br> press A, then check its<br> description for instructions.	
+1030	14:$44D6	40	かんぬし「『どうぐ』を ひらいている<br> ときに スタートを おすのじゃ」<br>	Priest: Press Start while the<br> Items menu is open.	
+1031	14:$44FF	59	かんぬし「『どうぐ』のなかの やを<br> そうびすれば、セレクトをおしながら<br> Aボタンで うてるんじゃ」	Priest: Equip arrows from the<br> Items menu,<end><brk> then hold Select and press A<br> to fire.	
+1032	14:$453B	57	<cEC:09>▶1：はやく かいふくしたいときは？<br> 2：マップが みたいときは？<br> 3：ひとと いれかわりたいときは？	<cEC:09><$81>1: How do I heal faster?<br>  2: How do I view the map?<br>  3: How do I swap places?	
+1033	14:$4575	45	かんぬし「Aボタンと Bボタンを<br> どうじにおせば、はやくかいふく<br> できる」	Priest: Press A and B together<br> to recover faster.	
+1034	14:$45A3	48	かんぬし「ダンジョンないの マップを<br> みるには、セレクトを チョンッと<br> おせばよい」	Priest: Tap Select to view the<br> dungeon map.	
+1035	14:$45D4	59	かんぬし「ダンジョンにいる ひとや<br> なかまといれかわるには、Bボタンを<br> おしながら <$A7>じボタンじゃ」	Priest: To swap places with a<br> person or companion in the<br> dungeon,<end><brk> hold B and press the D-Pad.	
+1036	14:$4610	39	「  『クヨウとうげ けいろず』<br>   どのみちを えらびますか？<end><mode0>	   Kuyo Pass Route Map<br> Which path will you take?<end><mode0>	
+1037	14:$4638	34	<cEC:09>▶やさしい （いまえらんでいるみち）<br> ふつう<br> むずかしい	<cEC:09><$81>Easy (current road)<br>  Normal<br>  Hard	
+1038	14:$465B	35	<cEC:09>▶やさしい<br> ふつう  （いまえらんでいるみち）<br> むずかしい	<cEC:09><$81>Easy<br>  Normal (current road)<br>  Hard	
+1039	14:$467F	33	<cEC:09>▶やさしい<br> ふつう<br> むずかしい（いまえらんでいるみち）	<cEC:09><$81>Easy<br>  Normal<br>  Hard (current road)	
+1040	14:$46A4	13	<cEC:0E>▶すすむ<br> そのまま<br>	<cEC:0E><$81>Proceed<br>  Back<br>	
+1041	14:$46B5	11	▶すすむ<br> そのまま<br>	<$81>Proceed<br>  Back<br>	
+1042	14:$46C1	11	▶おりる<br> そのまま<br>	<$81>Proceed<br>  Back<br>	
+1043	14:$46CD	12	▶あがる<br> そのまま<br>	<$81>Proceed<br>  Back<br>	
+1044	14:$46EC	21	<cF4><cF2><cF0><name>は かぜにとばされた<br><cF3><mode1>ッ<mode0>	<cF4><cF2><cF0><name> was blown away by<br> the wind.<cF3><mode1><$78><mode0>	
+1045	14:$4702	19	「おーい だれか たすけてくれー！」	Hey! Somebody help me!	
+1046	14:$4716	19	いどの なかから こえがきこえる。	A voice is coming from inside<br> the well.	
+1047	14:$472A	27	「おーい！ ここの なかだよ！<br> たすけてくれー！」	Hey! I'm down here! Help me!	
+1048	14:$4746	32	<name>は わきにあった つなで<br>いどのなかから たすけだした。	<name> used the rope<br> beside the well to pull him<br> out.	
+1049	14:$4767	109	コッパ「ふいーっ。おてんとさまを<br> おがめたのは なんにちぶりだろう。<br> たすかったぜ。おっ！・・・<end><brk> <nop>、<name>じゃないか！<end><br> いままで どこいってたんだよ！<br> さびしかったよぉ！ うおおーん！」	Koppa: Phew! How many days<br> has it been since I saw<br> daylight?<end><brk> You saved me. Oh!...<end><brk> <nop>, <name>!<end><brk> Where have you been?! I was<br> so lonely! Waaaaah!	
+1050	14:$47D5	66	<cE0:00><mode1>1<cE0:28><name>は コッパと さいかいした！<mode1>ッ<end><br>・・・ひさしぶりだからかもしれないが<br>たしかに すこし くさい きもする。	<cE0:00><mode1><$02><cE0:28><name> reunited with<br> Koppa!<mode1><$78><end><brk> ...Maybe it's just been a<br> while,<end><brk> but he definitely smells a<br> little.	
+1051	14:$4818	193	コッパ「・・そんなことがあったのか。<br> いけにえにされた おんなのこを<br> たすけにねえ・・・<end><brk> オイラは ふしぎなへんそくちけいが<br> ここにあるって きいてね・・いけば<br> <name>にあえると おもってさ」<end><brk>コッパ「けど このさきの<br> 『りゅうの あぎと』は とおれない<br> から まいっちゃうよな。<end><brk> まっ もう よるだし きょうの<br> ところは ねようぜ。<end>おやすみ」	Koppa: ...So that's what<br> happened.<end><brk> You're going to save a girl<br> offered as a sacrifice...<end><brk> I heard there was a<br> Mystery Dungeon here,<end><brk> and figured I'd find you if I<br> came, <name>.<end><brk> Koppa: But Dragon's Maw up<br> ahead won't open, so we're<br> stuck.<end><brk> Well, it's already night.<br> Let's get some sleep. Good<br> night.	
+1052	14:$48DA	42	コッパ「ちょっと『りゅうの あぎと』<br> を しらべてから ここをでようぜ」	Koppa: Let's check out<br> Dragon's Maw before we<br> leave.	
+1053	14:$4905	410	「   『りゅうの あぎと』<br> りゅう なきさけぶとき そのくち<br>    はじめて ひらくべし   」<end><brk>コッパ「りゅう なきさけぶ・・ねえ。<end><brk> ・・・・・・あれ？<end><br> そういえば ツキカゲむらの<br> じんじゃの なまえって・・・！<end><brk>コッパ「<name>！<end> むらにもどろう！<end><br> あのむら ぜったいヘンだよ！<end><brk> だって クヨウとうげで かいぶつに<br> やられたら <name>は むらに<br> もどされるんだろ？<end><brk> だったら そのナギというコだって<br> やられるだけで むらに かえって<br> これるハズじゃないのか？<end><brk> なのに むらびとは なんだって<br> 『にどと かえってこれねえ』<br> なんていうんだよ？<end><brk>コッパ「いけにえのシキタリ。<end><br> むらでみたっていうコドモせんしゃ。<end><br> そして あのじんじゃ・・・<end><brk> ツキカゲむらには ぜったい<br> ひみつがあるぜ」	Dragon's Maw<br> When the dragon cries,<br> its maw shall open<end><brk> Koppa: When the dragon<br> cries, huh.<end><brk> ...Wait.<end><brk> Come to think of it, the<br> shrine in Moonlight<br> Village...!<end><brk> Koppa: <name>! Let's go<br> back!<end><brk> Something's definitely wrong<br> with that village!<end><brk> Think about it, <name>.<br> When a monster defeats you<br> at Kuyo Pass,<end><brk> you get sent back to the<br> village, right?<end><brk> Then if that kid Nagi gets<br> defeated,<end><brk> shouldn't he be sent back<br> too?<end><brk> So why do the villagers say<br> he'll never return?<end><brk> Koppa: The sacrifice<br> tradition.<end><brk> The Baby Tank you saw in<br> the village.<end><brk> And that shrine...<end><brk> Moonlight Village is<br> definitely hiding something.	
+1054	14:$4AA0	37	コッパ「なんとなく きちゃったけど<br> やっぱ あいてないよな・・・」	Koppa: We came all this way,<br> but of course it's still<br> closed...	
+1055	14:$4AC6	12	ヨシゾウタ「よおっ！」	Yoshizota: Hey!	
+1056	14:$4AD3	60	ヨシゾウタ「おれだ。ヨシゾウタだよ。<br> クスリうりの・・・<end>このまきものを<br> よめば ここ あくンだよね？」	Yoshizota: It's me, Yoshizota.<br> The medicine seller...<end><brk> This place opens if I read<br> this scroll, right?	
+1057	14:$4B10	51	<cEC:09>▶なんで あんたが まきものを？<br> なんで あんたが ここに？<br> まあ どうでもいっか	<cEC:09><$81>Why do you have a scroll?<br>  Why are you here?<br>  Never mind	
+1058	14:$4B47	157	ヨシゾウタ「いや、じつは あんたと<br> むらおさのはなしを そとから<br> ぜんぶ きいちゃってさ、<end><brk> で、おもしろそうだったんで つい<br> じんじゃのまきものをとって さきに<br> きちゃったんだけど・・・<end><brk> ひとりでいくの こわそうでさ、<br> で、あんたがくるのを まってた<br> ってワケよ」	Yoshizota: Well, the truth is,<end><brk> I overheard your entire<br> conversation<end><brk> with the Village Chief.<end><brk> It sounded interesting, so I<br> took the scroll from the<br> shrine<end><brk> and came on ahead...<end><brk> But going in alone looked<br> scary,<end><brk> so I waited for you to show<br> up.	
+1059	14:$4BE5	16	ヨシゾウタ「じゃ よむぜ」	Yoshizota: All right, I'll<br> read it.	
+1060	14:$4BF6	24	ヨシゾウタは なきりゅうのまきものを<br>よんだ	Yoshizota read the Dragon's<br> Cry Scroll.	
+1061	14:$4C0F	87	ヨシゾウタ「おおっ！ あいた！<end><br> ・・・ううっ、やっぱり おっかな<br> そうな ところだな。<end><brk> あんた さきに いっててくれよ。<br> おれは あとから おいつくからよ」	Yoshizota: Whoa! It opened!<br> ...Ugh, this place looks<br> pretty scary after all.<end><brk> You go on ahead. I'll catch<br> up with you later.	
+1062	14:$4C67	19	コッパ「オロチって<end> どこだ？」	Koppa: Orochi...<end><brk> Where is he?	
+1063	14:$4C7B	13	ヨシゾウタ「ここだよ」	Yoshizota: Right here.	
+1064	14:$4C89	125	ヨシゾウタ「おれが オロチなんだよ。<mode1>と<end><brk> <cF4><cE0:05>むらのやつらは かいぶつなんて<br> いってるが じょうだんじゃねえ。<end><br> おれは ちゃんとした にんげんだ。<end><brk> かいぶつなのは あいつらのほうさ。<br> あんたらも みただろ？」	Yoshizota: I'm Orochi.<mode1><$1E><end><brk> <cF4><cE0:05>The villagers call me a<br> monster, but give me a<br> break.<end><brk> I'm a perfectly normal human.<end><brk> They're the real monsters.<end><brk> You saw them yourselves,<br> didn't you?	
+1065	14:$4D07	17	コッパ「・・・・・・・・・・・」	Koppa: ...	
+1066	14:$4D19	503	ヨシゾウタ「いろいろなことが おきる<br> へんそくちけい・・・<end><brk> おれは このだいちの ちからを<br> わがものにするために ここへ<br> きたんだ。<end><brk> おれのつくった このクスリ・・・<br> これを ツキカゲむらのやつらに<br> のませたら どうなるとおもう？<end><brk> かいぶつになったままもどれなくなり<br> しかも おれさまの いうことだけを<br> きくように なるのさ。<end><brk> ただ おとなは うまく いかないん<br> だな。それで こどものいけにえって<br> ワケだ。<end><brk> もうすこしだった・・・もうすこしで<br> この どうくつも かんせいしたと<br> いうのに・・・・・<end><brk> なぜ あんたは たすけようとする？<end><br> あんな かいぶつどものむらの<br> ためにッ！<end><brk> かいぶつを たすけるために<br> にんげんである このおれを<br> たおそうというのかッ！<end><brk> ・・・・・・・・・・・・<end><br> ここに またべつのクスリがある。<end><brk> こどもたちから いきちを すこし<br> ずつ あつめてつくったクスリだ。<end><brk> これを にんげんがのむと<br> どうなると おもう？<end><br> みせてやるぜッ！！！」	Yoshizota: A Mystery Dungeon<br> where anything can happen...<end><brk> I came here to make the<br> power of this land my own.<end><brk> What do you think will<br> happen if I make Moonlight<br> Village drink this drug?<end><brk> They'll become monsters<br> forever.<end><brk> And they'll obey no one but<br> me.<end><brk> But it doesn't work on<br> adults. That's why I need<br> child sacrifices.<end><brk> I was so close... So close to<br> completing this cave...<end><brk> Why save them? Why save a<br> village of monsters?!<end><brk> Would you kill me, a human,<br> just to save monsters?!<end><brk> ...I have another drug here.<end><brk> I made it from the children's<br> blood, drawn a little at a<br> time.<end><brk> What happens when a human<br> drinks it? Let me show you!	
+1067	14:$4F11	36	<cF0>クスリをのんだヨシゾウタは<br>オロチに へんしんしたッ！！<br><cF3><mode1>と<mode0>	<cF0>Yoshizota drank the drug and<br> turned into Orochi!!<cF3><mode1><$1E><mode0>	
+1068	14:$4F36	21	ヨシゾウタは クスリをのんだ！<mode1>ぇ<cE7><mode0>	Yoshizota drank the drug!<mode1><$3C><cE7><mode0>	
+1069	14:$4F4C	66	オロチ「・・・たとえ このばで<br> ちからつきようとも、<end><brk> オロチは なんどでも ふっかつ<br> しようぞ・・・クックックッ」	Orochi: Even if I fall here,<end><brk> Orochi shall rise again and<br> again... Heh heh heh.	
+1070	14:$4F8F	41	コッパ「へッ！ ここまで くりゃ<br> あんたもじゅうぶん かいぶつだよ」	Koppa: Heh! If you made it<br> this far, you're practically<br> a monster yourself!	
+1071	14:$4FB9	34	コッパ「フミちゃん・・・だね。<br> たすけにきたんだ。かえろう」	Koppa: You're Fumi, right? We<br> came to rescue you. Let's go<br> home.	
+1072	14:$4FDC	90	<cF2><cF0><cF1><cF4>  こうして <name>たちは<br>     オロチをたおし、<mode1>F<brk>こんどは、ふたたび ツキカゲむらに<br>  もどるための ぼうけんへと<br>   いどむのであった・・・<mode1><cF0><mode0>	<cF2><cF0><cF1><cF4>And so, <name> and his<br> friends defeated Orochi,<mode1><$B4><end><brk> then set out on another<br> adventure<end><brk> to return to Moonlight<br> Village...<mode1><cF0><mode0>	
+1073	14:$5037	15	ケヤキ「あっ きがついた！」	Keyaki: Oh, you're awake!	
+1074	14:$5047	190	おかみ「だいじょうぶかい・・・<br> ひどく うなされていたから<br> しんぱいしたよ。<end><brk> ここ？・・・ここは ツキカゲむら。<br> あなた クヨウとうげで かいぶつに<br> やられたんだろ？<end><brk> あそこで ちからつきたら ここに<br> おいだされるんだよ。<end><brk> それより ケヤキちゃんに おれい<br> をいいなよ。あなたのこと ずっと<br> カンビョウしてくれてたんだよ」	Innkeeper: Are you all<br> right?...<end><brk> You were having terrible<br> nightmares. I was worried<br> about you.<end><brk> Where are you? This is<br> Moonlight Village.<end><brk> Monsters got you at Kuyo<br> Pass, didn't they?<end><brk> If you collapse there, you<br> get thrown back here.<end><brk> Anyway, you should go<br> thank Keyaki.<end><brk> She's been looking after you<br> this whole time.	
+1075	14:$5106	32	ケヤキ「そんな おれいなんて・・・<end><br> ・・・けど よかった」	Keyaki: Oh, you don't need to<br> thank me...<end><brk> But I'm just glad you're all<br> right.	
+1076	14:$5127	30	ケヤキ「おかみさん。わたし<br> ちょっと でかけてきますね」	Keyaki: Ma'am, I'm going to<br> step out for a bit.	
+1077	14:$5146	140	おかみ「ケヤキちゃんのことかい？<end><br> よしてよ あたしのコじゃないよ。<br> あたしゃ まだドクシンだよ。<end><brk> あのコ たまにここに フラッと<br> やってきちゃ みせを てつだって<br> くれるんだよ。<end><brk> ちょっと かわったところもあるけど<br> いいコだよ。あのコは・・・」	Innkeeper: You mean Keyaki?<end><brk> Oh, please! She's not my<br> daughter. I'm still single!<end><brk> She just wanders in now and<br> then and helps around the<br> inn.<end><brk> She's a little odd, but she's<br> a good kid...	
+1078	14:$51D3	10	ケヤキ「<name>さーん！」	Keyaki: <name>! Wait up!	
+1079	14:$51DE	52	ケヤキ「ハアハアハア・・・よかった<br> まにあって・・・<end><brk> たすけに いくんでしょ？<br> はい これ！」	Keyaki: Haa... haa... I'm so<br> glad I made it in time...<end><brk> You're going to rescue her,<br> right? Here, take this!	
+1080	14:$5213	12	<name>は <cE3:05>を もらった。	<name> received<br> <cE3:05>.	
+1081	14:$5220	62	ケヤキ「うらやま までいって とって<br> きたの。 けっこう じかんが<br> かかっちゃって・・・<end><brk> がんばってね！」	Keyaki: I went up into the<br> hills to get it. It took<br> quite a while...<end><brk> Good luck!	
+1082	14:$525F	33	ケヤキ「・・・だいじょうぶ？<end><br> あまり ムリしないでね」	Keyaki: ...Are you okay?<end><brk> Please don't overdo it.	
+1083	14:$5281	18	おかみ「あたしゃ しんじているよ」	Innkeeper: I believe in you.	
+1084	14:$5294	10	ケヤキ「<name>さーん！」	Keyaki: Hey, <name>!	
+1085	14:$529F	11	ケヤキ「はい これ！」	Keyaki: Here, take this!	
+1086	14:$52AB	12	<name>は<br><cE3:FE>を もらった。	<name> received<br> <cE3:FE>.	
+1087	14:$52B8	14	ケヤキ「がんばってね！」	Keyaki: Good luck!	
+1088	14:$52C7	148	おかみ「ケヤキちゃん？<end><br> ケヤキちゃんなら じんじゃのほうへ<br> いったみたいだけど・・・<end><brk> きまぐれなコでさ、たまに フラッと<br> どこかへ いっちゃうんだよ。<br> ネコみたいにね。<end><brk> ・・・まっ とくに いそがしいわけ<br> でもないから いいけどさ。<br> きゃくもいないし」	Innkeeper: Keyaki?<br> She went to the shrine...<end><brk> She's a free spirit.<br> Sometimes she just wanders<br> off somewhere.<end><brk> Like a cat.<end><brk> ...Well, it's not like I'm<br> busy. We don't have any<br> customers.	
+1089	14:$535C	34	ケヤキ「<name>さん？<end> ちょっと<br> まっててね。もうすぐ おわるから」	Keyaki: <name>?<end><brk> Wait just a moment. I will be<br> done soon.	
+1090	14:$537F	12	ケヤキ「よし<end> おわり」	Keyaki: There.<end><brk> All done.	
+1091	14:$538C	70	ケヤキ「ここのじんじゃって ちょっと<br> かわっているでしょ？<end><brk> ツキカゲむらは リーバしんこうじゃ<br> ないの。だから・・・」	Keyaki: Isn't this shrine a<br> little unusual?<end><brk> Moonlight Village doesn't<br> follow the Reeva faith.<br> That's why...	
+1092	14:$53D3	39	ケヤキ「え？ なんの おねがい<br> してたかって？<end><br> ・・ふふっ、ナイショ」	Keyaki: Hm? What was I<br> praying for?<end><brk> ...Hehe, it's a secret.	
+1093	14:$53FB	35	ケヤキ「それより あの・・・<br> たのみがあるんだけど・・いい？」	Keyaki: Anyway, um... I have a<br> favor to ask. Is that okay?	
+1094	14:$541F	31	<cEC:08> たのみがあるんだけど・・いい？<br>▶いいよ<br> ダメ	<cEC:08>Can I ask a favor?<br><$81>Sure<br>  No	
+1095	14:$5442	14	ケヤキ「いじわるね・・・」	Keyaki: You're mean...	
+1096	14:$5451	54	ケヤキ「じつは このネコを しばらく<br> あずかっててほしいの。<end><br> タンモモっていうの。よろしくね！」	Keyaki: Actually, I'd like you<br> to look after this cat for a<br> while.<end><brk> Her name is Tanmomo. Take<br> good care of her!	
+1097	14:$5488	22	<cE0:28>ネコのタンモモが なかまになった。<mode1>ッ	<cE0:28>Tanmomo the cat joined<br> you.<mode1><$78>	
+1098	14:$549F	52	ケヤキ「Bボタンを おしながら<br> <$A7>じボタンで、タンモモと<br> いれかわることが できるわ」	Keyaki: Hold B and press the<br> D-Pad to swap places with<br> Tanmomo.	
+1099	14:$54D4	12	ケヤキ「ん？ なあに？」	Keyaki: Hm? What is it?	
+1100	14:$54E1	56	<cEC:09>▶タンモモって きみがかってるの？<br> なんで タンモモっていうの？<br> タンモモと いれかわりたいときは？	<cEC:09><$81>Is Tanmomo yours?<br>  Why the name Tanmomo?<br>  How do I swap with her?	
+1101	14:$551D	68	ケヤキ「ううん。さっき じんじゃ<br> のウラで ひろったの。<end>こごえてて<br> かわいそうだったから・・・<end><brk> じゃ よろしくね」	Keyaki: No. I found her behind<br> the shrine earlier.<end><brk> She was freezing, poor<br> thing...<end><brk> Take good care of her!	
+1102	14:$5562	51	ケヤキ「ほら ふとももが<br> みじかいでしょ。<end><br> だから タンモモ。<end><brk> じゃ よろしくね」	Keyaki: See how short her<br> thighs are?<end><brk> That's why I call her<br> Tanmomo: Short-Thigh.<end><brk> Take good care of her!	
+1103	14:$5596	65	ケヤキ「Bボタンを おしながら<br> タンモモのほうに <$A7>じボタンを<br> いれれば、いれかわれるわ。<end><brk> じゃ よろしくね」	Keyaki: Hold B and press the<br> D-Pad toward Tanmomo to<br> switch places.<end><brk> Take good care of her!	
+1104	14:$55D8	56	だいくのキンジ「おっ！ きたきた！<end><br> <name>さん ちょっと いっしょに<br> きてよ。みせたいものがあるんだ」	Kinji: Oh, there you are! Come<br> with me for a minute,<br> <name>.<end><brk> There's something I want to<br> show you.	
+1105	14:$5611	36	だいくのマサ「あっ！ <name>さん！<end><br> ほらっ これっ！ みてくれよっ！」	Masa: Ah, <name>!<end><brk> Look at this! Check it out!	
+1106	14:$5636	54	だいくのキンジ「『そうこ』を つくっ<br> たんだぜ。このなかに アイテムを<br> とっといておけるんだ」	Kinji: We built a Warehouse!<br> You can store items in here.	
+1107	14:$566D	68	だいくのキンジ「<name>さんの<br> ために つくったんだ。<end><brk> まっ おれたちの できることって<br> これぐらいしか ないけど・・・」	Kinji: We built it for you,<br> <name>.<end><brk> Well... this is about all we<br> can do for you.	
+1108	14:$56B2	60	だいくのマサ「これで ぼうけんも<br> ぐっと ラクになるとおもうぜ。<end><br> フミちゃんのこと がんばってな！」	Masa: This should make your<br> adventures a lot easier.<end><brk> Good luck with Fumi!	
+1109	14:$56EF	58	<cE0:00><mode1>1<cE0:27><name>は そうこを つかえるように<br>なった！<mode1>ッ<end> あんなものや こんなものが<br>いろいろ おけるぞ！<cE0:0C>	<cE0:00><mode1><$02><cE0:27><name> can now use the<br> Warehouse!<mode1><$78><end><brk> You can store all kinds of<br> things there!<cE0:0C>	
+1110	14:$572A	36	だいくのキンジ「せっかく つくった<br> んだから つかってくれよな」	Kinji: We went to all the<br> trouble of building it, so<br> make sure you use it.	
+1111	14:$574F	151	だいくのマサ「『そうこ』にアイテムを<br> おいとけば ぼうけんの とちゅうで<br> ちからつきても なくならないぜ。<end><brk> ただし つぼのなかみは すべて<br> きえるから きをつけな。<end><brk> あと ぼうけんには アイテムを<br> 5こしかもっていけないぜ。ツボは<br> なかみが きえちゃうからな」	Masa: Leave items in the<br> Warehouse and you won't<end><brk> lose them if you collapse<br> during an adventure.<end><brk> But everything inside a Pot<br> will disappear, so be<br> careful.<end><brk> Also, you can only take 5<br> items with you.<end><brk> Remember, Pots lose their<br> contents.	
+1112	14:$57E7	88	うらないオババ「あんなところに<br> 『そうこ』を たてよって・・・<end><brk> ひあたりが わるくなったじゃ<br> ないか！ なにも かんがえていない<br> んだから！ まったく！」	Old Seer: Building a Warehouse<br> in a place like that...<end><brk> Now I'm not getting any<br> sunlight! Those boys never<end><brk> think things through!<br> Honestly!	
+1113	14:$5840	52	ケヤキ「さいきん むらのひとたちも<br> <name>さんのことを みとめてる<br> ようなの。<end>わたし うれしくて・・」	Keyaki: Lately, the<br> villagers are starting to<br> accept you, <name>.<end><brk> I'm so happy...	
+1114	14:$5875	86	おかみ「たおされても くじけず<br> なんども ちょうせんする・・・<end><brk> やっぱり アンタは、あたしが<br> おもっていたとおりの オトコだワ。<br> がんばってね！」	Innkeeper: No matter how<br> many times you get knocked<br> down, you never give up...<end><brk> You're every bit the man I<br> thought you were.<end><brk> Good luck out there!	
+1115	14:$58CC	41	タグラ「これ ぼくの たいせつな<br> おもちゃなんだけど・・・<end>あげるよ」	Tagura: This is my most<br> treasured toy, but...<end><brk> I'll give it to you.	
+1116	14:$58F6	11	<name>は <cE3:02>を もらった	<name> received <cE3:02>.	
+1117	14:$5902	33	タグラ「そのかわり フミちゃんを<br> たすけてね。きっとだよ！」	Tagura: In return, please<br> save Fumi. Promise me!	
+1118	14:$5924	54	ケヤキ「だいじょうぶ？<end>・・よかった。<br> わたし <name>さんの ケガだけが<br> しんぱいで・・・」	Keyaki: Are you okay?<end><brk> ...Thank goodness. I was so<br> worried you might be hurt,<br> <name>...	
+1119	14:$595B	46	ぱしりのゴン「うーーっ<end> これ<br> おれの たからものなんだけど<br> おめえに やるよ」	Gon: Urgh...<end><brk> This is my prized possession,<br> but I'll hand it over to you.	
+1120	14:$598A	11	<name>は <cE3:08>を<br>もらった	<name> received <cE3:08>.	
+1121	14:$5996	75	ぱしりのゴン「おれ かんぬしさまに<br> おこられそうになったら いつも<br> これつかって にげてるんだ。<end><brk> うーーっ けっこう やくだつぜ」	Gon: Whenever the Shrine<br> Priest is about to scold me,<br> I use this to get away.<end><brk> Urgh...<end><brk> It comes in pretty handy!	
+1122	14:$59E2	118	ナギ「うわあぁーっ！！<end> な、なんだ<br> かいぶつじゃないのか。ビックリした<end><br> ・・・えっ おれを たすけにきた？<end><brk> やだ！ おれ かえらねえ！<br> フミを たすけるって やくそくして<br> くれたら かえってもいいけど・・」	Nagi: Waaah!! Wh-what? You're<br> not a monster? You scared<br> me.<end><brk> ...You came to rescue me?<end><brk> No! I'm not going back!<end><brk> I might if you promise to<br> save Fumi...	
+1123	14:$5A59	29	<cEC:08>フミを たすけるやくそくをしますか？<br>▶はい<br> いいえ	<cEC:08>Promise to save Fumi?<br><$81>Yes<br>  No	
+1124	14:$5A7D	51	ナギ「けっ！ ひとりで かえりな。<br> おれひとりで やってやる。<br> か、かいぶつなんか・・・」	Nagi: Hmph! Go back by<br> yourself. I can handle this<br> on my own.<end><brk> M-monsters don't scare me...	
+1125	14:$5AB1	48	ナギ「・・・・・・・・・・・・<end><br> うえーーーーーん！！<br> やっぱ ここ こえーよーっ！！」	Nagi: ............<end><brk> Waaaaah!! This place really<br> is scary!!	
+1126	14:$5AE2	18	ナギ「うえーーん！ チキショー！」	Nagi: Waaaaah! Damn it!	
+1127	14:$5AF5	101	ナギ「よし！ かえってやらあ。<br> やくそく わすれんじゃねえぞ。<end><brk> ・・・ホントは おれ すげー<br> ビビっててよ<end> だから あの<end><brk> ・・・もれそうなんだ。<end><br> はやく かえろうぜ」	Nagi: Fine! I'll go back.<br> Don't you forget your<br> promise.<end><brk> ...Truth is, I'm really<br> scared, so, um...<end><brk> ...I'm about to wet myself.<br> Let's hurry back.	
+1128	14:$5AFD	93	かえってやらあ。<br> やくそく わすれんじゃねえぞ。<end><brk> ・・・ホントは おれ すげー<br> ビビっててよ<end> だから あの<end><brk> ・・・もれそうなんだ。<end><br> はやく かえろうぜ」	Please lets hurry back!<br>I gotta pee. Hurry!<end><brk>	
+1129	14:$5B5B	45	ナギ「あっ きてくれた！<end><br> はやく かえろうぜ。<br> おれ まだガマンしてんだ」	Nagi: Oh, you came back!<end><brk> Let's hurry home. I'm still<br> holding it in.	
+1130	14:$5B81	7	ンしてんだ」	Please lets hurry back!<br>I gotta pee. Hurry!	
+1131	14:$5B89	17	ナギ「じ、じいちゃん・・・」	Nagi: G-grandpa...	
+1132	14:$5B9B	22	むらおさ「ナギ・・よ、よく ぶじで」	Chief: Nagi... Y-you're safe!	
+1133	14:$5BB2	15	ナギ「じいちゃーーん！！」	Nagi: Grandpaaa!!	
+1134	14:$5BC2	19	むらおさ「ナギーッ！ うおおーっ！」	Chief: Nagiii! Whoaaa!	
+1135	14:$5BD6	10	むらおさ「な・・・」	Chief: Wh...	
+1136	14:$5BE1	16	ナギ「もれちゃうーーーっ！！」	Nagi: I'm gonna wet myself!!	
+1137	14:$5BF2	18	<cF2><cF0>ナギ「まにあった・・・」<mode1>ッ<mode0>	<cF2><cF0>Nagi: We made it...<mode1><$78><mode0>	
+1138	14:$5C05	21	<cF2><cF1>   そして、つぎのあさ・・・<mode1>ッ<mode0>	<cF2><cF1> The next morning...<mode1><$78><mode0>	
+1139	14:$5C1B	62	むらおさ「<name>さん・・・<end><br> あなたが ききたいことは<br> わかっとるつもりです。<end><brk> こんばん ここに きてくだされ」	Chief: <name>, I believe I<br> know what it is you want to<br> ask.<end><brk> Please come here tonight.	
+1140	14:$5C5A	24	おかみ「おや？ とまりかい？<br> めずらしいね」	Innkeeper: Oh? Staying the<br> night? That's unusual.	
+1141	14:$5C73	108	むらおさ「ま、まて！<br> おどろかんでくれ！<end><br> わしじゃ。むらおさじゃよ。<end><brk> こんなスガタだが りせいは ある。<br> あんたたちを おそったりは せん。<end><brk> こっちにきて わしのはなしを<br> きいてくれ」	Chief: W-wait! Don't be<br> alarmed!<end><brk> It's me, the village chief.<end><brk> I may look like this, but I'm<br> still in control of myself.<end><brk> I won't hurt you.<end><brk> Come closer and hear me out.	
+1142	14:$5CE0	433	むらおさ「わしらは、つきかげをあびて<br> へんしんするタイシツをもった<br> いちぞくなんじゃ<end><brk> うみのむこうでは バンパイヤとか<br> よばれているらしいがの。<end><brk> わしらは このタイシツのせいで<br> こんな ひとめのつかない ばしょで<br> かくれるように すんでいるのじゃ。<end><brk> オロチのこと・・・<br> いけにえのこと・・・<br> クヨウとうげのこと・・・<end><brk> これらについて はなすのは<br> カンベンしてくだされ。<end><brk> こうしていることも オロチには<br> たぶん つつぬけなんじゃ・・・<end><brk> じんじゃの さいせんばこの したに<br> まきものがある。<end><brk> それをよめば『りゅうの あぎと』は<br> ひらくはず ですじゃ。<end><brk> <name>さん おねがいします！<br> フミを たすけてくだされ！<end><brk> フミを たすければ いけにえの<br> シキタリも たちきれます。<end><brk> どうか フミを むらの のろわれた<br> サダメから すくってくだされ！」	Chief: When moonlight falls on<br> us, we transform.<end><brk> It is a trait our clan<br> carries.<end><brk> Across the sea, I hear they<br> call us the moon-cursed.<end><brk> Because of this trait, we<br> live here in hiding, far from<br> prying eyes.<end><brk> Orochi... the sacrifices...<br> Kuyo Pass...<end><brk> Please forgive me, but I<br> cannot speak of these<br> things.<end><brk> Even this conversation is<br> probably reaching Orochi's<br> ears...<end><brk> There is a scroll beneath the<br> offering box at the shrine.<end><brk> Read it, and Dragon's Maw<br> should open.<end><brk> <name>, I beg you! Please<br> save Fumi!<end><brk> If you save her, we can end<br> the custom of sacrifice.<end><brk> Please free Fumi from this<br> village's cursed fate!	
+1143	14:$5E92	32	むらおさ「ん？ もういちど わしの<br> はなしをききますかの？」	Chief: Hmm? Would you like to<br> hear my story once more?	
+1144	14:$5EB3	21	<cEC:08>はなしをききますか？<br>▶はい<br> いいえ	<cEC:08>Hear the story?<br><$81>Yes<br>  No	
+1145	14:$5ECC	93	ぱしりのゴン「うーっ こどものうちは<br> ほっさがおこるだけで へんしん<br> しちゃうんだなー。<end><brk> で、かいぶつになると なにも<br> おぼえていないんだなー。うーーっ」	Gon: Urgh... While they're<br> children, a single fit can<br> make them transform.<end><brk> And when they become<br> monsters, they don't<br> remember a thing. Urrrgh.	
+1146	14:$5F2A	96	だいくのキンジ「オトナになれば<br> ほっさもおきないし、へんしんしても<br> りせいを うしなわなくなるんだ。<end><brk> うちのあんちゃんみたいに なかなか<br> なおらないひとも いるけど・・・」	Kinji: Once you become an<br> adult, the fits stop,<end><brk> and you stay in control<br> even when transformed.<end><brk> Some people take a while to<br> change back, like my<br> brother...	
+1147	14:$5F8B	69	ロクロウ「ナギやタグラに おそわれ<br> ないよう きをつけるんだな。<end><brk> こどもたちは へんしんちゅうは<br> りせいが ないからな」	Rokuro: Be careful Nagi and<br> Tagura don't attack you.<end><brk> Children lose control when<br> they transform.	
+1148	14:$5FD1	68	かんぬし「わしらは リーバしんこう<br> には えんどおいが・・・<end><brk> それでも クロンのかぜが<br> ふくことを いのりますぞ」	Priest: We don't follow the<br> Reeva faith...<end><brk> but I'll still pray for<br> Kron's wind to guide you.	
+1149	14:$6016	51	おかみ「ケヤキちゃんのこと さがさ<br> ないでね。<end><name>さんには<br> みられたくないと おもうから・・」	Innkeeper: Don't go looking<br> for Keyaki.<end><brk> I don't think she wants you<br> to see her, <name>...	
+1150	14:$604A	28	<cEC:08>さいせんばこを しらべますか？<br>▶はい<br> いいえ	<cEC:08>Search the offering box?<br><$81>Yes<br>  No	
+1151	14:$606A	17	<name>は さいせんばこを しらべた	<name> searched the<br> offering box.	
+1152	14:$607C	37	コッパ「・・・まきもの あった？<end><br> え？ ないって？！<end> そんなっ！」	Koppa: ...Was the scroll<br> there?<end><brk> What? It's gone?! No way!	
+1153	14:$60A2	66	おかみ「<name>さん。あの・・・<br> ケヤキちゃんなんだけど・・・<end><brk> ゆうべから もどってこないのよ。<br> どこいったのかしら？」	Innkeeper: <name>... It's<br> about Keyaki...<end><brk> She hasn't come back since<br> last night. I wonder where<br> she went.	
+1154	14:$60E5	33	おかみ「ケヤキちゃん どこ<br> いっちゃったんだろうねえ・・・」	Innkeeper: I wonder where<br> Keyaki could have gone off<br> to...	
+1155	14:$6107	31	フミのはは「<name>さん・・・<br> フミのこと おねがいします・・」	Fumi's Mom: <name>...<br> Please, take care of Fumi...	
+1156	14:$6127	51	ぱしりのゴン「そこにいるのが<br> コッパなのか？<end> うーーっ<br> やっぱ くさそうだな・・・」	Gon: So that's Koppa?<end><brk> Urgh... He looks as stinky as<br> I expected...	
+1157	14:$615B	97	ロクロウ「のろわれた このカラダを<br> みられるたびに われわれのせんぞは<br> にげかくれてきた。<end><brk> そして いつしか このひみつを<br> まもることが 『テツのおきて』と<br> なったのだ」	Rokuro: Whenever our<br> ancestors' cursed bodies<br> were seen, they fled and hid.<end><brk> In time, protecting this<br> secret became our ironclad<br> law.	
+1158	14:$61BD	54	タグラ「きのうの よるのこと？<end><br> いつも ぐっすりと ねてるよ。<br> へんなゆめを みるけどね・・・」	Tagura: Last night?<end><brk> I always sleep soundly,<br> though I have strange<br> dreams...	
+1159	14:$61F4	97	ナギ「『ふつう』や『むずかしい』へ<br> いくには そうこのいりぐちのよこの<br> カンバンに ちずがかいてあるから、<end><brk> それをみれば わかるよ。<br> フミちゃんのこと たのんだぜ！」	Nagi: To reach Normal or Hard,<br> check the map on the sign<end><brk> beside the Warehouse<br> entrance.<end><brk> It'll show you the way. We're<br> counting on you to save<br> Fumi!	
+1160	14:$6256	58	だいくのキンジ「ばあちゃん。そうこを<br> つくったから またハラが へっち<br> まったよ。くいもン ないかい？」	Kinji: Gran, building that<br> Warehouse made me hungry<br> again.<end><brk> Got anything to eat?	
+1161	14:$6291	36	うらないオババ「ないねえ。<br> くさったおにぎり ぐらいしか・・」	Old Seer: Nope. Nothing but a<br> Rotten Onigiri...	
+1162	14:$62B6	15	ケヤキ「あっ きがついた！」	Keyaki: Oh, you're awake!	
+1163	14:$62C6	49	おかみ「ここは、ツキカゲむらだよ。<end><br> あんた、ここを でていったんじゃ<br> ないのかい？」	Innkeeper: You're in Moonlight<br> Village.<end><brk> Didn't you leave?	
+1164	14:$62F8	30	ケヤキ「え？<end> むらから でられなく<br> なっちゃったの！」	Keyaki: What?<end><brk> You can't leave the village?!	
+1165	14:$6317	32	おかみ「カッコよくでていったわりには<br> なんだかねえ・・・」	Innkeeper: You made such a<br> grand exit, and now look at<br> you...	
+1166	14:$6338	77	むらおさ「おお、どうしたのじゃ！<end><br> なに？ ツキカゲむらから<br> でられンじゃと？<end><brk> うむむむ。フシギなことが<br> おこるもんじゃ・・・」	Chief: Oh, what's wrong?<end><brk> What? You can't leave<br> Moonlight Village?<end><brk> Hmm. How strange...	
+1167	14:$6386	125	かんぬし「なにっ！<br> むらから でれんとなっ！ うーむ。<end><brk> わしは、ダンジョンを たびする<br> ものに いつも じょげんを<br> あたえておる。<end><brk> なにについて ききたい？<end><br> ・・・と、いいたいところだが<br> これは、わしにもわからん」	Priest: What! You can't leave?<br> Hmm.<end><brk> I offer guidance to those who<br> venture into dungeons.<end><brk> What would you like to know?<end><brk> ...is what I would say, but<br> even I don't understand this.	
+1168	14:$6404	57	フミのははおや「あっ <name>さん。<end><br> そのせつは ほんとうにおせわに・・<br> どうも ありがとうございました」	Fumi's Mom: Oh, <name>.<end><brk> Thank you again for<br> everything you did for us.	
+1169	14:$643E	34	ぱしりのゴン「うーーっ なんだ。<br> あんた かえってきたのか」	Gon: Urgh... Oh, it's you.<br> You're back.	
+1170	14:$6461	69	ロクロウ「あれ？ もどってきたのか？<end><brk> そうか！ あんたも このむらの<br> にんげんになる けっしんが<br> ついたんだな。よしよし」	Rokuro: Huh? You're back?<end><brk> I see! You've decided to<br> become one of us. Good, good.	
+1171	14:$64A7	41	だいくのマサ「あれ？ <name>さん<br> じゃないの。<end>どしたのよ<br> いったい・・・」	Masa: Huh? <name>?<end><brk> What are you doing here...?	
+1172	14:$64D1	62	だいくのキンジ「<nop>、<name>さん！<br> どうして・・・<end><brk> あっ・・・まさか ケヤキちゃんを<br> むかえに きたんじゃ・・・」	Kinji: <nop>, <name>! What are<br> you doing...<end><brk> Wait... Don't tell me you<br> came back for Keyaki...	
+1173	14:$6510	55	うらないオババ「ん？ どしたんじゃ？<end><br> あ！ まさか・・・<end>わしに<br> あいにきたのかの・・・ポッ」	Old Seer: Hm? What's wrong?<end><brk> Oh! Could it be... You came<br> to see me...? Tee hee.	
+1174	14:$6548	27	タグラ「あ、おにいちゃんだ！<br> わーい わーい！」	Tagura: Hey, it's you! Hooray!	
+1175	14:$6564	27	フミ「あっ・・・どうしたの？<br> ・・・わすれもの？」	Fumi: Oh... what is it?<br> ...Forget something?	
+1176	14:$6580	56	ナギ「あれ？ にいちゃんたち・・・<end><br> わかった！ モレそうに なったんで<br> ひきかえして きたんだろ！」	Nagi: Huh? You guys...<end><brk> I know! You had to pee so<br> bad you turned back!	
+1177	14:$65B9	10	ケヤキ「<name>さーん！」	Keyaki: <name>! Wait!	
+1178	14:$65C4	11	ケヤキ「はい これ！」	Keyaki: Here, take this!	
+1179	14:$65D0	12	<name>は<br><cE3:06>を もらった。	<name> received <cE3:06>.	
+1180	14:$65DD	63	ケヤキ「でられるといいわね。<end><br> ・・・けど、わたし <name>さんが<br> むらに もどってきて・・・<end><brk> うれしかった・・・」	Keyaki: I hope you find a way<br> out.<end><brk> ...But I was happy. Happy<br> that you came back to the<br> village, <name>.	
+1181	14:$661D	26	こどもたち「ヒューヒューッ！！<br> あついねぇー！」	Children: Ooh la la! Things<br> are heating up!	
+1182	14:$6638	29	コッパ「ちぇ、ひやかしてやがる。<br> <name>、いこうぜ！」	Koppa: Tch, they're just<br> teasing us. Come on,<br> <name>!	
+1183	14:$6656	33	ケヤキ「・・・だいじょうぶ？<end><br> あまり ムリしないでね」	Keyaki: ...Are you okay?<end><brk> Don't push yourself too hard.	
+1184	14:$6678	51	おかみ「また もどってきたのかい？<br> あんた、このむらが よっぽど<br> すきなンだねえ・・・」	Innkeeper: Back again? You<br> must really like this<br> village...	
+1185	14:$66AC	48	むらおさ「まだ でられんのか！<end><br> うーむ フシギなことが おこる<br> もんじゃ・・・」	Chief: You still can't leave?<end><brk> Hmm. How strange...	
+1186	14:$66DD	65	だいくのマサ「え？ こんどきたら<br> ウチを たててやる？<end><br> おれ そんなこと いったっけ？<end><brk> ま、まあ そのうちな・・・」	Masa: Huh? I said I'd build<br> you a house next time you<br> came?<end><brk> Did I really say that?<end><brk> W-well... maybe someday.	
+1187	14:$671F	52	うらないオババ「・・・で、わしと<br> あんたの しゅうげんは いつに<br> するのかの？・・・ポッ」	Old Seer: ...So, when are you<br> and I getting married? ...Tee<br> hee.	
+1188	14:$6754	16	フミ「・・・また わすれもの？」	Fumi: ...Forgot something<br> again?	
+1189	14:$6765	39	ナギ「またかい？<end> あんまり ガマン<br> すると からだに よくないぜ」	Nagi: Again?<end><brk> It's bad for you to hold it<br> in that long.	
+1190	14:$678D	82	だいくのキンジ「・・・<name>さんは<br> ケヤキちゃんのこと むかえにきたん<br> じゃ なかったの？<end><brk> じゃ、ケヤキちゃん どうして<br> あんなに あかるく・・・」	Kinji: ...Didn't you come back<br> for Keyaki, <name>?<end><brk> Then why is she acting so<br> cheerful...?	
+1191	14:$67E0	10	ケヤキ「<name>さーん！」	Keyaki: <name>! Wait!	
+1192	14:$67EB	137	ケヤキ「はい これ！<end> しきべつの<br> うでわっていう ものらしいの。<br> ずいぶん やくにたつって・・・<end>え？<end><brk> こっちには もっていけないの？！<end><br> そっかぁ・・・ざんねんね。<end><brk> わたし おうえんするぐらいしか<br> できないけど・・・<end>がんばってね！」	Keyaki: Here, take this!<br> Apparently it's called an ID<br> Bracer.<end><brk> They say it's really<br> useful... Huh?<end><brk> You can't take it with you?!<end><brk> Oh... that's too bad.<end><brk> I know cheering you on isn't<br> much, but... good luck!	
+1193	14:$6875	20	だいくのキンジ「ケヤキちゃん・・・」	Kinji: Keyaki...	
+1194	14:$688A	59	おかみ「さっき キンジが ここきてさ<br> 『<name>さんに はなしがあるから<br> じんじゃ まで くるように』って」	Innkeeper: Kinji stopped by<br> earlier looking for you,<br> <name>.<end><brk> He wants you to meet him at<br> the shrine.	
+1195	14:$68C6	55	コッパ「おい <name>、あそこ！<end><br> あれ？ ケヤキちゃんも いるぜ。<br> なにか はなしているみたいだけど」	Koppa: Hey, <name>! Over<br> there!<end><brk> Huh? Keyaki's there too.<br> Looks like they're talking.	
+1196	14:$68FE	33	<cF4>だいくのキンジ「いや そんでね、<br> じつは さあ・・・」	<cF4>Kinji: No, listen, the thing<br> is...	
+1197	14:$6920	10	ケヤキ「・・・・・」	Keyaki: .....	
+1198	14:$692B	16	だいくのキンジ「なあ・・・」	Kinji: So...	
+1199	14:$693C	19	だいくのキンジ「ね、どしたの？」	Kinji: Hey, what's wrong?	
+1200	14:$6950	10	ケヤキ「・・・え？」	Keyaki: ...Huh?	
+1201	14:$695B	48	だいくのキンジ「いつもは もっと<br> しゃべるのにさ・・・なんか<br> <name>さん みたいだよ？」	Kinji: You're usually much<br> chattier than this... You're<br> acting like <name> today.	
+1202	14:$698C	42	ケヤキ「・・・・・・<end><br> そういって もらえるの・・・<br> すごく うれしい・・・」	Keyaki: ......<end><brk> Hearing you say that...<br> makes me so happy...	
+1203	14:$69B7	45	だいくのキンジ「ほんとうに スキだと<br> そのひとの クセって うつるんだ<br> よね」	Kinji: When you really love<br> someone, you start picking<br> up their habits.	
+1204	14:$69E5	46	だいくのキンジ「・・・やっぱり<br> ケヤキちゃんは <name>さんの<br> ことを・・・<end>けどさ」	Kinji: ...So Keyaki really<br> does have feelings for<br> <name>...<end><brk> But still...	
+1205	14:$6A14	57	ケヤキ「・・・<name>さんは ここの<br> にんげんじゃない。そして、ツキカゲ<br> むらを でていこうとしている・・」	Keyaki: ...<name> isn't from<br> here.<end><brk> And he intends to leave<br> Moonlight Village...	
+1206	14:$6A4E	178	だいくのキンジ「そ、そうさ。<br> まあ、いまは『でれない！』なんて<br> ダサいこと いってるけど・・・<end><brk> けど、オロチを たおすほどの<br> ひとだ。いつかは だっしゅつできる<br> だろうぜ。<end><brk> なのに ケヤキちゃんは、いつも<br> わらって みおくっている・・・<end><brk> どうして？ もう いっしょう<br> あえないかも しれないンだぜ？！」	Kinji: R-right.<end><brk> Sure, right now he's stuck<br> here because he can't get<br> out...<end><brk> But he defeated Orochi.<end><brk> I'm sure he'll escape<br> someday.<end><brk> And yet Keyaki always sees<br> him off with a smile...<end><brk> Why? She may never see him<br> again!	
+1207	14:$6B01	179	ケヤキ「・・・わたしだって<br> いっしょに ついていきたい、って<br> なんども おもったけど・・・<end><brk> けど ついていっても きっと<br> メイワクかける だけだろうし、<br> それに・・・<end><brk> わたし このむらでしか いきて<br> いけないし・・・<end><br> だから あきらめよう、って・・・<end><brk> スパーッと あきらめて なにもかも<br> わすれよう、って・・・」	Keyaki: ...I've thought about<br> going with him so many<br> times...<end><brk> But I'd probably only be a<br> burden, and besides...<end><brk> I can only survive in this<br> village...<end><brk> So I told myself to give up.<end><brk> To let him go and forget<br> everything...	
+1208	14:$6BB5	62	だいくのキンジ「ケヤキちゃん いつも<br> えがおで みおくってるけど・・・<end><br> やっぱり おなかンなかでは・・」	Kinji: Keyaki always sees him<br> off with a smile, but...<end><brk> Deep down, she must...	
+1209	14:$6BF4	20	だいくのキンジ「あ ケヤキちゃん！」	Kinji: Oh, Keyaki!	
+1210	14:$6C09	52	だいくのキンジ「うーん すごい！<br> おれ かんどう しちゃった！<br> ますます ホレちゃったよ！」	Kinji: Wow, that's amazing!<br> I'm moved!<end><brk> Now I love her even more!	
+1211	14:$6C3E	227	だいくのキンジ「すごいよな！<br> オンナのひとって！<end><brk> あんな おもいを ひきずりながら<br> それでいて カラリと わらったり<br> できるんだから！<end><brk> おれが はいりこむヨチは やっぱ<br> なかったけど・・・けど、おれ<br> あきらめないからね。<end><brk> いつか あのコを ふりむかして<br> やるもンね・・・<end>なあんちゃって。<end><brk> いじょう、オンナごころを かってに<br> かいしゃくした バカな おとこの<br> ひとりごと でした。おわり」	Kinji: Women are incredible!<end><brk> She carries all those<br> feelings<end><brk> and can still smile so<br> brightly!<end><brk> I never had a chance, of<br> course...<end><brk> but I won't give up.<end><brk> One day I'll get her to look<br> my way...<end><brk> Just kidding.<end><brk> And thus ends the rambling<br> monologue of a foolish man<end><brk> who decided for himself what<br> a woman was feeling. The end.	
+1212	14:$6D22	72	だいくのキンジ「あー でっかいこえ<br> だしたら すっきりした！<end><brk> さ、かえろ かえろ。<end><br> かえって・・・<end>ヤケぐいだっ！！」<br><cF3>	Kinji: Ahh, shouting that out<br> made me feel better!<end><brk> All right, time to go home.<end><brk> Home to... eat my feelings!!<cF3>	
+1213	14:$6D6B	69	だいくのキンジ「がつがつがつがつ！<end><br> がつがつがつががつ！！<end><br> がつがつがつががつがつがつ！！！」	Kinji: Chomp chomp chomp<br> chomp!<end><brk> Chomp chomp chomp chomp!!<end><brk> Chomp chomp chomp chomp<br> chomp!!!	
+1214	14:$6DB1	19	だいくのキンジ「・・・・・・・・」	Kinji: ........	
+1215	14:$6DC5	39	コッパ「あれ？ アイテム こっちじゃ<br> つかえないって いわなかったけ？」	Koppa: Huh? Didn't you say<br> items don't work here?	
+1216	14:$6DED	36	ケヤキ「ううん？ ちがうわ。アイテム<br> とどけにきたんじゃないの」	Keyaki: Hm? No. I didn't come<br> to bring you an item.	
+1217	14:$6E12	86	ケヤキ「<name>さん、あの・・<end><br> もし また むらに もどるよう<br> だったら・・・<end>そのときは、<end><brk> おまいりに つきあって？<end><br> わたし、じんじゃで まってるから」	Keyaki: <name>, um...<end><brk> If you ever come back to the<br> village...<end><brk> will you pray with me?<end><brk> I'll be waiting at the<br> shrine.	
+1218	14:$6E69	22	ケヤキ「じんじゃで・・・<end>まってます」	Keyaki: I'll be waiting...<end><brk> At the shrine.	
+1219	14:$6E80	30	ケヤキ「きてくれたんだ・・・<end><br> さ、おまいり しよ」<br><cF4>	Keyaki: You came...<end><brk> Come on, let's pray.<cF4>	
+1220	14:$6E9F	12	ケヤキ「よし<end>、おわり」	Keyaki: All right.<end><brk> We're done.	
+1221	14:$6EAC	46	ケヤキ「ありがとう。<br> つきあってくれて・・・<end>もう、<br> おもいのこすこと ないな・・・」	Keyaki: Thank you for coming<br> with me...<end><brk> Now I don't have any<br> regrets...	
+1222	14:$6EDB	10	チョウモモ「ニャア」	Chomomo: Meow.	
+1223	14:$6EE6	15	コッパ「あっ、ノラネコ！」<cE7>	Koppa: Hey, a stray cat!<cE7>	
+1224	14:$6EF6	52	ケヤキ「このコ、たぶん タンモモの<br> きょうだいよ。<end>だから、チョウモモ<br> って なづけたの」<cE7>	Keyaki: This one is probably<br> Tanmomo's sibling.<end><brk> So I named her Chomomo.<cE7>	
+1225	14:$6F2B	237	ケヤキ「わたし、ノラネコが スキ。<br> とくに じゆうな ところが・・・<end><brk> ・・わたしね、じつは ものすごく<br> だいスキな ネコが いたんだけど、<end><brk> そのコね、もう ここには かえって<br> こないかも しれないの・・・<end><brk> かといって かいネコに おさまった<br> んじゃ そのコの いちばんのよさが<br> なくなるような きがして・・・<end><brk> ・・・でね、わたし こう<br> おもうことにしたの。<end><brk> あいたくなったら いつでもおいで、<br> って・・・」<cE7>	Keyaki: I love stray cats,<br> especially how free they<br> are...<end><brk> ...The truth is, there was a<br> cat I loved very much,<end><brk> but he may never come back<br> here again...<end><brk> Yet if he settled down and<br> became a house cat,<end><brk> I think he'd lose the best<br> part of himself...<end><brk> ...So I decided to think of<br> it this way.<end><brk> Come see me whenever you<br> want.<cE7>	
+1226	14:$7019	29	ケヤキ「わたしは いつも ここに<br> います・・・<end>って」<cE7>	Keyaki: I'll always be here...<end><brk> That's what I mean.<cE7>	
+1227	14:$7037	54	ケヤキ「あ！ いけない！<br> わたし おかみさんに すぐに<br> もどるわ、って<end><brk> ・・・じゃあね」<br><cF3><cE7>	Keyaki: Oh! I almost forgot! I<br> told the Innkeeper I'd be<br> right back.<end><brk> ...See you.<cF3><cE7>	
+1228	14:$706E	49	ケヤキ「<name>さんなら いつか<br> だっしゅつできる ひが くるわ。<br> ・・・がんばってね！」	Keyaki: I'm sure you'll find a<br> way out someday, <name>.<end><brk> ...Good luck!	
+1229	14:$70A0	22	ナギ「ガ、ガマンできないよぉ・・・」	Nagi: I-I can't hold it<br> anymore...	
+1230	14:$70B7	32	ナギ「ううう。もれるまえに<br> たおれちゃうよ。たすけて・・・」	Nagi: Ugh... I'm gonna<br> collapse before I wet myself.<br> Help...	
+1231	14:$70BE	25	。もれるまえに<br> たおれちゃうよ。たすけて・・・」	I'm gonna collapse before I<br> wet myself. Help...	
+1232	14:$70D8	13	フミ「・・・・・・・・・」	Fumi: .........	
+1233	14:$70E6	12	フミ「たおれそう・・・」	Fumi: I feel like I'm going to<br> collapse...	
+1234	14:$70F3	17	ポチ「ワン！ ワワン！ ワン！」	Pochi: Woof! Woof woof! Woof!	
+1235	14:$7105	95	コッパ「おれは いつもフミちゃんに<br> ナデナデしてもらっていた オンギ<br> がある。<end><brk> だから おれも たすけたいんだ。<br> なかまにしてくれ・・・だってさ。<br> どうする？」	Koppa: He says Fumi always<br> petted him, so he owes her.<end><brk> He wants to help too, so let<br> him join you.<end><brk> What do you say?	
+1236	14:$7165	25	<cEC:08>ポチを なかまにしますか？<br>▶はい<br> いいえ	<cEC:08>Let Pochi join you?<br><$81>Yes<br>  No	
+1237	14:$7182	21	<cE0:28>いぬのポチが なかまになった！<mode1>ッ	<cE0:28>The dog Pochi joined you!<mode1><$78>	
+1238	14:$7198	14	ポチ「ワワワワワーーン！」	Pochi: Woof woof woof wooooof!	
+1239	14:$71A7	43	コッパ「たすけが ほしいときは<br> いつでも こえかけてくれ・・・<br> だってさ」	Koppa: He says to call him<br> anytime you need help.	
+1240	14:$71D3	34	ポチ「ワン！ ワワン！ ワン！<br> （おれも なかまにしてくれ！）」	Pochi: Woof! Woof woof! Woof!<end><brk> (Let me come along too!)	
+1241	14:$71F6	121	コッパ「おれは いつもフミちゃんに<br> ナデナデしてもらっていた オンギ<br> がある。<end><brk> だから おれも たすけたいんだ。<br> なかまにしてくれ・・・<end><brk> と おもったけど すでになかまが<br> いるなら いいや・・・だってさ」	Koppa: He says Fumi always<br> petted him, so he owes her.<end><brk> He wanted to help too and<br> join you...<end><brk> but since you already have<br> a companion, never mind.	
+1242	14:$7270	67	ポチ「ワン！ ワワン！ ワン！<br> （おれも なかまにしてくれ・・<end><brk> と おもったけど すでになかまが<br> いるなら いいや）」	Pochi: Woof! Woof woof! Woof!<end><brk> (I wanted to come along<br> too...<end><brk> but since you already have<br> someone, never mind.)	
+1243	14:$72B4	22	ポチ「ワン！<br> （がんばろうぜ！）」	Pochi: Woof! (Let's do this!)	
+1244	14:$72CB	30	ポチ「ワン、ワワン！<br> （<var>なら、おれに<br> まかせろ！）」	Pochi: Woof, wuff!<br> (Leave <var> to me!)	
+1245	14:$72EA	26	ポチ「クウン・・・<br> （もう ダメだ・・・）」	Pochi: Whine... (I can't go<br> on...)	
+1246	14:$7305	11	ニワトリ「コケーッ！」	Rooster: Cock-a-doodle-doo!	
+1247	14:$7311	158	コッパ「ワタシは しじょうさいきょう<br> のニワトリッ。<end>はっきりいって<br> ワタシは つよいッ！<end><brk> いままで だまって みてきたけど<br> むらびとの だらしなさときたら<br> もう あきれかえるワ！<end><brk> むらびとたちが いかないのなら<br> このワタシが なかまになるッ！・・<br> だってさ。どうする？」	Koppa: I am the strongest<br> rooster in history!<end><brk> To put it plainly, I am<br> strong!<end><brk> I've watched in silence until<br> now,<end><brk> but these useless villagers<br> are simply unbearable!<end><brk> If they won't go, then I<br> shall be your companion!<end><brk> That's what he says. What do<br> you want to do?	
+1248	14:$73B0	26	<cEC:08>ニワトリを なかまにしますか？<br>▶はい<br> いいえ	<cEC:08>Let the Rooster join?<br><$81>Yes<br>  No	
+1249	14:$73CE	19	<cE0:28>ニワトリが なかまになった！<mode1>ッ	<cE0:28>The Rooster joined you!<mode1><$78>	
+1250	14:$73E2	45	ニワトリ「コケーッ！<br> （ワタシは さいきょうのニワトリ。<br> なかまとして つれてけ！）」	Rooster: Cock-a-doodle-doo!<end><brk> (I am the mightiest rooster!<br> Take me with you!)	
+1251	14:$7410	184	コッパ「ワタシは しじょうさいきょう<br> のニワトリッ。<end>はっきりいって<br> ワタシは つよいッ！<end><brk> いままで だまって みてきたけど<br> むらびとの だらしなさときたら<br> もう あきれかえるワ！<end><brk> むらびとたちが いかないのなら<br> このワタシが なかまになるッ！・・<end><brk> と おもったけど すでになかまが<br> いるなら いいや・・・だってさ」	Koppa: I am the strongest<br> rooster in history!<end><brk> To put it plainly, I am<br> strong!<end><brk> I've watched in silence until<br> now,<end><brk> but these useless villagers<br> are simply unbearable!<end><brk> If they won't go, then I<br> shall be your companion!...<end><brk> is what he thought, but since<br> you already have a<br> companion,<end><brk> never mind.	
+1252	14:$74C9	78	ニワトリ「コケーッ！<br> （ワタシは さいきょうのニワトリ。<br> なかまとして つれてけ！<end><brk> と おもったけど すでになかまが<br> いるなら いいっ！）」	Rooster: Cock-a-doodle-doo!<end><brk> (I am the mightiest rooster!<br> Take me with you!<end><brk> ...or I would say that, but<br> you already have someone.<br> So be it!)	
+1253	14:$7518	33	ニワトリ「コッコッコッコッ！<br> （ムテキのちからをみせてやる！）」	Rooster: Cluck cluck cluck!<br> (Witness my invincible<br> power!)	
+1254	14:$753A	48	ニワトリ「コケーッ！ コケーッ！<br> （<var>など、しょせん<br> ザコッ！ オロチを だせッ！）」	Rooster: Cock-a-doodle-doo!<br> Cock-a-doodle-doo!<end><brk> (<var> is mere<br> small fry! Bring me Orochi!)	
+1255	14:$756B	53	ニワトリ「ゴフッ、コケコケコ・・・<br> （グフッ このワタシも ついに<br> ちからつきるときが・・・）」	Rooster: Guh, cluck cluck...<end><brk> (Guh... Even I have finally<br> run out of strength...)	
+1256	14:$75A1	44	タンモモ「ニャーニャー<br> （ワガハイは、ぺケネコでし。<br> なかまに しましか？）」	Tanmomo: Mew, mew.<end><brk> (I'm a no-good kitty. Will<br> you make me your<br> companion?)	
+1257	14:$75CE	26	<cEC:08>タンモモを なかまにしますか？<br>▶はい<br> いいえ	<cEC:08>Let Tanmomo join you?<br><$81>Yes<br>  No	
+1258	14:$75EC	51	タンモモ「ニャーン！（ワガハイは<br> ぺケネコでし。タンモモ？・・・<br> ヘンな なまえでし！）」	Tanmomo: Meow!<end><brk> (I'm a no-good cat.<br> Tanmomo...? What a weird<br> name!)	
+1259	14:$7620	36	タンモモ「ニャン、ニャニャン！<br> （<var>なんて<br> ちょろいもンでし！）」	Tanmomo: Mew, me-mew!<br> (<var> is no match!)	
+1260	14:$7645	52	タンモモ「ニャニャ？ ニャー！<br> （ありゃ？ けど、そんなとこに<br> いるほうが わるいンでし！）」	Tanmomo: Mew mew? Mewww!<end><brk> (Huh? Well, it's your fault<br> for standing there!)	
+1261	14:$767A	30	タンモモ「ニャニャニャー・・・<br> （しにそうでし・・・）」	Tanmomo: Me-me-mew... (I think<br> I'm dying...)	
+1262	14:$7699	22	<cE0:28>ネコのタンモモが なかまになった！<mode1>ッ	<cE0:28>The cat Tanmomo joined<br> you!<mode1><$78>	
+1263	14:$76B0	15	タンモモ「フギャーーーッ！」	Tanmomo: Yeeeeowl!	
+1264	14:$76C0	78	タンモモ「ニャーニャー<br> （ワガハイは、ぺケネコでし。<br> なかまに しましか？<end><brk> と おもったけど すでになかまが<br> いるなら いいでし）」	Tanmomo: Mew, mew.<end><brk> (I'm a no-good kitty. Will<br> you make me your<br> companion?<end><brk> ...or I would ask, but you<br> already have someone. Never<br> mind.)	
+1265	14:$770F	58	タンモモ「ニャーニャー<br> （あれから とっくんして すこしは<br> つよく なったでし。<end><brk> なかまに しましか？）」	Tanmomo: Mew, mew.<end><brk> (I've been training and<br> gotten a little stronger<br> since then.<end><brk> Will you make me your<br> companion?)	
+1266	14:$774A	66	タンモモ「ニャーニャー<br> （もう クヨウとうげでは てきは<br> いないぐらい つよくなったでし。<end><brk> なかまに しましか？）」	Tanmomo: Mew, mew.<end><brk> (I've gotten so strong that<br> no one at Kuyo Pass can<br> beat me.<end><brk> Will you make me your<br> companion?)	
+1267	14:$778D	29	こどもマムル「ぼくも つれていって<br> くれよう・・・」	Baby Mamel: Please take me<br> with you too...	
+1268	14:$77AB	17	こどもマムル「こわいよう・・・」	Baby Mamel: I'm scared...	
+1269	14:$77BD	21	こどもマムル「もう・・・ダメだ・・」	Baby Mamel: I... can't go<br> on...	
+1270	14:$77D3	41	こどもマムル「たすけてくれて<br> ありがとう。<end>おれいに これ<br> あげるよ！」	Baby Mamel: Thank you for<br> saving me.<end><brk> Here, take this as thanks!	
+1271	14:$77FD	12	<name>は、<cE3:FD>を<br>もらった！	<name> received<br> <cE3:FD>!	
+1272	14:$780A	20	こどもマムル「じゃあね。さようなら」	Baby Mamel: Bye! See you!	
+1273	14:$781F	48	こどもマムル「たすけてくれて<br> ありがとう。<end>おれいに これを<br> そうこに おくっておくよ」	Baby Mamel: Thank you for<br> saving me.<end><brk> I'll send this to your<br> Warehouse as thanks.	
+1274	14:$7850	93	こどもマムル「たすけてくれて<br> ありがとう。<end>おれいに なにか<br> あげたいけど・・・<end><brk> もちものも そうこも いっぱい<br> だから わたせないや。<br> じゃあね。さようなら」	Baby Mamel: Thank you for<br> saving me.<end><brk> I'd like to give you<br> something as thanks...<end><brk> but your pack and<br> Warehouse are both full,<end><brk> so I can't give it to you.<br> Bye! See you!	
+1275	14:$78AE	16	<name>は、マムルのけんを<br>もらった！	<name> received the Mamel<br> Sword!	
+1276	14:$78BF	16	<name>は、マムルのたてを<br>もらった！	<name> received the Mamel<br> Shield!	
+1277	14:$78D0	16	<cEC:04>フミは、ねむっている。<br> <br>	<cEC:04>Fumi is asleep.<br> <br>	
+1278	14:$78E1	17	<cEC:04>ナギは、ねむっている。<br> <br>	<cEC:04>Nagi is asleep.<br> <br>	
+1279	14:$78F3	17	<cEC:04>ポチは、ねむっている。<br> <br>	<cEC:04>Pochi is asleep.<br> <br>	
+1280	14:$7905	18	<cEC:04>ニワトリは、ねむっている。<br> <br>	<cEC:04>The Rooster is asleep.<br> <br>	
+1281	14:$7918	18	<cEC:04>タンモモは、ねむっている。<br> <br>	<cEC:04>Tanmomo is asleep.<br> <br>	
+1282	14:$792B	21	<cEC:04>こどもマムルは、ねむっている。<br> <br>	<cEC:04>Baby Mamel is asleep.<br> <br>	
+1283	14:$7941	42	コッパ「ちょっと『りゅうの あぎと』<br> を しらべてから ここをでようぜ」	Koppa: Let's check out<br> Dragon's Maw before we<br> leave.	
+1284	14:$796C	17	コッパ「<name>、むらにもどろう！」	Koppa: <name>, let's go<br> back to the village!	
+1285	14:$797E	42	コッパ「なあ <name>、おもいきって<br> むらおさに むらのひみつを きいて<br> みようよ」	Koppa: Hey, <name>, let's<br> ask the Village Chief about<br> the village's secret.	
+1286	14:$79A9	43	コッパ「とりあえず 『ととや』で<br> ひとやすみして、よるになるのを<br> まつか！」	Koppa: For now, let's rest at<br> the Totoya and wait until<br> night.	
+1287	14:$79D5	34	コッパ「やけに しずかだな・・・<br> だれも いないのかな？」	Koppa: It's way too quiet...<br> Is no one here?	
+1288	14:$79F8	37	コッパ「<name>！ じんじゃだ！<br> さいせんばこを しらべようよ！」	Koppa: <name>! The shrine!<br> Let's search the offering<br> box!	
+1289	14:$7A1E	64	コッパ「そういえばオイラ、どうぶつの<br> コトバが わかるンだ。むらにいる<br> どうぶつに はなしかけてみようよ」	Koppa: Come to think of it, I<br> can understand animals.<end><brk> Let's talk to the ones in the<br> village.	
+1290	14:$7A5F	21	コッパ「とりあえず きたけど・・・」	Koppa: Well, we made it here,<br> but...	
+1291	14:$7A75	30	コッパ「はやいとこ フミちゃんを<br> つれて かえろうぜ」	Koppa: Let's hurry and get<br> Fumi home.	
+1292	14:$7A94	39	コッパ「あとは、 フミちゃんを<br> たすけるだけだ。がんばろうぜ！」	Koppa: All that's left is<br> rescuing Fumi. Let's do this!	
+1293	14:$7ABC	26	コッパ「どうなってんだ？！<br> いったい・・・」	Koppa: What the heck is going<br> on...?!	
+1294	14:$7AD7	35	コッパ「なんだか ここからでるの<br> たいへんみたいだな・・・」	Koppa: Looks like getting out<br> of here won't be easy...	
+1295	14:$7AFB	47	コッパ「キンジのやつ・・・<br> ケヤキちゃんの ホンネをきかせる<br> ために ワザと・・・」	Koppa: That Kinji... He did it<br> on purpose to get Keyaki to<br> admit how she really feels...	
+1296	14:$7B2B	48	コッパ「ケヤキちゃん、じんじゃで<br> まってるって いってたけど・・・<br> どうする？」	Koppa: Keyaki said she'd wait<br> at the shrine...<end><brk> What do you want to do?	
+1297	14:$7B5C	31	コッパ「さっきのノラネコ・・・<br> どっか いっちゃったな」	Koppa: That stray cat we<br> saw... Guess it ran off<br> somewhere.	
+1298	14:$7B7C	36	コッパ「・・・なあ、オイラたち<br> いつになったら でれるンだろ？」	Koppa: ...Hey, when are we<br> ever gonna get out of here?	
+1299	14:$7BA1	32	コッパ「あいかわらず おっかなそうな<br> ところだな・・・」	Koppa: This place looks as<br> scary as ever...	
+1300	14:$7BC2	47	コッパ「ブルル・・・なんか<br> おっかない ところだったな。<br> はやいとこ かえろうぜ」	Koppa: Brrr... That was scary.<br>Let's hurry home!	
+1301	14:$7BF2	16	コッパ「・・・<name>、いこうぜ」	Koppa: ...Come on, <name>.<br> Let's go.	
+1302	14:$7C03	11	コッパ「・・・・・」	Koppa: .....	
+1303	14:$7C78	14	ふつうをポチをつれてクリア	Normal + Pochi	
+1304	14:$7C87	15	ふつうをタンモモをつれてクリア	Normal + Tanmomo	
+1305	14:$7C97	15	ふつうをニワトリをつれてクリア	Normal + Rooster	
+1306	14:$7CA7	17	むずかしいをポチをつれてクリア	Hard + Pochi	
+1307	14:$7CB9	18	むずかしいをタンモモをつれてクリア	Hard + Tanmomo	
+1308	14:$7CCC	18	むずかしいをニワトリをつれてクリア	Hard + Rooster	
+1309	14:$7CDF	17	ツキカゲむらからだっしゅつした	Escaped Moonlight	
+1310	14:$7CF1	17	ぼうけんが1000かいをこえた	1000+ adventures	
+1311	14:$7D03	19	90000ギタンいじょうでクリア	Clear 90000+ Gitan	
+1312	14:$7D17	10	0ギタンでクリア	Clear with 0 Gitan	
+1313	14:$7D22	21	さいだいまんぷくど200％でクリア	Max Fullness 200	
+1314	14:$7D38	22	さいだいまんぷくど10％いかでクリア	Max Fullness 10	
+1315	14:$7D4F	11	ちから1でクリアした	Clear at Str 1	
+1316	14:$7D5B	12	HPさいだいでクリア	Cleared at max HP	
+1317	14:$7D68	10	レベル1でクリア	Cleared at Level 1	
+1318	14:$7D73	19	すべてごうせいしたぶきをつくった	Fully fused weapon	
+1319	14:$7D87	18	すべてごうせいしたたてをつくった	Fully fused shield	
+1320	14:$7D9A	17	ひけんカブラステギをてにいれた	Got Kabura Sutegi	
+1321	14:$7DAC	15	らせんフウマのたてをてにいれた	Got Rasen Fuuma	
+1322	14:$7DBC	16	ちからが30いじょうになった	Strength 30+	
+1323	14:$7DCD	15	レベルがさいだいになった	Reached max level	
+1324	14:$7DDD	9	てんしゅをたおした	Beat a Shopkeeper	
+1325	14:$7DE7	18	くさったおにぎりをたべてたおれた	Rotten Onigiri	
+1326	14:$7DFA	11	おとしあなでたおれた	Fell: Pitfall Trap	
+1327	14:$7E06	10	どくやでたおれた	Fell: Poison Arrow	
+1328	14:$7E11	10	おおいわでたおれた	Fell: Boulder	
+1329	14:$7E1C	16	ねむっているあいだにたおされた	Fell while asleep	
+1330	14:$7E2D	9	マムルにたおされた	Fell: Mamel	
+1331	14:$7E37	13	こどもマムルにたおされた	Fell: Baby Mamel	
+1332	14:$7E45	16	999999ギタンもってクリア	Clear 999999 Gitan	
+1333	14:$7E56	10	タンモモにたおされた	Fell: Tanmomo	
+1334	14:$7E61	9	ポチにたおされた	Fell: Pochi	
+1335	14:$7E6B	10	ニワトリにたおされた	Fell: Rooster	
+1336	14:$7E76	11	にせシレンにたおされた	Fell: Fake Shiren	
+1337	14:$7E82	21	えんとうをはめてごうせいツボをなげた	Far-shot Fusion Pot	
+1338	14:$7E98	7	ふつうをクリア	Cleared Normal	
+1339	14:$7EA0	20	ふつうをどうぐをもちださずクリア	Normal: no items out	
+1340	14:$7EB5	10	むずかしいをクリア	Cleared Hard	
+1341	14:$7EC0	23	むずかしいをどうぐをもちださずクリア	Hard: no items out	
+1342	14:$7ED8	12	こどもマムルをたすけた	Saved Baby Mamel	
+1343	14:$7EE6	294	      0            かょ    か  E   ょ せ       30に  か  か    0？に1   ？ょ 3    7 ょ3に     に 73   か        <$88>                    ？                  ょ ょょ      ？ □  0  ほ     か  か  ょ ょ  3 こ      ょ       0         は   1 か せょ？   3 ： ？ ょょ       か？   0   かか 0  か        ょ        73  7     0           お  ェカミえフミフャミ		
+1344	30:$7EC3	2	のむ	Eat	
+1345	30:$7EC6	2	よむ	Read	
+1346	30:$7EC9	2	ふる	Wave	
+1347	30:$7ECC	2	みる	See	
+1348	30:$7ECF	4	たべる	Eat	
+1349	30:$7ED4	4	そうび	Equip	
+1350	30:$7ED9	3	いれる	Put	
+1351	30:$7EDD	2	おす	Push	
+1352	30:$7EE0	4	なげる	Toss	
+1353	30:$7EE5	2	おく	Drop	
+1354	30:$7EE8	2	かく	Tag	
+1355	30:$7EEB	4	せつめい	Info	
+1356	30:$7EF0	2	うつ	Fire	
+1357	30:$7EF3	3	なまえ	Name	
+1358	30:$7EF7	4	こうかん	Swap	
+1359	30:$7EFC	0			
+1360	30:$7EFD	0			
+1361	30:$7EFE	3	ひろう	Take	
+1362	30:$7F02	4	はずす	Remove	
+1363	30:$7F07	0			
+1364	30:$7F08	3	だす	Get	
+1365	31:$41D0	3	おかね	Gitan	
+1366	31:$41D4	7	とうたつちてん	Floor	
+1367	31:$41DC	5	なんいど	Path	
+1368	31:$41E9	12	けんのつよさ  ▌ちから	Weapon  <$B6>Str	
+1369	31:$41F6	14	たてのつよさ  ▌けいけんち	Shield  <$B6>Exp	
+1370	31:$422F	5	どれを？	Which?	
+1371	31:$423C	15	  アイテムを もっていません	 No items held.	
+1372	31:$4261	19	カタカナ  すすむ もどる  おわる	      Fwd Bck  End	
+1373	31:$4275	18	あいうえお はひふへほ  ぁぃぅぇぉ	ABCDE Zabcd  yz.,'	
+1374	31:$4288	18	かきくけこ まみむめも  ゃゅょっー	FGHIJ efghi  -!?()	
+1375	31:$429B	18	さしすせそ や ゆ よ  01234	KLMNO jklmn  :/[]+	
+1376	31:$42AE	18	たちつてと らりるれろ  56789	PQRST opqrs  01234	
+1377	31:$42C1	18	なにぬねの わをん<$C2><$C3>  ＋−［］？	UVWXY tuvwx  56789	
+1378	31:$42DB	20	ひらがな  すすむ もどる  おわる		
+1379	31:$42F0	18	アイウエオ ハヒフヘホ  ァィゥェォ		
+1380	31:$4303	18	カキクケコ マミムメモ  ャュョッー		
+1381	31:$4316	18	サシスセソ ヤ ユ ヨ  01234		
+1382	31:$4329	18	タチツテト ラリルレロ  56789		
+1383	31:$433C	18	ナニヌネノ ワヲン<$C2><$C3>  ＋−［］？		
+1384	31:$4356	5	どうぐ	Items	
+1385	31:$436A	19	これいじょう なまえをつけられません	No more names.	
+1386	31:$4385	3	ツボ	Pot	
+1387	31:$4390	4	あしもと	Floor	
+1388	31:$43A3	5	 とじる	 Close	
+1389	31:$43A9	4	 おわる	 Quit	
+1390	31:$43B5	5	 とじる	 Close	
+1391	31:$43BB	6	 でぐち	 Exit	
+1392	31:$43C2	4	 おわる	 Quit	
+1393	31:$43DC	7	 つづきから	 Continue	
+1394	31:$43E4	10	 ツキカゲむらから	 New Game	
+1395	31:$440B	4	 いいえ	 No	
+1396	31:$4410	3	 はい	 Yes	
+1397	31:$441B	5	 やさしい	 Easy	
+1398	31:$4421	4	 ふつう	 Normal	
+1399	31:$4426	7	 むずかしい	 Hard	
+1400	31:$4435	15	だい   もん  なんいど	No     Rating	
+1401	31:$4453	19	 どのもんだいを えらぶアルか？	 Which task?	
+1402	31:$446E	3	 くさ	 Herb	
+1403	31:$4472	5	 まきもの	 Scroll	
+1404	31:$4478	3	 つえ	 Staff	
+1405	31:$447C	4	 つぼ	 Pot	
+1406	31:$4481	6	 たべもの	 Food	
+1407	31:$448F	4	 ぶき	 Weapon	
+1408	31:$4494	3	 たて	 Shield	
+1409	31:$4498	5	 うでわ	 Bracer	
+1410	31:$449E	2	 や	 Arrow	
+1411	31:$44A1	4	 そのた	 Misc.	
+1412	31:$44BB	14	あいてむをかくほできません	Pack is full.	
+1413	31:$44D1	16	まだパスワードはありません	No awards.	
+1414	31:$44F7	12	ふうらいにんばんづけ	Rankings	
+1415	31:$4526	5	はじめて	New	
+1416	31:$452C	21	 『ふしぎのダンジョン』を するひと	 to Shiren series	
+1417	31:$4549	8	 クヨウとうげ	 Kuyo	
+1418	31:$4552	13	 ツキカゲむらでぐち	 Village Exit	
+1419	31:$4567	20	『ふしぎのダンジョン』シリーズを	Played a Shiren	
+1420	31:$457C	19	       やったことが あるひと	 game before	
+1421	31:$459E	16	スーファミ『ふうらいのシレン』を	Cleared Shiren	
+1422	31:$45AF	19	     クリアーしたことがあるひと	 on Super Famicom	
+1423	31:$45CA	10	 ツキカゲむらから	 New Game	
+intro_01	31:$5CEF	22	ははおや「わたしのこが・・・」	Mother: My child...	
+intro_02	31:$5D1A	45	むらびと「かわいそうだが シキタリだ。  あきらめるしかねえ・・・」	Villager: It's tragic, but that's<br>the custom. We have no choice...	
+intro_03	31:$5D4E	21	ははおや「ああっ どうして・・・」	Mother: Why...? Why her?	
+intro_04	31:$5D6A	15	ここ すうねんまえから・・・	A few years ago...	
+intro_05	31:$5D80	32	おさなごを かいぶつの いけにえにささげているという	A small village was said to<br>offer children	
+intro_06	31:$5DA7	18	ひとつの ちいさなむらが あった	as sacrifices to a monster.	
+intro_07	31:$5E04	35	コッパ「ふうっ、やっと でられたな。	Koppa: Phew, we finally got out.	
+intro_08	31:$5E46	21	ほら、あそこ！<page>ササラやまが みえる！	Look, over there!<page>There's Mount Sasara!	
+intro_09	31:$5E6E	44	ここまでくりゃ もうにどと  もどされることも ないとおもうぜ」	We've come too far to ever be<br>sent back again.	
+intro_10	31:$5EA7	49	コッパ「ケヤキちゃんのことか？  けなげで いいこだったよな・・・」	Koppa: You mean Keyaki?<br>She was a sweet, brave girl...	
+intro_11	31:$5EE1	56	コッパ「・・・しょうがないよ。  オイラたち フウライニンだもンな。	Koppa: ...It can't be helped.<br>We're wanderers, after all.	
+intro_12	31:$5F24	16	さ、いこうぜ！」	Come on, let's go!	

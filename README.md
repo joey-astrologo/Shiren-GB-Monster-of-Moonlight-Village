@@ -215,6 +215,13 @@ in the [prose import guide](site/prose/README.md#use-a-downloaded-tsv-in-the-pro
 
 ### Edit TSV files directly
 
+For spreadsheet review, [script/script_full.tsv](script/script_full.tsv) combines all
+1,424 extracted entries and 12 cinematic entries into `id`, `loc`, `bytes`, `jp`, `en`
+and `edited_en` columns. `en` contains the current readable insertion text; the human
+translator writes proposals in `edited_en`. See the [spreadsheet guide](script/README.md#complete-spreadsheet)
+for regeneration, reference-only rows and how this review format differs from website
+downloads.
+
 The ordinary translation is [`script/en.tsv`](script/en.tsv):
 
 ```text

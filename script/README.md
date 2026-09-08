@@ -16,6 +16,51 @@ from the repository root, then open **http://127.0.0.1:8765/**. The original fil
 remain the source of truth. Workbench imports route each edit to the appropriate file,
 and can include a prose download in the same transaction for coordinated name changes.
 
+## Complete spreadsheet
+
+For one spreadsheet containing the complete extracted script and cinematic text, use
+[`script_full.tsv`](script_full.tsv). Its columns are:
+
+```text
+id<TAB>loc<TAB>bytes<TAB>jp<TAB>en<TAB>edited_en
+```
+
+`<TAB>` above represents a tab character. The file contains 1,424 extracted entries
+followed by 12 cinematic entries (`intro_01`–`intro_12`). It is UTF-8 with a BOM for
+spreadsheet compatibility. Keep `id`, `loc`, `bytes`, `jp` and `en` as reference columns;
+the translator writes proposed wording in the initially empty **`edited_en`** column.
+
+- **`en`** uses glossary names followed by `en.tsv` overrides, including the wrapped
+  dialogue already accepted in `en.tsv`. It includes the native leading indent and
+  additional selector spacing supplied by the inserter. Cinematic rows show their actual
+  wrapped lines as `<br>` and page transitions as `<page>`. This is readable insertion
+  text before compression/storage padding, generated from the current project inputs;
+  it is not a readback of a previously built ROM.
+- **`bytes`** retains the original extracted byte count, not an English length limit.
+  For cinematics it counts the original source spans in `intro.tsv`, including their VM
+  bytes; an event can span multiple ranges.
+- **Empty `en` cells** identify 18 extraction/alias references without a standalone
+  English translation. They remain present for complete coverage. Fixed composite and
+  keyboard rows can also require renderer changes; an editable spreadsheet cell does not
+  establish that a row can be imported safely. Artwork such as titles and credits is
+  separate from this text dump.
+- **`edited_en`** is for review. This six-column file is not the website's changes-TSV
+  format and cannot be passed directly to its importers or the ROM builder. Keep control
+  codes and significant spaces while editing; proposed changes still need routing and
+  the appropriate validation before application.
+
+Generate or refresh the spreadsheet from the repository root after normal extraction:
+
+```sh
+python3 tools/script_dump.py
+python3 tools/script_dump.py --check
+```
+
+The exporter preserves existing `edited_en` values when their reference rows are unchanged.
+If a reference changes underneath an edit, it stops without overwriting the spreadsheet.
+Use `--output /path/to/script_full.tsv` to create another copy. The extraction files and
+translation inputs remain separate from this review spreadsheet.
+
 ## The map
 
 | You want to change | Open | Section |
