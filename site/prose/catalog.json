@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "rulesRevision": "832eb6ce4a9a01760ca5fdf7064eb9d55d36be0661fd28b8be8dd20a85a65001",
+  "rulesRevision": "f1222cca8b65a11b0126e817949012a7d918287e43442602572ecb299ea58325",
   "font": {
     "name": "Thin Pixel-7 GB Compact",
     "glyphs": {
@@ -11084,5 +11084,5 @@
       ]
     }
   ],
-  "revision": "77140b08831a8ddd58b9c45c4e455d2897cadfa9898f94cc1d736bd0ca7dcb16"
+  "revision": "f676f4e013744dd1a783df874a958a7a72ea0a069d82ade2f8afba04d9c3eec4"
 }

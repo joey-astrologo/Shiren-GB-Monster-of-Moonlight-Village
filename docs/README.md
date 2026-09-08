@@ -7,6 +7,7 @@ onboarding — start with the repository [README](../README.md), and if you are 
 | Document | Subject | Read it when |
 |---|---|---|
 | [TEXT_REFERENCE.md](TEXT_REFERENCE.md) | Translation rules | You need the character set, storage classes, control tokens, per-renderer pixel budgets, or the worklist error list |
+| [Translation Workshop](../site/README.md) | Website preview and GitHub Pages deployment | You want to open, preview or publish the workshop home and its studios |
 | [Prose Studio](../site/prose/README.md) | Browser editor proof of concept | You want to edit prose with Japanese reference, preview text fit, and download/import a changes TSV |
 | [FINDINGS.md](FINDINGS.md) | How the ROM works | You need encoding, pointer tables, renderers, the DTE design, or any measured ROM behaviour |
 | [VWF_BUDGETS.md](VWF_BUDGETS.md) | Renderer contracts | You are changing a variable-width font path — dialogue, menus, items, status, Rankings |

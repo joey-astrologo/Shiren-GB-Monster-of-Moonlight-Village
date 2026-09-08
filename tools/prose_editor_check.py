@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prose editor import regressions and Python oracles for the browser checks.
 
-Run this, serve with prose_editor.py serve --test, then open checks.html.
+Run this, serve with prose_editor.py serve --test, then open /prose/checks.html.
 No ROM is rebuilt and no project translation is changed.
 """
 import json
@@ -138,7 +138,7 @@ def main():
     destination.write_text(json.dumps(oracle, ensure_ascii=False))
     print(f'PASS: catalogue privacy, {len(baseline)} baseline records, {len(wrapping)} editable drafts, '
           'changed-row import, glossary/fit/token rejection, conflict handling and isolated apply.')
-    print('Browser oracle: build/prose-editor-oracle.json. Open /checks.html on the test preview.')
+    print('Browser oracle: build/prose-editor-oracle.json. Open /prose/checks.html on the test preview.')
 
 
 if __name__ == '__main__':

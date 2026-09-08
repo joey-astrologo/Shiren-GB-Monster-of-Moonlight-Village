@@ -141,10 +141,14 @@ so re-extraction does not overwrite the translations.
 
 ## Edit the translation
 
-For a browser-based prose proof of concept, run `python3 tools/prose_editor.py serve`
-and open **http://127.0.0.1:8765/**. [Prose Studio](site/prose/README.md) provides Japanese
+Open the [Translation Workshop](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
+and choose **Prose Studio**, or run `python3 tools/prose_editor.py serve` and open
+**http://127.0.0.1:8765/** for the local workshop. [Prose Studio](site/prose/README.md) provides Japanese
 reference, event groups, live text-fit checks, local draft saving and a changes-TSV
 download/import workflow. Structured prompts are reference-only in this first version.
+The hosted version loads your extracted Japanese TSV locally in the browser.
+The [Pages workflow](.github/workflows/pages.yml) publishes the workshop on site changes
+to `main` or a manual run; see [deployment and preview instructions](site/README.md).
 
 The ordinary translation is [`script/en.tsv`](script/en.tsv):
 

@@ -12,7 +12,8 @@ From the repository root:
 python3 tools/prose_editor.py serve
 ```
 
-Open **http://127.0.0.1:8765/**. The preview binds only to localhost and supplies the
+Open **http://127.0.0.1:8765/** and choose **Open Prose Studio**, or go directly to
+**http://127.0.0.1:8765/prose/**. The preview binds only to localhost and supplies the
 Japanese column from your existing, ignored `script/script.tsv`. It does not accept writes.
 If extraction is missing, generate it using the repository's normal extraction command,
 or use **Load Japanese TSV** to select a matching extraction in the browser.
@@ -116,7 +117,7 @@ python3 tools/prose_editor_check.py
 python3 tools/prose_editor.py serve --test
 ```
 
-Open **http://127.0.0.1:8765/checks.html** for browser differential and interaction checks.
+Open **http://127.0.0.1:8765/prose/checks.html** for browser differential and interaction checks.
 The Python command writes its oracle under ignored `build/`. Tests cover baseline layout,
 wrapping, pixel/source boundaries, controls, source integrity, TSV rejection/round trips,
 file-input import, downloads, autosave, reload and stale-draft recovery. The browser
@@ -125,11 +126,14 @@ recommended for automated runs.
 
 ## GitHub Pages
 
-The editor needs only static files and relative URLs. Publish the **contents of this
-directory** as a GitHub Pages artifact; no Python, account, API key or server is required
-by visitors. Include `index.html`, `style.css`, `app.js`, `rules.js`, `catalog.json` and
-`font-license.txt`. The test pages and this README are optional. Keep the Japanese
-extraction and `build/` out of the published artifact. This change prepares the site;
-it does not enable Pages or publish a deployment.
+The [workshop home](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
+links to [Prose Studio](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/prose/).
+The [Pages workflow](../../.github/workflows/pages.yml) packages the landing page and
+public Studio assets in `build/pages`, then deploys on site changes to `main` or a
+manual run. Visitors need only a browser. Japanese source is loaded from a local file.
+
+See [workshop deployment instructions](../README.md) for the initial GitHub Pages
+setting, artifact preview and publication details. Test pages and fixtures are excluded
+from the public artifact.
 
 The font credit is displayed in the UI and its bundled license is in `font-license.txt`.

@@ -281,9 +281,9 @@ def serve(port, testing=False):
     class Handler(SimpleHTTPRequestHandler):
         def do_GET(self):
             route = self.path.split('?', 1)[0]
-            special = {'/local-source.tsv': ROOT / 'script/script.tsv'}
+            special = {'/prose/local-source.tsv': ROOT / 'script/script.tsv'}
             if testing:
-                special['/test-oracle.json'] = ROOT / 'build/prose-editor-oracle.json'
+                special['/prose/test-oracle.json'] = ROOT / 'build/prose-editor-oracle.json'
             path = special.get(route)
             if path is not None:
                 if not path.exists():
@@ -299,9 +299,10 @@ def serve(port, testing=False):
                 return
             super().do_GET()
 
-    handler = functools.partial(Handler, directory=str(SITE))
+    handler = functools.partial(Handler, directory=str(SITE.parent))
     server = ThreadingHTTPServer(('127.0.0.1', port), handler)
-    print(f'Prose Studio: http://127.0.0.1:{port}/', flush=True)
+    print(f'Translation Workshop: http://127.0.0.1:{port}/', flush=True)
+    print(f'Prose Studio: http://127.0.0.1:{port}/prose/', flush=True)
     server.serve_forever()
 
 
