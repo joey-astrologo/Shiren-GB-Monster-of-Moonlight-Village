@@ -13,7 +13,7 @@
   <a class="skip-link" href="#content">Skip to dialogue</a>
   <aside class="sidebar">
     <a class="brand" href="../" aria-label="Shiren GB translation home"><span class="moon" aria-hidden="true"></span><span>SHIREN GB<small>Translation tools</small></span></a>
-    <div class="collection"><span class="collection-icon" aria-hidden="true">文</span><span>Prose editor<small>Proof of concept</small></span><span class="live-dot" aria-hidden="true"></span></div>
+    <div class="collection"><span class="collection-icon" aria-hidden="true">文</span><span>Prose editor<small>Dialogue by event</small></span><span class="live-dot" aria-hidden="true"></span></div>
     <div class="nav-label">EVENTS <span id="event-count"></span></div>
     <nav id="events" aria-label="Story events"></nav>
     <div class="sidebar-footer"><small>Current game font: English glyph set</small><button id="rules-open" class="sidebar-link">Editing guide ↗</button></div>
@@ -42,7 +42,7 @@
   </div>
   <input type="file" id="edits-file" accept=".tsv,text/tab-separated-values,text/plain" hidden>
   <input type="file" id="source-file" accept=".tsv,text/tab-separated-values,text/plain" hidden>
-  <dialog id="guide"><div class="dialog-heading"><span class="eyebrow">EDITING GUIDE</span><button id="rules-close" class="icon-button" aria-label="Close editing guide">×</button></div><h2>Prose editing rules</h2><p>Ordinary prose wraps automatically into boxes of three lines. Each line has room for 30 source glyphs and 144 painted pixels, measured with the game’s actual font.</p><ul><li>Use <code>&lt;brk&gt;</code> for a deliberate page break, and <code>&lt;br&gt;</code> for a deliberate line break.</li><li>Keep required control tokens and their order. The wrapper supplies indents and end/wait controls.</li><li>Structured choice prompts are available as reference in this first version.</li><li>Shaded preview spans reserve space for runtime names or values. Unknown values still need project checks.</li></ul><p>Download a changes TSV and import it into the project for glossary, build and emulator checks. The browser checks text fit; it does not run the game.</p><p class="muted">Event groups follow the draft’s existing sections and record order. They are not a verified chronological walkthrough.</p></dialog>
+  <dialog id="guide"><div class="dialog-heading"><span class="eyebrow">EDITING GUIDE</span><button id="rules-close" class="icon-button" aria-label="Close editing guide">×</button></div><h2>Prose editing rules</h2><p>Ordinary prose wraps automatically into boxes of three lines. Each line has room for 30 source glyphs and 144 painted pixels, measured with the game’s actual font.</p><ul><li>Use <code>&lt;brk&gt;</code> for a deliberate page break, and <code>&lt;br&gt;</code> for a deliberate line break.</li><li>Keep required control tokens and their order. The wrapper supplies indents and end/wait controls.</li><li>Structured choice prompts link to the <a href="../workbench/?subject=choices">Choices and structured dialogue editor</a>.</li><li>Shaded preview spans reserve space for runtime names or values. Unknown values still need project checks.</li></ul><p>Download a changes TSV and import it into the project for glossary, build and emulator checks. The browser checks text fit; it does not run the game.</p><p class="muted">Event groups follow the draft’s existing sections and record order. They are not a verified chronological walkthrough.</p></dialog>
   <script type="module" src="app.js"></script>
 </body>
 </html>

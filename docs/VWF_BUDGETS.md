@@ -6,6 +6,14 @@ is intentionally outside this reset. Implementation sources for each rule are in
 [`TEXT_REFERENCE.md`](TEXT_REFERENCE.md). Dated measurements below retain their original
 context; regenerate `fontaudit.py --details 4 --strict-unproven` for the current text.
 
+The [translation workbenches](../site/workbench/README.md) expose these contracts per
+entry. ROM menu rows additionally use the exact runtime slice from
+`menuromspill.rom_slice` (including row-specific difficulty, confirmation and ranking
+allocations); the larger `menuvwf.install` preflight caps alone are not a fit verdict.
+The browser rechecks shared help consumers, known item-result/herb messages, suffixes,
+floor prefixes, duplicate names, the seal staging buffer and the any-five condition
+allocation. Other runtime producer/allocation paths still require the game checks below.
+
 A single character count is not a fit verdict. Every non-cinematic renderer can have four
 independent constraints:
 

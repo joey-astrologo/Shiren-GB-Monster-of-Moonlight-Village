@@ -36,9 +36,15 @@ For the mistakes behind them see [`TRAPS.md`](TRAPS.md).
 - Translation documentation must follow the current implementation and regression
   evidence. `TEXT_REFERENCE.md` indexes the rule sources; update it, `VWF_BUDGETS.md`,
   `script/README.md` and relevant TSV comments together when a contract changes. Label
-  superseded checkpoint records explicitly. A future editor must use the approved font,
+  superseded checkpoint records explicitly. Translation editors must use the approved font,
   bank-specific codec and renderer rules, and distinguish static validation from runtime
   or visual acceptance.
+- Public workbench catalogues must account for every extracted script entry exactly once,
+  with separately counted cinematic entries. Fixed or unconfirmed text stays visible with
+  a reference explanation. Regenerate catalogue/rule hashes and Python/browser fixtures
+  when a contract changes; missing coverage or stale rules must block Pages publication.
+  Use the runtime ROM-row allocations from `menuromspill.rom_slice`, not just the looser
+  installer preflight caps. Cross-entry edits must recheck their known consumers.
 - Rankings must remain VWF. Do not fall back to fixed-width text or weaken the Orochi,
   repeated-navigation, native-control or hostile-layout regressions.
 - A green model is not visual approval. Photograph or inspect the actual emulator route

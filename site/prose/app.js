@@ -255,6 +255,9 @@ function makeCard(row, first) {
     reference.append(node("summary", "", "Current English reference"), node("p", "", row.draft)); right.append(reference);
   } else {
     right.append(node("p", "read-only-text", row.current));
+    const structured = node("a", "text-button", "Edit in Choices and structured dialogue →");
+    structured.href = "../workbench/?subject=choices#" + encodeURIComponent(row.loc);
+    right.append(structured);
   }
   const feedback = node("div", "feedback-messages"); feedback.id = card.id + "-feedback";
   feedback.setAttribute("aria-live", "polite");

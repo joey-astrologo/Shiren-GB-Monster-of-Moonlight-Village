@@ -143,13 +143,14 @@ so re-extraction does not overwrite the translations.
 ## Edit the translation
 
 Open [Shiren GB Translation](https://joey-astrologo.github.io/Shiren-GB-Monster-of-Moonlight-Village/)
-and choose **Open prose editor**, or run `python3 tools/prose_editor.py serve` and open
-**http://127.0.0.1:8765/** for the local site. The [prose editor](site/prose/README.md) provides Japanese
-reference, event groups, live text-fit checks, local draft saving and a changes-TSV
-download/import workflow. Structured prompts are reference-only in this first version.
-The original Japanese TSV is included and loads automatically on the hosted and local
-sites. **Download source TSV** saves a copy; **Replace source** optionally loads a matching
-local extraction.
+and choose a subject, or run `python3 tools/prose_editor.py serve` and open
+**http://127.0.0.1:8765/** locally. The [translation workbenches](site/workbench/README.md)
+cover all 1,424 extracted entries plus 12 opening-cinematic entries, with Japanese on the
+left, editable translations on the right, renderer-specific checks, local draft saving
+and changes-TSV downloads. The [prose editor](site/prose/README.md) retains event groups
+and automatic wrapping; structured prompts have their own editor. The 28 fixed or
+unconfirmed entries remain visible as explained references.
+The original Japanese TSVs are included and load automatically on both sites.
 The [Pages workflow](.github/workflows/pages.yml) publishes the website on site changes
 to `main` or a manual run; see [deployment and preview instructions](site/README.md).
 

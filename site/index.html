@@ -37,24 +37,37 @@
     </section>
 
     <section id="studios" class="studios" aria-labelledby="studios-title">
-      <div class="section-heading"><h2 id="studios-title">Translation editors</h2><span class="poc-badge">Proof of concept</span></div>
-      <article class="studio-card">
-        <div class="studio-mark" aria-hidden="true"><span>文</span><small>01 / PROSE</small></div>
-        <div class="studio-copy"><h3>Prose</h3><p>Dialogue grouped by event, with Japanese source text beside the editable translation.</p><ul class="features"><li>Text validation</li><li>Game-font preview</li><li>TSV export</li></ul><a class="button" href="prose/">Open prose editor <span aria-hidden="true">→</span></a></div>
-      </article>
-      <p class="future-note">This version supports prose. Editors for items, menus and verbs are planned.</p>
+      <div class="section-heading"><h2 id="studios-title">Translation editors</h2><a class="coverage-link" href="coverage.html">View script coverage →</a></div>
+      <!-- workbenches:start -->
+<div class="subject-grid">
+<article class="subject-card"><div class="subject-count">436 entries</div><h3><a href="prose/">Prose</a></h3><p>Dialogue grouped by the existing event sections.</p><a class="subject-open" href="prose/">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">239 entries</div><h3><a href="workbench/?subject=items">Items</a></h3><p>Identified item names and unidentified appearance names, grouped by category.</p><a class="subject-open" href="workbench/?subject=items">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">152 entries</div><h3><a href="workbench/?subject=names">Monsters and characters</a></h3><p>Monster tiers, character names and named objects.</p><a class="subject-open" href="workbench/?subject=names">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">125 entries</div><h3><a href="workbench/?subject=descriptions">Item descriptions</a></h3><p>Help text grouped by item category; shared fragments have their own editor.</p><a class="subject-open" href="workbench/?subject=descriptions">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">20 entries</div><h3><a href="workbench/?subject=seals">Equipment seals</a></h3><p>One-line equipment abilities displayed below an item name.</p><a class="subject-open" href="workbench/?subject=seals">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">13 entries</div><h3><a href="workbench/?subject=fragments">Shared help text</a></h3><p>The thirteen fragments inserted into descriptions by &lt;cF0:xx&gt;.</p><a class="subject-open" href="workbench/?subject=fragments">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">82 entries</div><h3><a href="workbench/?subject=menus">Menus</a></h3><p>Labels grouped by menu or box, using its actual text and tile limits.</p><a class="subject-open" href="workbench/?subject=menus">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">18 entries</div><h3><a href="workbench/?subject=verbs">Item actions</a></h3><p>Commands used by the inventory and floor-item submenus.</p><a class="subject-open" href="workbench/?subject=verbs">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">227 entries</div><h3><a href="workbench/?subject=messages">Gameplay messages</a></h3><p>Combat, item, trap and system messages in script order.</p><a class="subject-open" href="workbench/?subject=messages">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">44 entries</div><h3><a href="workbench/?subject=choices">Choices and structured dialogue</a></h3><p>Event text whose explicit breaks, cursor cells and controls must be retained.</p><a class="subject-open" href="workbench/?subject=choices">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">40 entries</div><h3><a href="workbench/?subject=conditions">Clear conditions</a></h3><p>The forty condition rows displayed five at a time.</p><a class="subject-open" href="workbench/?subject=conditions">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">12 entries</div><h3><a href="workbench/?subject=cinematic">Opening cinematic</a></h3><p>The twelve entries from intro.tsv, using the cinematic screen slots.</p><a class="subject-open" href="workbench/?subject=cinematic">Open editor →</a></article>
+<article class="subject-card"><div class="subject-count">28 entries</div><h3><a href="workbench/?subject=reference">Fixed text and extraction references</a></h3><p>Keyboard tables, fixed composite labels and extraction entries without an editable text contract.</p><a class="subject-open" href="workbench/?subject=reference">Open references →</a></article>
+</div>
+<!-- workbenches:end -->
+      <p class="future-note">All 1,424 extracted entries are accounted for, along with the 12 opening-cinematic entries. Fixed text and extraction references have their own page.</p>
     </section>
 
     <section class="how-it-works" aria-labelledby="steps-title">
       <h2 id="steps-title">How to use the editor</h2>
       <ol class="steps">
-        <li><span class="step-number">01</span><h3>Select an event</h3><p>Open the prose editor and select an event. The included Japanese source and English draft load automatically.</p></li>
+        <li><span class="step-number">01</span><h3>Select a workbench</h3><p>Choose a subject and a group. The included Japanese source and current English translation load automatically.</p></li>
         <li><span class="step-number">02</span><h3>Edit translations</h3><p>Edit the draft and review the text validation messages and game-font preview. Edits are saved in this browser.</p></li>
         <li><span class="step-number">03</span><h3>Download changes</h3><p>Download a TSV containing your validated changes. Import it into the editor to continue editing, or into the project for review and game testing.</p></li>
       </ol>
       <p class="font-note">The current game font supports the project’s English glyph set. Other writing systems need additional font support.</p>
     </section>
   </main>
-  <footer class="footer"><span>Shiren GB translation project</span><a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/site/prose/README.md">Editor documentation <span aria-hidden="true">↗</span></a></footer>
+  <footer class="footer"><span>Shiren GB translation project</span><a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/site/workbench/README.md">Editor documentation <span aria-hidden="true">↗</span></a></footer>
 </body>
 </html>

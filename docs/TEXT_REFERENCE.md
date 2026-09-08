@@ -496,24 +496,35 @@ incorrect. Consult the actual consuming path before changing a reviewed effect s
 
 ## 8. Translator tooling and remaining gaps
 
-**Implemented prose proof of concept:** the [prose editor](../site/prose/README.md) has
+**Implemented editors:** the [prose editor](../site/prose/README.md) has
 480 prose/reference records in 25 draft-derived event groups, including 436 editable
 ordinary drafts. It loads the included Japanese source TSV automatically and supports
 optional replacement from a matching local file, font-aware wrapping/preview,
 control and fit checks, local saving, changes-TSV download and a Python project importer.
 Japanese text is published separately at `site/data/script.tsv` and verified against the
-catalogue's source hashes. Structured/verbatim records remain read-only.
+catalogue's source hashes. Its structured references link to the separate Choices editor.
 `tools/prose_editor_check.py` and `site/prose/checks.html` check the browser model against
 the current Python wrapper and layout measurements, plus import and browser interactions.
 
+The [additional workbenches](../site/workbench/README.md) cover the remaining extraction
+and the 12 cinematic entries: items (239), monsters/characters (152), descriptions (125),
+seals (20), shared help (13), menus (82), actions (18), gameplay messages (227), structured
+choices (44), conditions (40), cinematic text (12) and fixed/extraction references (28).
+Together with 436 ordinary prose entries, every extracted row has exactly one primary
+owner. `tools/workbench.py` derives bank codecs and renderer contracts from the existing
+tools, including runtime ROM-row slices from `menuromspill.rom_slice`; it validates and
+imports downloaded edits into their original project TSVs. `tools/workbench_check.py`
+and `tools/site_check.py` check Python/browser agreement, shared dependencies, coverage,
+TSV routing and browser interactions. `tools/build_site.py` gates complete source coverage,
+catalogue integrity and current rule hashes without a ROM or local extraction in CI.
+
 Remaining gaps:
 
-- **A translator export with budgets and context.** `script.tsv` gives you `bytes`, which is
-  the wrong number for almost everything above. It should carry each path's source/pixel/
-  tile contract, the storage class from §3, speaker/screen, and conversation ordering.
-- **Editor coverage beyond prose.** Menus, items, glossary, cinematics and graphics need
-  separate editing models and validators. The prose-only TSV contract is documented with
-  the editor; the original translation files remain the build inputs.
+- **Storage and runtime context.** Workbenches expose source/pixel/tile constraints and
+  existing script groups. Actual ROM placement, all shared runtime allocations and a
+  verified chronological speaker/event map remain project/build/playtesting concerns.
+- **Graphics and fixed composite fields.** The coverage page links these separate assets
+  and renderers; changing a script TSV alone cannot translate their artwork or input maps.
 - **Runtime name substitution census.** Pixel-aware source staging is now 30 glyphs with a
   separate 144px painted-edge check, and the old `over_cap` decree is gone. Current item
   signed/`[NN]` variants are exhaustive; `<var>`/`<cE3>` producer scope remains open.

@@ -8,9 +8,13 @@ rules — storage classes, the character set, the per-renderer pixel budgets, ev
 error, and what the build does not check. Read it once before a large batch. Come back
 here when you want to know "where do I change a monster's name".
 
-For prose, the [prose editor](../site/prose/README.md) provides a browser editor and a validated
-changes-TSV importer. Run `python3 tools/prose_editor.py serve` from the repository root,
-then open **http://127.0.0.1:8765/**. The original files below remain the source of truth.
+The [translation workbenches](../site/workbench/README.md) provide subject-specific
+browser editors, complete extraction/cinematic coverage and a validated changes-TSV
+importer. The [prose editor](../site/prose/README.md) retains automatic wrapping by event;
+structured choices have a separate editor. Run `python3 tools/prose_editor.py serve`
+from the repository root, then open **http://127.0.0.1:8765/**. The original files below
+remain the source of truth. Workbench imports route each edit to the appropriate file,
+and can include a prose download in the same transaction for coordinated name changes.
 
 ## The map
 

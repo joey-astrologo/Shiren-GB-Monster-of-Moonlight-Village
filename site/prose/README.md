@@ -1,4 +1,4 @@
-# Prose editor — proof of concept
+# Prose editor
 
 A static browser editor for Shiren GB prose. It contains **480 records in 25 event
 groups**: 436 ordinary prose drafts are editable, and 44 structured/verbatim records are
@@ -60,6 +60,8 @@ To apply it after review:
 python3 tools/prose_editor.py import /path/to/shiren-prose-changes.tsv --apply
 sh build.sh
 python3 tools/prose_editor.py export
+python3 tools/workbench.py export
+python3 tools/workbench_check.py
 ```
 
 The importer uses the existing **Python** encoder, wrapper, layout validator and complete
@@ -86,7 +88,7 @@ may be merged, but edited-row baseline changes and different rule revisions are 
 Duplicate/unknown addresses, malformed fields, structured-row edits and invalid text are
 also rejected. The importer handles UTF-8 BOMs and CRLF downloads.
 
-## Rules and limits of this proof of concept
+## Rules and limits
 
 `tools/prose_editor.py export` derives the catalogue from the current Python toolchain
 and extraction. `rules.js` mirrors prose wrapping, source indents, selector spacing,
@@ -104,8 +106,10 @@ gameplay route, allocation or pacing choice.
 
 Event groups and their row order come from the draft's existing headings. They are useful
 editing context, not a verified chronological walkthrough or a complete speaker/event map.
-Inferred speaker labels come from English attribution. Opening/ending cinematics, items,
-menus, graphics and glossary editing are outside this first version.
+Inferred speaker labels come from English attribution. The [other workbenches](../workbench/README.md)
+cover items, names, descriptions, menus, gameplay messages, opening cinematic text and
+structured choices. The 44 structured records remain references on this prose page and
+link to their editable workbench. Graphics and fixed composite fields need project changes.
 
 ## Regenerate and check
 
@@ -116,7 +120,9 @@ installed tool dependencies for the preview helper; a generic static host needs 
 ```sh
 python3 tools/prose_editor.py export
 python3 tools/prose_editor.py export --check
+python3 tools/workbench.py export
 python3 tools/prose_editor_check.py
+python3 tools/workbench_check.py
 python3 tools/prose_editor.py serve --test
 ```
 

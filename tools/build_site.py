@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Stage the translation website and its bundled source TSV for GitHub Pages."""
 import argparse
+import csv
 import hashlib
 from html.parser import HTMLParser
 import json
@@ -13,10 +14,12 @@ SOURCE = ROOT / 'site'
 OUTPUT = ROOT / 'build/pages'
 SOURCE_TSV = 'data/script.tsv'
 PUBLIC_FILES = (
-    'index.html', 'style.css',
-    SOURCE_TSV,
+    'index.html', 'style.css', 'coverage.html',
+    SOURCE_TSV, 'data/intro.tsv',
     'prose/index.html', 'prose/style.css', 'prose/app.js',
     'prose/rules.js', 'prose/catalog.json', 'prose/font-license.txt',
+    'workbench/index.html', 'workbench/style.css', 'workbench/app.js',
+    'workbench/rules.js', 'workbench/catalog.json',
 )
 
 
@@ -79,10 +82,82 @@ def validate(files):
         if len(fields) != len(header) or fields[loc_index] in source:
             raise ValueError(f'Bundled source TSV has a malformed or duplicate row at line {number}')
         source[fields[loc_index]] = fields[jp_index]
+    def project_column(name, column, trim=False):
+        result = {}
+        for line in (ROOT / 'script' / name).read_text().splitlines():
+            if not line or line.startswith('#') or '\t' not in line: continue
+            fields = line.split('\t', column)
+            if len(fields) <= column or fields[0].strip() in result:
+                raise ValueError(f'{name}: malformed or duplicate project row')
+            if fields[column].strip(): result[fields[0].strip()] = fields[column].strip() if trim else fields[column]
+        return result
+    project_en = project_column('en.tsv', 1)
+    project_draft = project_column('prose_draft.tsv', 1)
+    project_glossary = project_column('glossary.tsv', 3, trim=True)
     for row in data['records']:
         jp = source.get(row['loc'])
         if jp is None or hashlib.sha256(jp.encode('utf-8')).hexdigest() != row['sourceHash']:
             raise ValueError(f'{row["loc"]}: bundled Japanese source does not match the catalogue')
+        if row['current'] != project_en.get(row['loc']) or row['draft'] != project_draft.get(row['loc'], '').strip():
+            raise ValueError('Stale prose translation snapshot; regenerate both catalogues')
+
+    work = json.loads(files['workbench/catalog.json'])
+    revision = work.pop('revision')
+    if work['format'] != 'shiren-workbench-edits-v1' or revision != hashlib.sha256(json.dumps(work, ensure_ascii=False, sort_keys=True).encode()).hexdigest():
+        raise ValueError('Invalid workbench catalogue; run tools/workbench.py export')
+    rules_hash = hashlib.sha256()
+    for name in work['ruleSources']:
+        path = ROOT / name
+        if path.is_symlink() or path.resolve().is_relative_to(ROOT.resolve()) is False:
+            raise ValueError('Invalid rule source path')
+        rules_hash.update(name.encode() + b'\0' + path.read_bytes() + b'\0')
+    if rules_hash.hexdigest() != work['rulesRevision']:
+        raise ValueError('Stale workbench rules; run tools/workbench.py export')
+    owners = {r['loc']: r['subject'] for r in work['coverage']}
+    if len(owners) != len(work['coverage']) or set(owners) != set(source) or len(source) != work['extractedCount']:
+        raise ValueError('Every extracted entry must have exactly one workbench owner')
+    subjects = {r['id']: r for r in work['subjects']}
+    if len(subjects) != len(work['subjects']) or set(owners.values()) - set(subjects):
+        raise ValueError('Invalid workbench subjects')
+    prose = {r['loc'] for r in data['records'] if r['editable']}
+    if prose != {loc for loc, subject in owners.items() if subject == 'prose'}:
+        raise ValueError('Prose ownership disagrees with the prose catalogue')
+    opening = list(csv.DictReader((line for line in files['data/intro.tsv'].decode('utf-8-sig').splitlines()
+                                  if line and not line.startswith('#')), delimiter='\t'))
+    intro = {r['id']: r for r in opening}
+    if len(intro) != len(opening) or len(intro) != work['cinematicCount'] or any(None in r or None in r.values() for r in opening):
+        raise ValueError('Malformed, missing or duplicate cinematic sources')
+    if files['data/intro.tsv'] != (ROOT / 'script/intro.tsv').read_bytes():
+        raise ValueError('Stale cinematic snapshot; run tools/workbench.py export')
+    keys = set()
+    for row in work['records']:
+        key = row['key']
+        if key in keys: raise ValueError('Duplicate workbench record')
+        keys.add(key)
+        if row['subject'] == 'cinematic':
+            original = intro.get(key, {}).get('japanese')
+            if intro.get(key, {}).get('english') != row['current']:
+                raise ValueError('Cinematic translation snapshot does not match the catalogue')
+        else:
+            original = source.get(key)
+            if owners.get(key) != row['subject'] or key != row['loc']:
+                raise ValueError('Workbench record does not match its coverage owner')
+            current = project_en.get(key, project_glossary.get(key, ''))
+            base = hashlib.sha256(json.dumps([original, current, row['destination'], project_glossary.get(key), project_en.get(key), project_draft.get(key)], ensure_ascii=False).encode()).hexdigest()
+            if current != row['current'] or base != row['base']:
+                raise ValueError(f'{key}: stale workbench translation snapshot')
+        if original is None or original != row['jp'] or hashlib.sha256(original.encode()).hexdigest() != row['sourceHash']:
+            raise ValueError(f'{key}: workbench source mismatch')
+        if row['subject'] not in subjects or row['editable'] == bool(row['reason']):
+            raise ValueError(f'{key}: invalid subject or missing reference explanation')
+    if keys != (set(owners) - prose) | set(intro):
+        raise ValueError('Workbench records omit or add entries beyond the source census')
+    for sid, subject in subjects.items():
+        actual = len(intro) if sid == 'cinematic' else sum(s == sid for s in owners.values())
+        if actual != subject['count']: raise ValueError('Incorrect workbench entry count')
+        href = 'prose/' if sid == 'prose' else 'workbench/?subject=' + sid
+        if ('href="' + href + '"').encode() not in files['index.html']:
+            raise ValueError(f'Home page is missing the {sid} workbench link')
 
 
 def main():

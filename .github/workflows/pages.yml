@@ -6,11 +6,57 @@ on:
     paths:
       - 'site/**'
       - 'tools/build_site.py'
+      - 'tools/workbench.py'
+      - 'tools/workbench_check.py'
+      - 'tools/site_check.py'
+      - 'tools/menuromspill.py'
+      - 'tools/menuvwf.py'
+      - 'tools/fontaudit.py'
+      - 'tools/intro.py'
+      - 'tools/build.py'
+      - 'tools/prose_editor.py'
+      - 'tools/wrap_en.py'
+      - 'tools/textlayout.py'
+      - 'tools/dialogue_preview.py'
+      - 'tools/lint_en.py'
+      - 'tools/codec.py'
+      - 'tools/latinfont.py'
+      - 'tools/dotfont.py'
+      - 'tools/dte_rom.py'
+      - 'assets/fonts/**'
+      - 'script/build-inputs/box*.tsv'
+      - 'script/en.tsv'
+      - 'script/glossary.tsv'
+      - 'script/prose_draft.tsv'
+      - 'script/intro.tsv'
       - '.github/workflows/pages.yml'
   pull_request:
     paths:
       - 'site/**'
       - 'tools/build_site.py'
+      - 'tools/workbench.py'
+      - 'tools/workbench_check.py'
+      - 'tools/site_check.py'
+      - 'tools/menuromspill.py'
+      - 'tools/menuvwf.py'
+      - 'tools/fontaudit.py'
+      - 'tools/intro.py'
+      - 'tools/build.py'
+      - 'tools/prose_editor.py'
+      - 'tools/wrap_en.py'
+      - 'tools/textlayout.py'
+      - 'tools/dialogue_preview.py'
+      - 'tools/lint_en.py'
+      - 'tools/codec.py'
+      - 'tools/latinfont.py'
+      - 'tools/dotfont.py'
+      - 'tools/dte_rom.py'
+      - 'assets/fonts/**'
+      - 'script/build-inputs/box*.tsv'
+      - 'script/en.tsv'
+      - 'script/glossary.tsv'
+      - 'script/prose_draft.tsv'
+      - 'script/intro.tsv'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -32,6 +78,8 @@ jobs:
           persist-credentials: false
       - name: Stage public assets
         run: python3 tools/build_site.py
+      - name: Check browser rules and editing
+        run: python3 tools/site_check.py
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v4

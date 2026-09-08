@@ -1,5 +1,12 @@
 # Menu systems and regional-blanking ownership
 
+**Translation tools:** the [Menus and Item actions workbenches](../site/workbench/README.md)
+group editable labels by the menu/box census below. Their contracts use the current
+geometry overrides, cursor reservation, source scanner and runtime row allocation.
+Fixed status/Fay composites and the keyboard/alias remain explained reference entries.
+The workbenches validate text; the route and ownership evidence below still determines
+runtime acceptance.
+
 **Status:** Engineering map plus implemented Item/Floor and Start checkpoints, measured
 through 2026-09-06. The dispatcher, box catalogue, memory map, and fixture-backed routes below
 are established. Routes marked `outline` or `inferred` still need a real button-driven

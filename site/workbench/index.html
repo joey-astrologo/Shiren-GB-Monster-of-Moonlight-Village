@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#253c34">
+  <title>Translation workbenches · Shiren GB</title>
+  <link rel="stylesheet" href="../prose/style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to entries</a>
+  <aside class="sidebar">
+    <a class="brand" href="../"><span class="moon" aria-hidden="true"></span><span>SHIREN GB<small>Translation tools</small></span></a>
+    <div class="nav-label">WORKBENCHES</div>
+    <nav id="subjects" aria-label="Translation subjects"></nav>
+    <div class="sidebar-footer"><a class="sidebar-link" href="../coverage.html">Script coverage ↗</a><small>Current game font: English glyph set</small></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><div class="breadcrumb"><a href="../">HOME</a> <span>/</span> <strong id="crumb">WORKBENCHES</strong></div><div id="save-state" class="save-state" role="status">Loading…</div></header>
+    <main id="content" tabindex="-1">
+      <section class="intro"><div><h1 id="title">Translation workbenches</h1><p id="description">Loading the script and editing rules…</p></div><div class="file-actions"><button id="import" class="button secondary" disabled>Import edits</button><button id="export" class="button primary" disabled>↓ Download changes <span id="changed-count">0</span></button></div></section>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <div id="recovery" class="notice warning" hidden><p id="recovery-message">A saved draft needs review before editing can continue.</p><button id="recover" class="text-button">Download recovery file</button><button id="fresh" class="text-button" disabled>Start fresh</button></div>
+      <div class="source-strip"><div><strong id="source-status">Loading original Japanese TSVs…</strong><span id="source-description">Sources and the current English translation are included.</span></div><div class="source-actions"><a class="text-button" href="../data/script.tsv" download>Script TSV</a><a class="text-button" href="../data/intro.tsv" download>Cinematic TSV</a></div></div>
+      <details class="editing-guide"><summary>Editing rules and downloads</summary><p>Each entry shows the rules for its rendering path. Most workbenches retain explicit line breaks and structural spaces. Item descriptions allow line breaks to move within the existing pages; cinematic text wraps into its fixed screen slots. Ordinary dialogue wraps in the <a href="../prose/">prose editor</a>.</p><p>Changes from these workbenches share one browser draft and one download. Shared fragments and names are checked against their known consumers. The prose editor keeps its existing separate draft and TSV format.</p><p>A download contains only edited entries, their stable keys and baseline checks. The project importer routes them to the correct TSV. Terminology, ROM placement, shared runtime allocation and visual acceptance also need the project build and game checks. A browser fit check does not run the game.</p><p>The current font supports the project's English glyph set. Translating into a language that needs other characters requires a font change.</p><p><a href="../coverage.html">View script coverage and rule sources</a> · <a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/site/workbench/README.md">Import instructions</a></p></details>
+      <section id="global-issues" class="notice warning" aria-label="Validation across workbenches" hidden></section>
+      <section class="toolbar" aria-label="Find entries"><label class="search"><input id="search" type="search" placeholder="Search Japanese, translation, or address…" aria-label="Search this workbench"></label><label class="select-label">Group <select id="group"></select></label><label class="select-label">Show <select id="filter"><option value="all">All entries</option><option value="edited">Edited entries</option><option value="errors">Needs attention</option></select></label></section>
+      <div class="event-heading"><h2 id="group-title">Entries</h2><span id="row-count" class="entry-count"></span></div>
+      <div class="column-labels"><span>日本語 <small>ORIGINAL</small></span><span>YOUR TRANSLATION <small>EDITABLE TEXT</small></span></div>
+      <section id="records" aria-label="Translation entries"></section>
+      <p id="empty" class="empty" hidden>No entries match these filters.</p>
+      <div class="pagination"><button id="previous" class="button secondary">← Previous</button><span id="page-status" role="status"></span><button id="next" class="button secondary">Next →</button></div>
+      <footer class="page-footer"><span>Drafts stay in this browser. Downloads contain changes from all these workbenches.</span><a href="../prose/font-license.txt">Font credit &amp; license</a></footer>
+    </main>
+  </div>
+  <input id="file" type="file" accept=".tsv,text/tab-separated-values,text/plain" hidden>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
