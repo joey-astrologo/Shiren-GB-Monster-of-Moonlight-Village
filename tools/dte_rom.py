@@ -718,7 +718,7 @@ def load_allowlist(path=None):
     return out
 
 
-def chunks(data):
+def chunks(data, bank=None):
     """Split a string into (compressible, bytes) runs.
 
     A pair may never span a control code, because a DTE byte is expanded blind into the
@@ -731,14 +731,13 @@ def chunks(data):
     emit one, so the bypass is limited to a byte that was already in the source. English
     has no marks, so this costs nothing.
 
-    THE MESSAGE-PATH ARITY IS USED HERE ON PURPOSE, and this is the one place in the
-    project where the two dispatch tables may safely disagree. On banks 11/14 `$E7` and
-    `$F0` take no argument (codec.DIALOGUE_ARITY), so this over-reads their barrier by a
-    byte -- but a barrier is only ever emitted verbatim, so the ROM gets the same bytes
-    in the same order either way. All it costs is one byte of compression at seven sites.
-    Threading a bank through compress() and training_segments() to buy that back would
-    add a parameter to four callers for no change in output.
+    The bank selects the native consumer's argument lengths. Dialogue `$E3` has an
+    item selector that the message handler does not; treating it as text can compress
+    the selector with the next glyph. Conversely, over-reading dialogue `$E7`/`$F0`
+    can swallow the NEXT control byte and expose that control's argument to compression.
+    None retains the message-path default for callers handling control-free corpora.
     """
+    arity = codec.arity_for(bank)
     out, run, i = [], bytearray(), 0
     while i < len(data):
         b = data[i]
@@ -746,7 +745,7 @@ def chunks(data):
             if run:
                 out.append((True, bytes(run)))
                 run = bytearray()
-            n = 1 + (codec.ARITY.get(b, 0) if b >= CONTROL_MIN else 0)
+            n = 1 + (arity.get(b, 0) if b >= CONTROL_MIN else 0)
             out.append((False, bytes(data[i:i + n])))
             i += n
         else:
@@ -757,12 +756,12 @@ def chunks(data):
     return out
 
 
-def training_segments(data):
+def training_segments(data, bank=None):
     """The runs of `data` a table may be trained on."""
-    return [blob for ok, blob in chunks(data) if ok and len(blob) > 1]
+    return [blob for ok, blob in chunks(data, bank) if ok and len(blob) > 1]
 
 
-def compress(data, table, first_code=0x100):
+def compress(data, table, first_code=0x100, *, bank=None):
     """Apply an existing table to one string. -> ROM bytes.
 
     The pairs are applied in the order dte.build assigned them, which is what makes this
@@ -777,7 +776,7 @@ def compress(data, table, first_code=0x100):
     """
     import dte
     out = bytearray()
-    for ok, blob in chunks(data):
+    for ok, blob in chunks(data, bank):
         if not ok:
             out += blob
             continue
@@ -790,19 +789,28 @@ def compress(data, table, first_code=0x100):
     return bytes(out)
 
 
-def expand_bytes(rom_bytes, table, first_code=0x100):
-    """Decode ROM bytes back to plain text bytes -- build.py's round-trip check."""
+def expand_bytes(rom_bytes, table, first_code=0x100, *, bank=None):
+    """Expand glyphs while preserving native control arguments for the selected path.
+
+    Blind expansion used to hide a compressed dialogue item selector: it reconstructed
+    the source even though the native control handler consumed that DTE byte as an
+    argument. Arguments are opaque bytes, including any that equal a DTE code.
+    """
     code_of = {DTE_CODES[i]: table[i] for i in range(len(table))}
     out = bytearray()
-    stack = list(reversed(rom_bytes))
-    while stack:
-        s = stack.pop()
-        if s in code_of:
-            a, b = code_of[s]
-            stack.append(rom_symbol(b, first_code))
-            stack.append(rom_symbol(a, first_code))
-        else:
-            out.append(s)
+    for ok, blob in chunks(rom_bytes, bank):
+        if not ok:
+            out += blob
+            continue
+        stack = list(reversed(blob))
+        while stack:
+            s = stack.pop()
+            if s in code_of:
+                a, b = code_of[s]
+                stack.append(rom_symbol(b, first_code))
+                stack.append(rom_symbol(a, first_code))
+            else:
+                out.append(s)
     return bytes(out)
 
 

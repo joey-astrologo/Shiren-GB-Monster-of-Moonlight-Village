@@ -19,6 +19,8 @@ For the mistakes behind them see [`TRAPS.md`](TRAPS.md).
   permits no other failures. `build.sh` and the release runner supply it to their control.
 - Every scan uses the matching `<rom>.relocmap.tsv` and verifies its ROM SHA-256.
   A shared directory-wide map is unsafe when normal and hostile layouts coexist.
+- `tools/romtextcheck.py` gates native DTE control-argument consumption and allocation
+  across every reserved text window, including bank 38's Fay restore and graphics tails.
 - The redirect-all layout is a real timing gate. On 2026-08-13 it exposed a 160-scanline
   reveal-map pass that normal placement missed; the optimized direct-pointer builder now
   completes the same route within 143/154 scanlines and uploads byte-exact.

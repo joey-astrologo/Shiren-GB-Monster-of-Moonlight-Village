@@ -110,7 +110,7 @@ can consume more of a pool bank later.
 | 34-45 | `$405A-$40FF` when assigned | VWF carry/transition helpers | See per-module constants; otherwise reader-owned |
 | 35 | `$4060-$40EC` | `tools/menuvwf.py`: save-summary allocator, including fixed difficulty inset for both native clear badges | Exclusive within the existing prefix reservation; redirected text begins at `$4100` |
 | 37 | `$405A-$429F` | `tools/menuvwf.py`: carried-/Floor-/contained-Action live-layer admission/collision gate, exact visible top-verb preservation for direct Floor and screen 16, contained-item Info stack proof, and page-edge save dispatch | Exclusive, far indices `$05/$07`; redirected text begins at `$42A0` |
-| 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fei restore | Exclusive |
+| 38 | `$405A-$41FF` | `tools/propvwf.py` + `tools/structvwf.py`: carry and Fay restore | Exclusive; redirected text begins at `$4200` |
 | 40 | `$4068-$41D9` | `tools/menuvwf.py`: exact Start cancellation-return owner for popped file children 21..26 and Rank/Pass layers 30..32, including screen 31's bounded native `$CB` Orochi-plane restore | Exclusive, far index `$07`; redirected text begins at `$4200` |
 | 41 | `$405A-$410B` | `tools/menuvwf.py`: Start title/file transition controller | Exclusive, far index `$05`; redirected text begins at `$4110` |
 | 46 | `$4060-$43FF` | `tools/menuvwf.py` + `tools/rankvwf.py`: saved-Log/category allocator, screen-22/26 regional owner, and rank-screen helpers | Exclusive; deliberate `$40F2-$40F4` and `$4179-$417F` guards |
@@ -119,7 +119,7 @@ can consume more of a pool bank later.
 | 50 | `$405A-$40FF` | `tools/itemfix.py`: English category prefixes for player-named unidentified items | Exclusive |
 | 51 | `$405A-$40F2` | `tools/menuvwf.py`: priced Item-row `$D0-$DE` five-slot classifier and restorer | Exclusive |
 | 52 | `$405A-$4088` | `tools/faypath.py`: status-only `Puzzle` / `Expert` Path producers | Exclusive, exact call-site guard |
-| 53 | `$405A-$7AEC` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers (including Moonlight screen 18), completed standing-Floor exit, screen-2 Action intermediate replay, screen-6 empty-history and screen-18 settled-page gates, selector multiplexer, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09/$0B/$0D/$0F` |
+| 53 | `$405A-$7AEC` | `tools/statusvwf.py`: exact Status/Items entry+exit controllers (including Moonlight screen 18), completed standing-Floor exit, screen-2 Action intermediate replay, screen-6 empty-history and screen-18 settled-page gates, selector multiplexer, status compositor, shifted glyph data | Exclusive, far indices `$05/$07/$09/$0B/$0D/$0F`; entire bank excluded from text allocation |
 | 54 | `$405A-$40FA` | `tools/menuvwf.py`: hidden debug-menu screen-28 item and screen-29 enhancement-value VWF classifier / allocator reset | Exclusive |
 | 55 | `$405A-$40D7` | `tools/menuvwf.py`: shop `Price` / `G` private-raster stager and map writer | Exclusive, exact call-site guard |
 | 56 | `$405A-$40A0` | `tools/menuvwf.py`: exact shop amount-row VWF classifier | Exclusive, exact shape/source gate |
@@ -171,8 +171,15 @@ These extra VRAM tiles are owned only during the ending title; the native LCD-of
 setup, fade, hold and input routines retain control of the screen lifecycle.
 
 Banks 34-62 are addressable by the redirected-text allocator, but the graphics/helper tails
-listed above take precedence. Their installers assert the reserved spans are still untouched;
-a collision must be solved by changing allocation policy, never by weakening that assertion.
+listed above take precedence. `tools/pool.py:TEXT_WINDOWS` enforces both ends of each text
+window: bank 38 starts at `$4200`; banks 53, 58 and 59 have no text window; bank 60 ends
+before `$5000`; and banks 61/62 end before `$7000`. The other prefix reservations in the
+table are enforced there too. These reservations also apply to diagnostic builds with an
+individual renderer disabled. All reader-bank IDs and far stubs remain consecutive.
+
+Installers additionally assert the reserved spans are untouched. Never weaken that check to
+resolve an allocation conflict. `tools/romtextcheck.py` fills the text windows, verifies
+capacity and boundary behavior, and checks that writing the pool preserves the reserved bytes.
 
 ## Script-bank text is executable data
 
@@ -199,10 +206,19 @@ parallel pointer tables at `6:$7C59`/`6:$7C7F` giving each trap its event and ou
 lines. One
 was added to the English heal line for readability; in play it garbled the line, blanked
 the dialogue box, fired an unrelated actor animation, and displaced the healer past its
-target. The consumer wraps by itself and needs no help: `<var> robbed <var>` reaches 179px
-with the widest monster name substituted twice, which is the real budget. `tools/healfragmentspill.py`
-enforces both facts and locates the records by content, because `script/en.tsv` is keyed
-by Japanese addresses that the build relocates.
+target. Long runtime substitutions can still clip at the VWF line limits; that is an
+accepted limitation, not permission to insert breaks. `tools/healfragmentspill.py` forbids
+those breaks and prevents the heal fragment from exceeding the existing widest-fragment
+baseline. That baseline is not proof that every substituted name fits on screen. The tool
+locates records by content, because `script/en.tsv` is keyed by Japanese addresses that
+the build relocates.
+
+DTE training, compression and round-trip verification must use the record's source bank to
+select control arities. Dialogue `$E3` consumes an item selector; message `$E3` does not.
+Dialogue `$E7`/`$F0` consume no argument, unlike their message forms. Arguments remain opaque
+even when their byte values coincide with DTE codes. `tools/romtextcheck.py` executes the
+native item-selector reader against an adversarial compression pair and checks adjacent
+controls; blind decompression alone would hide a corrupted selector.
 
 Rules for dynamic records:
 

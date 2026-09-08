@@ -14,6 +14,8 @@ python3 tools/build.py     build/_base_expanded.gb script/en.tsv build/shiren_en
 
 # Guard CLI failure semantics, per-ROM scan maps, and preview/wrapper byte budgets.
 python3 tools/toolchaincheck.py
+# Native control consumption and text growth across helper/graphics reservations.
+python3 tools/romtextcheck.py
 
 # Distribution artifact for the unmodified 512 KiB Japanese ROM. Creation
 # includes a byte-for-byte application check and fails if the IPS is not exact.

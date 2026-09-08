@@ -718,7 +718,7 @@ def main():
         segs = []
         for r in eligible:
             w = dte_rom.TRAIN_WEIGHT.get(r['bank'], dte_rom.DEFAULT_WEIGHT)
-            segs += dte_rom.training_segments(final[r['id']]) * w
+            segs += dte_rom.training_segments(final[r['id']], bank=r['bank']) * w
         # Train on the SNES English corpus AS WELL as our own text. Yield scales with the
         # TABLE's corpus, not with the text being compressed -- which is why the measured
         # 40.7% transfers -- and without it there is a chicken-and-egg: two translated
@@ -729,10 +729,10 @@ def main():
             dte_table, _, dte_stats = dte_rom.encode_segments(corpus + segs)
             saved = 0
             for r in eligible:
-                packed = dte_rom.compress(final[r['id']], dte_table)
+                packed = dte_rom.compress(final[r['id']], dte_table, bank=r['bank'])
                 # round-trip every string, not just the corpus: compress() has to agree
                 # with the expander for text the table was not trained on too
-                back = dte_rom.expand_bytes(packed, dte_table)
+                back = dte_rom.expand_bytes(packed, dte_table, bank=r['bank'])
                 if back != final[r['id']]:
                     problems.append((r, 'dte_roundtrip',
                                      'compressed form does not expand back'))

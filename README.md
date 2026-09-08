@@ -48,6 +48,14 @@ normal, rapid-input, shuffled, and redirect-all layouts.
 The build-failure, per-ROM scan-map and preview/wrapper indent regressions also passed,
 including the live scan across alternate builds. The final IPS reproduces the normal ROM
 byte-for-byte, and each ROM's relocation map matches its SHA-256.
+
+The battery was rerun after fixing DTE control-argument handling and text-pool bank
+reservations. Compression now preserves arguments using each record's control-code
+path, and text allocation respects reserved code and graphics regions. New regressions
+cover native item-selector execution and allocation through every text bank. A fresh
+checkout regenerated the script and produced identical ROM and IPS artifacts. These
+fixes protect future builds; the current release bytes and hashes remain unchanged.
+
 Artifact hashes from this 2026-09-07 release candidate:
 
 | Build | SHA-256 |

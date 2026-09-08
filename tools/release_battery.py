@@ -49,6 +49,7 @@ def main() -> int:
 
     section("Offline translation and model tests")
     py("toolchaincheck.py", "--state", "saves/dungeon.state")
+    py("romtextcheck.py")
     run(PYTHON, "-m", "compileall", "-q", "tools")
     py("dialogue_preview.py", "--check")
     py("dialogue_preview.py", "--selftest")

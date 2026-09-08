@@ -124,9 +124,9 @@ def main():
                 print('%-11s -- no such string' % loc)
                 continue
             laid, lines = layout(text)
-            raw = B.encode_en(laid)
-            pk = dte_rom.compress(raw, tbl)
-            if dte_rom.expand_bytes(pk, tbl) != raw:
+            raw = B.encode_en(laid, r['bank'])
+            pk = dte_rom.compress(raw, tbl, bank=r['bank'])
+            if dte_rom.expand_bytes(pk, tbl, bank=r['bank']) != raw:
                 raise SystemExit('%s: compressed form does not expand back' % loc)
             jp = r['bytes']
             inplace = not r['refs'] or r.get('pin')

@@ -160,6 +160,29 @@ START_RANK_CHOICE_TEXT_ORG = 0x42C0
 START_TRANSITION_BANK = 0x29
 START_TRANSITION_TEXT_ORG = 0x4110
 
+# Allocatable CPU-address windows, with exclusive ends. Keep every addressable reader
+# bank in TEXT_BANKS: read_entry_src() indexes a contiguous far-stub table by bank ID.
+# Empty windows reserve whole banks without changing that runtime ABI. Reservations
+# remain in force in diagnostic builds where an individual renderer is disabled.
+#
+# See docs/ROM_BANK_MAP.md. Prefixes alone are insufficient: bank 38's Fay restore
+# crosses $4100, bank 53 is the Status engine, and banks 58-62 hold graphics tails.
+# The old first-fit allocator reached those owners before exhausting its text capacity.
+TEXT_WINDOWS = {bank: (TEXT_ORG, 0x8000) for bank in TEXT_BANKS}
+TEXT_WINDOWS.update({
+    ACTION_GATE_BANK: (ACTION_GATE_TEXT_ORG, 0x8000),
+    38: (0x4200, 0x8000),                  # propvwf carry + structvwf Fay restore
+    START_ROOT_RETURN_BANK: (START_ROOT_RETURN_TEXT_ORG, 0x8000),
+    START_TRANSITION_BANK: (START_TRANSITION_TEXT_ORG, 0x8000),
+    RANK_SCREEN_BANK: (RANK_SCREEN_TEXT_ORG, 0x8000),
+    53: (TEXT_ORG, TEXT_ORG),              # statusvwf code and shifted glyph data
+    58: (TEXT_ORG, TEXT_ORG),              # endingcredits code/data
+    59: (TEXT_ORG, TEXT_ORG),              # endingcredits + normalending raster tail
+    MENU_TRANSITION_BANK: (MENU_TRANSITION_TEXT_ORG, 0x5000),  # markers tail
+    START_RANK_CHOICE_BANK: (START_RANK_CHOICE_TEXT_ORG, 0x7000),  # titlecard tail
+    ACTION_BLANK_BANK: (ACTION_BLANK_TEXT_ORG, 0x7000),        # titlelogo tail
+})
+
 RENDER_TABLE = 13 * 0x4000 + 0x554A - 0x4000   # the help table, for reloc_verify
 
 
@@ -794,7 +817,7 @@ def install(rom, normalise=NORMALISE):
     return bytes(rom), {
         'dispatch': len(dispatch), 'normalise': len(norm), 'reader': len(reader),
         'gate': len(gate), 'index_entries': (0x8000 - INDEX_ORG) // ENTRY_LEN,
-        'text': len(TEXT_BANKS) * (0x8000 - TEXT_ORG),
+        'text': Pool().capacity(),
     }
 
 
@@ -833,25 +856,17 @@ class Pool:
         self.index_at = index_org
         self.index_base = index_org
         self.index = bytearray()
-        special_orgs = {
-            RANK_SCREEN_BANK: RANK_SCREEN_TEXT_ORG,
-            ACTION_GATE_BANK: ACTION_GATE_TEXT_ORG,
-            MENU_TRANSITION_BANK: MENU_TRANSITION_TEXT_ORG,
-            ACTION_BLANK_BANK: ACTION_BLANK_TEXT_ORG,
-            START_ROOT_RETURN_BANK: START_ROOT_RETURN_TEXT_ORG,
-            START_RANK_CHOICE_BANK: START_RANK_CHOICE_TEXT_ORG,
-            START_TRANSITION_BANK: START_TRANSITION_TEXT_ORG,
-        }
-        self.at = {b: max(text_org, special_orgs.get(b, text_org))
+        self.end = {b: TEXT_WINDOWS[b][1] for b in TEXT_BANKS}
+        self.at = {b: min(self.end[b], max(text_org, TEXT_WINDOWS[b][0]))
                    for b in TEXT_BANKS}
         self.base = dict(self.at)
         self.data = {b: bytearray() for b in TEXT_BANKS}
         self.entries = 0
 
     def _add_text(self, blob):
-        """-> (bank, addr). First fit: a line never straddles two banks."""
+        """-> (bank, addr). First fit within a bank's reserved text window."""
         for bank in TEXT_BANKS:
-            if self.at[bank] + len(blob) <= 0x8000:
+            if self.at[bank] + len(blob) <= self.end[bank]:
                 addr = self.at[bank]
                 self.data[bank] += bytes(blob)
                 self.at[bank] = addr + len(blob)
@@ -969,11 +984,8 @@ class Pool:
                    (0x8000 - self.index_base) // ENTRY_LEN))
 
     def capacity(self):
-        """Total text bytes the pool can hold. THIRTY banks: the record names an index
-        entry rather than text, so the 16 bits of the continuation pointer no longer have
-        to carry a bank number and the two-bank ceiling is gone. The binding limit is now
-        the index -- `entry_capacity()` -- and it is 5,034 lines."""
-        return sum(0x8000 - self.base[b] for b in TEXT_BANKS)
+        """Total text bytes after helper/graphics reservations, before the index limit."""
+        return sum(self.end[b] - self.base[b] for b in TEXT_BANKS)
 
     def entry_capacity(self):
         return (0x8000 - self.index_base) // ENTRY_LEN
