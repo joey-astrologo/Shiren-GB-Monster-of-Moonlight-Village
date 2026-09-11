@@ -13,6 +13,8 @@ Fuurai no Shiren GB — Tsukikage Mura no Kaibutsu** (風来のシレンGB 月�
 Chunsoft, Game Boy, 1996. It includes the original Japanese source TSV for the browser
 editor. It does not contain the game ROM.
 
+**[Download the English patch from the releases page](https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/releases).**
+
 ## Showcase
 
 Screenshots from the current English build:
