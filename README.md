@@ -17,9 +17,9 @@ editor. It does not contain the game ROM.
 
 Screenshots from the current English build:
 
-| Story dialogue | Combat messages |
+| Title screen | Combat messages |
 |:---:|:---:|
-| ![Translated story dialogue](docs/images/showcase/story-dialogue.png) | ![Translated combat message](docs/images/showcase/combat-message.png) |
+| ![Translated title screen](docs/images/showcase/title-screen.png) | ![Translated combat message](docs/images/showcase/combat-message.png) |
 | **Proportional item menus** | **Translated ending credits** |
 | ![Proportional item menu](docs/images/showcase/item-menu.png) | ![Translated ending credit card](docs/images/showcase/ending-credits.png) |
 
