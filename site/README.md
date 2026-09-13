@@ -54,13 +54,21 @@ The workflow checks out the repository, runs `python3 tools/build_site.py` and
 has `pages: write` and `id-token: write`; package validation only needs `contents: read`.
 No custom token, npm install, third-party Python packages or ROM extraction is needed in CI.
 
-The packaging helper uses an explicit list of 19 public assets plus `.nojekyll`,
+The packaging helper uses an explicit list of public assets plus `.nojekyll`,
 including the complete original TSV at `data/script.tsv` and cinematic TSV at
 `data/intro.tsv`. It checks page links, catalogue integrity, current rule hashes,
 translation baselines, source hashes and exactly-once coverage of all extracted entries.
 Missing, duplicate, malformed or mismatched sources and stale snapshots fail the build.
 Test pages/fixtures, Markdown documentation and local working files are excluded.
 Add new public assets to `PUBLIC_FILES` in `tools/build_site.py` when adding editors.
+
+## Header sprite
+
+`assets/shiren.png` is the unmodified Shiren GB sprite from the
+[Mystery Dungeon Franchise Wiki](https://mysterydungeonwiki.com/wiki/File:Moonlight_Village_GB_-_Shiren.png).
+The game artwork remains copyrighted by its respective owners; the source wiki
+identifies it as fair-use media. The 48 × 48 transparent PNG is bundled locally
+and displayed at 32 × 32 with pixel rendering in both shared headers.
 
 ## Updating the catalogues
 

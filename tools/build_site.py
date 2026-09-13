@@ -15,6 +15,7 @@ OUTPUT = ROOT / 'build/pages'
 SOURCE_TSV = 'data/script.tsv'
 PUBLIC_FILES = (
     'index.html', 'style.css', 'coverage.html',
+    'assets/shiren.png',
     'controls/index.html', 'controls/style.css', 'controls/links.js',
     SOURCE_TSV, 'data/intro.tsv',
     'prose/index.html', 'prose/style.css', 'prose/app.js',
