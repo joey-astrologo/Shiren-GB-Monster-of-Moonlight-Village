@@ -68,7 +68,8 @@ Add new public assets to `PUBLIC_FILES` in `tools/build_site.py` when adding edi
 [Mystery Dungeon Franchise Wiki](https://mysterydungeonwiki.com/wiki/File:Moonlight_Village_GB_-_Shiren.png).
 The game artwork remains copyrighted by its respective owners; the source wiki
 identifies it as fair-use media. The 48 × 48 transparent PNG is bundled locally
-and displayed at 32 × 32 with pixel rendering in both shared headers.
+and displayed at 32 × 32 with pixel rendering in all page headers and editor
+sidebars. Every public page also uses the same asset as its favicon.
 
 ## Updating the catalogues
 

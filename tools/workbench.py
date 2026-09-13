@@ -274,8 +274,8 @@ def write_navigation(data):
     ]
     art = ''.join(f'<li><a href="https://github.com/joey-astrologo/Shiren-GB-Monster-of-Moonlight-Village/blob/main/{p}">{n}</a> — {d}</li>' for n, p, d in assets)
     (ROOT / 'site/coverage.html').write_text('''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Script coverage · Shiren GB</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="masthead"><div class="header-inner"><a class="brand" href="./">SHIREN GB<small>Translation tools</small></a><a href="./">All workbenches</a></div></header>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Script coverage · Shiren GB</title><link rel="stylesheet" href="style.css"><link rel="icon" type="image/png" sizes="48x48" href="assets/shiren.png"></head>
+<body><header class="masthead"><div class="header-inner"><a class="brand" href="./"><img class="shiren-sprite" src="assets/shiren.png" width="32" height="32" alt=""><span>SHIREN GB<small>Translation tools</small></span></a><a href="./">All workbenches</a></div></header>
 <main class="coverage"><h1>Script coverage</h1><p>Every one of the 1,424 extracted script entries has exactly one primary workbench. The 12 opening-cinematic entries are counted separately. The prose editor also retains 44 structured entries as linked references; they are counted under Choices below.</p>
 <table><thead><tr><th scope="col">Workbench</th><th scope="col">Entries</th><th scope="col">Editing</th></tr></thead><tbody>''' + ''.join(table) + '''</tbody></table>
 <p>Coverage is checked against the included Japanese TSVs when the site is packaged. Missing entries, duplicate ownership, stale rule snapshots or mismatched Japanese prevent publication.</p>

@@ -1,6 +1,6 @@
 {
   "format": "shiren-workbench-edits-v1",
-  "rulesRevision": "de3b01f655ffc9449692a064ea391b028bd67c8c32aade40a949ea711555ce63",
+  "rulesRevision": "f7218d584bd3416c1605f5bc1ecf3febaa3a466251ee9592223763a25f44904c",
   "ruleSources": [
     "tools/prose_editor.py",
     "tools/wrap_en.py",
@@ -50298,5 +50298,5 @@
     "tools/menuvwf.py",
     "tools/intro.py"
   ],
-  "revision": "fd9b59a465a3953e3e75fafe9abba2408bd3e19d2f97aa5d280ab85f603be87e"
+  "revision": "89efc99a3142f70a45f7e6d2073273041efe056dde32691974256ec8a852fa43"
 }
