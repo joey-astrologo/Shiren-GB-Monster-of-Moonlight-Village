@@ -63,7 +63,7 @@ translation inputs remain separate from this review spreadsheet.
 ### Validate and insert a completed spreadsheet
 
 Run from the repository root with the normal extraction, Python dependencies and
-`build/base.gb` available. For `--apply`, the [game-test setup](../README.md#testing)
+`build/base.gb` available. For `--apply`, the [game-test setup](../more-readme.md#testing)
 must also be ready, including the local emulator states used by the build's regressions
 (`saves/dungeon.state` is required by the shop check). The default run validates the complete spreadsheet and its
 proposed edits, prints the project-file diff, and changes no translation files or ROMs:

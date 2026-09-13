@@ -93,7 +93,7 @@ changes with game state — a menu being open is enough to change what an addres
 
 When a playthrough is accepted: stop changing font, text, graphics and geometry; run
 `python3 tools/release_battery.py`; verify a clean clone with a locally supplied ROM and
-fixtures; and record the final hashes in [`../README.md`](../README.md).
+fixtures; and record the final hashes in [`../more-readme.md`](../more-readme.md).
 
 ## Verifying a render-path change
 

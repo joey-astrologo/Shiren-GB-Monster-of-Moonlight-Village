@@ -9,7 +9,7 @@ normal, shuffled and redirect-all release battery passed on 2026-09-07. Manual f
 playtesting remains open before a final release tag.
 
 Use [MENU_STRUCTURE.md](MENU_STRUCTURE.md) for current route admission, fallback
-classification and visual acceptance, and the [repository README](../README.md) for
+classification and visual acceptance, and the [detailed project guide](../more-readme.md) for
 release status and hashes. The original 45/78 direct-writer census was superseded by the
 full display-mutator census described there, including native shadow publication. Name,
 Info and Floor-Pot routes previously described here as the next regional candidates have

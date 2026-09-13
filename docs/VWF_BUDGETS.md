@@ -190,7 +190,7 @@ pixels and temporary storage first.
 
 ## Current status and remaining work
 
-The [repository README](../README.md) records accepted release hashes and battery results;
+The [detailed project guide](../more-readme.md) records accepted release hashes and battery results;
 [MENU_STRUCTURE.md](MENU_STRUCTURE.md) records exact menu routes and visual acceptance.
 The following reconciles the earlier V4–V6 worklist as of 2026-09-08:
 

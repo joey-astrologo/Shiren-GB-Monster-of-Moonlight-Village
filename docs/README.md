@@ -1,8 +1,8 @@
 # Documentation
 
 Subject-organised reference for the Shiren GB translation. Nothing here is required
-onboarding — start with the repository [README](../README.md), and if you are translating,
-[`script/README.md`](../script/README.md).
+onboarding — start with the [detailed project guide](../more-readme.md), and if you are
+translating, [`script/README.md`](../script/README.md).
 
 | Document | Subject | Read it when |
 |---|---|---|
@@ -27,8 +27,8 @@ font measurement or checkpoint restriction must not silently become a current li
 
 These files absorbed the project's engineering handoffs. The handoffs recorded work
 session by session, which meant a fact's home was whenever it was discovered rather than
-what it was about — and their dated status blocks contradicted the current README. The
-durable content was moved into the files above and the handoffs were removed.
+what it was about — and their dated status blocks contradicted the current project status.
+The durable content was moved into the files above and the handoffs were removed.
 
 Two consequences worth knowing:
 
@@ -37,4 +37,4 @@ Two consequences worth knowing:
   `FINDINGS.md`, and most of `TRAPS.md`. They are the cheapest way to stop the next
   person repeating the work.
 - **Dates in these files describe when something was measured**, not the current state.
-  The repository [README](../README.md) is authoritative for current status and hashes.
+  The [detailed project guide](../more-readme.md) is authoritative for current status and hashes.

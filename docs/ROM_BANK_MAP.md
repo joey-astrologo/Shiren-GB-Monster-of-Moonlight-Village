@@ -249,7 +249,7 @@ per-character address helper without rerunning the complete timing/upload matrix
 For a quick overlap search, use both hexadecimal styles because modules vary:
 
 ```sh
-rg -n '7440|0x7440|\$7440' tools docs README.md
+rg -n '7440|0x7440|\$7440' tools docs more-readme.md
 ```
 
 If an agent cannot prove that a region is safe, it must leave that region untouched.
