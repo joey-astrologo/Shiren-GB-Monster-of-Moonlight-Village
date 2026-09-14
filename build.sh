@@ -70,8 +70,7 @@ python3 tools/coverage.py
 # The final test continues beyond the marker and proves the same New Log route still
 # reaches a live, walkable village.
 python3 tools/titlecardspill.py build/shiren_en.gb
-python3 tools/titlelogospill.py build/shiren_en.gb \
-  --ram saves/shiren_en096_broken_title_screen.srm
+python3 tools/titlelogospill.py build/shiren_en.gb
 python3 tools/markerspill.py build/shiren_en.gb
 python3 tools/newgamesmoke.py build/shiren_en.gb
 
@@ -398,6 +397,18 @@ fi
 if [ -f saves/shiren_en-moonlight-ending.srm ]; then
   python3 tools/moonlightendspill.py build/shiren_en.gb
   python3 tools/moonlighttitlespill.py build/shiren_en.gb
+fi
+
+# Save-dependent opening titles: the selector must read name6's 36-byte log summaries.
+# Before Hard and the v0.96 report show the English title; Hard cleared (Orochi, and
+# Moonlight Exit 49F) shows native 脱出; Moonlight Exit cleared (Keyaki) shows native 恋人.
+# Each route also checks the SGB attribute file, and the Moonlight Fin card keeps English.
+if [ -f saves/shiren_en_log_1_trigger_ending.srm ] &&
+   [ -f saves/shiren_en096_broken_title_screen.srm ] &&
+   [ -f saves/shiren_en_log_1_orochi_symbol.srm ] &&
+   [ -f saves/shiren_en-moonlight-ending.srm ] &&
+   [ -f saves/shiren_en-moonlight-clear-icon.srm ]; then
+  python3 tools/titlevariantspill.py build/shiren_en.gb
 fi
 
 # `build/_base_expanded.gb` is KEPT, not deleted. It is the input every diagnostic build

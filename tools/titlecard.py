@@ -9,8 +9,9 @@ tiles and complete visible map, so it does not depend on a file outside the repo
 
 The card is loaded after the native decompressor finishes while the LCD is off. Its native
 fade, timing, skip behavior, and transition into cinematic scene 0 remain unchanged. The
-same guarded wrapper also recognizes both native title layouts (fresh and completion-
-unlocked) before dispatching the illustrated English title.
+same guarded wrapper keeps the native title-layout pointer checks that once dispatched the
+illustrated English title; ``titlelogo.py`` now draws every title variant after the
+native producer, and the checks remain only to preserve decompressor-hook timing.
 """
 import base64
 import hashlib
@@ -141,12 +142,13 @@ def _uploader(code_org, groups, group_addresses, map_org, logo_far=None):
     alternate_target = 'title_check_alt' if logo_far else 'done'
     title_check = ''
     if logo_far:
-        far_index, far_bank = logo_far
         title_check = f"""
 title_check_alt:
-        ; The completion-unlocked alternate title finishes one map row earlier than the
-        ; ordinary title.  A still contains H from the failed ordinary-route check;
-        ; avoid slowing the timing-sensitive ordinary title/marker path.
+        ; The illustrated title is now drawn after the native producer returns
+        ; (titlelogo.py hooks both producer calls), so neither title checkpoint below
+        ; dispatches. The compare chain is kept instruction-for-instruction because this
+        ; hook runs on every decompressor call: removing it shifted later RNG and frame
+        ; phase enough to fail the fixed-budget item-page latency gates.
         cp $9B
         jr nz,done
         ld a,l
@@ -157,7 +159,7 @@ title_check_alt:
         jr nz,done
         ld a,e
         cp $70
-        jr z,title_draw
+        jr z,done
         jr done
 title_check:
         ; Keep this ordinary-title path instruction-for-instruction equivalent to the
@@ -172,8 +174,7 @@ title_draw:
         ld a,[$FF40]
         and $80
         jr nz,done
-        rst $10
-        db ${far_index:02X},${far_bank:02X}
+        db $00,$00,$00              ; formerly the title far call; timing retained
         jr done
 """
 

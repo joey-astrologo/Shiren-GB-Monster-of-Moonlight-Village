@@ -89,7 +89,7 @@ LCDC	32	$6CD2	ldh	variable	translation	translation-added writer	observe	does not
 LCDC	32	$6D42	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	38	$408F	ldh	explicit-off	translation	structvwf.feirestore	keep	user-approved Fay's Puzzle independent-screen entry/B-exit and native fixed-tile reload; internal puzzle paging remains LCD-live
 LCDC	41	$40D4	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	41	$40F2	ldh	explicit-off	translation	menuvwf.starttransition	dormant	title/file composite fallback after all catalogued file, difficulty, and Rank/Pass choice-layer regional admissions
+LCDC	41	$40F6	ldh	explicit-off	translation	menuvwf.starttransition	dormant	title/file composite fallback after all catalogued file, difficulty, and Rank/Pass choice-layer regional admissions
 LCDC	43	$4086	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	43	$40B6	ldh	explicit-off	translation	rankvwf.rankfinish	keep	user-approved independent Rankings display publication/page replacement
 LCDC	43	$40C5	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
@@ -97,12 +97,12 @@ LCDC	44	$4066	ldh	explicit-off	translation	name6.namerestore	mixed	complete nati
 LCDC	44	$406C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$429E	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	46	$42C2	ldh	explicit-off	translation	rankvwf.nativerestore	keep	native-font restoration retained for approved final Rankings/Pass exits, already-dark transactions, and rejected unknown callers; exact file-menu B returns bypass it through the S2R regional owner
-LCDC	53	$4734	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower regional owner
-LCDC	53	$473D	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$5B0F	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$5BEF	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$7868	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
-LCDC	53	$7AD8	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$4738	ldh	explicit-off	translation	statusvwf.statusentry	replace-menu	rejected LCD-on Status reconstruction retained for unknown callers; every catalogued Item/Floor return has a narrower regional owner
+LCDC	53	$4741	ldh	explicit-on	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$5B13	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$5BF3	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$786C	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
+LCDC	53	$7ADC	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79AD	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	58	$79B1	ldh	variable	translation	translation-added writer	observe	does not locally prove an LCD-off transition
 LCDC	59	$406F	ldh	explicit-off	translation	normalending.install	keep	Normal-ending full-screen art installation

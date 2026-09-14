@@ -2,8 +2,9 @@
 """Compare the real Moonlight post-credit title with its native Fin-card control.
 
 The SRAM route is unmodified: finish floor 49 and let the cinematic and credits run.
-Require the approved opening artwork without PUSH START, the native Fin's exact
-pixels/position, register-transparent LCD-off installation, and the original hold.
+Require the approved "Lover of Moonlight Village" title artwork without PUSH START, the
+native Fin's exact pixels/position, register-transparent LCD-off installation, and the
+original hold.
 """
 import argparse
 import os
@@ -111,7 +112,8 @@ def _raster(tilemap, tiles, cgb):
 
 def run(rom, ram, png_dir=None):
     PyBoy = _import_pyboy()
-    artwork = titlelogo.compile_graphics()
+    built = titlelogo.compile_graphics()
+    artwork = titlelogo.variant_graphics(built, titlelogo.VARIANT_FOR_A[3])
     problems = []
     if png_dir:
         os.makedirs(png_dir, exist_ok=True)
@@ -134,7 +136,7 @@ def run(rom, ram, png_dir=None):
             native_entry, native_returned, (native_shot,), _ = native
             failures = []
             expected_map = bytearray(artwork['map'])
-            blank = next(tile for tile, data in artwork['tiles'].items() if data == bytes(16))
+            blank = built['blank']
             expected_map[15 * 20 + 6:15 * 20 + 14] = bytes((blank,)) * 8
             expected_tiles = dict(artwork['tiles'])
             x, y, width, height = FIN_BOX
@@ -145,7 +147,7 @@ def run(rom, ram, png_dir=None):
                     original_id = native_shot['map'][at]
                     if original_id != 0x2D + index:
                         failures.append('native Fin source map changed')
-                    tile_id = artwork['unique'] + index
+                    tile_id = built['fin_base'] + index
                     expected_tiles[tile_id] = _tile(native_shot, original_id)
                     expected_map[at] = tile_id
             if shot['map'] != expected_map:

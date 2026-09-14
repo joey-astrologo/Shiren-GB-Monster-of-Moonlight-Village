@@ -28,9 +28,12 @@ this map in the same commit whenever ownership changes.
 | 11 | `$51D0-$51DC` | `tools/decoyname.py`: decoy-name producer | Guarded native patch |
 | 13 | `$7FAA-$7FFF` | Native cinematic pointer table consumed by `tools/intro.py` | Never allocate |
 | 15 | `$592F-$5A80` | `tools/name6.py`, `tools/rank6.py`: six-character save-name records/helpers | Exclusive |
+| 29 | `$44FA-$4553` | `tools/titlelogo.py`: English-aligned 20x18 SGB title attribute file (every title variant and the Fin card) | Guarded native data patch |
 | 29 | `$71C4-$7263` | `tools/waitcard.py`: loading-bubble tiles | Guarded graphics patch |
 | 29 | `$78C4-$798B` | `tools/waitcard.py`: first loading-bubble tilemap plane | Guarded graphics patch |
 | 29 | `$7A90-$7B57` | `tools/waitcard.py`: second loading-bubble tilemap plane | Guarded graphics patch |
+| 31 | `$48A1-$48A3` | `tools/titlelogo.py`: opening title producer call (A = title variant) | Guarded native far-call patch |
+| 31 | `$492D-$4989` | `tools/name6.py`: title variant selector frame and summary operands moved to the 36-byte log summaries | Guarded operand patch |
 | 31 | `$6980-$6AD9` | Native actor/stat readers, including enemy reward construction | Never allocate |
 | 31 | `$6ADA-$74B2` | Native actor/stat data; includes all enemy-tier EXP arrays below | Never allocate |
 | 31 | `$767E-$76D6` | `tools/endingcredits.py`: exact replacement of native credit driver | Exclusive, SHA-guarded |
@@ -142,10 +145,11 @@ can consume more of a pool bank later.
 | 61 | `$405A-$417F` | `tools/menuvwf.py`: guarded carried-/Floor-Action private-row allocator plus register-transparent initial title cursor staging | Exclusive, far indices `$07/$09` |
 | 61 | `$4180-$4231` | `tools/menuvwf.py`: exact Start Rank/Pass choice/category/log-selector regional owner | Exclusive, far index `$0B` |
 | 61 | `$4240-$42B9` | `tools/menuvwf.py`: exact screen-25 difficulty/explanation regional owner | Exclusive, far index `$0D`; redirected text begins at `$42C0` |
-| 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus fresh/progressed title-route dispatch | Exclusive tail |
+| 61 | `$7000-$77F5` | `tools/titlecard.py`: pre-intro card plus the timing-preserving title-layout compare chains (no longer dispatch) | Exclusive tail |
+| 61 | `$7800-$7B16` | `tools/titlelogo.py`: approved scroll subtitles (Monsters/Escape/Lover of Moonlight Village) with their tiles and 9x2 scroll cells | Exclusive tail, far index `$0F` |
 | 62 | `$405A-$4429` | `tools/menuvwf.py`: carried-/Floor-Action box-6 parent, screen-1 machine-state restorer, and Action/Pot routing | Exclusive, far index `$07` |
 | 62 | `$4430-$547C`, `$5480-$548F` | `tools/menuvwf.py`: Item/Floor Info/seal/Pot regional lifecycle and fixed Floor/Pot return leaf | Exclusive, far indices `$09/$0B/$0D/$0F`; redirected text begins at `$5490` |
-| 62 | `$7000-$7F7D` | `tools/titlelogo.py`: illustrated opening and Moonlight post-credit title screens | Exclusive tail |
+| 62 | `$7000-$7EBD` | `tools/titlelogo.py`: illustrated title shared tiles/map and the uploader for every opening variant and the Moonlight post-credit title | Exclusive tail, far index `$05` |
 | 63 | `$4010-$6DA3` | `tools/intro.py`: prologue/ending cinematic engine and data | Exclusive |
 
 The cinematic initializer clears its shared `$C0CC-$C0CE` upload pointer/count on
@@ -162,10 +166,12 @@ and stale gameplay/window data in that map; the off branch must skip only the
 VBlank wait and hardware-disable write, not map initialization. The existing
 bank-41 owner and clear loop serve both entry states (`tools/quitrankspill.py`).
 
-The shared title uploader uses incoming A=0 for the two opening-title routes and
-A=3 for the guarded Moonlight post-credit producer. On the latter, it first runs
-the native loader and preserves the 16 Fin tiles from `$92D0-$93CF` in
-`$8D90-$8E8F` (signed tile IDs `$D9-$E8`), beyond the English title's 217 tiles.
+The shared title uploader replaces both native producer calls. It receives the title
+variant in A: 0-2 from the opening selector and 3 from Moonlight case 3. It always runs
+the native producer first, then uploads the 204 shared tiles (`$00-$CB`) and the map, and
+far-calls the bank-61 subtitle routine for that variant's 14 tiles (`$CC-$D9`) and 9x2
+scroll cells. On A=3 it also preserves the 16 native Fin tiles from `$92D0-$93CF` in
+`$8DA0-$8E9F` (signed tile IDs `$DA-$E9`), beyond every variant's allocation.
 It removes PUSH START and restores Fin at map cells `(15,13)` through `(18,16)`.
 These extra VRAM tiles are owned only during the ending title; the native LCD-off
 setup, fade, hold and input routines retain control of the screen lifecycle.

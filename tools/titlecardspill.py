@@ -40,6 +40,14 @@ def _native_control(rom, path):
     if bytes(data[at:at + 3]) != titlecard._hook():
         raise SystemExit('titlecardspill: %s does not contain the English card hook' % rom)
     data[at:at + 3] = native
+    # The illustrated title is drawn from the two native producer calls, not this hook.
+    # Restore them too so the later title in the control is the Japanese original.
+    far_call = bytes((0xD7, titlelogo.FAR_UPLOAD, titlelogo.FAR_BANK))
+    for bank, addr in ((titlelogo.OPENING_HOOK_BANK, titlelogo.OPENING_HOOK_AT),
+                       (titlelogo.ENDING_HOOK_BANK, titlelogo.ENDING_HOOK_AT)):
+        hook = titlelogo._off(bank, addr)
+        if bytes(data[hook:hook + 3]) == far_call:
+            data[hook:hook + 3] = titlelogo.NATIVE_PRODUCER_CALL
 
     # Keep the temporary comparison cartridge internally consistent.
     header = 0

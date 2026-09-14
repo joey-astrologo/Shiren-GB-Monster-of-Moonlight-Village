@@ -1910,6 +1910,116 @@ including identical Fin pixels, LCD-off installation, native return registers,
 display settings and hold duration within one frame. The input check waits an extra
 120 frames before pressing A and verifies the native continuation is reached.
 
+## The Japanese title has three versions, plus the Fin card — localized 2026-09-14
+
+Native title producer `30:$7F0C` takes a variant in A, and the Japanese ROM ships three
+opening titles. Each subtitle is a pun on 月影村の怪物, and the two alternates also swap a
+kana in シレン (デレン puns on 出れん, "can't get out"; ミレン on 未練, "lingering attachment"):
+
+| A | Japanese | English build | Screen |
+|---|---|---|---|
+| 0 | ![](images/showcase/title-screen-jp-1x.png) | ![](images/showcase/title-screen-en-1x.png) | 風来のシレン GB / 月影村の怪物 → "Monsters of Moonlight Village" |
+| 1 | ![](images/showcase/title-screen-jp-escape-1x.png) | ![](images/showcase/title-screen-en-escape-1x.png) | 風来のデレン GB / 月影村の脱出 → "Escape from Moonlight Village" |
+| 2 | ![](images/showcase/title-screen-jp-lover-1x.png) | ![](images/showcase/title-screen-en-lover-1x.png) | 風来のミレン GB / 月影村の恋人 → "Lover of Moonlight Village" |
+| 3 | ![](images/showcase/moonlight-ending-fin-jp-1x.png) | ![](images/showcase/moonlight-ending-fin-en-1x.png) | Moonlight post-credit card: the 恋人 art, no PUSH START, 完 (Fin) at bottom right |
+
+The opening route calls `31:$492D` at `31:$489E` to choose 0-2. It ORs one progress byte
+from each occupied save log (SRAM bank 2, `$AE90 + $780 * log`) and uses bits 2-3:
+
+| Progress | Set by | Title |
+|---|---|---|
+| neither bit | — | 怪物 (normal) |
+| bit 2 | clearing the Hard story, which unlocks 月影村出口 (Moonlight Exit) | 脱出 |
+| bit 3 | clearing 月影村出口 (the 49F stairs, credits and Fin card) | 恋人; wins over bit 2 |
+
+The progression matches Japanese player documentation
+([Wikipedia](https://ja.wikipedia.org/wiki/%E4%B8%8D%E6%80%9D%E8%AD%B0%E3%81%AE%E3%83%80%E3%83%B3%E3%82%B8%E3%83%A7%E3%83%B3_%E9%A2%A8%E6%9D%A5%E3%81%AE%E3%82%B7%E3%83%AC%E3%83%B3GB_%E6%9C%88%E5%BD%B1%E6%9D%91%E3%81%AE%E6%80%AA%E7%89%A9),
+[ひだまりP](https://www.hidamarie.net/entry/2018/03/27/121841)) and was confirmed by
+replaying the real routes in PyBoy. The Hard ending from
+`shiren_en_log_1_trigger_ending.srm` changes log 1 from `$00` to `$04`. The Moonlight
+Exit ending from `shiren_en-moonlight-ending.srm` changes it from `$04` to `$0C`.
+Moonlight ending case 3 passes A=3 directly (see the section above). The same producer
+also draws the Normal-clear teaser with A=4 from `31:$79CB`.
+
+**The English build misread the progress byte.** `name6.py` widened the summary records
+that `15:$4F90` builds from 34 to 36 bytes (a 113-byte buffer) and moved the 25 stack
+operands in `4:$666D`. The title selector is a second consumer of the same builder, and it
+kept the Japanese 107-byte frame. It read `+17/+51/+85` for logs 1-3 instead of
+`+19/+55/+91` and checked presence at `+34/+68` instead of `+36/+72`. The builder's 113
+bytes also overran the frame into the selector's saved BC/DE/HL. Before the fix, the
+build selected the normal title for every curated progression fixture:
+
+| Fixture | Log badges / state | Correct progress | Correct title | Selected before the fix |
+|---|---|---|---|---|
+| `shiren_en_log_1_trigger_ending.srm` | before the Hard ending | `$00` | 怪物 | 怪物 |
+| `shiren_en_log_1_orochi_symbol.srm` | Orochi (Hard cleared) | `$04` | 脱出 | 怪物 |
+| `shiren_en-moonlight-ending.srm` | on Moonlight Exit 49F | `$04` | 脱出 | 怪物 |
+| `shiren_en-moonlight-clear-icon.srm` | Orochi + Keyaki (Exit cleared) | `$0C` | 恋人 | 怪物 |
+| `shiren_en096_broken_title_screen.srm` | no clear | `$00` | 怪物 | 恋人 (misread) |
+
+The v0.96 report behind `shiren_en096_broken_title_screen.srm` was therefore a real bug.
+The earlier fix replaced the misselected 恋人 screen with the English artwork, which hid
+the misread rather than fixing it. The English overlay also missed the 脱出 map, which
+ends at `HL=$9C00`, `DE=$7618`, so that screen stayed Japanese.
+
+**The fix and localization.** `name6.py` moves the selector's frame and six summary
+operands with the other 25. Joey's approved subtitle overlays replace only the 73x27
+scroll interior at (24,86) of the illustrated title. They use the scroll's three SGB
+palette-1 colors, so the English 20x18 attribute file at `29:$44FA` serves every
+variant and the Fin card. The overlays are embedded in `titlelogo_subtitles.py` with
+their source SHA-256s.
+
+- `titlelogo.py` redirects both producer calls, the opening `31:$48A1` (A = selector
+  result) and Moonlight case 3 `31:$799B` (A=3), to the bank-62 uploader. It runs the
+  native producer with that A, then, with the LCD still off, uploads the 204 tiles shared
+  by every variant and the full map.
+- Only 14 cells in a 9x2 block at (3,11) differ between subtitles. A bank-61 routine
+  uploads that variant's 14 padded tiles at `$CC-$D9` and its 18 cells. A=3 selects
+  Lover. The Fin card also keeps the native Fin tiles at `$DA-$E9` and clears PUSH START.
+- `titlecard.py` no longer dispatches the title from its decompressor hook, but it keeps
+  both title compare chains instruction-for-instruction, with three NOPs where the far
+  call was. The hook runs on every decompressor call. An interim build that deleted a
+  two-instruction chain shifted RNG and frame phase enough to fail the full-item
+  `itempagespill.py` latency budgets (22/26 frames against 18/22).
+- A second interim build read the log summaries twice (12-42 frames each). It delayed the
+  title by 13 frames, and the Moonlight fixture's frame-timed boot route missed PUSH START.
+  The selector still runs exactly once, natively at `31:$489E`.
+
+`titlevariantspill.py` covers six title routes: fresh, before-Hard, the v0.96 report,
+Hard cleared, Moonlight 49F and Moonlight cleared. Each route requires the selector's
+variant, the screen pixel-exact against `titlelogo.approved_raster`, the English ATTR_TRN
+file in VRAM with `$FFCD` forced, one summary build, and the selector's HRAM scratch
+matching the `.srm`. A Moonlight ending replay requires the English attribute file for the
+Fin card. `titlelogospill.py` checks the fresh Monsters tiles, map and raster, and
+`moonlighttitlespill.py` checks the Lover Fin card. The settle-20 and both full-item
+latency series are identical to the previous build. The default item-page series moved
+within budget because the title is now drawn after the producer returns.
+
+**Screenshots.** Each image is an exact 160x144 picture, recolored from the four DMG shades
+into the approved English title palette. The Japanese titles come from `build/base.gb`
+with `31:$489E` patched to `ld a,N`. The English titles come from the build booted with
+the fixtures above. Both Fin cards equal their real Moonlight replays (Japanese via the
+native-producer control). Every English capture, DMG and Super Game Boy, is pixel-identical
+to Joey's approved mock-ups.
+
+**Super Game Boy.** Each screen also has a `-sgb-1x.png` version (the 160x144 picture) and
+a `-sgb-border-1x.png` version (the full 256x224 output with the game's night-village border):
+
+| Japanese | English build |
+|---|---|
+| ![](images/showcase/title-screen-jp-sgb-1x.png) ![](images/showcase/title-screen-jp-escape-sgb-1x.png) ![](images/showcase/title-screen-jp-lover-sgb-1x.png) ![](images/showcase/moonlight-ending-fin-jp-sgb-1x.png) | ![](images/showcase/title-screen-en-sgb-1x.png) ![](images/showcase/title-screen-en-escape-sgb-1x.png) ![](images/showcase/title-screen-en-lover-sgb-1x.png) ![](images/showcase/moonlight-ending-fin-en-sgb-1x.png) |
+
+These were captured with MesenCE's headless test runner (`--testrunner
+--gameboy.model=SuperGameBoy`, SGB2 firmware). Japanese captures use the forced ROMs, and
+English titles use the real fixture saves. Every crop maps each 8x8 cell's four DMG shades
+one-to-one to its colors. The Fin cards use the ending's own far call from the opening
+route (`ld a,3` with the case-3 producer path); PyBoy shows them pixel-identical to the
+real replay. Their SGB colors need no replay. The opening title and ending case 3 both
+call SGB setup `29:$401A`: the title passes `$04` or `$0C`, and the ending passes `$0C`.
+Both handlers finish with the same PAL01 `29:$44DA`, PAL23 `29:$44EA` and attribute
+file `29:$44FA`. Only `$04` uploads the border. The ROM's only CHR_TRN packet template
+is at `29:$47ED`.
+
 ## Ending-credit tiles are column-interleaved — fixed 2026-08-11
 
 The approved credit asset stores each 20x2 text strip in ordinary row-major order: all 20

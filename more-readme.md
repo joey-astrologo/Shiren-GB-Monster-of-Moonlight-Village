@@ -33,7 +33,7 @@ Screenshots from the current English build:
 | Prose and terminology | **Build-complete; playtest ongoing** | Continue reviewing wording and newly reached event routes during full playthroughs. |
 | VWF, menus, items and Rankings | **Complete for known routes** | Known dialogue, item/Floor/Info, standing Trap/Exit/Stairs, file, title, Rankings, full status-panel, name-entry and hidden debug-menu failures have fixtures. Keep adding a regression for every playtest discovery. |
 | Fonts | **Complete** | Thin Pixel-7 GB Compact is the production VWF; arrival cards use approved source rasters, and Inter SemiBold is used for credits. |
-| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map, Moonlight post-credit title, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
+| Graphics | **Complete for known routes** | Copyright card, illustrated title with an English-aligned Super Game Boy palette map and its three save-dependent subtitles (Monsters / Escape from / Lover of Moonlight Village), Moonlight post-credit title, eight arrival labels, loading bubble, HP/Lv/Fullness status art, solid item-page indicators, the Normal-clear teaser and all 22 ending-credit cards are localized. The native end marks are intentionally retained. |
 | Gameplay blockers | **None known** | Manual playtesting remains required; automated tests cannot discover every event route. |
 | Release validation | **Full release battery passed — 2026-09-07** | Continue manual hardware and emulator playtesting before the final release tag. |
 

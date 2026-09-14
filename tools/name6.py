@@ -618,6 +618,32 @@ def install(buf, notes=None):
     notes.append('name6: summary buffer %d -> %d bytes, %d `ld hl,sp+n` operands moved'
                  % (3 * old_sum + 5, 3 * new_sum + 5, moved))
 
+    # `31:$492D`, the opening title's variant selector, is the builder's SECOND consumer.
+    # It ORs each occupied log's progress byte (record byte 16) out of the same three
+    # summaries to pick the 怪物/脱出/恋人 title. Left on the Japanese frame it read the
+    # wrong byte for every log -- the v0.96 "broken title screen" -- and the builder's
+    # larger buffer overran its saved BC/DE/HL. Same field arithmetic as the Log screen.
+    # Each progress read is `ld hl,sp+n / add hl,bc` with BC = 10, so its operand is the
+    # field offset minus ten.
+    title_bias = 10
+    p.imm16(31, 0x4943, 0x01, title_bias, title_bias, 'the title selector field bias')
+    for addr, slot, within in ((0x4946, 0, 0), (0x494C, 0, 17),
+                               (0x4953, 1, 0), (0x4959, 1, 17),
+                               (0x4960, 2, 0), (0x4966, 2, 17)):
+        bias = title_bias if within else 0
+        old = slot * old_sum + within
+        new = old + grow * (slot + (1 if within > NAME_AT + OLD_LEN else 0))
+        p.imm8(31, addr, 0xF8, old - bias, new - bias, 'a title selector summary field')
+        if within:
+            p._expect(31, addr + 2, 0x09, 'the title selector progress add hl,bc')
+    p.imm8(31, 0x4930, 0xE8, (-3 * old_sum - 5) & 0xFF, (-3 * new_sum - 5) & 0xFF,
+           'the title selector stack frame')
+    p.imm8(31, 0x4984, 0xE8, 3 * old_sum + 5, 3 * new_sum + 5,
+           'the title selector stack frame')
+    notes.append('name6: title variant selector 31:$492D reads the %d-byte summaries '
+                 '(progress byte at +%d/+%d/+%d)'
+                 % (new_sum, 17 + grow, new_sum + 17 + grow, 2 * new_sum + 17 + grow))
+
     # The save-summary builder inserts two Japanese-only fixed fields after its dynamic
     # values.  $B4 is the native floor `F`; $AB/$AC are 回目 (attempt ordinal).  They sit
     # outside the translation tables, so use the installed English glyph codes directly.

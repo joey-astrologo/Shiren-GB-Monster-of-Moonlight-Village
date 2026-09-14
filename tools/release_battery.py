@@ -112,7 +112,8 @@ def main() -> int:
     )
     for label, rom in matrix:
         section(f"Runtime release matrix: {label}")
-        py("titlelogospill.py", rom, "--ram", "saves/shiren_en096_broken_title_screen.srm")
+        py("titlelogospill.py", rom)
+        py("titlevariantspill.py", rom)
         py("logicdiff.py", "build/_base_expanded.gb", rom)
         py("enemyexp.py", "build/_base_expanded.gb", rom)
         py("introspill.py", "build/_base_expanded.gb", rom)
